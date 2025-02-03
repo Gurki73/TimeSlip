@@ -1,0 +1,169 @@
+.task-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 1350px;
+  margin: 5px auto;
+  padding: 5px;
+  background: #ddf3e1;
+  border-radius: 8px;
+}
+
+.task-list, .task-editor {
+  flex: 1;
+}
+
+.button-columns {
+  display: flex;
+}
+
+.column {
+  flex: 1;
+}
+
+.task-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 90%;
+  margin: 5px auto;
+  padding: 5px;
+  padding-top: 0px;
+  padding-bottom: 2px;
+  font-size: 1rem;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: var(--role-color); /* Default fallback color */
+}
+
+.task-button:hover {
+  opacity: 0.9;
+}
+
+.task-button[data-role] {
+  background-color: var(--role-color); /* Original background color */
+  border-style: double;
+}
+
+
+.task-button[data-role="0"] { background-color:  var(--role-0-color); }
+.task-button[data-role="1"] { background-color:  var(--role-1-color); }
+.task-button[data-role="2"] { background-color:  var(--role-2-color); }
+.task-button[data-role="3"] { background-color:  var(--role-3-color); }
+.task-button[data-role="4"] { background-color:  var(--role-4-color); }
+.task-button[data-role="5"] { background-color:  var(--role-5-color); }
+.task-button[data-role="6"] { background-color:  var(--role-6-color); }
+.task-button[data-role="7"] { background-color:  var(--role-7-color); }
+.task-button[data-role="8"] { background-color:  var(--role-8-color); }
+.task-button[data-role="9"] { background-color:  var(--role-9-color); }
+.task-button[data-role="10"] { background-color: var(--role-10-color); }
+.task-button[data-role="11"] { background-color: var(--role-11-color); }
+.task-button[data-role="12"] { background-color: var(--role-12-color); }
+.task-button[data-role="13"] { background-color: var(--role-13-color); }
+
+.name-role {
+  margin-top: -2px;
+  color: ghostwhite;
+  vertical-align: top;
+  border: none;
+  background-color: transparent;
+  max-height: fit-content;
+  flex-grow: 1;
+}
+
+form {
+  margin-top: 5px;
+}
+
+label {
+  display: block;
+  margin: 10px 0 5px;
+  font-weight: bold;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+input:disabled {
+  background-color: #f9f9f9;
+}
+
+.button-group {
+  margin-top: 20px;
+}
+
+.button-group button {
+  margin-right: 10px;
+  padding: 10px 15px;
+  font-size: 1rem;
+  color: white;
+  background-color: #007bff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.button-group button:hover {
+  background-color: #0056b3;
+}
+
+#save-task:disabled {
+  background-color: gray;
+  cursor: not-allowed;
+}
+
+/* General styling for the post-it note */
+.post-it-note {
+  background-color: #FAEBD7; /* Antique White */
+  border: 1px solid #f2c400; /* Yellow border */
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
+  max-width: 500px;
+  font-family: 'Arial', sans-serif;
+  font-size: 16px;
+  color: #333;
+  margin: 15px;
+  max-width: 15%;
+  
+}
+
+/* Styling for the heading */
+.post-it-note h3.noto {
+  font-family: 'NotoEmoji', sans-serif;
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+/* Optional: Adjust the paragraph text styling */
+.post-it-note p {
+  line-height: 1.6;
+  margin: 10px 0;
+  font-size: small;
+}
+
+/* Optional: Add a sticky note icon or styling to make it more "post-it" like */
+.post-it-note::before {
+  content: '📌';
+  font-size: 18px;
+  margin-right: 10px;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  transform: rotate(-15deg);
+}
+
+.unaccessable {
+  cursor:not-allowed !important;
+  user-select: none;
+  -webkit-user-select: none; 
+  -moz-user-select: none; 
+  -ms-user-select: none; 
+}

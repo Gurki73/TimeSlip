@@ -1,0 +1,335 @@
+@font-face {
+  font-family: 'NotoEmoji';
+  src: url('../assets/font/NotoColorEmoji.ttf') format('truetype');
+}
+/* Global styles for the layout */
+body, html {
+  background-color:cornflowerblue;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'NotoEmoji', sans-serif;
+  overflow: hidden;
+}
+.noto {
+  font-family: 'NotoEmoji', sans-serif;
+  font-weight: 20;
+}
+
+#left-panel {
+  width: 60px;
+  background-color: azure;
+  display: flex;
+  flex-direction: column;
+  height: 97%;
+  overflow-x: hidden; 
+  position: relative; 
+  box-sizing: border-box; 
+  transition: width 0.3s ease;
+}
+
+  
+  #main-container2 {
+    background-color: chocolate;
+    display: flex;
+    flex-direction: row; 
+    height: 100vh;
+    width: 100%;
+    overflow: auto;
+  }
+  
+  .split-panel {
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    height: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+  
+  
+  #left-panel.expanded {
+    width: 240px; 
+  }
+  
+  #right-panel {
+    background-color: whitesmoke;
+    flex: 1; 
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width:100%;
+  }
+.top-row {
+  width:100%;
+  min-height: 20%;
+  max-height: 80%;
+}
+.bottom-row {
+  width:100%;
+  min-height: 20%;
+  max-height: 80%;
+  background-color: lightgray;
+}
+
+#right-panel .top-row, 
+#right-panel .bottom-row {
+  overflow-y: auto; 
+  overflow-x: hidden; 
+  flex-shrink: 0; 
+}
+  
+#vertical-divider {
+  width: 10px;
+  background-color: cornflowerblue;
+  border-style: double;
+  border-color: ghostwhite;
+  /* position: relative; */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+  .resize-button {
+    background-image: url('../assets/svg/next-svgrepo-com.svg');
+    background-repeat: no-repeat;
+    background-size: contain;
+    border: double;
+    border-color: ghostwhite;
+    cursor: pointer;
+    margin: 10px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: lightblue;
+    transform: rotate(0deg);
+    transition: background-color 0.3s ease, transform 0.3s ease;
+  }
+  
+  .resize-button:hover {
+    background-color: #888;
+  }
+  
+  .resize-button.expanded {
+    transform: rotate(180deg);
+  }
+
+  
+  .horizontal-divider-no-resize {
+    border-top: 5px solid cornflowerblue;
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+
+  #horizontal-divider {
+    height: 8px;
+    border-color: ghostwhite;
+    border-style: double;
+    background-color: cornflowerblue;
+    cursor: row-resize;
+    width: 100%;
+    position: relative;
+    z-index: 10;
+  }
+  
+  .divider {
+    width: 10px;
+    background-color: #ccc;
+  }
+  
+  #calendar-container {
+    height:fit-content;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    overflow-y: auto;
+  }
+  
+  .legend-color {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 10px;
+    border-radius: 50%;
+  }
+  
+  .legend-emoji {
+    margin-left: 5px;
+  }
+
+
+.divider {
+  width: 10px;
+  background-color: #ccc;
+  margin: 0 10px;
+}
+
+/* Ensure form and calendar sections take appropriate space */
+#calendar-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+#form-container {
+  flex: 1;
+}
+
+#legend {
+  flex-grow: 1;
+  overflow-y: auto; /* Allow vertical scrolling */
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  padding-right: 10px; /* Optional, to add padding if needed */
+}
+
+.legend-color {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 10px;
+  border-radius: 50%;
+}
+
+.legend-emoji {
+  margin-left: 5px;
+}
+
+/* Sidebar Container */
+#sidebar {
+  width: 250px;
+  background-color: whitesmoke;
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  overflow: hidden;
+  height: 100vh;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+  max-height: min-content;
+  min-width: min-content;
+}
+
+.nav-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  padding-right: 10px;
+  background-color: lightblue;
+  border: ghostwhite;
+  border-style: double;
+  border-color: ghostwhite;
+  border-radius: 10px;
+  color: darkslategray;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  overflow: hidden;
+}
+
+.nav-button:hover {
+  background-color: cornflowerblue;
+}
+
+.nav-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 15px;
+}
+
+.nav-button span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.underline {
+  text-decoration: underline;
+}
+
+.nav-button:focus {
+  outline: none;
+}
+
+#sidebar::-webkit-scrollbar {
+  width: 5px;
+}
+
+#sidebar::-webkit-scrollbar-thumb {
+  background-color: #7f8c8d;
+  border-radius: 5px;
+}
+
+#sidebar::-webkit-scrollbar-track {
+  background-color: #2c3e50;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(0, 0, 0, 0.1); /* Light border */
+  border-top: 5px solid #007BFF; /* Darker border for animation */
+  border-radius: 50%;
+  animation: spin 1s linear infinite; /* Smooth spinning animation */
+  margin: 20px auto; /* Center alignment */
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+#feedback-console {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: darkslategray;
+  color: limegreen;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 10px;
+  padding: 2px;
+  text-align: center;
+  z-index: 1000;
+  display: none; 
+}
+
+.welcome-list-item li{
+  display: inline-block;
+  align-items: left;           /* Align vertically in the middle */
+  padding: 0 10px;               /* Add some horizontal padding */
+  list-style: none;              /* Remove bullets */
+  margin: 5px;                     /* Reset margin */
+}
+
+.squiggle {
+  font-family: 'NotoEmoji';
+  font-weight: bold;
+}
+.squiggle.mirrored {
+  transform: scaleX(-1);
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center; /* Optional for vertical alignment */
+  gap: 8px; /* Space between items */
+}
+

@@ -1,0 +1,66 @@
+<div id="calendar-form-container">
+    <!-- Left Column: State and Year -->
+    <div class="column left-column">
+        <div class="calendar-form-state-section">
+            <div id="calendar-form-state-flag" class="state-flag-icon"></div>
+            <select id="state-select">
+                <option value="SH">Schlewsig Holstein</option>
+                <option value="NI">Niedersachsen</option>
+                <option value="MV">Mecklenburg Vorpommern</option>
+                <option value="HB">Bremen</option>
+                <option value="HH">Hamburg</option>
+                <option value="NW">Nordrhein Westfalen</option>
+                <option value="BB">Brandenburg</option>
+                <option value="BE">Berlin</option>
+                <option value="ST">Sachsen Anhalt</option>
+                <option value="HE">Hessen</option>
+                <option value="TH">Thüringen</option>
+                <option value="RP">Rheinland Pfalz</option>
+                <option value="BW">Baden-Württemberg</option>
+                <option value="SN">Sachsen</option>
+                <option value="SL">Saarland</option>
+                <option value="BY">Bayern</option>
+            </select>>
+
+            <input type="number" id="calendar-year" min="2025" value="2025">
+            
+        </div>
+        <div>
+            <ul id="public-holidays" class="calendar-form-scrollbox">
+                1.1 = Neujahr
+                <!-- Dynamically populated -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- Central Column: Office Closed Days -->
+    <div class="column center-column">
+        <h2>Büro geschlossen</h2>
+        <div class="single-days">
+            <h3>Einzeltage</h3>
+            <ul id="single-days" class="scrollbox">
+                <!-- Dynamically populated -->
+            </ul>
+        </div>
+        <div class="special-days">
+            <h3>Besondere Tage</h3>
+            <ul id="special-days" class="scrollbox">
+                <!-- E.g., Christmas Eve, New Year's Eve -->
+            </ul>
+        </div>
+    </div>
+    <div>
+        <div class="date-ranges">
+            <div id="custom-date-picker"></div>
+            <h3>Betriebsferien</h3>
+            <ul id="date-ranges" class="scrollbox">
+                <!-- Dynamically populated -->
+            </ul>
+        </div>
+    </div>
+    <!-- Right Column: School Holidays -->
+    <div class="column right-column">
+        <h2>Schulferien</h2>
+        <div id="school-holiday-container" class="scrollbox"> wait </div>
+    </div>
+</div>

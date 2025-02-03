@@ -1,0 +1,221 @@
+#request-form-container {
+  max-height: 45%;
+}
+#request-enter-container {
+  min-width: 90%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+}
+
+#year-filter {
+  background-color: whitesmoke;
+  color: darkslategray;
+  font-size: large;
+  font-weight: bold;
+}
+
+
+#request-enter-container.inactive, #decision.inactive {
+  background-color: black;
+  display: none;
+  z-index: 2;
+}
+
+#request-enter-container.active, #decision.active {
+  background-color: goldenrod;
+  border: 2px solid saddlebrown;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: row;
+  margin: -5px;
+  padding: 20px;
+  z-index: 2;
+  width: 100%;
+}
+
+.request-button {
+  padding: 10px 20px;
+  margin: 5px 5px 0 5px;
+  background-color: wheat;
+  border: 2px solid saddlebrown;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.request-button::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  border-radius: 0 0 5px 5px;
+  z-index: -1;
+  transition: all 0.3s ease;
+}
+
+.request-button.active {
+  background-color: goldenrod;
+  color: white;
+  border-color: saddlebrown;
+  border-bottom: none; 
+  z-index: 3;
+}
+
+.request-button.inactive {
+  background-color: wheat;
+  color: darkslategray;
+  border-color: burlywood;
+}
+
+.request-button:hover {
+  transform: translateY(-2px);
+}
+
+.request-form-col {
+  background-color: wheat;
+  border-color: brown;
+  border-radius: 12px;
+  border-style: solid;
+  margin: 12px;
+  padding: 12px;
+  min-height: 100%;
+  min-width: 13%;
+}
+
+.request-form-warn {
+  background-color: lightyellow;
+  border-color: red;
+  border-radius: 12px;
+  border-style: solid;
+  margin: 12px;
+  padding: 12px;
+  min-Height: 100%;
+  min-width: 25%;
+  margin-right: 25px;
+}
+
+#requester-emoji {
+  padding: 5px;
+  margin-right: 10px;
+  border-color: brown;
+  border-radius: 5px;
+  border-style: solid;
+}
+
+.request-date {
+  max-width: 110px;
+  background-color: whitesmoke;
+  border-style: solid;
+  border-color: lightslategray;
+  border-width: 1px;
+}
+
+.request-date-warning {
+  position: relative;
+  background-color: lightyellow;
+  border-color: red;
+  border-style: solid;
+  border-width: 2px;
+  color: red;
+}
+
+.request-date-warning::after {
+  content: "⚠️"; 
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  font-size:16; 
+  background-color: lightyellow;
+  border-radius: 50%;
+  border-color: red;
+  border-width: 1px;
+  border-style: solid;
+  overflow: visible;
+  padding: 2px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+#decision-table-container {
+  max-height: 40vh; /* Set a max-height for the table container */
+  overflow-y: auto; /* Enable vertical scrolling */
+}
+
+#decision {
+  max-height: 45vh;
+  max-width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#decision-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 2px solid brown;
+}
+
+#decision-table thead {
+  position: sticky;
+  top: 0;
+  background-color: brown;
+  color: white;
+  font-weight: bold;
+  z-index: 10;
+}
+
+#decision-table tbody {
+  display: block;
+  max-height: 35vh; /* Prevent tbody from growing */
+  overflow-y: auto; /* Enable scrolling inside tbody */
+  width: 100%;
+}
+
+#decision-table thead,
+#decision-table tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed; /* Ensures columns stay aligned */
+}
+
+#decision-table tbody tr:nth-child(odd) {
+  background-color: wheat;
+}
+
+#decision-table tbody tr:nth-child(even) {
+  background-color: antiquewhite;
+}
+
+#decision-table th, 
+#decision-table td {
+  border: 1px solid brown;
+  padding: 8px;
+}
+
+#decision-table th select {
+  width: 100%;
+  padding: 4px;
+  border-radius: 4px;
+  border: none;
+}
+
+#decision-table tbody tr:hover {
+  background-color: #f0c674; 
+}
+
+.msg-cell::before {
+  content: "💬"; 
+  cursor: pointer;
+}

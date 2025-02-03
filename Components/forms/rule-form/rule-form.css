@@ -1,0 +1,160 @@
+#rule-form-container {
+    background-color: whitesmoke;
+}
+
+#newRule {
+    background-color: ghostwhite;
+    color: black;
+    margin-left:50px;
+    padding-left: 100px;
+    display: inline-block;
+    align-content: start;
+}
+
+.rule-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1em;
+}
+
+.inputRow {
+    display: flex;
+    display: row;
+}
+.rule-table tr {
+    min-height: 150px;
+}
+
+.rule-number-input {
+    min-width: 30px;
+    max-width: 30px;
+}
+
+.rule-table th,
+.rule-table td {
+    border: 1px solid #ddd;
+    text-align: center;
+    padding: 8px;
+}
+
+.rule-table th {
+    background-color: cornflowerblue;
+    font-weight: bold;
+}
+
+.rule-table.inactive select,
+.rule-table.inactive button {
+    background-color: lightgray;
+    color: #808080; 
+    cursor: not-allowed; 
+    opacity: 0.7;
+}
+
+.blinking-cursor {
+    animation: blink 1s step-end infinite;
+}
+
+.rule-table.inactive select:hover,
+.rule-table.inactive select:focus,
+.rule-table.inactive button:hover {
+    background-color: lightgray;
+    color: silver;
+}
+
+@keyframes blink {
+    from, to {
+        color: transparent;
+    }
+    50% {
+        color: black;
+    }
+}
+
+input.valid, select.valid {
+    background-color: lightgreen;
+    border-color: green;
+}
+
+input.warning, select.warning {
+    background-color: yellow;
+    border-color: orange;
+}
+
+input.error, select.error {
+    background-color: red;
+    border-color: darkred;
+}
+
+.rule-table.inactive {
+    background-color: lightgray;
+}
+
+#typing-text {
+    font-family: 'Courier New', monospace;
+    white-space: pre; /* Preserve spaces for formatting */
+    overflow: hidden; /* Hide overflowing text during typing animation */
+}
+
+.rule-table.inactive th {
+    background-color: silver; 
+    color: #808080;
+    opacity: 0.8; 
+}
+
+.rule-table:first-of-type th:nth-child(3),
+.rule-table:first-of-type td:nth-child(3) {
+    background-color: rgba(144, 238, 144, 0.4);
+    border: 2px solid lime;
+    animation: pulse 1.5s infinite;
+}
+
+.rule-table:first-of-type th:nth-child(3) {
+    background-color: seagreen;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 2px lime;
+    }
+    50% {
+        box-shadow: 0 0 10px lime;
+    }
+    100% {
+        box-shadow: 0 0 2px lime;
+    }
+}
+
+.rule-table:last-of-type th:nth-child(4), /* Header of the last table */
+.rule-table:last-of-type td:nth-child(4) { /* Data cells of the last table */
+    background-color: rgba(144, 238, 144, 0.4); /* Lightgreen with opacity */
+    border: 2px solid lime; /* Lime border */
+    animation: pulse 1.5s infinite; /* Pulsing effect */
+}
+
+.rule-table:last-of-type th:nth-child(4) { /* Slightly darker header */
+    background-color: seagreen;
+}
+
+.rule-table:last-of-type th:nth-child(6), 
+.rule-table:last-of-type td:nth-child(6) {
+    background-color: rgba(255, 165, 0, 0.4); /* Orange with transparency */
+    border: 2px solid orangered;
+    animation: warningPulse 1.0s infinite;
+}
+
+.rule-table:last-of-type th:nth-child(6) { /* Slightly darker header */
+    background-color: rebeccapurple;
+}
+
+@keyframes warningPulse {
+    0% {
+        box-shadow: 0 0 5px red;
+    }
+    50% {
+        box-shadow: 0 0 15px orange;
+    }
+    100% {
+        box-shadow: 0 0 5px orangered;
+    }
+}
+

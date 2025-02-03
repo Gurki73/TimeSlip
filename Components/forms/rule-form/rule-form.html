@@ -1,0 +1,167 @@
+<div id="rule-form-container">
+    <div id="newRule">
+        <button class="icon-button noto" title="Regel löschen">🚮</button>
+        <button class="icon-button noto" title="Regel speichern">💾</button>
+        <span id="typing-text">
+            &gt;
+        </span>
+        <span class="blinking-cursor noto">🏗️</span>
+    </div>
+
+    <!-- Main Table -->
+    <table class="rule-table">
+        <thead>
+            <tr>
+                <th class="noto">
+                    <b style="color: yellow; font-size: large;">⟳</b> Wiederholungen: 
+                    <select id="request-type-select-repeats" class="noto">
+                        <option class="noto" value="W">...</option>
+                        <option class="noto" value="W0">jeden 🕒</option>
+                        <option class="noto" value="W1">niemals 🕒</option>
+                        <option class="noto" value="W2">pro 🕒</option>
+                    </select>
+                </th>
+                <th class="noto">
+                    🕒 Zeitraum:
+                    <select id="request-type-select-time">
+                        <option value="T">...</option>
+                        <option value="T0">Schicht</option>
+                        <option value="T1">Tag</option>
+                        <option value="T2">Woche</option>
+                        <option value="T3">Monat</option>
+                        <option value="T4">Abwesentheit</option>
+                    </select>
+                </th>
+                <th class="noto">
+                    📊 Anzahl 
+                    <select id="request-type-select-amount" class="noto">
+                        <option class="noto" value="A1">ungefär 🧩</option>
+                        <option class="noto" value="A0">alle 🧩</option>
+                        <option class="noto" value="A2">keiner 🧩</option>
+                        <option class="noto" value="A3">zwischen 🧩</option>
+                        <option class="noto" value="A4">maximal 🧩</option>
+                        <option class="noto" value="A5">minimal 🧩</option>
+                        <option class="noto" value="A8">genau 🧩</option>
+                        <option class="noto" value="A6">prozentual 🧩</option>
+                    </select>
+                </th>
+                <th class="noto">
+                    🧩 Aufgaben:
+                    <select id="request-type-select-group">
+                        <option value="G0">Aufgabe</option>
+                        <option value="G1">Gruppe</option>
+                        <option value="G2">Alternative</option>
+                    </select>
+                </th>
+                <th class="noto">
+                    🔗 Abhängigkeiten:
+                    <select id="request-type-select-dependency" class="noto">
+                        <option value="D0">anwesend</option>
+                        <option value="D1">abwesend</option>
+                        <option value="D2">braucht</option>
+                        <option value="D3">hilft</option>
+                        <option class="noto" value="D4">im Verhältnis 🧩</option>
+                    </select>
+                </th>
+                <th class="noto">
+                    ↪️ Ausnahmen:
+                    <select id="request-type-select-exception">
+                        <option value="E0">...</option>
+                        <option value="E1">und</option>
+                        <option value="E2">oder</option>
+                        <option value="E3">aber</option>
+                        <option value="E4">außer</option>
+                        <option value="E5">aber nicht mehr als</option>
+                        <option value="E6">aber nicht weniger als</option>
+                    </select>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="firstTableSecondSteps">
+                <td id="repeat-cell"></td>
+                <td id="time-cell"></td>
+                <td id="amount-cell"></td>
+                <td id="task-cell"></td>
+                <td id="dependency-cell"></td>
+                <td id="exception-cell"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Second Table for Exceptions -->
+    <table class="rule-table">
+        <thead>
+            <tr>
+                <th class="noto">
+                    <b style="color: yellow; font-size: large;">⟳</b> Wiederholungen:
+                    <select id="ex-request-type-select-repeats" class="noto">
+                        <option class="noto" value="w" > ... </option>
+                        <option class="noto" value="w0">jeden 🕒</option>
+                        <option class="noto" value="w1">niemals 🕒</option>
+                        <option class="noto" value="w2">pro 🕒</option>
+                    </select>
+                </th>
+                <th class="noto">
+                    🕒 Zeitraum:
+                    <select id="ex-request-type-select-time">
+                        <option value="t"> ...</option>
+                        <option value="t0">Schicht</option>
+                        <option value="t1">Tag</option>
+                        <option value="t2">Woche</option>
+                        <option value="t3">Monat</option>
+                        <option value="t4">Abwesentheit</option>
+                    </select>
+                </th>
+                <th class="noto">
+                    📊 Anzahl:
+                    <select id="ex-request-type-select-amount" class="noto">
+                        <option class="noto" value="a"> ...</option>
+                        <option class="noto" value="a1">ungefär 🧩</option>
+                        <option class="noto" value="a0">alle 🧩</option>
+                        <option class="noto" value="a2">keiner 🧩</option>
+                        <option class="noto" value="a3">zwischen 🧩</option>
+                        <option class="noto" value="a4">maximal 🧩</option>
+                        <option class="noto" value="a5">minimal 🧩</option>
+                        <option class="noto" value="a6">prozentual 🧩</option>
+                        <option class="noto" value="a8">genau 🧩</option>
+                    </select>
+                </th>
+                <th class="noto">
+                    🧩 Aufgaben:
+                    <select id="ex-request-type-select-group">
+                        <option value="g"> ...</option>
+                        <option value="g0">Aufgabe</option>
+                        <option value="g1">Gruppe</option>
+                        <option value="g2">Alternative</option>
+                    </select>
+                </th>
+                <th class="noto">
+                    🔗 Abhängigkeiten:
+                    <select id="ex-request-type-select-dependency" class="noto">
+                        <option value="d"> ...</option>
+                        <option value="d0">anwesend</option>                        
+                        <option value="d1">abwesend</option>
+                        <option value="d2">braucht</option>
+                        <option value="d3">hilft</option>
+                        <option class="noto" value="d4">im Verhältnis 🧩</option>
+                    </select>
+                </th>
+                <th class="noto">
+                    ✅ Regel test
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id='secondTableSecondSteps'>
+                <td id="ex-repeat-cell"></td>
+                <td id="ex-time-cell"></td>
+                <td id="ex-amount-cell"></td>
+                <td id="ex-task-cell"></td>
+                <td id="ex-dependency-cell"></td>
+                <td id="ex-exception-cell"></td>
+                <td id="rule-check"></td>
+            </tr>
+        </tbody>
+    </table>
+</div>

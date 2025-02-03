@@ -1,0 +1,174 @@
+<div class="employee-form-container" id="employee-form-container">
+
+    <!-- Privacy and Warning Section -->
+    <div id="privacy-warning-panel" class="form-column noto">
+        <p>
+          ⚠️ <b>Datenschutzhinweis:</b> <br> 
+          Beachten Sie, dass diese Anwendung sensible Daten enthält. 
+          Bitte stellen Sie sicher, dass die Daten gemäß den 
+          gesetzlichen Bestimmungen geschützt sind.
+        </p>
+        <p>
+          Diese Anwendung ist nur für autorisierte Benutzer bestimmt.
+          Eine unsachgemäße Verwendung kann rechtliche Konsequenzen haben.
+        </p>
+    </div>
+    
+    <!-- Employee Selection -->
+    <div id="employee-list-column">
+        <h3>Mitarbeiter - Auswahl</h3>
+        <div>
+            <div class="employee-item" id="employeeForm-new-btn">
+                <span class="employee-item">
+                    <span class="employee-emoji noto">❓</span>
+                    <span>
+                        ⇨ neuer Mitarbeiter 
+                    </span>
+                </span>
+            </div>
+            <ul id="employee-list" class="employee-list"></ul>
+        </div>    
+    </div>
+    <!-- Employee Details -->
+        <div id="employee-form-details">
+        <!-- Left Section -->
+        <div id="employee-details-left">
+            <div class="employee-flex-row">
+                <button id="employee-emoji-picker-btn" class="emoji-picker-btn noto" title="Emoji ändern">❓</button>
+                <input type="text" id="employee-name" value="${employee.name}" placeholder="Enter employee name">
+            </div>
+
+            <div style="background-color: silver; height: 5px; margin-top: 10px; margin-bottom: 10px;"> </div>
+            
+            <div class="employee-flex-row">
+                <span>U-anspr.</span>
+                <input type="number" class="employee-details-number" id="employee-form-vacation-left" step="0.5">
+                <span>von</span>
+                <input type="number" class="employee-details-number" id="employee-form-vacation-total" step="0.5">
+
+            </div>
+            <div class="employee-flex-row">
+                <span>Überstunden</span> 
+                <input type="number" class="employee-details-number" id="employee-form-overtime-input"
+                 value="0" step="0.5">
+                [Tage]
+            </div>
+
+            <div style="background-color: silver; height: 5px; margin-top: 10px; margin-bottom: 10px;"> </div>
+
+            <div class="employee-flex-row">
+                <span>Anfang</span>
+                <input type="date" class="employee-details-date" id="employee-form-start-work">
+            </div>
+            
+            <div class="employee-flex-row">
+                <span>Ende</span>
+                <input type="date" class="employee-details-date" id="employee-form-end-work">
+            </div>
+            
+            <div class="employee-flex-row">
+                <span> <i>opt.</i> Geburtstag</span>
+                <div style="display: flex; flex-direction: row ;">
+                    <input type="number" min="1" max="31" step="1" class="employee-details-number" id="employee-form-birthday-day">
+                    <input type="number" min="1" max="31" step="1" class="employee-details-number" id="employee-form-birthday-month">
+                </div>
+            </div>
+        </div>
+        <div>
+        <!-- Middle Section -->
+            <div id="employee-detail-middle"> 
+
+                <div id="employee-detail-top-row">
+                    <button id="employee-reset-button" class="noto" type="button" title="Rückgängig">⤺</button>
+                    <button id="employee-delete-button" class="noto" type="button" title="Mitarbeiter löschen">🚮</button>
+                    <button id="employee-store-button" class="noto" type="button" title="Änderungen speichern">💾</button>
+                </div>
+              
+                <div id="employee-ratio">
+                    <div>
+                       <span class="noto"> <h3>🧩 Aufgaben </h3></span>
+                       <div style="display: flex; flex-direction: row; background-color: lightgray;">
+                            <span id="employee-details-icon-main" class="employee-details-icon noto">❓</span>
+                            <select id="employee-details-role-main" class="noto">
+                            </select>
+                           <input type="range" id="employee-form-role1" min="0" max="10" value="7" step="1">
+                       </div>
+
+                       <div style="display: flex; flex-direction: row; background-color: darkgray;">
+                        <span id="employee-details-icon-secondary" class="employee-details-icon noto">❓</span>
+                            <select id="employee-details-role-secondary" class="noto">
+                            </select>
+                           <input type="range" id="employee-form-role2" min="0" max="10" value="2" step="1">
+                        </div>
+
+                        <div style="display: flex; flex-direction: row; background-color: grey;">
+                            <span id="employee-details-icon-trinary" class="employee-details-icon noto">❓</span>
+                            <select id="employee-details-role-trinary" class="noto">
+                            </select>
+                           <input type="range" id="employee-form-role3" min="0" max="10" value="1" step="1">
+                       </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Right Section -->
+        <div id="employee-details-right">
+            <h4 id="employee-form-shifts-title">Regel- <br> Arbeitszeit</h4>
+            <table id="employee-form-shifts-table">
+                <tbody>
+                    <tr>
+                        <td><b>Mo:</b></td>
+                        <td>
+                            <select id="employee-form-shift-mon">
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><b>Di:</b></td>
+                        <td>
+                            <select id="employee-form-shift-tue">
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><b>Mi:</b></td>
+                        <td>
+                            <select id="employee-form-shift-wed">
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><b>Do:</b></td>
+                        <td>
+                            <select id="employee-form-shift-thu">
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><b>Fr:</b></td>
+                        <td>
+                            <select id="employee-form-shift-fri">
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><b>Sa:</b></td>
+                        <td>
+                            <select id="employee-form-shift-sat">
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="color: red;"><b>So:</b></td>
+                        <td>
+                            <select id="employee-form-shift-sun">
+                            </select>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>    
+</div>

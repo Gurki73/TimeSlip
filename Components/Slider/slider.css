@@ -1,0 +1,62 @@
+/* General styling for slider */
+.slider-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+  .slider-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .slider-label {
+    font-size: 14px;
+    margin-bottom: 5px;
+  }
+  
+  .slider-bar {
+    position: relative;
+    width: 300px;
+    height: 8px;
+    background-color: #ddd;
+    border-radius: 5px;
+  }
+  
+  .slider-fill {
+    position: absolute;
+    height: 100%;
+    background-color: #4CAF50;
+    border-radius: 5px;
+    width: 50%; /* Default fill at 50% */
+  }
+  
+  .slider-button {
+    padding: 5px 15px;
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  
+  .slider-button:disabled {
+    background-color: #ccc;
+  }
+  
+  #role-ratio-input {
+    margin-top: 10px;
+    font-size: 16px;
+    text-align: center;
+    width: 50px;
+  }
+  
+  #role-ratio-input:disabled {
+    background-color: #f0f0f0;
+    color: #bbb;
+  }
+  

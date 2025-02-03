@@ -1,0 +1,24 @@
+:root {
+  /* General Styles */
+  --btn-padding: 8px 16px;
+  --btn-margin: 5px;
+  --btn-font-size: 14px;
+  --btn-border-radius: 15px;
+  --btn-border-color: grey;
+  --btn-bg-color: #f4f4f4;
+  --btn-hover-bg-color: rgb(197, 31, 161);
+  --icon-size: 16px;
+
+  /* SVG Paths */
+  --icon-next: url('/assets/svg/next-svgrepo-com.svg');
+  --icon-previous: url('/assets/svg/previous-svgrepo-com.svg');
+  --icon-person: url('/assets/svg/person-team-svgrepo-com.svg');
+  --icon-role: url('/assets/svg/puzzle-piece-svgrepo-com.svg');
+  --icon-rule: url('/assets/svg/knowledge-graph-relationship-svgrepo-com.svg');
+  --icon-edit: url('/assets/svg/file-document-svgrepo-com.svg');
+  --icon-delete: url('/assets/svg/file-delete-svgrepo-com.svg');
+  --icon-create: url('/assets/svg/file-add-svgrepo-com.svg');
+  --icon-safe: url('/assets/svg/safe-svgrepo-com.svg');
+  --icon-calendar: url('/assets/svg/calendar-svgrepo-com.svg');
+  --icon-admin: url('/assets/svg/cog-wheel-settings-svgrepo-com.svg');
+}

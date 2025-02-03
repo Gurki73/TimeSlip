@@ -1,0 +1,84 @@
+/* Container for the emoji picker */
+.emoji-picker {
+  position: absolute;
+  background-color: white;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); /* Shadow for the entire picker */
+  padding: 10px;
+  border-radius: 8px;
+  z-index: 9999;
+  border: 1px double rgba(0, 0, 0, 0.2); /* Subtle border around the picker */
+}
+
+/* Wrapper for the top bar */
+.emoji-picker .top-bar-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+/* Top bar where the close button will go */
+.emoji-picker .top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px 5px 0 0; /* Rounded top corners */
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Slight shadow for the top bar */
+  width: 100%;
+  z-index: 1001; /* Ensure the top bar is above the emojis */
+}
+
+/* Close button inside the top bar */
+.emoji-picker .close-btn {
+  background: none;
+  border: none;
+  color: ghostwhite;
+  cursor: pointer;
+  margin-top: 5px;
+  margin-right: 5px;
+  padding: 5px;
+  border-radius: 3px;
+  transition: background-color 0.3s ease;
+  border: 1px double rgba(0, 0, 0, ghostwhite)
+}
+
+/* Change the background of the close button on hover */
+.emoji-picker .close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Wrapper for the emoji grid */
+.emoji-picker .emoji-grid {
+  display: grid;
+  grid-gap: 2px;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); /* Adjusts grid layout */
+}
+
+.emoji-picker .emoji {
+  font-size: 24px;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 5px;
+  transition: background-color 0.3s;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  z-index: 10000;
+}
+
+.emoji-picker .emoji:hover {
+  background-color: var(--hover-color);
+}
+
+/* Dynamic color for top bar */
+.emoji-picker .top-bar-wrapper[data-index="0"] { background-color: var(--role-0-color); }
+.emoji-picker .top-bar-wrapper[data-index="1"] { background-color: var(--role-1-color); }
+.emoji-picker .top-bar-wrapper[data-index="2"] { background-color: var(--role-2-color); }
+.emoji-picker .top-bar-wrapper[data-index="3"] { background-color: var(--role-3-color); }
+.emoji-picker .top-bar-wrapper[data-index="4"] { background-color: var(--role-4-color); }
+.emoji-picker .top-bar-wrapper[data-index="5"] { background-color: var(--role-5-color); }
+.emoji-picker .top-bar-wrapper[data-index="6"] { background-color: var(--role-6-color); }
+.emoji-picker .top-bar-wrapper[data-index="7"] { background-color: var(--role-7-color); }
+.emoji-picker .top-bar-wrapper[data-index="8"] { background-color: var(--role-8-color); }
+.emoji-picker .top-bar-wrapper[data-index="9"] { background-color: var(--role-9-color); }
+.emoji-picker .top-bar-wrapper[data-index="10"] { background-color: var(--role-10-color); }
+.emoji-picker .top-bar-wrapper[data-index="11"] { background-color: var(--role-11-color); }

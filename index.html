@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<!--
+  Vacation Approval App for Small Businesses
+  -------------------------------------------
+  
+  Overview:
+  - This app is designed to help small business owners approve or reject vacation requests, ensuring that all necessary roles are covered with some tolerance for flexibility. 
+  - It replaces commonly used Excel sheets, providing a lightweight, portable, and intuitive solution for small offices.
+  - This app is ideal for businesses like restaurants, where roles such as cooks, busboys, and waiters are critical, and employees may switch roles depending on the situation.
+
+  Technical Details:
+  - Built with simple HTML, JavaScript, and CSS to avoid dependency on package managers or frameworks. 
+    (We might have chosen Angular otherwise, but simplicity rules!)
+  - Designed to run in modern Chromium-based browsers due to reliance on the File API. 
+    A fallback exists via Blob downloads, but it may require manual file handling, making it less feasible.
+  - No login or user identification required, mimicking the portability and simplicity of Excel sheets. 
+    We provide a warning regarding identity and privacy considerations.
+
+  Features:
+  - Rule-based validation ensures business-critical roles are covered during vacation periods.
+  - Completely offline functionality, suitable for environments without constant internet access.
+  - Color-blindness support is partially implemented and can be further improved.
+  - ARIA support for accessibility is not yet implemented due to resource constraints but remains a future goal.
+
+  License:
+  - Released under the MIT License, allowing free personal and commercial use. Attribution is appreciated but not required.
+  - Editing and advancing the app are encouraged! 
+
+  Monetization:
+  - Translators/adapters for other countries: You keep 85% of any donations; the rest supports this project's growth.
+  - Developers adding cloud or self-server support: The app becomes yours to monetize, but I’d love a coffee in return!
+  - Salespersons distributing the app: Voluntary contribution of 35% of earnings is welcome, but not mandatory. It’s free, after all.
+
+  Core Development Philosophy:
+  - "Robustness" is my primary coding principle, although the simplicity of a web app limits some advanced practices.
+  - Accessibility is a core value. While incomplete (e.g., ARIA support), I aim for inclusive design where possible.
+
+  Acknowledgments:
+  - Special thanks to Alex, one of the top 1% LoL players in Europe, ( now I play Shaco as support, but ia am in the least 1%  )
+    whose mentoring inspired me to build this app from scratch to understand the principles of robust and maintainable code.
+   
+  - GitHub or Discord links for contributions, feedback, and community interaction will be added soon!
+
+  Created with passion for small businesses and their unique needs. 
+  Let's replace messy spreadsheets with something smarter! ( i didn't wrote this, its just chatGpt like everything else)
+-->
+
+<html lang="de">
+  <head>
+    <meta charset="UTF-16">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urlaubsmanagement</title>
+    <link rel="stylesheet" href='styles/global.css'>
+    <link rel="stylesheet" href='Components/legend/legend.css'>
+    <link rel="stylesheet" href='Components/calendar/calendar.css'>
+    <link rel="stylesheet" href='Components/emojiPicker/emojiPicker.css'>
+    <link rel="stylesheet" href='Components/Slider/slider.css'>
+    <link rel="stylesheet" href='assets/css/colors.css'>
+    <link rel="stylesheet" href='assets/css/buttons.css'>
+    <link rel="stylesheet" href='assets/css/icons.css'>
+    <link rel="stylesheet" href='Components/forms/role-form/role-form.css'>
+    <link rel="stylesheet" href='Components/forms/rule-form/rule-form.css'>
+    <link rel="stylesheet" href='Components/forms/calendar-form/calendar-form.css'>
+    <link rel="stylesheet" href='Components/forms/admin-form/admin-form.css'>
+    <link rel="stylesheet" href='Components/forms/request-form/request-form.css'>
+    <link rel="stylesheet" href='Components/forms/employee-form/employee-form.css'>
+  </head>
+
+  <body>
+
+    <div id="main-container2">
+      <div id="left-panel" class="split-panel left">
+        <div id="legend"></div> 
+        <div class="horizontal-divider-no-resize"></div>
+        <div id="sidebar">
+          <button class="nav-button" data-form="request-form">
+            <img src="./assets/svg/file-document-svgrepo-com.svg" alt="Urlaub Icon" class="nav-icon">
+            <span><span class="underline">U</span>rlaub</span>
+          </button>
+      
+          <button class="nav-button" data-form="employee-form">
+            <img src="./assets/svg/person-team-svgrepo-com.svg" alt="Mitarbeiter Icon" class="nav-icon">
+            <span><span class="underline">M</span>itarbeiter</span>
+          </button>
+      
+          <button class="nav-button" data-form="role-form">
+            <img src="./assets/svg/puzzle-piece-svgrepo-com.svg" alt="Aufgaben Icon" class="nav-icon">
+            <span><span class="underline">A</span>ufgaben</span>
+          </button>
+      
+          <button class="nav-button" data-form="rule-form">
+            <img src="./assets/svg/knowledge-graph-relationship-svgrepo-com.svg" alt="Regeln Icon" class="nav-icon">
+            <span><span class="underline">R</span>egeln</span>
+          </button>
+          
+          <button class="nav-button" data-form="calendar-form">
+            <img src="./assets/svg/calendar-svgrepo-com.svg" alt="Kalender Icon" class="nav-icon">
+            <span><span class="underline">K</span>alender</span>
+          </button>
+      
+          <button class="nav-button" data-form="admin-form">
+            <img src="./assets/svg/cog-wheel-settings-svgrepo-com.svg" alt="Werkzeuge Icon" class="nav-icon">
+            <span><span class="underline">W</span>erkzeuge</span>
+          </button>
+        </div>        
+      </div> 
+      <div id="vertical-divider">
+        <button id="resize-toggle" class="resize-button"> </button>
+      </div>
+      <div id="right-panel" class="split-panel right">
+        <div id="calendar" class="top-row">
+          <div style="background-color: orangered; width:100%; height:100%">
+            <br> hier sollte ein Kalendar erscheinen :-/
+            <br><br> <div class="spinner"></div>
+         </div>
+     
+        </div>
+        <div id="horizontal-divider"></div>
+        <div id="form-container" class="bottom-row" >
+          <div class="welcome-page" style="font-family: Arial, sans-serif; color: #333;">
+            <h4 style="text-align: center; color: #2c3e50;">Willkommen bei der Urlaubsplaner-App</h4>
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-evenly; width: 100%; height: 100%; padding: 20px;">
+                <!-- Urlaub Icon Card -->
+                  <div style="background-color: #fafad2; margin: 5px; padding: 5px; border-radius: 12px; border: 2px solid #dcdcdc; height: 100%; width: 250px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                    <img src="./assets/svg/file-document-svgrepo-com.svg" alt="Urlaub Icon" class="nav-icon" style="width: 50px; margin-bottom: 10px;">
+                    <h4 style="color: #e67e22;">
+                    <mark class="squiggle noto">𑇤</mark>
+                    Urlaubsanträge
+                    <mark class="squiggle.mirrored noto">𑇤</mark></h4>
+                    <ul class="welcome-list-item" >
+                        <li class="noto">📄 Anträge stellen</li>
+                        <li class="noto">🔄 Status ändern</li>
+                    </ul>
+                </div>
+                
+                <!-- Mitarbeiter Icon Card -->
+                <div style="background-color: #c0c0c0; margin: 5px; padding: 5px; border-radius: 12px; border: 2px solid #dcdcdc; height: 100%; width: 250px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                    <img src="./assets/svg/person-team-svgrepo-com.svg" alt="Mitarbeiter Icon" class="nav-icon" style="width: 50px; margin-bottom: 10px;">
+                    <h4 style="color: #8e44ad;">Mitarbeiter</h4>
+                    <ul class="welcome-list-item" >
+                        <li class="noto">➕ Mitarbeiter erstellen</li>
+                        <li class="noto">🔧 Aufgaben zuweisen</li>
+                        <li class="noto">✏️ Mitarbeiter bearbeiten</li>
+                        <li class="noto">⏰ Regelarbeitszeiten definieren</li>
+                        <li class="noto">🗑️ Mitarbeiter entfernen</li>
+                    </ul>
+                </div>
+                
+                <!-- Aufgaben Icon Card -->
+                <div style="background-color: #7fffd4; margin: 5px; padding: 5px; border-radius: 12px; border: 2px solid #dcdcdc; height: 100%; width: 250px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                    <img src="./assets/svg/puzzle-piece-svgrepo-com.svg" alt="Aufgaben Icon" class="nav-icon" style="width: 50px; margin-bottom: 10px;">
+                    <h4 style="color: #16a085;">Aufgaben</h4>
+                    <ul class="welcome-list-item" >
+                        <li class="noto">🎨 Aufgabenfarben zuweisen</li>
+                        <li class="noto">📝 Aufgaben benennen</li>
+                        <li class="noto">🗑️ Aufgaben löschen</li>
+                    </ul>
+                </div>
+                
+                <!-- Regeln Icon Card -->
+                <div style="background-color: #f0f8ff; margin: 5px; padding: 5px; border-radius: 12px; border: 2px solid #dcdcdc; height: 100%; width: 250px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                    <img src="./assets/svg/knowledge-graph-relationship-svgrepo-com.svg" alt="Regeln Icon" class="nav-icon" style="width: 50px; margin-bottom: 10px;">
+                    <h4 style="color: #2980b9;">Regeln</h4>
+                    <p style="font-size: 14px; color: #34495e;">
+                        Eine Regel ist eine Bedingung, die für den reibungslosen Ablauf und die Sicherheit der Mitarbeiter 
+                        gewährleistet werden sollte. Es können Ausnahmen und Toleranzen definiert werden. Ein Regelverstoß 
+                        löst eine Warnung im Kalender und in den Einträgen aus.
+                    </p>
+                    <ul class="welcome-list-item" >
+                        <li class="noto">📝 Regeln erstellen</li>
+                        <li class="noto">🔧 Regeln verwalten</li>
+                    </ul>
+                </div>
+                
+                <!-- Kalender Icon Card -->
+                <div style="background-color: #f08080; margin: 5px; padding: 5px; border-radius: 12px; border: 2px solid #dcdcdc; height: 100%; width: 250px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                    <img src="./assets/svg/calendar-svgrepo-com.svg" alt="Kalender Icon" class="nav-icon" style="width: 50px; margin-bottom: 10px;">
+                    <h4 style="color: #e74c3c;">Kalender</h4>
+                    <p style="font-size: 14px; color: #34495e;">
+                        Der Kalender kann individuell angepasst werden, um Ihre spezifischen Anforderungen zu erfüllen.
+                    </p>
+                    
+                    <ul class="welcome-list-item" >
+                        <li class="noto" style="display: flex; align-items: center;">📅 Bundesland wählen</li>
+                        <li class="noto" style="display: flex; align-items: center;">⏱️ Öffnungszeiten festlegen</li>
+                        <li class="noto" style="display: flex; align-items: center;">🏖️ Betriebsferien eingeben</li>
+                        <li class="noto" style="display: flex; align-items: center;">👨‍💻 Schichten festlegen</li>
+                        <li class="noto" style="display: flex; align-items: center;">📆 Brücken- und besondere Tage verwalten</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        </div>  
+      </div>
+    </div>
+
+    <div id="feedback-console">
+      Ready for action... 
+    </div>
+    <!-- <script src="./js/renderer.js"></script> -->  
+    <script type="module" src="./js/links.js"> </script>
+    <script defer>
+      function updateFeedback(message) {
+        const feedbackConsole = document.getElementById('feedback-console');
+        feedbackConsole.innerHTML = message;
+        feedbackConsole.style.display = 'block';
+      }
+      updateFeedback("System is ready...");
+    </script>
+  </body>
+</html>

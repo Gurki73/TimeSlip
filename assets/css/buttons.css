@@ -1,0 +1,107 @@
+/* General Button Styles */
+.mybutton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--btn-padding);
+  margin: var(--btn-margin);
+  font-size: var(--btn-font-size);
+  border-radius: var(--btn-border-radius);
+  border: 1px solid var(--btn-border-color);
+  background-color: var(--button-inactive-color);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.mybutton:hover {
+  background-color: var(--button-hover-color);;
+}
+
+.mybutton svg {
+  background-color: transparent;
+  border-radius: 50%;
+  border-style: dotted;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  margin-right: 8px;
+}
+.transparentButton {
+  max-height: fit-content;
+  padding: 2px;
+  margin: 1px;
+  background-color:transparent;
+  border-color: ghostwhite;
+  
+}
+.mybutton-small {
+  max-height: fit-content;
+  padding: 2px;
+  margin: 1px;
+  background-color: var(--button-inactive-color);
+  border-color: transparent;
+}
+.mybutton-small:hover {
+  background-color: var(--button-hover-color);
+}
+
+/* Specific Button Styles */
+.next {
+  background-image: url('assets/svg/next-svgrepo-com.svg');
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+}
+
+.previous {
+  background-image: url('assets/svg/previous-svgrepo-com.svg');
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center left;
+}
+
+.person {
+  background-image: var(--icon-person);
+  background-repeat: no-repeat;
+  background-position: center left;
+}
+
+.role {
+  background-image: var(--icon-role);
+  background-repeat: no-repeat;
+  background-position: center left;
+}
+
+.rule {
+  background-image: var(--icon-rule);
+  background-repeat: no-repeat;
+  background-position: center left;
+}
+
+.edit {
+  background-image: var(--icon-edit);
+  background-repeat: no-repeat;
+  background-position: center left;
+}
+
+.delete {
+  background-image: var(--icon-delete);
+  background-repeat: no-repeat;
+  background-position: center left;
+}
+
+.create {
+  background-image: var(--icon-create);
+  background-repeat: no-repeat;
+  background-position: center left;
+}
+
+.safe {
+  background-image: var(--icon-safe);
+  background-repeat: no-repeat;
+  background-position: center left;
+}
+
+.inputName {
+  max-height: fit-content;
+  cursor:text;
+}

@@ -1,0 +1,116 @@
+
+#legend {
+  overflow:hidden;
+}
+.legend-container {
+  width: 100%; /* Occupy the full width of the parent container */
+  height: 100%; /* Occupy the full height of the parent container */
+  min-height: 200px; /* Ensure a minimum height for the container */
+  display: flex;
+  flex-direction: column; /* Stack sections vertically */
+  overflow: hidden;
+  box-sizing: border-box; /* Include padding and borders in dimensions */
+  gap: 10px; /* Space between sections */
+  
+}
+
+.collapsible {
+  background-color: var(--button-inactive-color);
+  color: darkgrey;
+  cursor: pointer;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: hidden;  
+  gap: 12px;
+  padding: 10px;
+  max-height: 35px;
+  width: 100%;
+  text-align: left;
+  border: double;
+  border-color: silver;
+  outline: none;
+  font-size: 18px;
+  margin-bottom: 5px;
+  margin-left: 0px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  white-space: nowrap; 
+  text-overflow: ellipsis; 
+}
+
+.collapsible-emoji {
+  display: inline-flex;
+  align-items: center;
+  font-family: 'NotoEmoji', sans-serif;
+  font-size: 18px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;         
+  flex-shrink: 1;          
+}
+
+.collapsible-icon {
+  background-image: url('../../assets/svg/next-svgrepo-com.svg');
+  background-repeat: no-repeat;
+  background-size: contain;
+  width: 16px;
+  height: 16px;
+  margin-left: -5px;
+  flex-shrink: 0;  
+}
+
+.collapsible.active .collapsible-icon {
+  transform: rotate(90deg); 
+}
+
+.collapsible.active {
+  background-color: var(--button-active-color);
+}
+
+.collapsible-content {
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: calc(100% - 40px); /* Adjust for button height and padding */
+  padding: 5px 0;
+}
+
+.legend-list {
+  background-color: silver;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.legend-item {
+  font-family: 'NotoEmoji', sans-serif;
+  font-weight: 18px;
+  display: flex;
+  color: ghostwhite;
+  align-items: center;
+  padding: 5px;
+  border-radius: 4px;
+  margin-bottom: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.legend-section {
+  flex: 1 1 auto; /* Allow sections to grow and shrink */
+  display: flex;
+  flex-direction: column; /* Stack button and content */
+  min-height: 100px; /* Minimum height for sections */
+  
+}
+
+@media (max-width: 600px) {
+  .legend-name {
+    display: none; /* Hide names on small screens, keep only icons */
+  }
+}
