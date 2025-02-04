@@ -9,7 +9,7 @@ let currentMonthIndex;
 let currentYear;
 let weeks;
 let isInOffice;
-let state;
+let currentState;
 
 export async function initializeCalendar(api) {
   if (!api) {
@@ -22,13 +22,12 @@ export async function initializeCalendar(api) {
     loadEmployeeData(),
     loadCalendarData()
   ])
-    .then(() => {
-      state = loadStateData();
-    })
+    .then(() => { })
     .catch((error) => {
       console.error('Error loading calendardata:', error);
     });
 
+  currentState = await loadStateData();
   const navigator = document.getElementById('calendar-navigation2');
   if (!navigator) {
     console.warn("Calendar navigator not found in the top right corner.");
@@ -73,6 +72,7 @@ function generateCalendar(month, year) {
   let currentWeek = [];
   let weekNumber = getWeekNumber(firstDay);
   let isInOffice = true;
+  let currentState;
 
   for (let i = 0; i < firstDayOfWeek; i++) {
     currentWeek.push('');
@@ -127,18 +127,17 @@ async function createCalendarNavigation() {
   const prevYearButton = document.getElementById('prev-year');
   const nextYearButton = document.getElementById('next-year');
 
-  let currentMonthIndex = new Date().getMonth();
-  let currentYear = new Date().getFullYear();
+  currentMonthIndex = new Date().getMonth();
+  currentYear = new Date().getFullYear();
 
   const monthNames = [
     'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'December'
   ];
 
-  if (!state) {
-    state = await loadStateData();
-    if (stateImage) {
-      updateStateFlag(state, stateImage);
-    }
+
+  currentState = await loadStateData();;
+  if (stateImage) {
+    updateStateFlag(currentState, stateImage);
   }
 
   monthLabel.textContent = monthNames[currentMonthIndex];
@@ -211,10 +210,10 @@ async function renderCalendarMonth(weeks) {
   let monthRequests = [];
 
   try {
-    const formattedMonth = String(currentMonthIndex).padStart(2, '0');
+    const formattedMonth = String(currentMonthIndex + 1).padStart(2, '0');
     monthRequests = await loadRequests(currentYear, formattedMonth);
   } catch (error) {
-    console.error("Error loading month requests:", error);
+    console.error("Error loading month requests:");
   }
 
 
@@ -237,7 +236,7 @@ function renderCalendarHeader() {
     headerCell.textContent = day;
     headerCell.className = day === 'KW' ? 'kw-column' : 'day-column';
 
-    if (officeDays[index - 1] === 'niemals' || day === 'KW') {
+    if (officeDays[index - 1] === 'never' || day === 'KW') {
       headerCell.classList.add('shrink');
       columnWidths.push('35px');
     } else {
@@ -254,37 +253,41 @@ function renderCalendarHeader() {
 function renderDayCell(day, index, officeDayStatus, monthRequests) {
 
   const fullDate = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  const holidayDetails = getHolidayDetails(fullDate, state);
+  const holidayDetails = getHolidayDetails(fullDate, currentState);
   const companyClosed = getCompanyHoliday(fullDate);
   const dayCell = document.createElement('div');
   dayCell.className = 'day-column';
 
   if (!day) {
     dayCell.classList.add('empty');
-    if (officeDayStatus === 'niemals') {
+    if (officeDayStatus === 'never') {
       dayCell.classList.add('shrink');
       dayCell.style.background = 'transparent';
     }
-    return { dayCell, isValid: false };
+    return { cell: dayCell, render: false };
   }
+  const dayCellHeaderObject = createDayCellHeader(day, dayCell, holidayDetails, companyClosed);
 
+  dayCell.appendChild(dayCellHeaderObject.hRow);
 
-  dayCell.appendChild(createDayCellHeader(day, holidayDetails, companyClosed));
+  if (!dayCellHeaderObject.isValid) return { cell: dayCell, render: false };
 
   let renderEmployees = true;
 
-  if (officeDayStatus === 'niemals') {
+  if (officeDayStatus === 'never') {
     dayCell.classList.add('shrink');
     renderEmployees = false;
   }
 
   if (index === 6) dayCell.classList.add('sunday');
-  if (officeDayStatus === 'vormittags') dayCell.classList.add('morning-shift');
-  if (officeDayStatus === 'nachmittags') dayCell.classList.add('afternoon-shift');
+  if (officeDayStatus === 'morning') dayCell.classList.add('morning-shift');
+  if (officeDayStatus === 'aftenoon') dayCell.classList.add('afternoon-shift');
 
-  const shifts = createShifts(day, index, monthRequests);
-  dayCell.appendChild(shifts);
-  return { dayCell };
+  if (renderEmployees) {
+    const shifts = createShifts(day, index, monthRequests);
+    dayCell.appendChild(shifts);
+  }
+  return { cell: dayCell, render: true };
 }
 
 function createShifts(day, index, monthRequests) {
@@ -294,7 +297,7 @@ function createShifts(day, index, monthRequests) {
   shifts.appendChild(moringShift);
   const dayShift = createDayShift(day, index, monthRequests);
   shifts.appendChild(dayShift);
-  const afternoonShift = createAfternoonShift(day, index.monthRequests);
+  const afternoonShift = createAfternoonShift(day, index, monthRequests);
   shifts.appendChild(afternoonShift);
 
   return shifts;
@@ -304,9 +307,11 @@ function createMorningShift(day, index, monthRequests) {
   const morningShift = document.createElement('span');
   morningShift.classList.add('shift', 'noto');
   morningShift.title = 'vormittags';
+
+
   if (officeDays[index] === 'afternoon') {
     morningShift.innerHTML = "🔒";
-    morningShift.title = "geschloßen";
+    morningShift.title = "vormittags geschlossen";
     morningShift.style.background = "lightpink";
     return morningShift;
   }
@@ -320,14 +325,15 @@ function createAfternoonShift(day, index, monthRequests) {
   const afternoonShift = document.createElement('span');
   afternoonShift.classList.add('shift', 'noto');
   afternoonShift.title = "nachmittags";
+
   if (officeDays[index] === 'morning') {
     afternoonShift.innerHTML = "🔒";
-    afternoonShift.title = "geschloßen";
+    afternoonShift.title = "nachmittags geschlossen";
     afternoonShift.style.background = "lightpink";
     return afternoonShift;
   }
-  afternoonShift.innerHTML = '.';
   afternoonShift.classList.add('afternoon-shift');
+  afternoonShift.innerHTML = '.';
   populateShift('afternoon', afternoonShift, day, index, monthRequests);
   return afternoonShift;
 }
@@ -340,7 +346,7 @@ function createDayShift(day, index, monthRequests) {
   if (officeDays[index] === 'morning' || officeDays[index] === 'afternoon') {
     dayShift.style.background = "lightpink";
     dayShift.innerHTML = "🔒";
-    dayShift.title = "geschloßen"
+    dayShift.title = "halbtags geschlossen"
     return dayShift;
   }
   dayShift.classList.add('day-shift');
@@ -365,7 +371,8 @@ function checkEmployeeRequested(employee, monthRequests, day) {
         return {
           overlap: true,
           vacationType: req.vacationType,
-          shift: req.shift
+          shift: req.shift,
+          status: req.status
         };
       }
     }
@@ -377,8 +384,10 @@ function checkEmployeeRequested(employee, monthRequests, day) {
 function populateShift(type, shift, day, index, monthRequests) {
   employees.forEach(employee => {
 
+    if (employee.workDays[index] === 'never') return;
+
     const checkResult = checkEmployeeRequested(employee, monthRequests, day)
-    if (checkResult.overlap !== isInOffice) {
+    if (checkResult.overlap !== isInOffice || checkResult.status === 'pending') {
       if (employee.workDays[index] === type ||
         (employee.workDays[index] === 'full' && officeDays[index] !== 'full')
       ) {
@@ -387,6 +396,15 @@ function populateShift(type, shift, day, index, monthRequests) {
         emoji.innerHTML = employee.personalEmoji;
         emoji.classList.add('noto', 'calendar-emoji');
 
+        if (checkResult.status === 'pending') {
+          emoji.innerHTML += "⌛";
+          emoji.title = `${employee.name}´s Antrag steht aus`;
+        }
+
+        if (Number(employee.birthday) === day && Number(employee.birthMonth) === currentMonthIndex) {
+          emoji.innerHTML += "🎂";
+          emoji.title = `${employee.name}´s Geburtstag`;
+        }
         const roleColor = getComputedStyle(document.documentElement)
           .getPropertyValue(`--role-${employee.mainRoleIndex}-color`)
           .trim();
@@ -399,7 +417,7 @@ function populateShift(type, shift, day, index, monthRequests) {
 }
 
 
-function createDayCellHeader(day, holidayDetails, companyClosed) {
+function createDayCellHeader(day, dayCell, holidayDetails, companyClosed) {
 
   const dayCellHeader = document.createElement('div');
   dayCellHeader.classList.add('day-class-header');
@@ -417,24 +435,27 @@ function createDayCellHeader(day, holidayDetails, companyClosed) {
 
   const specialDay = document.createElement('div');
   specialDay.className = 'special-day noto';
+  let renderEmployees = true;
 
-  if (holidayDetails) {
+  // console.log(holidayDetails);
+
+  if (holidayDetails.isValid) {
     specialDay.textContent = holidayDetails.emoji;
     specialDay.title = holidayDetails.name;
     dayCell.classList.add('holiday');
     dayCell.style.backgroundColor = 'tomato';
     renderEmployees = false;
-  } else {
-    if (companyClosed) {
-      specialDay.textContent = '🔒';
-      specialDay.title = 'Betriebsferien';
-      dayCell.classList.add('closed-office');
-      dayCell.style.backgroundColor = '#F08080';
-      renderEmployees = false;
-    }
+  } else if (companyClosed) {
+    specialDay.textContent = '🔒';
+    specialDay.title = 'Betriebsferien';
+    dayCell.classList.add('closed-office');
+    dayCell.style.backgroundColor = '#F08080';
+    renderEmployees = false;
   }
+
   dayCellHeader.appendChild(specialDay);
-  return dayCellHeader;
+
+  return { isValid: renderEmployees, hRow: dayCellHeader };
 }
 
 function renderWeekRow(week, monthRequests) {
@@ -448,9 +469,9 @@ function renderWeekRow(week, monthRequests) {
 
   week.days.forEach((day, index) => {
     const officeDayStatus = officeDays[index];
-    const { dayCell, renderEmployees } = renderDayCell(day, index, officeDayStatus, monthRequests);
+    const dayCellObj = renderDayCell(day, index, officeDayStatus, monthRequests);
 
-    weekRow.appendChild(dayCell);
+    weekRow.appendChild(dayCellObj.cell);
   });
 
   return weekRow;
@@ -471,12 +492,13 @@ function getCompanyHoliday(date) {
 }
 
 function getSchoolHoliday(date) {
+  const schoolHoliday = [];
   for (const holiday of schoolHoliday) {
     const holidayStart = new Date(holiday.startDate);
     const holidayEnd = new Date(holiday.endDate);
     const targetDate = new Date(date);
 
-    const isHolidayInState = holiday.bundesländer.includes(state) || holiday.bundesländer.includes('All States');
+    const isHolidayInState = holiday.bundesländer.includes(currentState) || holiday.bundesländer.includes('All States');
     if (targetDate >= holidayStart && targetDate <= holidayEnd && isHolidayInState) {
       return {
         emoji: holiday.emoji,

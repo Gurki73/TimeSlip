@@ -3,13 +3,11 @@ async function loadRequests(year, month) {
     try {
         const response = await fetch(`data/requests/${year}_${month}_requests.csv`);
         if (!response.ok) {
-            // console.warn(`🚨 File not found: ${year}-${month}, returning empty array.`);
             return [];
         }
         const data = await response.text();
         return parseRequestsCSV(data);
     } catch (error) {
-        // console.warn(`Error loading requests for ${year}-${month}:`);
         return [];
     }
 }

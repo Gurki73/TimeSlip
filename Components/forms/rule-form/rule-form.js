@@ -15,8 +15,8 @@ let api;
 export async function initializeRuleForm(passedApi) {
 
     api = passedApi;
-    if(!api) console.error(" Api was not passed ==> " + api);
-    
+    if (!api) console.error(" Api was not passed ==> " + api);
+
     try {
         const roles = await rolesPromise;
         ruleRoles = roles;
@@ -37,9 +37,9 @@ export async function initializeRuleForm(passedApi) {
     try {
         const response = await fetch('Components/forms/rule-form/rule-form.html');
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-        
+
         const formContent = await response.text();
-        formContainer.innerHTML = formContent; 
+        formContainer.innerHTML = formContent;
 
     } catch (err) {
         console.error(`Loading rule form failed: ${err}`);
@@ -63,7 +63,7 @@ function getOptionByID(id) {
         return null;
     }
     const element = document.getElementById(id);
-    return element || null; 
+    return element || null;
 }
 
 function validateInput(id) {
@@ -142,7 +142,7 @@ function createDependency(id) {
 
     const input2 = document.createElement('input');
     input2.type = 'number';
-    input2.classList.add('noto','rule-number-input')
+    input2.classList.add('noto', 'rule-number-input')
     input2.value = 2;
     input2.id = id + '-2';
 
@@ -150,7 +150,7 @@ function createDependency(id) {
 
     const dependencyRoleSelection = document.createElement('select');
     dependencyRoleSelection.classList.add('role-select', 'noto');
-    dependencyRoleSelection.id = id + '-2'; 
+    dependencyRoleSelection.id = id + '-2';
     ruleRoles.forEach((role, index) => {
         if (['❓', 'keine', '?', 'name'].includes(role.name)) return;
 
@@ -162,7 +162,7 @@ function createDependency(id) {
         dependencyRoleOption.innerHTML = `${role.emoji} ⇨ ${role.name}`;
         dependencyRoleOption.title = role.name;
         dependencyRoleOption.value = index;
-        
+
         dependencyRoleSelection.appendChild(dependencyRoleOption); // Missing appendChild fixed.
     });
 
@@ -174,7 +174,7 @@ function createDependency(id) {
             break;
         case "d1": // abwesend
             label.innerHTML = 'abwesend';
-            dependencyElement.append(label); 
+            dependencyElement.append(label);
             updateHumanRule(id, 'abwesend');
             break;
         case "d2": // braucht
@@ -209,8 +209,8 @@ function createDependency(id) {
 function createTimeFrame(id) {
     console.log('time frame:' + id);
 
-    const timeFrameElement = document.createElement('div'); 
-    
+    const timeFrameElement = document.createElement('div');
+
     switch (id.toLowerCase()) {
         case 't':
             timeFrameElement.innerHTML = '...';
@@ -220,15 +220,15 @@ function createTimeFrame(id) {
 
             const shiftSelection = document.createElement('select');
             shiftSelection.classList.add('role-select', 'noto');
-        
+
             exsitingShifts.forEach(shift => {
                 const shiftOption = document.createElement('option');
-        
+
                 let emoji = '🥗';
                 let name = 'ganztags';
                 let val = 'full';
                 let index = 1;
-        
+
                 if (shift === 'morning') {
                     emoji = '☕';
                     name = 'vormittags';
@@ -241,24 +241,24 @@ function createTimeFrame(id) {
                     val = 'afternoon';
                     index = 3;
                 }
-        
+
                 shiftOption.innerHTML = `${emoji} ⇨ ${name}`;
                 shiftOption.title = name;
                 shiftOption.value = val;
                 shiftOption.id = id + '-' + index;
                 shiftSelection.appendChild(shiftOption);
             });
-        
+
             timeFrameElement.appendChild(shiftSelection);
             break;
         case 't1': {
 
             const ruleWorkdays = [];
             const ruleWorkdayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-        
+
             ruleOfficeDays.forEach((item, index) => {
                 if (item === 'never') return;
-        
+
                 let name = ruleWorkdayNames[index];
                 if (item === 'morning') {
                     name += '(früh)';
@@ -267,7 +267,7 @@ function createTimeFrame(id) {
                 }
                 ruleWorkdays.push(name);
             });
-        
+
             const checkboxesContainer = document.createElement('div');
             checkboxesContainer.style = `
                 display: flex; 
@@ -275,7 +275,7 @@ function createTimeFrame(id) {
                 gap: 10px; 
                 width: 100%; 
             `;
-        
+
             ruleWorkdays.forEach((workday, index) => {
                 const workdayCheck = document.createElement('div');
                 workdayCheck.style = `
@@ -286,24 +286,24 @@ function createTimeFrame(id) {
                     border: 1px solid #ccc; 
                     border-radius: 6px;
                 `;
-        
+
                 const workdayCheckbox = document.createElement('input');
                 workdayCheckbox.type = 'checkbox';
                 workdayCheckbox.id = id + '-' + ruleWorkdayNames[index];
                 workdayCheck.appendChild(workdayCheckbox);
-        
+
                 const workdayLabel = document.createElement('label');
                 workdayLabel.htmlFor = `workday-${index}`;
                 workdayLabel.style = "margin-left: 5px;";
                 workdayLabel.textContent = workday;
                 workdayCheck.appendChild(workdayLabel);
-        
+
                 checkboxesContainer.appendChild(workdayCheck);
             });
-        
+
             timeFrameElement.appendChild(checkboxesContainer);
             break;
-        }            
+        }
         case 't2':
             timeFrameElement.innerHTML = 'Woche';
             updateHumanRule(id, 'Woche');
@@ -320,31 +320,31 @@ function createTimeFrame(id) {
                 '⛄🌱🌺☀️🎃 Schulferien',
                 '💉🧸💸 verhindert'
             ];
-        
+
             outOfOfficeReasons.forEach((reason, index) => {
                 const reasonRow = document.createElement('div');
                 reasonRow.style = 'display: flex;'; // Corrected style
-        
+
                 const label = document.createElement('label');
                 label.style = "max-height:1.5rem;";
                 label.textContent = reason;
                 label.classList.add('reason-label', 'noto');
-        
+
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.classList.add('reason-checkbox');
                 checkbox.id = id + '-' + index;
-        
+
                 reasonRow.appendChild(checkbox);
                 reasonRow.appendChild(label);
-        
+
                 outOfOfficeElemnt.appendChild(reasonRow);
             });
-        
+
             timeFrameElement.appendChild(outOfOfficeElemnt);
             break;
-            
-            
+
+
         default:
             console.error(" time frame identifyer " + id + " not identified");
             return;
@@ -355,14 +355,14 @@ function createTimeFrame(id) {
     } else {
         timeCell = document.getElementById('time-cell');
     }
- 
+
     timeCell.innerHTML = '';
     timeCell.appendChild(timeFrameElement);
     updateEventListener();
 }
 
 function toggleHTMLOption(id, isVisible) {
-    
+
     const selectorMap = {
         w: 'request-type-select-repeats',    // repeat
         t: 'request-type-select-time',       // timeframe
@@ -451,7 +451,7 @@ function createRoles(id) {
         singleRoleSelection.id = id + '-1';
         ruleRoles.forEach((role, index) => {
             if (['❓', 'keine', '?', 'name'].includes(role.name)) return;
-    
+
             const singleRoleOption = document.createElement('option');
             const roleColor = getComputedStyle(document.documentElement).getPropertyValue(
                 `--role-${role.colorIndex}-color`
@@ -460,10 +460,10 @@ function createRoles(id) {
             singleRoleOption.innerHTML = `${role.emoji} ⇨ ${role.name}`;
             singleRoleOption.title = role.name;
             singleRoleOption.value = index;
-    
+
             singleRoleSelection.appendChild(singleRoleOption);
         });
-    
+
         if (ruleRoles.length > 0) {
             const firstRole = ruleRoles.find((role) => !['❓', 'keine', '?', 'name'].includes(role.name));
             if (firstRole) {
@@ -473,15 +473,15 @@ function createRoles(id) {
                 singleRoleSelection.style.backgroundColor = initialColor;
             }
         }
-    
+
         singleRoleSelection.addEventListener('change', (event) => {
             const selectedOption = singleRoleSelection.options[singleRoleSelection.selectedIndex];
             singleRoleSelection.style.backgroundColor = selectedOption.style.backgroundColor;
         });
-    
+
         roleElement.appendChild(singleRoleSelection);
     }
-    
+
 
     let roleCell;
     if (id[0] === id[0].toLowerCase()) {
@@ -508,7 +508,7 @@ function createException(id) {
         E6: 'aber nicht weniger',
     };
 
-    if (id !== 'E0' ) {
+    if (id !== 'E0') {
         updateHumanRule(id, exceptionTexts[id]);
     }
     const exceptionElement = document.createElement('div');
@@ -518,7 +518,7 @@ function createException(id) {
     toggleExceptionTable(id !== 'E0');
     const exceptionCell = document.getElementById('exception-cell');
     exceptionCell.innerHTML = '';
-    exceptionCell.appendChild(exceptionElement); 
+    exceptionCell.appendChild(exceptionElement);
     updateEventListener();
 }
 
@@ -534,13 +534,13 @@ function createNumberInput(id) {
     input1.type = 'number';
     input1.classList.add('rule-number-input');
     input1.value = 1;
-    input1.id = id + '-1'; 
+    input1.id = id + '-1';
 
     const input2 = document.createElement('input');
     input2.type = 'number';
     input2.classList.add('rule-number-input');
     input2.value = 1;
-    input2.id = id + '-2'; 
+    input2.id = id + '-2';
 
     switch (id.toLowerCase()) {
         case 'w':
@@ -571,42 +571,42 @@ function createNumberInput(id) {
             updateHumanRule(id, 'alle');
             break;
 
-        case ("a1") : // about 🧩
-            numLabel.innerHTML = 'ungefähr: ';         
+        case ("a1"): // about 🧩
+            numLabel.innerHTML = 'ungefähr: ';
             container.append(numLabel, input1);
             break;
 
-        case ("a2") : // no 🧩  
+        case ("a2"): // no 🧩  
             numLabel.innerHTML = 'keine(r) ';
             container.append(numLabel);
             updateHumanRule(id, 'keine');
             break;
 
-        case ("a3") : // between 🧩 
-            numLabel.innerHTML = 'zwischen: '; 
+        case ("a3"): // between 🧩 
+            numLabel.innerHTML = 'zwischen: ';
             const andLabel = document.createElement('span');
             andLabel.innerHTML = ' und ';
             input2.value = 3;
-            container.append(numLabel, input1, andLabel,  input2);
+            container.append(numLabel, input1, andLabel, input2);
             break;
 
-        case ("a4") : // max 🧩 
+        case ("a4"): // max 🧩 
             numLabel.innerHTML = 'maximal: ';
             container.append(numLabel, input1);
             break;
 
-        case ("a5") : // min 🧩 
+        case ("a5"): // min 🧩 
             numLabel.innerHTML = 'minimal: ';
             container.append(numLabel, input1);
             break;
 
-        case ("a6") : // percent 🧩
+        case ("a6"): // percent 🧩
             numerType = 'ratio';
             numLabel.innerHTML = 'prozent von 🧩';
             container.append(numLabel, input1);
             break;
 
-        case ("a8") : // exact 🧩
+        case ("a8"): // exact 🧩
             numLabel.innerHTML = 'genau: ';
             container.append(numLabel, input1);
             break;
@@ -616,10 +616,10 @@ function createNumberInput(id) {
     }
 
     const firstChar = id[0];
-    console.log( ' first character from ' + id + " ==> " + firstChar );
+    console.log(' first character from ' + id + " ==> " + firstChar);
     let numberCell;
 
-    switch (firstChar){
+    switch (firstChar) {
         case 'A':
             numberCell = document.getElementById('amount-cell');
             break;
@@ -651,7 +651,7 @@ function toggleExceptionTable(isActive) {
 }
 
 function validateRules(identifier) {
-    
+
     const relationToCheck = ruleRelations.find(rel => rel.id === identifier);
 
     if (relationToCheck) {
@@ -677,53 +677,53 @@ function validateRules(identifier) {
 
 function updateEventListener() {
     const container = document.getElementById('rule-form-container');
-  
+
     if (!container) {
-      console.error("Error: 'rule-form-container' element not found.");
-      return;
+        console.error("Error: 'rule-form-container' element not found.");
+        return;
     }
-  
+
     container.removeEventListener('change', handleContainerChange);
     container.addEventListener('change', handleContainerChange);
-  }
-  
-  function handleContainerChange(event) {
+}
+
+function handleContainerChange(event) {
     const firstTableSelector = '#firstTableSecondSteps input, #firstTableSecondSteps select';
     const secondTableSelector = '#secondTableSecondSteps input, #secondTableSecondSteps select';
-  
+
     const validTarget = event.target.matches(`${firstTableSelector}, ${secondTableSelector}`);
     if (!validTarget) return;
-  
+
     const element = event.target;
     const logMessage = `Element ${element.id} updated: `;
-  
+
     let parentID = element.id.slice(0, 2);
     let humanText;
 
     switch (true) {
-      case (element.type === 'checkbox'):
-        console.log(`${logMessage}Checkbox changed to ${element.checked}`);
-        humanText = element.label;
-        break;
-  
-      case (element.tagName === 'SELECT'):
-        const selectedOption = element.options[element.selectedIndex];
-        if (!selectedOption) return;
-        console.log(`${logMessage}Dropdown changed: ${selectedOption.value} - ${selectedOption.title}`);
-        humanText = selectedOption.value;
-        break;
-  
-      case (element.type === 'number'):
-        console.log(`${logMessage}Number input changed to ${element.value}`);
-        humanText = element.value.toString();
-        break;
-  
-      default:
-        console.log(`${logMessage}Unhandled element type`);
+        case (element.type === 'checkbox'):
+            console.log(`${logMessage}Checkbox changed to ${element.checked}`);
+            humanText = element.label;
+            break;
+
+        case (element.tagName === 'SELECT'):
+            const selectedOption = element.options[element.selectedIndex];
+            if (!selectedOption) return;
+            console.log(`${logMessage}Dropdown changed: ${selectedOption.value} - ${selectedOption.title}`);
+            humanText = selectedOption.value;
+            break;
+
+        case (element.type === 'number'):
+            console.log(`${logMessage}Number input changed to ${element.value}`);
+            humanText = element.value.toString();
+            break;
+
+        default:
+            console.log(`${logMessage}Unhandled element type`);
     }
-    
+
     validateInput(parentID);
     // updateMachineRule(parentID); 
     updateHumanRule(parentID, humanText);
     // updateWizzard(parentID);
-  }
+}

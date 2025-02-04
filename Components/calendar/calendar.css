@@ -133,8 +133,11 @@
   flex-grow: 0;
 }
 
-/* Special Days */
 .day-column.sunday.shrink {
+  background-color: tomato;
+}
+
+.sunday {
   background-color: tomato;
 }
 
