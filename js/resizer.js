@@ -1,18 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const divider = document.getElementById('horizontal-divider');
+  const topPanel = document.querySelector('#right-panel .top-row');
+  const bottomPanel = document.querySelector('#right-panel .bottom-row');
+  const rightPanel = document.getElementById('right-panel');
   const leftPanel = document.getElementById('left-panel');
   const resizeButton = document.getElementById('resize-toggle');
 
   resizeButton.addEventListener('click', () => {
     const isExpanded = leftPanel.classList.toggle('expanded');
-    resizeButton.classList.toggle('expanded', isExpanded);  
+    resizeButton.classList.toggle('expanded', isExpanded);
   });
-});
 
-document.addEventListener('DOMContentLoaded', () => {
-  const divider = document.getElementById('horizontal-divider');
-  const topPanel = document.querySelector('#right-panel .top-row');
-  const bottomPanel = document.querySelector('#right-panel .bottom-row');
-  const rightPanel = document.getElementById('right-panel');
+
+
   let isDragging = false;
 
   divider.addEventListener('mousedown', (e) => {
@@ -27,8 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const panelRect = rightPanel.getBoundingClientRect();
     const offsetY = e.clientY - panelRect.top;
 
-    const minHeight = 100; 
-    const maxHeight = panelRect.height - minHeight;
+    const minHeight = 100;
+    const maxHeight = panelRect.height * 0.8; // Allow up to 80%
 
     if (offsetY > minHeight && offsetY < maxHeight) {
       topPanel.style.height = `${offsetY}px`;
@@ -40,5 +40,4 @@ document.addEventListener('DOMContentLoaded', () => {
     isDragging = false;
     document.body.style.cursor = 'default';
   });
-});
-
+})

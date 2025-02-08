@@ -93,9 +93,6 @@ function validateInput(id) {
     console.log(warnings);
 }
 
-
-
-
 function initializeInputFunctions() {
 
     const mainRepeatSelect = document.getElementById('request-type-select-repeats');
@@ -193,17 +190,6 @@ function createDependency(id) {
             console.error("no match for dependency rule " + id);
             return; // Ensure early exit on unmatched cases.
     }
-
-    let dependencyCell;
-    if (id[0] === id[0].toLowerCase()) {
-        dependencyCell = document.getElementById('ex-dependency-cell');
-    } else {
-        dependencyCell = document.getElementById('dependency-cell');
-    }
-
-    dependencyCell.innerHTML = '';
-    dependencyCell.appendChild(dependencyElement);
-    updateEventListener();
 }
 
 function createTimeFrame(id) {
@@ -212,16 +198,16 @@ function createTimeFrame(id) {
     const timeFrameElement = document.createElement('div');
 
     switch (id.toLowerCase()) {
-        case 't':
+        case 't0':
             timeFrameElement.innerHTML = '...';
             break;
-        case 't0': // shift
-            const exsitingShifts = ['full', 'morning', 'afternoon'];
+        case 't1': { // shift
+            const existingShifts = ['full', 'morning', 'afternoon'];
 
             const shiftSelection = document.createElement('select');
             shiftSelection.classList.add('role-select', 'noto');
 
-            exsitingShifts.forEach(shift => {
+            existingShifts.forEach(shift => {
                 const shiftOption = document.createElement('option');
 
                 let emoji = '🥗';
@@ -245,14 +231,23 @@ function createTimeFrame(id) {
                 shiftOption.innerHTML = `${emoji} ⇨ ${name}`;
                 shiftOption.title = name;
                 shiftOption.value = val;
+                shiftOption.dataset.name = name; // Store name without emoji
                 shiftOption.id = id + '-' + index;
                 shiftSelection.appendChild(shiftOption);
             });
 
+            // Attach event listener to updateHumanRole on change
+            shiftSelection.addEventListener('change', function () {
+                const selectedOption = shiftSelection.options[shiftSelection.selectedIndex];
+                const shiftName = selectedOption.dataset.name; // Get name without emoji
+                updateHumanRule(id, shiftName);
+            });
+
             timeFrameElement.appendChild(shiftSelection);
             break;
-        case 't1': {
+        }
 
+        case 't2':
             const ruleWorkdays = [];
             const ruleWorkdayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
@@ -265,55 +260,67 @@ function createTimeFrame(id) {
                 } else if (item === 'afternoon') {
                     name += '(spät)';
                 }
-                ruleWorkdays.push(name);
+                ruleWorkdays.push({ name, id: ruleWorkdayNames[index] });
             });
 
             const checkboxesContainer = document.createElement('div');
             checkboxesContainer.style = `
-                display: flex; 
-                flex-wrap: wrap; 
-                gap: 10px; 
-                width: 100%; 
-            `;
+                    display: flex; 
+                    flex-wrap: wrap; 
+                    gap: 10px; 
+                    width: 100%; 
+                `;
 
             ruleWorkdays.forEach((workday, index) => {
                 const workdayCheck = document.createElement('div');
                 workdayCheck.style = `
-                    display: flex; 
-                    align-items: center; 
-                    width: 25%; /* 5 items per row, adjust width as needed */ 
-                    padding: 2px; 
-                    border: 1px solid #ccc; 
-                    border-radius: 6px;
-                `;
+                        display: flex; 
+                        align-items: center; 
+                        width: 25%; 
+                        padding: 2px; 
+                        border: 1px solid #ccc; 
+                        border-radius: 6px;
+                    `;
 
                 const workdayCheckbox = document.createElement('input');
                 workdayCheckbox.type = 'checkbox';
-                workdayCheckbox.id = id + '-' + ruleWorkdayNames[index];
-                workdayCheck.appendChild(workdayCheckbox);
+                workdayCheckbox.id = `workday-${workday.id}`;
+                workdayCheckbox.dataset.day = workday.name; // Store name in data attribute
 
                 const workdayLabel = document.createElement('label');
-                workdayLabel.htmlFor = `workday-${index}`;
+                workdayLabel.htmlFor = workdayCheckbox.id;
                 workdayLabel.style = "margin-left: 5px;";
-                workdayLabel.textContent = workday;
-                workdayCheck.appendChild(workdayLabel);
+                workdayLabel.textContent = workday.name;
 
+                workdayCheck.appendChild(workdayCheckbox);
+                workdayCheck.appendChild(workdayLabel);
                 checkboxesContainer.appendChild(workdayCheck);
+
+                workdayCheckbox.addEventListener('change', updateSelectedDays);
             });
 
             timeFrameElement.appendChild(checkboxesContainer);
+
+            function updateSelectedDays() {
+                const selectedDays = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+                    .map(checkbox => checkbox.dataset.day) // Get the day name from data attribute
+                    .join('\ ');
+
+                console.log("Selected days:", selectedDays); // Log or update the UI
+                updateHumanRule(id, selectedDays);
+            }
+
             break;
-        }
-        case 't2':
+        case 't3':
             timeFrameElement.innerHTML = 'Woche';
             updateHumanRule(id, 'Woche');
             break;
-        case 't3':
+        case 't4':
             timeFrameElement.innerHTML = 'Monat';
             updateHumanRule(id, 'Monat');
             break;
-        case 't4':
-            const outOfOfficeElemnt = document.createElement('div');
+        case 't5': {
+            const outOfOfficeElement = document.createElement('div');
             const outOfOfficeReasons = [
                 '🚕🏠📐 dienstlich',
                 '🏖️⚖️🎁 frei',
@@ -321,28 +328,51 @@ function createTimeFrame(id) {
                 '💉🧸💸 verhindert'
             ];
 
+            const checkboxes = []; // Store references to all checkboxes
+
             outOfOfficeReasons.forEach((reason, index) => {
                 const reasonRow = document.createElement('div');
-                reasonRow.style = 'display: flex;'; // Corrected style
-
-                const label = document.createElement('label');
-                label.style = "max-height:1.5rem;";
-                label.textContent = reason;
-                label.classList.add('reason-label', 'noto');
+                reasonRow.style = 'display: flex; align-items: center; gap: 8px;';
 
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.classList.add('reason-checkbox');
                 checkbox.id = id + '-' + index;
 
+                const label = document.createElement('label');
+                label.htmlFor = checkbox.id;
+                label.style = "max-height: 1.5rem;";
+                label.textContent = reason;
+                label.classList.add('reason-label', 'noto');
+
                 reasonRow.appendChild(checkbox);
                 reasonRow.appendChild(label);
+                outOfOfficeElement.appendChild(reasonRow);
 
-                outOfOfficeElemnt.appendChild(reasonRow);
+                checkboxes.push(checkbox);
+
+                // Listen for checkbox changes
+                checkbox.addEventListener('change', () => {
+                    updateOutOfOfficeString();
+                });
             });
 
-            timeFrameElement.appendChild(outOfOfficeElemnt);
+            timeFrameElement.appendChild(outOfOfficeElement);
+
+            // Function to collect checked values and update the role
+            function updateOutOfOfficeString() {
+                const selectedReasons = checkboxes
+                    .filter(cb => cb.checked)
+                    .map(cb => {
+                        const index = parseInt(cb.id.split('-').pop());
+                        return outOfOfficeReasons[index].replace(/[^a-zA-ZäöüÄÖÜß\s]/g, '').trim(); // Remove emojis
+                    });
+
+                const finalString = selectedReasons.join(', '); // Join all checked reasons
+                updateHumanRole(id, finalString); // Call function with concatenated string
+            }
             break;
+        }
 
 
         default:
@@ -398,8 +428,6 @@ function toggleHTMLOption(id, isVisible) {
         console.warn(`Option with id "${id}" not found in "${selectorName}".`);
     }
 }
-
-
 
 function createRoles(id) {
 
@@ -460,7 +488,6 @@ function createRoles(id) {
             singleRoleOption.innerHTML = `${role.emoji} ⇨ ${role.name}`;
             singleRoleOption.title = role.name;
             singleRoleOption.value = index;
-
             singleRoleSelection.appendChild(singleRoleOption);
         });
 
@@ -601,7 +628,7 @@ function createNumberInput(id) {
             break;
 
         case ("a6"): // percent 🧩
-            numerType = 'ratio';
+            // numberType = 'ratio';
             numLabel.innerHTML = 'prozent von 🧩';
             container.append(numLabel, input1);
             break;
@@ -650,31 +677,6 @@ function toggleExceptionTable(isActive) {
     }
 }
 
-function validateRules(identifier) {
-
-    const relationToCheck = ruleRelations.find(rel => rel.id === identifier);
-
-    if (relationToCheck) {
-        relationToCheck.forbidden.forEach((forbiddenOption) => {
-            const optionElement = document.querySelector(`#request-type-select-time option[value="${forbiddenOption}"]`);
-            if (optionElement) {
-                optionElement.disabled = true;
-                optionElement.style.opacity = '0.5';
-                optionElement.title = `This option is forbidden due to a conflict: ${relationToCheck.warning}`;
-            }
-        });
-
-        relationToCheck.mandatory.forEach((mandatoryOption) => {
-            const mandatoryOptionElement = document.querySelector(`#request-type-select-time option[value="${mandatoryOption}"]`);
-            if (mandatoryOptionElement) {
-                mandatoryOptionElement.disabled = false;
-                mandatoryOptionElement.style.opacity = '1';
-            }
-        });
-    }
-}
-
-
 function updateEventListener() {
     const container = document.getElementById('rule-form-container');
 
@@ -682,7 +684,6 @@ function updateEventListener() {
         console.error("Error: 'rule-form-container' element not found.");
         return;
     }
-
     container.removeEventListener('change', handleContainerChange);
     container.addEventListener('change', handleContainerChange);
 }
@@ -721,9 +722,6 @@ function handleContainerChange(event) {
         default:
             console.log(`${logMessage}Unhandled element type`);
     }
-
     validateInput(parentID);
-    // updateMachineRule(parentID); 
     updateHumanRule(parentID, humanText);
-    // updateWizzard(parentID);
 }

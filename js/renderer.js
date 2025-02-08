@@ -9,6 +9,7 @@ const loadFormModules = async () => {
     const { initializeEmployeeForm } = await import('../Components/forms/employee-form/employee-form.js');
     const { initializeRequestForm } = await import('../Components/forms/request-form/request-form.js');
     const { initializeCalendarForm } = await import('../Components/forms/calendar-form/calendar-form.js');
+    const { initializeAdminForm } = await import('../Components/forms/admin-form/admin-form.js');
 
     formInitializers = {
       'role-form': initializeRoleForm,
@@ -16,6 +17,8 @@ const loadFormModules = async () => {
       'employee-form': initializeEmployeeForm,
       'request-form': initializeRequestForm,
       'calendar-form': initializeCalendarForm,
+      'admin-form': initializeAdminForm,
+
     };
 
     console.log('✅ Form modules loaded successfully');
@@ -35,13 +38,13 @@ window.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.nav-button').forEach(button => {
     button.addEventListener('click', (e) => {
       const formName = e.currentTarget.getAttribute('data-form');
-      window.api.loadForm( formName);
+      window.api.loadForm(formName);
       localStorage.setItem('selectedForm', formName);
     });
   });
 
   const CalendarContainer = document.getElementById('calendar');
-if (!CalendarContainer) {
+  if (!CalendarContainer) {
     console.error('❌ Calendar container in renderer.js not found');
   } else {
     console.log(' *** Found calendar container in renderer.js');
@@ -57,10 +60,10 @@ if (!CalendarContainer) {
     }).catch(error => {
       console.error('❌ Error loading calendar content:', error);
     });
-    
+
   }
 
-  
+
   async function loadCalendarIntoContainer(container) {
     try {
       const filePath = './Components/calendar/calendar.html';
@@ -71,12 +74,12 @@ if (!CalendarContainer) {
       }
 
       const data = await response.text();
-      container.innerHTML = data; 
+      container.innerHTML = data;
 
     } catch (error) {
       console.error('❌ Error loading the calendar:', error);
       container.innerHTML = `<p>Error loading the calendar. Please try again later.</p>`;
-      throw error; 
+      throw error;
     }
   }
 
@@ -135,9 +138,7 @@ window.api.receive('resize-response', (data) => {
 
 document.addEventListener('DOMContentLoaded', () => {
   window.electron.onFormLoaded(async (event, { formName, htmlContent }) => {
-    
-    console.log("📩 Form loaded event triggered for:", formName);
-  
+
     const formContainer = document.getElementById('form-container');
     if (!formContainer) {
       console.error('❌ form-container not found!');

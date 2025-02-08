@@ -101,15 +101,22 @@ input.error, select.error {
     opacity: 0.8; 
 }
 
-.rule-table:first-of-type th:nth-child(3),
-.rule-table:first-of-type td:nth-child(3) {
+.rule-table th[data-highlight="true"] {
+    background-color:seagreen;
+    border: 2px solid lime;
+    animation: pulse 1.5s infinite;
+}
+
+.rule-table td[data-highlight="true"] {
     background-color: rgba(144, 238, 144, 0.4);
     border: 2px solid lime;
     animation: pulse 1.5s infinite;
 }
 
-.rule-table:first-of-type th:nth-child(3) {
-    background-color: seagreen;
+.rule-table th[data-highlight="true"]::before {
+    content: "📎";
+    font-size: x-large;
+    margin-right: 5px;
 }
 
 @keyframes pulse {
@@ -124,16 +131,6 @@ input.error, select.error {
     }
 }
 
-.rule-table:last-of-type th:nth-child(4), /* Header of the last table */
-.rule-table:last-of-type td:nth-child(4) { /* Data cells of the last table */
-    background-color: rgba(144, 238, 144, 0.4); /* Lightgreen with opacity */
-    border: 2px solid lime; /* Lime border */
-    animation: pulse 1.5s infinite; /* Pulsing effect */
-}
-
-.rule-table:last-of-type th:nth-child(4) { /* Slightly darker header */
-    background-color: seagreen;
-}
 
 .rule-table:last-of-type th:nth-child(6), 
 .rule-table:last-of-type td:nth-child(6) {
@@ -158,3 +155,10 @@ input.error, select.error {
     }
 }
 
+.clippy-highlight::before {
+    font-family: 'Segoe UI Symbol', 'Segoe UI', sans-serif;
+    font-size: x-large;
+    content: "\1F4CE"; /* Unicode for 📎 */
+    cursor: pointer;
+    margin-right: 5px;
+}

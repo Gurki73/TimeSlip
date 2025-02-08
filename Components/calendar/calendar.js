@@ -36,7 +36,7 @@ export async function initializeCalendar(api) {
 
   initializeCalendarData();
   createCalendarNavigation();
-  generateAndRenderCalendar(currentMonthIndex, currentYear);
+  // generateAndRenderCalendar(currentMonthIndex, currentYear);
   updateCalendarDisplay();
 }
 
@@ -57,7 +57,7 @@ function updateCalendarDisplay() {
 
 function generateAndRenderCalendar(newMonthIndex, newYear) {
 
-  updateFeedback("current month:" + currentMonthIndex + "  current year:" + currentYear);
+  // updateFeedback("current month:" + currentMonthIndex + "  current year:" + currentYear);
   weeks = generateCalendar(newMonthIndex, newYear);
   renderCalendarMonth(weeks);
 }

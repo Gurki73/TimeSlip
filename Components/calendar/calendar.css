@@ -222,7 +222,6 @@
 #calendar {
   width: 100%;
   height: fit-content;
-  min-height: 400px;
   display: flex;
   flex-direction: column;
   overflow: auto;

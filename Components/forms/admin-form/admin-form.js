@@ -1,20 +1,13 @@
-document.getElementById('excel-import').addEventListener('click', () => {
-    alert("Excel Import wird bald verfügbar sein!");
+export function initializeAdminForm(api) {
+  const coffeeBtn = document.getElementById('buy-coffee');
+
+  if (!coffeeBtn) {
+    console.error('❌ Buy Me a Coffee button not found.');
+    return;
+  }
+
+  coffeeBtn.addEventListener('click', () => {
+    console.log("coffe button was clicked");
+    api.openExternalLink('https://buymeacoffee.com/gurky73');
   });
-  
-  document.getElementById('excel-export').addEventListener('click', () => {
-    alert("Excel Export wird bald verfügbar sein!");
-  });
-  
-  document.getElementById('customization').addEventListener('click', () => {
-    const options = `
-      - Farbpalette anpassen
-      - Emoji-Auswahl bearbeiten
-    `;
-    alert(`Customization Optionen:\n${options}`);
-  });
-  
-  document.getElementById('buy-coffee').addEventListener('click', () => {
-    window.open("https://www.buymeacoffee.com/", "_blank");
-  });
-  
+}

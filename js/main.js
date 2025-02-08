@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, dialog, shell } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -81,6 +81,7 @@ app.whenReady().then(async () => {
   } catch (error) {
     console.error('Error creating window:', error);
   }
+  // mainWindow.loadURL('file://' + __dirname + '/index.html');
 });
 
 ipcMain.handle('show-save-dialog', async (event, suggestedName) => {
@@ -111,6 +112,21 @@ ipcMain.handle('save-file', async (event, filePath, content) => {
 ipcMain.on('app-close', () => {
   if (mainWindow) {
     mainWindow.close();
+  }
+});
+
+ipcMain.on('open-external', async (event, url) => {
+  if (!app.isReady()) {
+    console.error("❌ Electron app is not ready yet!");
+    return;
+  }
+
+  console.log("🚀 Opening external URL:", url);
+  try {
+    await shell.openExternal(url);
+    console.log("✅ Successfully opened external link.");
+  } catch (error) {
+    console.error("❌ Failed to open external link:", error);
   }
 });
 

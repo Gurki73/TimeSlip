@@ -18,6 +18,10 @@ contextBridge.exposeInMainWorld('api', {
   readStateFile: (filePath) => require('fs').promises.readFile(filePath, 'utf-8'),
   saveStateFile: (filePath, content) => require('fs').promises.writeFile(filePath, content, 'utf-8'),
   showSaveStateDialog: (options) => ipcRenderer.invoke('show-save-dialog', options),
+  openExternalLink: (url) => {
+    console.log(`[Preload] Attempting to open URL: ${url}`);
+    ipcRenderer.send('open-external', url);
+  },
   loadForm: (formName) => {
     ipcRenderer.send('load-form', formName);
   },

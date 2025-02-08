@@ -1,15 +1,9 @@
-/* Buy Me A Coffee Button */
-body {
-  font-family: Arial, sans-serif;
-  text-align: center;
-  margin: 20px;
-}
-
 .admin-buttons {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  justify-content: space-evenly;
   gap: 20px;
-  max-width: 300px;
+  max-width: 80%;
   margin: 0 auto;
 }
 
@@ -29,4 +23,14 @@ button:hover {
 
 button:active {
   background-color: #ddd;
+}
+
+.coffee-button {
+  width: 120px;
+  height: 120px;
+  background-image: url('../../../assets/png/BuyMeACoffee.png'); 
+  background-size: cover;
+  background-repeat: no-repeat;
+  border: none;
+  cursor: pointer;
 }

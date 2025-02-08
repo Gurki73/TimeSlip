@@ -1,7 +1,9 @@
 <div id="request-form-container">
 
 <div>
+  <!--
   <input type="number" id="year-filter" placeholder="2000" min="2025" max="2099" style="max-width: 80px">
+  -->
   <span style="width:150px;"></span>
   <button id="create-request-mode-btn" class="active noto request-button">📝 Urlaubsantrag stellen</button>
   <button id="approve-request-mode-btn" class="inactive noto request-button">✅ Urlaubsantrag genehmigen ❌</button>
@@ -12,7 +14,7 @@
 
 <div id="request-enter-container" class="active">
 
-  <div class="request-form-col">
+  <div class="request-form-col request-form-dates">
     <div style="display: flex; flex-direction: row;">
       <span id="requester-emoji" class="noto">❓</span>
         <div>  
@@ -29,8 +31,8 @@
   </div>
 
   <div class="request-form-col">
-    <span style="display: flex; flex-direction: row;">
-      <label> Art der Abwesentheit: </label>
+    <span class="request-date" style="display: flex; flex-direction: row; justify-content: space-between;">
+      <label>Art Abwesentheit: </label>
       <select id="request-type-select" class="noto" style="font-size: large;">
         <option value="vac">🏖️ Urlaub</option>
         <option value="sik">💉 Genesung</option>
@@ -60,7 +62,7 @@
   </div>
 
   <div class="request-form-col">
-    Kommentar Antragsteller
+    Kommentar Antragsteller <br>
     <textarea id="multiline-input" name="multiline-input" rows="3" cols="30" placeholder="Enter your text here..."></textarea>
   </div>
   <div class="request-form-warn noto">

@@ -43,6 +43,7 @@
   border-top-right-radius: 15px;
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
+  border-bottom: none;
   position: relative;
   cursor: pointer;
   transition: background-color 0.3s, transform 0.2s;
@@ -56,6 +57,7 @@
   width: 100%;
   height: 5px;
   border-radius: 0 0 5px 5px;
+  border-bottom-color: wheat;
   z-index: -1;
   transition: all 0.3s ease;
 }
@@ -64,6 +66,7 @@
   background-color: goldenrod;
   color: white;
   border-color: saddlebrown;
+  border-bottom-color: saddlebrown;
   border-bottom: none; 
   z-index: 3;
 }
@@ -77,7 +80,6 @@
 .request-button:hover {
   transform: translateY(-2px);
 }
-
 .request-form-col {
   background-color: wheat;
   border-color: brown;
@@ -86,7 +88,11 @@
   margin: 12px;
   padding: 12px;
   min-height: 100%;
-  min-width: 13%;
+  flex-grow: 1;
+}
+.request-form-dates {
+  min-width: 20%;
+  flex-grow: 2;
 }
 
 .request-form-warn {
@@ -219,3 +225,10 @@
   content: "💬"; 
   cursor: pointer;
 }
+.request-date {
+  max-width: 140px; /* Adjust if necessary */
+  min-width: 80px;
+  width: 100%;
+  box-sizing: border-box; /* Ensures padding doesn’t break layout */
+}
+
