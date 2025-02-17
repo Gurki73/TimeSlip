@@ -13,6 +13,10 @@ import '../Components/forms/rule-form/rule-form.js';
 import '../Components/forms/calendar-form/calendar-form.js';
 import '../Components/forms/employee-form/employee-form.js';
 
+import '../Components/forms/rule-form/HumanReadableRules.js';
+import '../Components/forms/rule-form/dicctionary.js';
+import '../Components/forms/rule-form/RuleFlowWizzard.js';
+
 // components
 import '../Components/legend/legend.js';
 import '../Components/calendar/calendar.js';

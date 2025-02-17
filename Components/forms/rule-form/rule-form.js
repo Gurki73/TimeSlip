@@ -1,6 +1,7 @@
 import { roles as rolesPromise } from '../../../js/loader/role-loader.js';
 import { loadOfficeDaysData } from '../../../js/loader/calendar-loader.js';
-import { updateHumanRule } from './preview-generator.js';
+import { updateHumanRule } from './HumanReadableRules.js';
+import { updateWizzard } from './RuleFlowWizzard.js';
 
 const ruleRelations = [
     { id: 'd0', forbidden: ['t4'], mandatory: ['exception'], warning: 'contradiction' },
@@ -163,27 +164,35 @@ function createDependency(id) {
         dependencyRoleSelection.appendChild(dependencyRoleOption); // Missing appendChild fixed.
     });
 
+    let rawValue;
+
     switch (id.toLowerCase()) {
         case "d0": // anwesend
             label.innerHTML = 'anwesend';
             dependencyElement.append(label);
-            updateHumanRule(id, 'anwesend');
+            updateHumanRule(id);
             break;
         case "d1": // abwesend
             label.innerHTML = 'abwesend';
             dependencyElement.append(label);
-            updateHumanRule(id, 'abwesend');
+            updateHumanRule(id);
             break;
         case "d2": // braucht
             label.innerHTML = 'braucht';
+            rawValue = { number: input1, roles: dependencyRoleSelection }
+            updateHumanRule(id, rawValue);
             dependencyElement.append(input1, label, dependencyRoleSelection);
             break;
         case "d3": // hilft
             label.innerHTML = 'hilft';
+            rawValue = { number: input1, roles: dependencyRoleSelection }
+            updateHumanRule(id, rawValue);
             dependencyElement.append(input1, label, dependencyRoleSelection);
             break;
         case "d4": // im Verhältnis 🧩
             label.innerHTML = ' <= 🧩 ';
+            rawValue = { number1: input1, number2: input2, roles: dependencyRoleSelection }
+            updateHumanRule(id, rawValue);
             dependencyElement.append(label, input1, dependencyRoleSelection, input2); // Fixed arguments.
             break;
         default:
@@ -570,24 +579,24 @@ function createNumberInput(id) {
     input2.id = id + '-2';
 
     switch (id.toLowerCase()) {
-        case 'w':
+        case 'w0':
             numLabel.innerHTML = '...';
             container.append(numLabel);
             break;
 
-        case 'w0':
+        case 'w1':
             numLabel.innerHTML = 'jede(n)';
             container.append(numLabel);
             updateHumanRule(id, 'jede');
             break;
 
-        case 'w1':
+        case 'w2':
             numLabel.innerHTML = 'niemals';
             container.append(numLabel);
             updateHumanRule(id, 'niemals');
             break;
 
-        case 'w2':
+        case 'w3':
             numLabel.innerHTML = ' x pro 🕒 <i style="color:silver;">(Monat/Woche)</i>';
             container.append(input1, numLabel);
             break;
