@@ -2,7 +2,7 @@ export const appDictionary = {
     "w": {
         "w1": { "text": "jeden", "typ": "Adverb", "beispiel": "jeden Montag" },
         "w2": { "text": "niemals", "typ": "Adverb", "beispiel": "niemals im Monat" },
-        "w3": { "text": "pro", "typ": "Präposition", "beispiel": "einmal pro Woche" }
+        "w3": { "text": "REPEAT_COUNT pro", "typ": "Präposition", "beispiel": "einmal pro Woche" }
     },
     "t": {
         "t2": {
@@ -119,14 +119,14 @@ export const appDictionary = {
 
     },
     "a": {
-        "a1": { "text": "ungefähr $(zahl1)", "typ": "Zahl" },
+        "a1": { "text": "ungefähr AVERAGE_COUNT", "typ": "Zahl" },
         "a2": { "text": "alle", "typ": "Quantor" },
         "a3": { "text": "keiner", "typ": "Quantor" },
-        "a4": { "text": "zwischen $(zahl1) und $(zahl2)", "typ": "Zahl" },
-        "a5": { "text": "maximal $(zahl1)", "typ": "Zahl" },
-        "a6": { "text": "minimal $(zahl1)", "typ": "Zahl" },
-        "a7": { "text": "genau $(zahl1)", "typ": "Zahl" },
-        "a8": { "text": "$(zahl1) Prozent", "typ": "Zahl" }
+        "a4": { "text": "zwischen LOWER_LIMIT und UPPER_LIMIT", "typ": "Zahl" },
+        "a5": { "text": "maximal UPPER_LIMIT", "typ": "Zahl" },
+        "a6": { "text": "minimal LOWER_LIMIT", "typ": "Zahl" },
+        "a7": { "text": "genau LOWER_LIMIT", "typ": "Zahl" },
+        "a8": { "text": "AVERAGE_COUNT Prozent", "typ": "Zahl" }
     },
     "g": {
         "g0": { "text": "$(aufgabe)", "typ": "Nomen" },
@@ -136,9 +136,9 @@ export const appDictionary = {
     "d": {
         "d0": { "text": "muss anwesend sein", "typ": "Regel", "beispiel": "Ein Arzt muss anwesend sein" },
         "d1": { "text": "muss abwesend sein", "typ": "Regel", "beispiel": "Kein Ausbilder muss abwesend sein" },
-        "d2": { "text": "braucht $(zahl1)", "typ": "Regel", "beispiel": "Ein Koch braucht 2 Kellner" },
-        "d3": { "text": "hilft $(zahl1)", "typ": "Regel", "beispiel": "Eine Krankenschwester hilft 3 Ärzten" },
-        "d4": { "text": "Verhältnis: Für $(zahl1) Rolle(n) je $(zahl2)", "typ": "Regel", "beispiel": "Für 3 Fahrer je 2 Kommissionierer" }
+        "d2": { "text": "braucht SECONDARY_ROLE_COUNT", "typ": "Regel", "beispiel": "Ein Koch braucht 2 Kellner" },
+        "d3": { "text": "hilft SECONDARY_ROLE_COUNT", "typ": "Regel", "beispiel": "Eine Krankenschwester hilft 3 Ärzten" },
+        "d4": { "text": "Verhältnis: Für PRIMARY_ROLE_COUNT Rolle(n) je SECONDARY_ROLE_COUNT", "typ": "Regel", "beispiel": "Für 3 Fahrer je 2 Kommissionierer" }
     },
     "e": {
         "e0": { "text": "", "typ": "keine Ausnahme", "beispiel": "Keine Ausnahme" },
@@ -150,3 +150,7 @@ export const appDictionary = {
         "e6": { "text": "aber nicht weniger als", "typ": "Limitation", "beispiel": "Es gibt mindestens 3 Aufgaben" }
     }
 };
+
+export function applyGrammaticalContext() { }
+
+export function getDictionaryEntry() { }

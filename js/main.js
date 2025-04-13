@@ -64,7 +64,7 @@ async function createWindow() {
   });
 
   mainWindow.setTitle('Urlaubsplaner-App');
-
+  // mainWindow.webContents.openDevTools();
   try {
     await mainWindow.loadFile('index.html');
   } catch (error) {

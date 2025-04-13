@@ -1,10 +1,10 @@
 // legend.js
 
-import { loadRoleData , roles} from '../../js/loader/role-loader.js';
-import { loadEmployeeData, employees } from '../../js/loader/employee-loader.js';
+import { loadRoleData, roles } from '../../js/loader/role-loader.js';
+import { loadEmployeeData, employees, getTotalEmployeesByRole } from '../../js/loader/employee-loader.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-  
+
   Promise.all([loadRoleData(), loadEmployeeData()])
     .then(() => {
 
@@ -20,7 +20,7 @@ function initializeLegend() {
   const legendContainer = document.getElementById('legend');
   if (!legendContainer) return console.error('Legend container not found');
 
-  legendContainer.innerHTML = ''; 
+  legendContainer.innerHTML = '';
   renderCollapsibleSection(legendContainer, '🎨 ⇨ Aufgaben', renderRoles);
   renderCollapsibleSection(legendContainer, '😊 ⇨ Mitarbeiter', renderEmployees);
 }
@@ -50,13 +50,13 @@ function renderCollapsibleSection(container, title, renderContentFunction) {
   collapsibleButton.classList.add('collapsible');
 
   const icon = document.createElement('span');
-  icon.classList.add('collapsible-icon'); 
+  icon.classList.add('collapsible-icon');
   collapsibleButton.appendChild(icon);
   collapsibleButton.title = title;
 
   const titleLabel = document.createElement('span');
-  titleLabel.classList.add('collapsible-emoji'); 
-  titleLabel.innerHTML = ` ${title}`; 
+  titleLabel.classList.add('collapsible-emoji');
+  titleLabel.innerHTML = ` ${title}`;
 
   collapsibleButton.appendChild(titleLabel);
 
@@ -72,6 +72,10 @@ function renderCollapsibleSection(container, title, renderContentFunction) {
     const isVisible = collapsibleContent.style.display === 'block';
     collapsibleContent.style.display = isVisible ? 'none' : 'block';
     collapsibleButton.classList.toggle('active', !isVisible);
+
+    if (!isVisible && renderContentFunction) {
+      renderContentFunction();
+    }
   });
 }
 
@@ -80,15 +84,15 @@ function renderRoles(container) {
   const list = document.createElement('ul');
   list.classList.add('legend-list');
 
-  roles.forEach(role => {
+  roles.forEach((role, index) => {
     if (role.emoji === "❓") return;
     if (role.name === 'keine') return;
     if (role.name === '?') return;
     if (role.name === "name") return;
-    
+
     const listItem = document.createElement('li');
     listItem.classList.add('legend-item');
-    
+
     const roleColor = getComputedStyle(document.documentElement)
       .getPropertyValue(`--role-${role.colorIndex}-color`);
     listItem.style.backgroundColor = roleColor;
@@ -101,9 +105,17 @@ function renderRoles(container) {
     roleName.classList.add('legend-name');
     roleName.innerText = `   ⇨ ${role.name}`;
 
+    const roleCount = getTotalEmployeesByRole(index);
+
+    const roleCountSpan = document.createElement('span');
+    roleCountSpan.classList.add('role-count');
+    roleCountSpan.innerHTML = ` [${roleCount}]`;
+
+    roleName.appendChild(roleCountSpan);
+
     listItem.appendChild(emoji);
     listItem.appendChild(roleName);
-    
+
     list.appendChild(listItem);
   });
 
@@ -117,10 +129,10 @@ function renderEmployees(container) {
   employees.forEach(employee => {
     if (employee.name === '?') return;
     if (employee.name === "name") return;
-    
+
     const listItem = document.createElement('li');
     listItem.classList.add('legend-item');
-    
+
     const roleColor = getComputedStyle(document.documentElement)
       .getPropertyValue(`--role-${employee.mainRoleIndex}-color`);
 
@@ -136,7 +148,7 @@ function renderEmployees(container) {
 
     listItem.appendChild(emoji);
     listItem.appendChild(employeeName);
-    
+
     list.appendChild(listItem);
   });
 

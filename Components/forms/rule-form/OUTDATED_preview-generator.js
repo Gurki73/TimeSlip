@@ -78,18 +78,18 @@ export function updateHumanRule(id, rawValue = null) {
 
     normalizeValue(id);
     const entry = getDictionaryEntry(id[0].toLowerCase(), id);
-    if (entry) {
-        currentState.context[category] = {
-            value,
-            metadata: {
-                case: entry.cases?.nominative,
-                article: entry.artikel,
-                plural: entry.plural
-            }
-        };
-
-        applyGrammaticalContext(currentConfig, currentStep);
-    }
+    // if (entry) {
+    //     currentState.context[category] = {
+    //         value,
+    //         metadata: {
+    //             case: entry.cases?.nominative,
+    //             article: entry.artikel,
+    //             plural: entry.plural
+    //         }
+    //     };
+    // 
+    //     applyGrammaticalContext(currentConfig, currentStep);
+    // }
     moveToNextStep(currentConfig);
     updateUI();
 }
@@ -133,7 +133,7 @@ function checkDependencyInput(id) {
         clearHighlight('E', true);
         return;
     }
-    if (id = 'D0') {
+    if (id === 'D0') {
         currentState.path = 'pathTime';
         currentState.step = 0;
         clearAllHighlights();
@@ -292,7 +292,6 @@ function normalizeValue(id, rawValue = null) {
         /** 🔢 Number + Known Word */
         case ["w3", "W3", "a1", "A1", "a4", "A4", "A5", "a5", "a6", "A6", "a8", "A8"].includes(id):
             return parseNumberAndWord(rawValue);
-            we
         /** ❓ Single Unknown Word */
         case ["g0", "G0"].includes(id):
             return { type: "unknown", value: rawValue };
@@ -306,6 +305,9 @@ function normalizeValue(id, rawValue = null) {
             return rawValue;
     }
 }
+function parseNumberAndArray() { }
+function parseTwoNumbersAndArray() { }
+function parseNumberAndWord() { }
 
 function updateMandatoryInputs(id, isIgnored) {
     if (id.startsWith("E")) {

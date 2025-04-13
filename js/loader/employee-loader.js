@@ -76,5 +76,24 @@ function generateUniqueFileName() {
     return folderPath ? `${folderPath}/data/` : `data/`;
 }
 
+export function getTotalEmployeesByRole(roleID) {
+
+    if (roleID === 0 || !roleID) return -99;
+
+    let roleCount = 0;
+
+    if (!employees || employees.length === 0) return 0; // Safe check
+
+    employees.forEach(emp => {
+        if (emp.mainRoleIndex === roleID) roleCount += emp.roleSplitMain;
+        if (emp.secondaryRoleIndex === roleID) roleCount += emp.roleSplitSecondary;
+        if (emp.tertiaryRoleIndex === roleID) roleCount += emp.roleSplitTertiary;
+    });
+
+    return roleCount * 0.1; // Convert split ratio to fraction
+}
+
+
+
 
 export { loadEmployeeData, employees, generateEmployeeCSV };

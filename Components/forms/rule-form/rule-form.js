@@ -1,13 +1,9 @@
 import { roles as rolesPromise } from '../../../js/loader/role-loader.js';
 import { loadOfficeDaysData } from '../../../js/loader/calendar-loader.js';
-import { updateHumanRule } from './HumanReadableRules.js';
-import { updateWizzard } from './RuleFlowWizzard.js';
-
-const ruleRelations = [
-    { id: 'd0', forbidden: ['t4'], mandatory: ['exception'], warning: 'contradiction' },
-    { id: 'd1', forbidden: ['t4'], mandatory: [], warning: 'unnecessary' },
-    { id: 't4', forbidden: ['d0', 'd1'], mandatory: ['repeats'], warning: 'contradiction' },
-];
+import { checkInput, resetRule, initVisibilityChecker } from './ruleChecker.js';
+import { toggleExceptionTable, updateWizzard } from './ruleFlowWizzard.js';
+import { updateMachineRule, initMachineRule } from './machineReadableRules.js';
+import { updateHumanRule } from './humanReadableRules.js';
 
 let ruleRoles;
 let ruleOfficeDays;
@@ -51,104 +47,91 @@ export async function initializeRuleForm(passedApi) {
         await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
     }
 
-    toggleExceptionTable(false);
+    resetRule();
     initializeInputFunctions();
-    createRoles('G0');
-    createNumberInput('A1');
-    createDependency('D0');
+    handleTopCellRoles('G0');
+    handleTopCellNumberInput('A1');
+    handleTopCellDependency('D0');
     updateEventListener();
-}
-function getOptionByID(id) {
-    if (!id || typeof id !== 'string') {
-        console.error(`Invalid ID provided: "${id}"`);
-        return null;
-    }
-    const element = document.getElementById(id);
-    return element || null;
+    initMachineRule();
+    initVisibilityChecker();
 }
 
-function validateInput(id) {
-    if (!id || typeof id !== 'string') {
-        console.error(`Invalid input ID provided: "${id}"`);
-        return;
-    }
-    const warnings = [];
-    const inputToCheck = ruleRelations[id];
-    if (!inputToCheck) {
-        console.warn(`No rules found for ID: "${id}"`);
-        return;
-    }
-    inputToCheck.forbidden.forEach(option => {
-        if (toggleHTMLOption) {
-            toggleHTMLOption(option, false);
-        } else {
-            console.warn(`toggleHTMLOption is not defined`);
-        }
-        const optionElement = getOptionByID(option);
-        if (optionElement) {
-            warnings.push(option.warn);
-        } else {
-            console.warn(`Option with ID "${option}" not found in the DOM.`);
-        }
+function resetInput() {
+    console.log("reset rule button was pressed");
+
+    resetRule();
+    toggleExceptionTable(false);
+
+    document.querySelectorAll('.rule-table thead select').forEach(select => {
+        select.selectedIndex = 0;
+        select.dispatchEvent(new Event('change'));
     });
-    console.log(warnings);
+
+    updateEventListener();
 }
+
 
 function initializeInputFunctions() {
 
     const mainRepeatSelect = document.getElementById('request-type-select-repeats');
-    mainRepeatSelect.addEventListener('change', (event) => createNumberInput(event.target.value));
+    mainRepeatSelect.addEventListener('change', (event) => handleTopCellNumberInput(event.target.value));
 
     const mainTimeSelect = document.getElementById('request-type-select-time');
-    mainTimeSelect.addEventListener('change', (event) => createTimeFrame(event.target.value));
+    mainTimeSelect.addEventListener('change', (event) => handleTopCellTimeFrame(event.target.value));
 
     const mainAmountSelect = document.getElementById('request-type-select-amount');
-    mainAmountSelect.addEventListener('change', (event) => createNumberInput(event.target.value));
+    mainAmountSelect.addEventListener('change', (event) => handleTopCellNumberInput(event.target.value));
 
     const mainGroupSelect = document.getElementById('request-type-select-group');
-    mainGroupSelect.addEventListener('change', (event) => createRoles(event.target.value));
+    mainGroupSelect.addEventListener('change', (event) => handleTopCellRoles(event.target.value));
 
     const mainDependicySelect = document.getElementById('request-type-select-dependency');
-    mainDependicySelect.addEventListener('change', (event) => createDependency(event.target.value));
+    mainDependicySelect.addEventListener('change', (event) => handleTopCellDependency(event.target.value));
 
     const mainExceptionSelect = document.getElementById('request-type-select-exception');
-    mainExceptionSelect.addEventListener('change', (event) => createException(event.target.value));
+    mainExceptionSelect.addEventListener('change', (event) => handleTopCellException(event.target.value));
 
     const exRepeatSelect = document.getElementById('ex-request-type-select-repeats');
-    exRepeatSelect.addEventListener('change', (event) => createNumberInput(event.target.value));
+    exRepeatSelect.addEventListener('change', (event) => handleTopCellNumberInput(event.target.value));
 
     const exTimeSelect = document.getElementById('ex-request-type-select-time');
-    exTimeSelect.addEventListener('change', (event) => createTimeFrame(event.target.value));
+    exTimeSelect.addEventListener('change', (event) => handleTopCellTimeFrame(event.target.value));
 
     const exAmountSelect = document.getElementById('ex-request-type-select-amount');
-    exAmountSelect.addEventListener('change', (event) => createNumberInput(event.target.value));
+    exAmountSelect.addEventListener('change', (event) => handleTopCellNumberInput(event.target.value));
 
     const exGroupSelect = document.getElementById('ex-request-type-select-group');
-    exGroupSelect.addEventListener('change', (event) => createRoles(event.target.value));
+    exGroupSelect.addEventListener('change', (event) => handleTopCellRoles(event.target.value));
 
     const exDependencySelect = document.getElementById('ex-request-type-select-dependency');
-    exDependencySelect.addEventListener('change', (event) => createDependency(event.target.value));
+    exDependencySelect.addEventListener('change', (event) => handleTopCellDependency(event.target.value));
+
+    const resetButton = document.getElementById('reset-rule-button');
+    resetButton.addEventListener('click', () => resetInput());
 }
 
-function createDependency(id) {
+function handleTopCellDependency(id) {
+
     const dependencyElement = document.createElement('div');
     const input1 = document.createElement('input');
     input1.type = 'number';
     input1.classList.add('noto', 'rule-number-input');
     input1.value = 1;
-    input1.id = id + '-1';
+    input1.id = id + '-number1';
 
     const input2 = document.createElement('input');
     input2.type = 'number';
     input2.classList.add('noto', 'rule-number-input')
     input2.value = 2;
-    input2.id = id + '-2';
+    input2.id = id + '-number2';
 
-    const label = document.createElement('span'); // Added `const` to declare `label`.
+    const label = document.createElement('span');
 
     const dependencyRoleSelection = document.createElement('select');
     dependencyRoleSelection.classList.add('role-select', 'noto');
     dependencyRoleSelection.id = id + '-2';
+
     ruleRoles.forEach((role, index) => {
         if (['❓', 'keine', '?', 'name'].includes(role.name)) return;
 
@@ -161,49 +144,73 @@ function createDependency(id) {
         dependencyRoleOption.title = role.name;
         dependencyRoleOption.value = index;
 
-        dependencyRoleSelection.appendChild(dependencyRoleOption); // Missing appendChild fixed.
+        dependencyRoleSelection.appendChild(dependencyRoleOption);
     });
 
-    let rawValue;
+    let inputObject = {
+        "id": id,
+        "inpuID": "topCell",
+        "value": null
+    };
 
     switch (id.toLowerCase()) {
         case "d0": // anwesend
             label.innerHTML = 'anwesend';
             dependencyElement.append(label);
-            updateHumanRule(id);
             break;
+
         case "d1": // abwesend
             label.innerHTML = 'abwesend';
             dependencyElement.append(label);
-            updateHumanRule(id);
             break;
+
         case "d2": // braucht
             label.innerHTML = 'braucht';
-            rawValue = { number: input1, roles: dependencyRoleSelection }
-            updateHumanRule(id, rawValue);
+            inputObject.number1 = input1.value;
+            inputObject.words = [dependencyRoleSelection.value];
             dependencyElement.append(input1, label, dependencyRoleSelection);
             break;
+
         case "d3": // hilft
             label.innerHTML = 'hilft';
-            rawValue = { number: input1, roles: dependencyRoleSelection }
-            updateHumanRule(id, rawValue);
+            inputObject.number1 = input1.value;
+            inputObject.words = [dependencyRoleSelection.value];
             dependencyElement.append(input1, label, dependencyRoleSelection);
             break;
+
         case "d4": // im Verhältnis 🧩
             label.innerHTML = ' <= 🧩 ';
-            rawValue = { number1: input1, number2: input2, roles: dependencyRoleSelection }
-            updateHumanRule(id, rawValue);
-            dependencyElement.append(label, input1, dependencyRoleSelection, input2); // Fixed arguments.
+            inputObject.number1 = input1.value;
+            inputObject.number2 = input2.value;
+            inputObject.words = [dependencyRoleSelection.value];
+            dependencyElement.append(label, input1, dependencyRoleSelection, input2);
             break;
+
         default:
             console.error("no match for dependency rule " + id);
-            return; // Ensure early exit on unmatched cases.
+            return;
     }
+    let dependencyCell;
+    if (id[0] === id[0].toLowerCase()) {
+        dependencyCell = document.getElementById('ex-dependency-cell');
+    } else {
+        dependencyCell = document.getElementById('dependency-cell');
+    }
+
+    dependencyCell.innerHTML = '';
+    dependencyCell.appendChild(dependencyElement);
+    updateEventListener();
+    handleInput(inputObject);
 }
 
-function createTimeFrame(id) {
-    console.log('time frame:' + id);
 
+function handleTopCellTimeFrame(id) {
+
+    let inputObject = {
+        "id": id,
+        "inputID": "topCell",
+        "value": null
+    };
     const timeFrameElement = document.createElement('div');
 
     switch (id.toLowerCase()) {
@@ -240,16 +247,15 @@ function createTimeFrame(id) {
                 shiftOption.innerHTML = `${emoji} ⇨ ${name}`;
                 shiftOption.title = name;
                 shiftOption.value = val;
-                shiftOption.dataset.name = name; // Store name without emoji
+                shiftOption.dataset.name = name;
                 shiftOption.id = id + '-' + index;
                 shiftSelection.appendChild(shiftOption);
             });
 
-            // Attach event listener to updateHumanRole on change
             shiftSelection.addEventListener('change', function () {
                 const selectedOption = shiftSelection.options[shiftSelection.selectedIndex];
-                const shiftName = selectedOption.dataset.name; // Get name without emoji
-                updateHumanRule(id, shiftName);
+                inputObject.words = [selectedOption.dataset.name];
+                handleInput(inputObject);
             });
 
             timeFrameElement.appendChild(shiftSelection);
@@ -293,7 +299,7 @@ function createTimeFrame(id) {
 
                 const workdayCheckbox = document.createElement('input');
                 workdayCheckbox.type = 'checkbox';
-                workdayCheckbox.id = `workday-${workday.id}`;
+                workdayCheckbox.id = `${id}-checkbox-${workday.id}`;
                 workdayCheckbox.dataset.day = workday.name; // Store name in data attribute
 
                 const workdayLabel = document.createElement('label');
@@ -316,17 +322,15 @@ function createTimeFrame(id) {
                     .join('\ ');
 
                 console.log("Selected days:", selectedDays); // Log or update the UI
-                updateHumanRule(id, selectedDays);
+                handleInput(inputObject);
             }
 
             break;
         case 't3':
             timeFrameElement.innerHTML = 'Woche';
-            updateHumanRule(id, 'Woche');
             break;
         case 't4':
             timeFrameElement.innerHTML = 'Monat';
-            updateHumanRule(id, 'Monat');
             break;
         case 't5': {
             const outOfOfficeElement = document.createElement('div');
@@ -346,7 +350,7 @@ function createTimeFrame(id) {
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.classList.add('reason-checkbox');
-                checkbox.id = id + '-' + index;
+                checkbox.id = id + '-checkbox-' + index;
 
                 const label = document.createElement('label');
                 label.htmlFor = checkbox.id;
@@ -360,7 +364,6 @@ function createTimeFrame(id) {
 
                 checkboxes.push(checkbox);
 
-                // Listen for checkbox changes
                 checkbox.addEventListener('change', () => {
                     updateOutOfOfficeString();
                 });
@@ -377,8 +380,9 @@ function createTimeFrame(id) {
                         return outOfOfficeReasons[index].replace(/[^a-zA-ZäöüÄÖÜß\s]/g, '').trim(); // Remove emojis
                     });
 
-                const finalString = selectedReasons.join(', '); // Join all checked reasons
-                updateHumanRole(id, finalString); // Call function with concatenated string
+                const finalString = selectedReasons.join(', ');
+                inputObject.words = [finalString];
+                handleInput(inputObject);
             }
             break;
         }
@@ -398,47 +402,10 @@ function createTimeFrame(id) {
     timeCell.innerHTML = '';
     timeCell.appendChild(timeFrameElement);
     updateEventListener();
+    handleInput(inputObject);
 }
 
-function toggleHTMLOption(id, isVisible) {
-
-    const selectorMap = {
-        w: 'request-type-select-repeats',    // repeat
-        t: 'request-type-select-time',       // timeframe
-        a: 'request-type-select-amount',     // amount
-        g: 'request-type-select-group',      // role/group
-        d: 'request-type-select-dependency', // dependency
-        e: 'request-type-select-exception',  // exception
-    };
-
-    const selectorKey = id[0].toLowerCase();
-    let selectorName = selectorMap[selectorKey];
-
-    if (!selectorName) {
-        console.error(`Cannot find a selector for the given ID: "${id}".`);
-        return;
-    }
-
-    if (id[0] === id[0].toLowerCase()) {
-        selectorName = `ex-${selectorName}`;
-    }
-
-    const selectElement = document.getElementById(selectorName);
-    if (!selectElement) {
-        console.error(`Dropdown with selector name "${selectorName}" not found.`);
-        return;
-    }
-
-    const option = selectElement.querySelector(`option[value="${id}"]`);
-    if (option) {
-        option.disabled = !isVisible;
-        console.log(`Option with id "${id}" in "${selectorName}" is now ${isVisible ? "enabled" : "disabled"}.`);
-    } else {
-        console.warn(`Option with id "${id}" not found in "${selectorName}".`);
-    }
-}
-
-function createRoles(id) {
+function handleTopCellRoles(id) {
 
     const roleElement = document.createElement('div');
     roleElement.classList.add('noto');
@@ -459,11 +426,18 @@ function createRoles(id) {
             if (['❓', 'keine', '?', 'name'].includes(role.name)) return;
 
             const roleCheck = document.createElement('div');
-            roleCheck.style = "display: flex; align-items: center; width: 20%;  border-radius: 6px;"; // Adjust to 20% for 5 items per row
+            roleCheck.style = "display: flex; align-items: center; width: 20%; border-radius: 6px;";
 
             const roleCheckbox = document.createElement('input');
             roleCheckbox.type = 'checkbox';
-            roleCheckbox.id = id + '-' + index;
+
+            // ✅ ID: unique per role + block
+            roleCheckbox.id = `${id}-checkbox-${index}`;
+            // ✅ Consistent name for grouped checkboxes
+            roleCheckbox.name = 'selectedRoles';
+            // ✅ Optional: include role label as data
+            roleCheckbox.dataset.day = role.name;
+
             roleCheck.appendChild(roleCheckbox);
 
             const multiRoleEmoji = document.createElement('mark');
@@ -481,11 +455,16 @@ function createRoles(id) {
         });
 
         roleElement.appendChild(checkboxesContainer);
+
     } else if (id.toLowerCase() === 'g0') {
 
         const singleRoleSelection = document.createElement('select');
         singleRoleSelection.classList.add('role-select', 'noto');
-        singleRoleSelection.id = id + '-1';
+
+        // ✅ Set a unique ID and inputID
+        singleRoleSelection.id = `${id}-select`;
+        singleRoleSelection.name = 'roleIndicee';
+
         ruleRoles.forEach((role, index) => {
             if (['❓', 'keine', '?', 'name'].includes(role.name)) return;
 
@@ -500,16 +479,16 @@ function createRoles(id) {
             singleRoleSelection.appendChild(singleRoleOption);
         });
 
-        if (ruleRoles.length > 0) {
-            const firstRole = ruleRoles.find((role) => !['❓', 'keine', '?', 'name'].includes(role.name));
-            if (firstRole) {
-                const initialColor = getComputedStyle(document.documentElement).getPropertyValue(
-                    `--role-${firstRole.colorIndex}-color`
-                );
-                singleRoleSelection.style.backgroundColor = initialColor;
-            }
+        // Initial background color for select
+        const firstRole = ruleRoles.find((role) => !['❓', 'keine', '?', 'name'].includes(role.name));
+        if (firstRole) {
+            const initialColor = getComputedStyle(document.documentElement).getPropertyValue(
+                `--role-${firstRole.colorIndex}-color`
+            );
+            singleRoleSelection.style.backgroundColor = initialColor;
         }
 
+        // Handle style update on change
         singleRoleSelection.addEventListener('change', (event) => {
             const selectedOption = singleRoleSelection.options[singleRoleSelection.selectedIndex];
             singleRoleSelection.style.backgroundColor = selectedOption.style.backgroundColor;
@@ -517,7 +496,6 @@ function createRoles(id) {
 
         roleElement.appendChild(singleRoleSelection);
     }
-
 
     let roleCell;
     if (id[0] === id[0].toLowerCase()) {
@@ -532,8 +510,9 @@ function createRoles(id) {
 }
 
 
-function createException(id) {
-    console.log('exception:' + id);
+function handleTopCellException(id) {
+    console.log("Creating exception with ID:", id);
+
     const exceptionTexts = {
         E0: ' - - - ',
         E1: 'und',
@@ -541,25 +520,30 @@ function createException(id) {
         E3: 'aber',
         E4: 'außer',
         E5: 'aber nicht mehr als',
-        E6: 'aber nicht weniger',
+        E6: 'aber nicht weniger als',
     };
 
-    if (id !== 'E0') {
-        updateHumanRule(id, exceptionTexts[id]);
-    }
-    const exceptionElement = document.createElement('div');
-    exceptionElement.classList.add('noto');
-    exceptionElement.innerHTML = exceptionTexts[id] || 'Unbekannte Ausnahme';
+    let inputObject = {
+        id: id,
+        inputID: "topCell",
+        value: id
+    };
 
-    toggleExceptionTable(id !== 'E0');
     const exceptionCell = document.getElementById('exception-cell');
     exceptionCell.innerHTML = '';
-    exceptionCell.appendChild(exceptionElement);
+
+    const exceptionLabel = document.createElement('div');
+    exceptionLabel.classList.add('noto');
+    exceptionLabel.innerHTML = exceptionTexts[id] || 'Unbekannte Ausnahme';
+
+    exceptionCell.appendChild(exceptionLabel);
+
     updateEventListener();
+    handleInput(inputObject);
 }
 
-function createNumberInput(id) {
-    console.log('number:' + id);
+
+function handleTopCellNumberInput(id) {
     const container = document.createElement('div');
     container.classList.add('inputRow');
 
@@ -569,14 +553,20 @@ function createNumberInput(id) {
     const input1 = document.createElement('input');
     input1.type = 'number';
     input1.classList.add('rule-number-input');
-    input1.value = 1;
-    input1.id = id + '-1';
+    input1.value = 1; // Default value
+    input1.id = id + '-number1';
 
     const input2 = document.createElement('input');
     input2.type = 'number';
     input2.classList.add('rule-number-input');
-    input2.value = 1;
-    input2.id = id + '-2';
+    input2.value = 2; // Default value
+    input2.id = id + '-number2';
+
+    let inputObject = {
+        "id": id,
+        "inputID": "topCell",
+        "value": null
+    };
 
     switch (id.toLowerCase()) {
         case 'w0':
@@ -587,13 +577,11 @@ function createNumberInput(id) {
         case 'w1':
             numLabel.innerHTML = 'jede(n)';
             container.append(numLabel);
-            updateHumanRule(id, 'jede');
             break;
 
         case 'w2':
             numLabel.innerHTML = 'niemals';
             container.append(numLabel);
-            updateHumanRule(id, 'niemals');
             break;
 
         case 'w3':
@@ -604,7 +592,6 @@ function createNumberInput(id) {
         case 'a0':
             numLabel.innerHTML = 'alle';
             container.append(numLabel);
-            updateHumanRule(id, 'alle');
             break;
 
         case ("a1"): // about 🧩
@@ -615,7 +602,6 @@ function createNumberInput(id) {
         case ("a2"): // no 🧩  
             numLabel.innerHTML = 'keine(r) ';
             container.append(numLabel);
-            updateHumanRule(id, 'keine');
             break;
 
         case ("a3"): // between 🧩 
@@ -675,15 +661,7 @@ function createNumberInput(id) {
     numberCell.innerHTML = '';
     numberCell.appendChild(container);
     updateEventListener();
-}
-
-function toggleExceptionTable(isActive) {
-    const exceptionTable = document.querySelector('.rule-table:nth-of-type(2)');
-    if (exceptionTable) {
-        exceptionTable.classList.toggle('inactive', !isActive);
-    } else {
-        console.warn("Exception table not found.");
-    }
+    handleInput(inputObject);
 }
 
 function updateEventListener() {
@@ -693,44 +671,104 @@ function updateEventListener() {
         console.error("Error: 'rule-form-container' element not found.");
         return;
     }
-    container.removeEventListener('change', handleContainerChange);
-    container.addEventListener('change', handleContainerChange);
+
+    container.removeEventListener('change', handleDynamicInputChange);
+
+    container.addEventListener('change', (event) => {
+        const parentContainer = event.target.closest('.inputRow') || event.target.closest('tbody');
+        if (!parentContainer) return;
+
+        handleDynamicInputChange(event);
+    });
 }
 
-function handleContainerChange(event) {
-    const firstTableSelector = '#firstTableSecondSteps input, #firstTableSecondSteps select';
-    const secondTableSelector = '#secondTableSecondSteps input, #secondTableSecondSteps select';
-
-    const validTarget = event.target.matches(`${firstTableSelector}, ${secondTableSelector}`);
-    if (!validTarget) return;
-
+function handleDynamicInputChange(event) {
     const element = event.target;
-    const logMessage = `Element ${element.id} updated: `;
 
-    let parentID = element.id.slice(0, 2);
-    let humanText;
-
-    switch (true) {
-        case (element.type === 'checkbox'):
-            console.log(`${logMessage}Checkbox changed to ${element.checked}`);
-            humanText = element.label;
-            break;
-
-        case (element.tagName === 'SELECT'):
-            const selectedOption = element.options[element.selectedIndex];
-            if (!selectedOption) return;
-            console.log(`${logMessage}Dropdown changed: ${selectedOption.value} - ${selectedOption.title}`);
-            humanText = selectedOption.value;
-            break;
-
-        case (element.type === 'number'):
-            console.log(`${logMessage}Number input changed to ${element.value}`);
-            humanText = element.value.toString();
-            break;
-
-        default:
-            console.log(`${logMessage}Unhandled element type`);
+    const idParts = element.id.split('-');
+    if (idParts.length < 2) {
+        console.warn("Invalid ID format:", element.id);
+        return;
     }
-    validateInput(parentID);
-    updateHumanRule(parentID, humanText);
+
+    const elementId = idParts[0];
+    const inputID = idParts[1];
+    let index = idParts.slice(2).join('-');
+
+    console.log(`Element ID: ${elementId} | Input ID: ${inputID} | Extra Info: ${index}`);
+
+    let value;
+
+    if (element.type === 'number') {
+        value = parseFloat(element.value) || 0;
+    } else if (element.tagName === 'SELECT') {
+        value = element.value;
+    } else if (element.type === 'checkbox') {
+
+        const parentContainer = element.closest('.inputRow') || element.closest('tbody');
+        const checkboxes = parentContainer.querySelectorAll(`input[type="checkbox"][name="${element.name}"]`);
+        value = Array.from(checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.dataset.day || cb.id || cb.value);
+    } else {
+        value = element.value;
+    }
+
+    const inputObject = {
+        id: elementId,
+        inputID: inputID,
+        value: value
+    };
+
+    console.log("Dynamically Constructed Input:", inputObject);
+    handleInput(inputObject);
 }
+
+
+function handleInput(inputObject) {
+    console.log("Received Input:", inputObject);
+
+    const noSelectionIDs = ['W0', 'T0', 'E0'];
+    const mandatoryDefaultIds = ['A0', 'G0', 'D0'];
+    const singleLevelIds = ['W1', 'W2', 'T3', 'T4', 'A0', 'A2', 'D0', 'D1', 'E0', 'E1', 'E2', 'E3', 'E4', 'E5', 'E6'];
+
+
+    // if (singleLevelIds.includes(inputObject.id)) {
+    //     console.log("Single-level input detected, processing immediately...");
+    // 
+    //     processSingleLevelInput(inputObject);
+    //     return;
+    // }
+
+    const checkedRule = checkInput(inputObject);
+    console.log("Checked Rule:", checkedRule);
+
+    const machineRule = updateMachineRule(checkedRule);
+    console.log("Machine Rule:", machineRule);
+
+    const humanRule = updateHumanRule(machineRule);
+    console.log("Human Rule:", humanRule);
+
+    updateWizzard(inputObject);
+    // displayResults(checkedRule, machineRule, humanRule);
+}
+
+// function processSingleLevelInput(inputObject) {
+//     console.log("Processing single-level input:", inputObject);
+
+// Skip checking & machine conversion → Store directly
+// rules[inputObject.id] = inputObject;
+
+// Update UI instantly
+// const exceptionCell = document.getElementById('exception-cell');
+// exceptionCell.innerHTML = exceptionTexts[inputObject.id] || 'Unbekannte Ausnahme';
+
+// console.log("UI updated:", exceptionCell.innerHTML);
+// }
+
+function displayResults(checked, machine, human) {
+    document.getElementById("checkedRule").innerText = JSON.stringify(checked, null, 2);
+    document.getElementById("machineRule").innerText = JSON.stringify(machine, null, 2);
+    document.getElementById("humanRule").innerText = human;
+}
+

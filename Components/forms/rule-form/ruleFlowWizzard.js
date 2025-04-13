@@ -1,4 +1,4 @@
-import { getDictionaryEntry, applyGrammaticalContext } from "./dicctionary";
+import { getDictionaryEntry, applyGrammaticalContext } from "./dicctionary.js";
 
 const ruleCellsIDs = {
     W: ["repead-header", "repeat-cell"],
@@ -57,7 +57,14 @@ function clearHighlight(id, isHighlight) {
     });
 }
 
+function normalizeValue() { }
+
 export function updateWizzard(id, rawValue = null) {
+    if (!Array.isArray(id) || !id[0]) {
+        console.warn(`Invalid id passed: ${id}`);
+        return; // exit early if id is invalid
+    }
+
     const currentConfig = workflowPaths[currentState.path];
     const currentStep = currentConfig.sequence[currentState.step];
 
@@ -70,12 +77,13 @@ export function updateWizzard(id, rawValue = null) {
     normalizeValue(id);
     const entry = getDictionaryEntry(id[0].toLowerCase(), id);
     if (entry) {
-        currentState.context[category] = { value, metadata: entry.metadata };
+        // currentState.context[category] = { value, metadata: entry.metadata };
         applyGrammaticalContext(currentConfig, currentStep);
     }
     moveToNextStep(currentConfig);
     updateUI();
 }
+
 
 function moveToNextStep(config) {
     currentState.step++;
@@ -110,6 +118,73 @@ function updateUI() {
     clearAllHighlights();
     const currentStep = workflowPaths[currentState.path].sequence[currentState.step];
     clearHighlight(ruleCellsIDs[currentStep], true);
+}
+
+function toggleHTMLOption(id, isVisible) {
+
+    const selectorMap = {
+        w: 'request-type-select-repeats',    // repeat
+        t: 'request-type-select-time',       // timeframe
+        a: 'request-type-select-amount',     // amount
+        g: 'request-type-select-group',      // role/group
+        d: 'request-type-select-dependency', // dependency
+        e: 'request-type-select-exception',  // exception
+    };
+
+    const selectorKey = id[0].toLowerCase();
+    let selectorName = selectorMap[selectorKey];
+
+    if (!selectorName) {
+        console.error(`Cannot find a selector for the given ID: "${id}".`);
+        return;
+    }
+
+    if (id[0] === id[0].toLowerCase()) {
+        selectorName = `ex-${selectorName}`;
+    }
+
+    const selectElement = document.getElementById(selectorName);
+    if (!selectElement) {
+        console.error(`Dropdown with selector name "${selectorName}" not found.`);
+        return;
+    }
+
+    const option = selectElement.querySelector(`option[value="${id}"]`);
+    if (option) {
+        option.disabled = !isVisible;
+        console.log(`Option with id "${id}" in "${selectorName}" is now ${isVisible ? "enabled" : "disabled"}.`);
+    } else {
+        console.warn(`Option with id "${id}" not found in "${selectorName}".`);
+    }
+}
+
+export function toggleExceptionTable(isActive) {
+    const exceptionTable = document.querySelector('.rule-table:nth-of-type(2)');
+    if (exceptionTable) {
+        exceptionTable.classList.toggle('inactive', !isActive);
+    } else {
+        console.warn("Exception table not found.");
+    }
+}
+
+function checkException(id, mainCondition, exceptionCondition) {
+    switch (id) {
+        case "E0": // No exception
+            return mainCondition;
+        case "E1": // AND condition
+            return mainCondition && exceptionCondition;
+        case "E2": // OR condition
+            return mainCondition || exceptionCondition;
+        case "E3": // BUT: override if conditions differ
+            return mainCondition === exceptionCondition ? mainCondition : exceptionCondition;
+        case "E4": // EXCEPT: prioritize exception if true
+            return exceptionCondition ? exceptionCondition : mainCondition;
+        case "E5": // NOT MORE THAN (inverse logic)
+            return exceptionCondition ? mainCondition : exceptionCondition;
+        case "E6": // NOT LESS THAN (similar inverse logic)
+            return exceptionCondition ? mainCondition : exceptionCondition;
+    }
+    return true; // Default: main condition stands if no match
 }
 
 export { workflowPaths, clearAllHighlights, clearHighlight };
