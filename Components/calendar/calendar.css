@@ -132,13 +132,15 @@
   max-width: 35px !important;
   flex-grow: 0;
 }
-
+.closed-office {
+  background-color: var(--office-closed-color);
+}
 .day-column.sunday.shrink {
-  background-color: tomato;
+  background-color: var(--office-closed-color);
 }
 
 .sunday {
-  background-color: tomato;
+  background-color: var(--office-closed-color);
 }
 
 .kw-column.shrink {

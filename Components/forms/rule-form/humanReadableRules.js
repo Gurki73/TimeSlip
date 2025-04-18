@@ -15,6 +15,17 @@ function applyTypingEffect(element) {
     }, typingSpeed);
 }
 
+function getLimitText(bottom, upper) {
+    if (bottom === Infinity && upper === 0) return "niemals";
+    if (bottom === 0 && upper === Infinity) return ""; // always – no need to say anything
+    if (bottom === 0 && upper !== Infinity) return `höchstens ${upper}`;
+    if (bottom !== Infinity && upper === Infinity) return `mindestens ${bottom}`;
+    if (bottom === upper) return `genau ${bottom}`;
+    if (bottom < upper) return `mindestens ${bottom} und höchstens ${upper}`;
+
+    // Fallback: invalid config (e.g., bottom > upper)
+    return `⚠️ Ungültige Grenzwerte: mindestens ${bottom}, höchstens ${upper}`;
+}
 
 export function updateHumanRule(machineRuleObject) {
     const humanTextField = document.getElementById('typing-text');

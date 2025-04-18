@@ -1,6 +1,7 @@
 let regularRule = {};
 let irregularRule = {};
 
+
 export function initMachineRule() {
     // Add event listener to the save button
     const saveButton = document.getElementById("save-rule-button");
@@ -13,7 +14,7 @@ export function initMachineRule() {
 export function updateMachineRule(inputObject) {
     irregularRule = {};
     regularRule = {};
-
+    // what if one condition is regular but the other not?
     if (inputObject.T !== 'T5' && inputObject.t !== 't5') {
         return createRegularRule(inputObject);
     } else {
@@ -22,53 +23,52 @@ export function updateMachineRule(inputObject) {
 }
 
 function createIrregularRule(inputObject) {
+    /*
+    irregular rules are applies when no regular shedule (month, week, day or shift is applied)
+    but for situation like homeOffice or tradeSchool
+
+    checkpoint ? not from calendar but from requests
+    roles?
+    limits?
+    */
+
     irregularRule = { id: inputObject.T, note: "Irregular rule placeholder" };
     return irregularRule;
 }
 
 function createRegularRule(inputObject) {
-    const regularRule = {
-        W: { id: inputObject.W.id, repeats: inputObject.W.number1 ?? 0 },
-        T: { id: inputObject.T.id, level: 'daily', days: [{ day: "mo", shift: "full" }] },
-        A: {
-            id: inputObject.A.id,
-            bottomLimit: inputObject.A.number1 ?? 0,
-            upperLimit: inputObject.A.number2 ?? Infinity
-        },
-        G: {
-            id: inputObject.G.id,
-            roles: [0, 1, 2],
-            isAnd: true
-        },
-        D: {
-            id: inputObject.D.id,
-            level: 'daily',
-            days: [{ day: "mo", shift: "full" }],
-            secondaryRoles: [0, 1, 2],
-            isAnd: true,
-            Ratio: 1
-        },
-        E: { id: inputObject.E.id },
+    /*
+    Regular rules applies for normal shedule, not for absent roles
 
-        w: { id: inputObject.w.id, repeats: inputObject.w.number1 ?? 0 },
-        t: { id: inputObject.t.id, level: 'daily', days: [{ day: "mo", shift: "full" }] },
-        a: {
-            id: inputObject.a.id,
-            bottomLimit: inputObject.a.number1 ?? 0,
-            upperLimit: inputObject.a.number2 ?? Infinity
+    - when to check? month, week, day(s), shift(s), none , all
+    - what to count? roles, in or outof office, role to role
+    - how many? limits 
+    - which logic for second condition?
+
+    ==> two simular checks (condition 1) (logic operator) (condition 2)
+    ==> checkpoints (month, week, day(s), shifts)
+    ==> if rolr to role check, create a limit for second role based on first role and only check second role simular to standart check
+    ==> limits for groups, always as range
+    */
+    const machineRule = {
+        "condition1": {
+            isRegular: true,
+            checkpoint: [],
+            flagType: "daily",
+            upperLimit: Infinity,
+            bottomLimit: 0,
+            leadingRoles: [],
+            followingRoles: [],
         },
-        g: {
-            id: inputObject.g.id,
-            roles: [0, 1, 2],
-            isAnd: true
-        },
-        d: {
-            id: inputObject.d.id,
-            level: 'daily',
-            days: [{ day: "mo", shift: "full" }],
-            secondaryRoles: [0, 1, 2],
-            isAnd: true,
-            Ratio: 1
+        "logicOperator": "none",
+        "condition2": {
+            isRegular: true,
+            checkpoint: [],
+            flagType: "daily",
+            upperLimit: Infinity,
+            bottomLimit: 0,
+            leadingRoles: [],
+            followingRoles: [],
         }
     };
     return regularRule;

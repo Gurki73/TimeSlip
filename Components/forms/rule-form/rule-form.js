@@ -8,6 +8,7 @@ import { updateHumanRule } from './humanReadableRules.js';
 let ruleRoles;
 let ruleOfficeDays;
 let api;
+let eventDelegationInitialized = false;
 
 export async function initializeRuleForm(passedApi) {
 
@@ -52,11 +53,36 @@ export async function initializeRuleForm(passedApi) {
     handleTopCellRoles('G0');
     handleTopCellNumberInput('A1');
     handleTopCellDependency('D0');
-    updateEventListener();
+
+    // Switched to using event delegation to avoid stacking anonymous event listeners on each dynamic input element.
+    // This ensures scalability and independence from attaching individual listeners to each input.
+    // No more manual calls for updating event listeners; they are handled dynamically by the parent container.
+    initEventDelegation();
     initMachineRule();
+
     initVisibilityChecker();
 }
+function handleDelegatedChange(event) {
+    const target = event.target;
 
+    // only inputs inside valid rows
+    if (!target.matches('input, select, textarea')) return;
+    const row = target.closest('.inputRow') || target.closest('tbody');
+    if (!row) return;
+
+    const inputObject = extractInputObjectFromElement(target);
+    handleInput(inputObject);
+}
+
+function initEventDelegation() {
+    if (eventDelegationInitialized) return;
+
+    const container = document.getElementById('rule-form-container');
+    if (!container) return;
+
+    container.addEventListener('change', handleDelegatedChange);
+    eventDelegationInitialized = true;
+}
 function resetInput() {
     console.log("reset rule button was pressed");
 
@@ -67,10 +93,35 @@ function resetInput() {
         select.selectedIndex = 0;
         select.dispatchEvent(new Event('change'));
     });
-
-    updateEventListener();
 }
 
+function extractInputObjectFromElement(element) {
+    const idParts = element.id.split('-');
+    const elementId = idParts[0];
+    const inputID = idParts[1];
+    const index = idParts.slice(2).join('-');
+
+    let value;
+    if (element.type === 'number') {
+        value = parseFloat(element.value) || 0;
+    } else if (element.tagName === 'SELECT') {
+        value = element.value;
+    } else if (element.type === 'checkbox') {
+        const parent = element.closest('.inputRow') || element.closest('tbody');
+        const checkboxes = parent.querySelectorAll(`input[type="checkbox"][name="${element.name}"]`);
+        value = Array.from(checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.dataset.day || cb.id || cb.value);
+    } else {
+        value = element.value;
+    }
+
+    return {
+        id: elementId,
+        inputID: inputID,
+        value: value
+    };
+}
 
 function initializeInputFunctions() {
 
@@ -199,7 +250,6 @@ function handleTopCellDependency(id) {
 
     dependencyCell.innerHTML = '';
     dependencyCell.appendChild(dependencyElement);
-    updateEventListener();
     handleInput(inputObject);
 }
 
@@ -401,7 +451,6 @@ function handleTopCellTimeFrame(id) {
 
     timeCell.innerHTML = '';
     timeCell.appendChild(timeFrameElement);
-    updateEventListener();
     handleInput(inputObject);
 }
 
@@ -506,7 +555,6 @@ function handleTopCellRoles(id) {
 
     roleCell.innerHTML = '';
     roleCell.appendChild(roleElement);
-    updateEventListener();
 }
 
 
@@ -538,7 +586,6 @@ function handleTopCellException(id) {
 
     exceptionCell.appendChild(exceptionLabel);
 
-    updateEventListener();
     handleInput(inputObject);
 }
 
@@ -660,26 +707,7 @@ function handleTopCellNumberInput(id) {
     }
     numberCell.innerHTML = '';
     numberCell.appendChild(container);
-    updateEventListener();
     handleInput(inputObject);
-}
-
-function updateEventListener() {
-    const container = document.getElementById('rule-form-container');
-
-    if (!container) {
-        console.error("Error: 'rule-form-container' element not found.");
-        return;
-    }
-
-    container.removeEventListener('change', handleDynamicInputChange);
-
-    container.addEventListener('change', (event) => {
-        const parentContainer = event.target.closest('.inputRow') || event.target.closest('tbody');
-        if (!parentContainer) return;
-
-        handleDynamicInputChange(event);
-    });
 }
 
 function handleDynamicInputChange(event) {

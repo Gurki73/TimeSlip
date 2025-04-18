@@ -62,7 +62,7 @@
 }
 
 .calendar-form-right-column {
-    background-color: tomato; /* Debugging */
+    background-color: var(--office-closed-color); /* Debugging */
 }
 
 img#calendar-form-state-flag {

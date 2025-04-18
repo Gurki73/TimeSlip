@@ -3,19 +3,41 @@ import { toggleExceptionTable } from "./ruleFlowWizzard.js";
 import { getTotalEmployeesByRole } from "../../../js/loader/employee-loader.js";
 import { updateMachineRule } from "./machineReadableRules.js";
 
+// TO:DO - finalize full RuleState enum with validation logic & field awareness
+const RuleState = Object.freeze({
+    EMPTY: { label: "empty", icon: "◻️", action: "pass" },
+    DISABLED: { label: "disabled", icon: "🚫", action: "pass" },
+    SATISFIED: { label: "satisfied", icon: "✅", action: "pass" },
+
+    PLACEHOLDER: { label: "placeholder", icon: "🧩", action: "warn" }, // needs attention
+    RELATION: { label: "relation", icon: "🔗", action: "warn" }, // likely partial
+    NUMERIC: { label: "numeric", icon: "📊", action: "warn" }, // maybe partial
+
+    INCOMPLETE: { label: "incomplete", icon: "⚠️", action: "error" },
+    REDUNDANT: { label: "redundant", icon: "♻️", action: "warn" },
+    INCOHERENT: { label: "incoherent", icon: "❌", action: "error" },
+
+    // TO:DO - refactor placeholder variants into a system (maybe placeholder types: role, time, etc.)
+    WARNING_AMBIGUOUS: { label: "warning:ambiguous-placeholder", icon: "⚠️", action: "warn" },
+    ERROR_CONFLICT: { label: "error:conflict", icon: "❌", action: "error" }
+});
+
 const newRule = {
-    "W": { "id": "W0", "number1": 0, "number2": Infinity },
-    "T": { "id": "T0", "words": [] },
-    "A": { "id": "A0", "number1": 0, "number2": Infinity },
-    "G": { "id": "G0", "words": [] },
-    "D": { "id": "D0", "number1": 0, "words": [] },
-    "E": { "id": "E0" },
-    "w": { "id": "w0", "number1": 0, "number2": Infinity },
-    "t": { "id": "t0", "words": [] },
-    "a": { "id": "a0", "number1": 0, "number2": Infinity },
-    "g": { "id": "g0", "words": [] },
-    "d": { "id": "d0", "number1": 1, "words": [] }
+    "lastCategoryChanged": "x",
+    "W": { "id": "W0", "state": RuleState.EMPTY, "bottomLimit": 0, "upperLimit": Infinity },
+    "T": { "id": "T0", "state": RuleState.Empty, "indices": [] },
+    "A": { "id": "A0", "state": RuleState.PLACEHOLDER, "bottomLimit": 0, "upperLimit": Infinity },
+    "G": { "id": "G0", "state": RuleState.PLACEHOLDER, "indices": [] },
+    "D": { "id": "D0", "state": RuleState.PLACEHOLDER, "uperLimit": 0, "indices": 0 },
+    "E": { "id": "E0", "state": RuleState.Empty, },
+    "w": { "id": "w0", "state": RuleState.PLACEHOLDER, "bottomLimit": 0, "upperLimit": Infinity },
+    "t": { "id": "t0", "state": RuleState.PLACEHOLDER, "calendarEntries": [] },
+    "a": { "id": "a0", "state": RuleState.PLACEHOLDER, "bottomLimit": 0, "upperLimit": Infinity },
+    "g": { "id": "g0", "state": RuleState.PLACEHOLDER, "roleIndices": [] },
+    "d": { "id": "d0", "state": RuleState.PLACEHOLDER, "upperLimit": 1, "indices": [] }
 };
+
+
 
 const ruleRelations = [
     { id: 'd0', forbidden: ['t4'], mandatory: ['exception'], warning: 'contradiction' },
@@ -96,6 +118,7 @@ function checkDependencies(id, role1, role2, ratio1, ratio2) {
 export function checkInput(inputObject) {
     const category = inputObject.id[0];
 
+    currentRule.lastCategoryChanged = inputObject.id;
     updateCurrentRule(category, inputObject);
     checkRuleConsistency();
     showWarnings();
@@ -114,71 +137,117 @@ function updateCurrentRule(category, inputObject) {
 
     currentRule[category].id = inputObject.id;
 
-    // 🔹 Handle rules that only update words
-    if (["t2", "T2"].includes(inputObject.id)) {
-        currentRule[category].words = inputObject.words;
-        return;
+    if (inputObject.id === "E0") {
+        console.log(" disabled second condition");
+        currentRule["E"].state = RuleState.EMPTY;
+        currentRule["w"].state = RuleState.DISABLED;
+        currentRule["t"].state = RuleState.DISABLED;
+        currentRule["a"].state = RuleState.DISABLED;
+        currentRule["g"].state = RuleState.DISABLED;
+        currentRule["d"].state = RuleState.DISABLED;
+
     }
 
-    // 🔹 Handle rules that update both numbers and words
-    if (["w3", "W3"].includes(inputObject.id)) {
-        currentRule[category].words = inputObject.words;
-        currentRule[category].number1 = inputObject.number1;
-        checkNumberInput(inputObject.id, inputObject.number1);
-        return;
-    }
+    switch (inputObject.inputID) {
+        case "number1":
+            currentRule[category].bottomLimit = inputObject.value;
+            console.log("checker nubmber 1");
+            break;
+        case "number2":
+            currentRule[category].upperLimit = inputObject.value;
+            console.log("checker nubmber 2");
+            break;
+        case "checkboxes":
+            currentRule[category].bottomLimit = inputObject.value;
+            console.log("checker checkboxes");
+            break;
+        case "topCell":
+            const newCat = newRule[category] || {};
 
-    // 🔹 Handle "A" or "a" followed by specific numbers
-    if (["a", "A"].includes(inputObject.id[0]) && "14568".includes(inputObject.id[1])) {
-        currentRule[category].words = inputObject.words;
-        if (["a", "A"].includes(inputObject.id[0]) && "14568".includes(inputObject.id[1])) {
-            currentRule[category].words = inputObject.words;
-
-            if (inputObject.id.length > 2 && inputObject.id[2] === "-") {
-                if (inputObject.id[3] === "1") currentRule[category].number1 = inputObject.number1;
-                if (inputObject.id[3] === "2") currentRule[category].number2 = inputObject.number2;
-
-                inputObject.id = inputObject.id.substring(0, inputObject.id.length - 2);
-            } else {
-                currentRule[category].number1 = inputObject.number1;
+            if ('bottomLimit' in newCat) {
+                currentRule[category].bottomLimit = newCat.bottomLimit;
             }
 
-            checkNumberInput(inputObject.id, inputObject.number1);
-            return;
-        }
-        checkNumberInput(inputObject.id, inputObject.number1);
-        return;
-    }
+            if ('upperLimit' in newCat) {
+                currentRule[category].upperLimit = newCat.upperLimit;
+            }
 
-    if (["d2", "D2", "d3", "D3"].includes(inputObject.id)) {
-        currentRule[category].number1 = inputObject.number1;
-        checkNumberInput(inputObject.id, inputObject.number1);
-        return;
-    }
+            if ('indices' in newCat) {
+                currentRule[category].indices = newCat.indices;
+            }
+            console.log("checker top cell");
+            break;
 
-    if (["d4", "D4", "a3", "A3"].includes(inputObject.id)) {
-        Object.assign(currentRule[category], {
-            words: inputObject.words,
-            number1: inputObject.number1,
-            number2: inputObject.number2
-        });
-        checkNumberInput(inputObject.id, inputObject.number1);
-        checkNumberInput(inputObject.id, inputObject.number2);
-        return;
+        case "select":
+            currentRule[category].bottomLimit = inputObject.value;
+            console.log("checker select");
+            break;
     }
+    // 🔹 Handle rules that only update words
+    // if (["t2", "T2"].includes(inputObject.id)) {
+    //     currentRule[category].words = inputObject.words;
+    //     return;
+    // }
+
+    // 🔹 Handle rules that update both numbers and words
+    // if (["w3", "W3"].includes(inputObject.id)) {
+    //     currentRule[category].words = inputObject.words;
+    //     currentRule[category].number1 = inputObject.number1;
+    //     checkNumberInput(inputObject.id, inputObject.number1);
+    //     return;
+    // }
+
+    // 🔹 Handle "A" or "a" followed by specific numbers
+    //if (["a", "A"].includes(inputObject.id[0]) && "14568".includes(inputObject.id[1])) {
+    //    currentRule[category].words = inputObject.words;
+    //    if (["a", "A"].includes(inputObject.id[0]) && "14568".includes(inputObject.id[1])) {
+    //        currentRule[category].words = inputObject.words;
+    //
+    //        if (inputObject.id.length > 2 && inputObject.id[2] === "-") {
+    //            if (inputObject.id[3] === "1") currentRule[category].number1 = inputObject.number1;
+    //            if (inputObject.id[3] === "2") currentRule[category].number2 = inputObject.number2;
+    //
+    //            inputObject.id = inputObject.id.substring(0, inputObject.id.length - 2);
+    //        } else {
+    //            currentRule[category].number1 = inputObject.number1;
+    //        }
+    //
+    //        checkNumberInput(inputObject.id, inputObject.number1);
+    //        return;
+    //    }
+    //    checkNumberInput(inputObject.id, inputObject.number1);
+    //    return;
+    //}
+
+    //if (["d2", "D2", "d3", "D3"].includes(inputObject.id)) {
+    //    currentRule[category].number1 = inputObject.number1;
+    //    checkNumberInput(inputObject.id, inputObject.number1);
+    //    return;
+    //}
+    //
+    //if (["d4", "D4", "a3", "A3"].includes(inputObject.id)) {
+    //    Object.assign(currentRule[category], {
+    //        words: inputObject.words,
+    //        number1: inputObject.number1,
+    //        number2: inputObject.number2
+    //    });
+    //    checkNumberInput(inputObject.id, inputObject.number1);
+    //    checkNumberInput(inputObject.id, inputObject.number2);
+    //    return;
+    //}
 
     // 🔹 Handle Group-based Rules (G)
-    if (["g0", "G0"].includes(inputObject.id)) {
-        currentRule[category].words = inputObject.words.length > 0 ? inputObject.words[0] : roles[0];
-        return;
-    }
-
-    if (["g1", "G1", "G2", "G3"].includes(inputObject.id)) {
-        currentRule[category].words = inputObject.words.length > 1
-            ? inputObject.words
-            : [inputObject.words.length > 0 ? inputObject.words[0] : roles[0]];
-        return;
-    }
+    //if (["g0", "G0"].includes(inputObject.id)) {
+    //    currentRule[category].words = inputObject.words.length > 0 ? inputObject.words[0] : roles[0];
+    //    return;
+    //}
+    //
+    //if (["g1", "G1", "G2", "G3"].includes(inputObject.id)) {
+    //    currentRule[category].words = inputObject.words.length > 1
+    //        ? inputObject.words
+    //        : [inputObject.words.length > 0 ? inputObject.words[0] : roles[0]];
+    //    return;
+    //}
 }
 
 function checkNumberInput(id, number) {

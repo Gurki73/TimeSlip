@@ -443,13 +443,12 @@ function createDayCellHeader(day, dayCell, holidayDetails, companyClosed) {
     specialDay.textContent = holidayDetails.emoji;
     specialDay.title = holidayDetails.name;
     dayCell.classList.add('holiday');
-    dayCell.style.backgroundColor = 'tomato';
+    dayCell.classList.add('closed-office');
     renderEmployees = false;
   } else if (companyClosed) {
     specialDay.textContent = '🔒';
     specialDay.title = 'Betriebsferien';
     dayCell.classList.add('closed-office');
-    dayCell.style.backgroundColor = '#F08080';
     renderEmployees = false;
   }
 
