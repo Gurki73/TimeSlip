@@ -1,0 +1,42 @@
+.theme-dark {
+    --role-0-color: #1e1e1e;
+    --role-1-color: #7aa2f7;
+    --role-2-color: #5c8aff;
+    --role-3-color: #9f7aea;
+    --role-4-color: #9ae6b4;
+    --role-5-color: #f6e05e;
+    --role-6-color: #48bb78;
+    --role-7-color: #ed64a6;
+    --role-8-color: #f56565;
+    --role-9-color: #c53030;
+    --role-10-color: #a0aec0;
+    --role-11-color: #6b46c1;
+    --role-12-color: #e2e8f0;
+    --role-13-color: #f6ad55;
+    --button-active-color: #535a64;
+    --button-inactive-color: #4b5563;
+    --button-hover-color: #232d42;
+    --list-item-color: #2d2d2d;
+    --office-closed-color: #462f2f;
+    
+    --bg-white: #1e1e1e;
+    --bg-soft-white: #2b2b2b;
+    --bg-inactive: #3b3b3b;
+    
+    --accent-active: rgb(95, 40, 95);
+    --accent-hover: #c792ea;
+    --accent-inactive: #666;
+    --accent-muted: #444;
+
+    --text-color: limegreen;
+
+    --calendar-day-closed-bg: brown;
+    --calendar-day-regular-bg: blue;
+    --calendar-day-weekend-bg: green;
+    --calendar-day-holiday-bg: red;
+
+    --calendar-shift-early-bg: darkgray;
+    --calendar-shift-day-bg: black;
+    --calendar-shift-late-bg: darkorange;
+    }
+  

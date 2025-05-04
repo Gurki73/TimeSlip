@@ -1,6 +1,14 @@
 let regularRule = {};
 let irregularRule = {};
 
+// Logic Connectors:
+// E0: Only condition A – no combination, single condition applies.
+// E1: A AND B – both conditions must be true.
+// E2: A OR B – at least one of the conditions must be true.
+// E3: A XOR B – exactly one condition must be true (mutually exclusive). ( !a && b)||(A && !B)
+// E4: A UNLESS B – condition B overrides/suppresses condition A if true.
+// E5: MINIMUM LIMIT – lower bound for staffed roles (e.g., at least 2 waiters).
+// E6: MAXIMUM LIMIT – upper bound for staffed roles (e.g., no more than 3 chefs).
 
 export function initMachineRule() {
     // Add event listener to the save button

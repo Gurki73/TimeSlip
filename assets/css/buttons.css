@@ -30,7 +30,7 @@
   padding: 2px;
   margin: 1px;
   background-color:transparent;
-  border-color: ghostwhite;
+  border-color: var(--bg-soft-white);
   
 }
 .mybutton-small {

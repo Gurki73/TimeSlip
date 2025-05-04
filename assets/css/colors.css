@@ -1,9 +1,9 @@
 
 /* theme.css 
 :root {
-    --role-0-color: whitesmoke;
+    --role-0-color: var(--bg-white);
     
-    --role-1-color: cornflowerblue;  
+    --role-1-color: var(--accent-active);  
     --role-2-color: blue;           
     --role-3-color: purple;  
 
@@ -30,7 +30,7 @@
 }
 */
 :root {
-    --role-0-color: #f5f5f5; /* whitesmoke-ish */
+    --role-0-color: #f5f5f5; /* var(--bg-white)-ish */
   
     /* 🔵 Blues/Purples */
     --role-1-color: #b3cfff; /* pastel cornflower */
@@ -60,5 +60,26 @@
   
     --list-item-color: #fdf1e2; /* soft antiquewhite */
     --office-closed-color: #f4a8a8;
+
+    --bg-white: whitesmoke;
+    --bg-soft-white: ghostwhite;
+    --bg-inactive: lightgray;
+
+    --accent-active:cornflowerblue;
+    --accent-hover: #6495ed;      /* lighter blue */
+    --accent-inactive: #a0a0a0;
+    --accent-muted: #d3d3d3;      /* subtle for disabled */
+
+    --text-color: darkslategray;
+
+    --calendar-day-closed-bg: hotpink;
+    --calendar-day-regular-bg: blue;
+    --calendar-day-weekend-bg: pink;
+    --calendar-day-holiday-bg: lightpink;
+
+    --calendar-shift-early-bg: lightgray;
+    --calendar-shift-day-bg: darkgray;
+    --calendar-shift-late-bg: lightgray;
+
   }
   

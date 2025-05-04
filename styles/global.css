@@ -4,7 +4,7 @@
 }
 /* Global styles for the layout */
 body, html {
-  background-color:cornflowerblue;
+  background-color:var(--accent-active);
   margin: 0;
   padding: 0;
   height: 100%;
@@ -53,7 +53,7 @@ body, html {
   }
   
   #right-panel {
-    background-color: whitesmoke;
+    background-color: var(--bg-white);
     flex: 1; 
     display: flex;
     flex-direction: column;
@@ -69,7 +69,7 @@ body, html {
   width:100%;
   min-height: 20%;
   max-height: 80%;
-  background-color: lightgray;
+  background-color: var(--bg-inactive);
 }
 
 #right-panel .top-row, 
@@ -81,9 +81,9 @@ body, html {
   
 #vertical-divider {
   width: 10px;
-  background-color: cornflowerblue;
+  background-color: var(--accent-active);
   border-style: double;
-  border-color: ghostwhite;
+  border-color: var(--bg-soft-white);
   /* position: relative; */
   display: flex;
   align-items: center;
@@ -95,7 +95,7 @@ body, html {
     background-repeat: no-repeat;
     background-size: contain;
     border: double;
-    border-color: ghostwhite;
+    border-color: var(--bg-soft-white);
     cursor: pointer;
     margin: 10px;
     padding: 10px;
@@ -109,7 +109,7 @@ body, html {
   }
   
   .resize-button:hover {
-    background-color: #888;
+    background-color: var(--accent-hover);
   }
   
   .resize-button.expanded {
@@ -118,16 +118,16 @@ body, html {
 
   
   .horizontal-divider-no-resize {
-    border-top: 5px solid cornflowerblue;
+    border-top: 5px solid var(--accent-active);
     margin-top: 10px;
     margin-bottom: 10px;
   }
 
   #horizontal-divider {
     height: 8px;
-    border-color: ghostwhite;
+    border-color: var(--bg-soft-white);
     border-style: double;
-    background-color: cornflowerblue;
+    background-color: var(--accent-active);
     cursor: row-resize;
     width: 100%;
     position: relative;
@@ -208,7 +208,7 @@ body, html {
 /* Sidebar Container */
 #sidebar {
   width: 250px;
-  background-color: whitesmoke;
+  background-color: var(--bg-white);
   padding: 10px 0;
   display: flex;
   flex-direction: column;
@@ -226,12 +226,13 @@ body, html {
   align-items: center;
   padding: 10px 20px;
   padding-right: 10px;
-  background-color: lightblue;
-  border: ghostwhite;
+  background-color: var(--accent-inactive);
+  border: var(--bg-soft-white);
   border-style: double;
-  border-color: ghostwhite;
+  border-color: var(--bg-soft-white);
   border-radius: 10px;
-  color: darkslategray;
+  /* color: darkslategray; */
+  color: var(--text-color);
   font-size: 16px;
   font-weight: 500;
   text-align: left;
@@ -241,7 +242,7 @@ body, html {
 }
 
 .nav-button:hover {
-  background-color: cornflowerblue;
+  background-color: var(--accent-active);
 }
 
 .nav-icon {

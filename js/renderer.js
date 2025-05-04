@@ -25,6 +25,7 @@ const loadFormModules = async () => {
   } catch (err) {
     console.error('❌ Error loading form modules:', err);
   }
+
 };
 
 loadFormModules().then(() => console.log("📂 All form modules initialized"));
@@ -136,6 +137,11 @@ window.api.receive('resize-response', (data) => {
   console.log('Received response:', data);
 });
 
+window.api.receive('set-theme', (themeName) => {
+  console.log('[Renderer] Received theme:', themeName);
+  setTheme(themeName);
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   window.electron.onFormLoaded(async (event, { formName, htmlContent }) => {
 
@@ -166,3 +172,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+function loadThemeCSS(href) {
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = href;
+  document.head.appendChild(link);
+}
+
+const savedTheme = localStorage.getItem("theme") || "default";
+setTheme(savedTheme);
+
+function setTheme(themeName) {
+  console.log("renderer recived theme: " + themeName);
+  document.body.classList.remove("theme-dark", "theme-default", "theme-pastel");
+  document.body.classList.add(`theme-${themeName}`);
+  localStorage.setItem("theme", themeName); // persist
+}

@@ -1,0 +1,22 @@
+.theme-default {
+    --role-0-color: var(--bg-white);
+    --role-1-color: var(--accent-active);
+    --role-2-color: blue;
+    --role-3-color: purple;
+    --role-4-color: limegreen;
+    --role-5-color: darkgoldenrod;
+    --role-6-color: darkgreen;
+    --role-7-color: hotpink;
+    --role-8-color: salmon;
+    --role-9-color: darkred;
+    --role-10-color: gray;
+    --role-11-color: darkslateblue;
+    --role-12-color: black;
+    --role-13-color: darkorange;
+    --button-active-color: #a1d2ff;
+    --button-inactive-color: #dbefff;
+    --button-hover-color: #7ebeff;
+    --list-item-color: antiquewhite;
+    --office-closed-color: tomato;
+  }
+  

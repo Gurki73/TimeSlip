@@ -1,9 +1,9 @@
 #rule-form-container {
-    background-color: whitesmoke;
+    background-color: var(--bg-white);
 }
 
 #newRule {
-    background-color: ghostwhite;
+    background-color: var(--bg-soft-white);
     color: black;
     margin-left:50px;
     padding-left: 100px;
@@ -38,7 +38,7 @@
 }
 
 .rule-table th {
-    background-color: cornflowerblue;
+    background-color: var(--accent-active);
     font-weight: bold;
 }
 

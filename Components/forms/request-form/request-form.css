@@ -9,8 +9,8 @@
 }
 
 #year-filter {
-  background-color: whitesmoke;
-  color: darkslategray;
+  background-color: var(--bg-white);
+  color: var(--text-color);
   font-size: large;
   font-weight: bold;
 }
@@ -73,7 +73,7 @@
 
 .request-button.inactive {
   background-color: wheat;
-  color: darkslategray;
+  color: var(--text-color);
   border-color: burlywood;
 }
 
@@ -117,7 +117,7 @@
 
 .request-date {
   max-width: 110px;
-  background-color: whitesmoke;
+  background-color: var(--bg-white);
   border-style: solid;
   border-color: lightslategray;
   border-width: 1px;
@@ -201,7 +201,7 @@
 }
 
 #decision-table tbody tr:nth-child(even) {
-  background-color: antiquewhite;
+  background-color: (--list-item-colt);
 }
 
 #decision-table th, 

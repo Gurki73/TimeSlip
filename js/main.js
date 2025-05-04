@@ -1,13 +1,15 @@
-import { app, BrowserWindow, ipcMain, Menu, dialog, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, dialog, shell, screen } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import axios from 'axios';
+import * as dataLoader from './main/clientDataLoader.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const gotTheLock = app.requestSingleInstanceLock();
 
 const template = [
   {
@@ -30,22 +32,64 @@ const template = [
     ]
   },
   {
-    label: 'View',
+    label: 'Anzeige',
     submenu: [
-      { role: 'reload' },
-      { role: 'forcereload' },
-      { role: 'toggledevtools' },  // ✅ DevTools menu item
+      {
+        label: 'Auto Zoom',
+        click: () => autoAdjustZoom()
+      },
+      {
+        label: 'Feste Zoomstufe',
+        submenu: [
+          { label: '50%', click: () => mainWindow.webContents.setZoomFactor(0.50) },
+          { label: '75%', click: () => mainWindow.webContents.setZoomFactor(0.75) },
+          { label: '80%', click: () => mainWindow.webContents.setZoomFactor(0.80) },
+          { label: '90%', click: () => mainWindow.webContents.setZoomFactor(0.90) },
+          { label: '100%', click: () => mainWindow.webContents.setZoomFactor(1.00) },
+          { label: '125%', click: () => mainWindow.webContents.setZoomFactor(1.25) },
+        ]
+      },
       { type: 'separator' },
-      { role: 'resetzoom' },
-      { role: 'zoomin' },
-      { role: 'zoomout' },
-      { type: 'separator' },
-      { role: 'togglefullscreen' }
+      {
+        label: 'Farbschemata',
+        submenu: [
+          { label: 'Hell', click: () => sendThemeToRenderer('default') },
+          { label: 'Pastell', click: () => sendThemeToRenderer('pastel') },
+          { label: 'Dunkel', click: () => sendThemeToRenderer('dark') },
+        ]
+      }
     ]
   }
 ];
 
 let mainWindow;
+
+function autoAdjustZoom() {
+  const { width } = screen.getPrimaryDisplay().workAreaSize;
+
+  console.log('Screen size:', screen.getPrimaryDisplay().size);
+  console.log('Work area size:', screen.getPrimaryDisplay().workAreaSize);
+
+  if (width < 1000) {
+    mainWindow.webContents.setZoomFactor(0.75);
+  } else if (width < 1400) {
+    mainWindow.webContents.setZoomFactor(0.90);
+  } else {
+    mainWindow.webContents.setZoomFactor(1.00);
+  }
+}
+
+
+function sendThemeToRenderer(themeName) {
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+
+  if (focusedWindow) {
+    console.log(`[Theme] Sending theme "${themeName}" to renderer`);
+    focusedWindow.webContents.send('set-theme', themeName);
+  } else {
+    console.warn('[Theme] No focused window — could not send theme to renderer');
+  }
+}
 
 async function createWindow() {
   mainWindow = new BrowserWindow({
@@ -63,8 +107,8 @@ async function createWindow() {
     }
   });
 
-  mainWindow.setTitle('Urlaubsplaner-App');
-  // mainWindow.webContents.openDevTools();
+  mainWindow.setTitle('Mitarbeiter Kalender');
+  mainWindow.webContents.openDevTools();
   try {
     await mainWindow.loadFile('index.html');
   } catch (error) {
@@ -75,14 +119,26 @@ async function createWindow() {
   Menu.setApplicationMenu(menu);
 }
 
-app.whenReady().then(async () => {
-  try {
-    await createWindow();
-  } catch (error) {
-    console.error('Error creating window:', error);
-  }
-  // mainWindow.loadURL('file://' + __dirname + '/index.html');
-});
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    // Optional: Focus existing window if another instance is launched
+    if (BrowserWindow.getAllWindows().length > 0) {
+      const mainWindow = BrowserWindow.getAllWindows()[0];
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+
+  app.whenReady().then(async () => {
+    try {
+      await createWindow();
+    } catch (error) {
+      console.error('Error creating window:', error);
+    }
+  });
+}
 
 ipcMain.handle('show-save-dialog', async (event, suggestedName) => {
   const defaultPath = path.join(__dirname, '..', 'data', suggestedName);
@@ -219,6 +275,10 @@ ipcMain.handle('get-school-holidays', async (event, state, year) => {
   }
 });
 
+ipcMain.handle('check-path', async (event, homeKey, relativePath) => {
+  return dataLoader.checkPath(homeKey, relativePath);
+});
+
 function parseToCSV(data) {
   const header = 'Holiday Name,Start Date,End Date\n';
   const rows = data.map(holiday => {
@@ -255,3 +315,4 @@ ipcMain.on('load-form', (event, formName) => {
     event.sender.send('form-loaded', { formName, htmlContent: `<p style="color:red;">Ungültiges Formular.</p>` });
   }
 });
+

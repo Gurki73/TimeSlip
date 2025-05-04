@@ -1,8 +1,45 @@
 let roles = [];
 let allRoles = [];
 
-async function loadRoleData() {
+async function loadRoleData(api) {
+    let homeKey = 'home';
+    const relativePath = 'data/role.csv';
+
+    // Step 1: Check localStorage for client-defined folder
+    const clientPath = localStorage.getItem('clientDefinedDataFolder');
+    if (clientPath) {
+        homeKey = clientPath;
+    }
+
     try {
+        // Step 2: Ask main process if the folder+file exists
+        const exists = await api.invoke('check-path', {
+            homeKey,
+            relativePath
+        });
+
+        if (exists) {
+            // Step 3a: Load real user data via IPC
+            const fileData = await api.invoke('load-data', {
+                homeKey,
+                relativePath
+            });
+            parseCSV(fileData);
+        } else {
+            // Step 3b: Fallback to static sample
+            console.warn('Using fallback sample data for roles.');
+            await loadSampleRoleData(); // uses fetch
+        }
+    } catch (error) {
+        console.error('Failed loading role data:', error);
+        await loadSampleRoleData(); // fail-safe
+    }
+}
+
+
+async function loadSampleRoleData() {
+    try {
+        console.log(" load static sample roles from sample");
         const response = await fetch('data/role.csv');
         const data = await response.text();
         parseCSV(data);
@@ -53,4 +90,4 @@ function generateUniqueFileName() {
     return uniquePath;
 }
 
-export { loadRoleData, roles, allRoles, generateRoleCSV };
+export { loadSampleRoleData as loadRoleData, roles, allRoles, generateRoleCSV };

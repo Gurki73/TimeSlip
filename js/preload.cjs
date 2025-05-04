@@ -1,7 +1,9 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 const validSendChannels = ['resize-event', 'load-form'];
-const validReceiveChannels = ['resize-response', 'form-loaded'];
+const validReceiveChannels = ['resize-response', 'form-loaded', 'set-theme'];
+const validInvokeChannels = ['load-data', 'save-data', 'check-path'];
+
 
 contextBridge.exposeInMainWorld('api', {
   send: (channel, data) => {
@@ -30,6 +32,11 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.on(channel, (event, ...args) => func(...args));
     } else {
       console.error(`❌ Invalid channel: ${channel}`);
+    }
+  },
+  invoke: (channel, data) => {
+    if (validInvokeChannels.includes(channel)) {
+      return ipcRenderer.invoke(channel, data);
     }
   },
   removeListener: (channel, func) => {

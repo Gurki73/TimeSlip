@@ -101,10 +101,10 @@ export function setOfficeStatus(isInOffice) {
   const myToogleAdvance = document.getElementById('toggle-attendance')
   if (isInOffice) {
     myToogleAdvance.textContent = 'Anwesend';
-    myToogleAdvance.style.backgroundColor = 'cornflowerblue';
+    myToogleAdvance.style.backgroundColor = 'var(--accent-active)';
   } else {
     myToogleAdvance.textContent = 'Abwesend';
-    myToogleAdvance.style.backgroundColor = 'pink';
+    myToogleAdvance.style.backgroundColor = 'var(--calendar-day-holiday-bg)';
   }
   generateAndRenderCalendar(currentMonthIndex, currentYear);
 }
@@ -144,13 +144,13 @@ async function createCalendarNavigation() {
   yearLabel.textContent = currentYear;
 
   toggleAttendanceButton.textContent = isInOffice ? 'Anwesend' : 'Abwesend';
-  toggleAttendanceButton.style.backgroundColor = isInOffice ? 'cornflowerblue' : 'salmon';
+  toggleAttendanceButton.style.backgroundColor = isInOffice ? 'var(--accent-active)' : 'salmon';
 
   toggleAttendanceButton.addEventListener('click', () => {
     isInOffice = !isInOffice;
     setOfficeStatus(isInOffice);
     toggleAttendanceButton.textContent = isInOffice ? 'Anwesend' : 'Abwesend';
-    toggleAttendanceButton.style.backgroundColor = isInOffice ? 'cornflowerblue' : 'salmon';
+    toggleAttendanceButton.style.backgroundColor = isInOffice ? 'var(--accent-active)' : 'salmon';
   });
 
   const updateCalendarNav = () => {
