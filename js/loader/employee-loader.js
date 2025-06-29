@@ -1,8 +1,28 @@
 let employees = [];
 
-async function loadEmployeeData() {
+async function loadEmployeeData(api) {
+
+    let homeKey = localStorage.getItem('clientDefinedDataFolder') || 'home';
+    const relativePath = 'employee.csv';
+
     try {
-        const response = await fetch('data/employee.csv');
+        const fileData = await api.loadCSV(homeKey, relativePath);
+
+        if (fileData) {
+            parseCSV(fileData);
+        } else {
+            console.warn('⚠ No employee data found, using sample fallback.');
+            await loadSampleEmployeeData();
+        }
+    } catch (error) {
+        console.warn('✗ Failed to load office day data:', error);
+        await loadSampleEmployeeData();
+    }
+}
+
+async function loadSampleEmployeeData() {
+    try {
+        const response = await fetch('samples/employee.csv');
         const data = await response.text();
         parseCSV(data);
     } catch (error) {
@@ -45,6 +65,12 @@ function parseCSV(data) {
             }
         };
     }).filter(employee => employee.name && employee.name !== '?');
+
+    employees.sort((a, b) => {
+        if (a.mainRoleIndex === null) return 1;
+        if (b.mainRoleIndex === null) return -1;
+        return a.mainRoleIndex - b.mainRoleIndex;
+    });
 }
 
 async function generateEmployeeCSV(api) {
@@ -60,10 +86,8 @@ async function generateEmployeeCSV(api) {
     const uniquePathName = generateUniqueFileName(); // Generate unique path
     const uniqueFileName = 'employee.csv';
 
-    console.log(csvContent);
     try {
         await api.saveCSV(uniquePathName, uniqueFileName, csvContent);
-        console.log('Employee data saved successfully.');
     } catch (err) {
         console.warn('Error saving employee data:', err);
     }
@@ -73,7 +97,7 @@ function generateUniqueFileName() {
     const pathname = window.location.pathname.split('/');
     const folderPath = pathname.slice(1, -1).join('/');
 
-    return folderPath ? `${folderPath}/data/` : `data/`;
+    return folderPath ? `${folderPath}/` : `data/`;
 }
 
 export function getTotalEmployeesByRole(roleID) {

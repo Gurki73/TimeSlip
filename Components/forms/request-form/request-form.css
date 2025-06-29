@@ -11,7 +11,7 @@
 #year-filter {
   background-color: var(--bg-white);
   color: var(--text-color);
-  font-size: large;
+  font-size: 1.125rem;
   font-weight: bold;
 }
 
@@ -137,7 +137,7 @@
   position: absolute;
   top: 5px;
   left: 5px;
-  font-size:16; 
+  font-size: 1rem; 
   background-color: lightyellow;
   border-radius: 50%;
   border-color: red;
@@ -232,3 +232,6 @@
   box-sizing: border-box; /* Ensures padding doesn’t break layout */
 }
 
+.layout-tabulator {
+  background-color: var(--color-tabulator);
+}

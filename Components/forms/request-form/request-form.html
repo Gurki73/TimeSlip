@@ -2,9 +2,9 @@
 
 <div>
   <!--
-  <input type="number" id="year-filter" placeholder="2000" min="2025" max="2099" style="max-width: 80px">
+  <input type="number" id="year-filter" placeholder="2000" min="2025" max="2099" st^yle="max-width: 80px">
   -->
-  <span style="width:150px;"></span>
+  <span class="layout-column-tiny"></span>
   <button id="create-request-mode-btn" class="active noto request-button">📝 Urlaubsantrag stellen</button>
   <button id="approve-request-mode-btn" class="inactive noto request-button">✅ Urlaubsantrag genehmigen ❌</button>
   <!--
@@ -15,25 +15,25 @@
 <div id="request-enter-container" class="active">
 
   <div class="request-form-col request-form-dates">
-    <div style="display: flex; flex-direction: row;">
+    <div class="flex-row">
       <span id="requester-emoji" class="noto">❓</span>
         <div>  
           Antragsteller: <br>
           <select id="requester-select"></select>
         </div>  
       </div>
-    <div style="background-color: burlywood; height: 5px; margin-top: 10px; margin-bottom: 10px;"></div> 
+    <div class="layout-tabulator text-line-spacer"></div> 
     Urlaubsanspruch <span id="request-vacation-left">xx</span> / <span id="request-vacation-total">xx</span>
     <br>
     Überstunden <span id="request-overtime">xx</span> [Tage]
-    <div style="background-color: burlywood; height: 5px; margin-top: 10px; margin-bottom: 10px;"></div>
+    <div class="layout-tabulator text-line-spacer"></div>
     Antrag erstellt am:  <span id="request-id">xx.xx.xxxx. xx.xx</span>
   </div>
 
   <div class="request-form-col">
-    <span class="request-date" style="display: flex; flex-direction: row; justify-content: space-between;">
+    <span class="request-date" class="flex-row layout-space-between;">
       <label>Art Abwesentheit: </label>
-      <select id="request-type-select" class="noto" style="font-size: large;">
+      <select id="request-type-select" class="noto text-large">
         <option value="vac">🏖️ Urlaub</option>
         <option value="sik">💉 Genesung</option>
         <option value="spe">🎁 Sonderurlaub</option>
@@ -45,18 +45,26 @@
       </select>
     </span>
     <br>
-    <span style="display: flex; flex-direction: row;">
-        von: 
-        <input type="date" id="request-start" class="request-date-warning request-date noto"/>
-        bis:
-        <input type="date" id="request-end" class="request-date"/>
-    </span>
+    <div class="request-date-picker noto flex-row">
+      <button id="pick-request-start" class="noto" title="Startdatum wählen">🔜 von ⇨ 📅</button>
+      <input type="date" id="request-start-picker" class="visually-hidden-date-picker" />
+        
+      <button id="pick-request-end" class="noto" title="Enddatum wählen">🔚 ⇨ bis 📅</button>
+      <input type="date" id="request-end-picker" class="visually-hidden-date-picker" />
+    </div>
+    
+    <div class="preview-label flex-row" id="requestPreview">
+      <span id="request-preview-start">--.--</span>
+      <i class="noto"> ⇨ </i>
+      <span id="request-preview-end">--.--</span>
+    </div>
+
     <br>
-    <span style="display: flex; flex-direction: row;">
+    <span class="flex-row">
         <input type="checkbox" id="request-morning"/>
-        vormittags
+        <i class="noto">🐓</i> vormittags
         <input type="checkbox" id="request-afternoon"/>
-        nachmittags  
+        <i class="noto">🌙</i> nachmittags  
         <button id="requestStoreButton" class="noto">💾</button>
     </span>
   </div>
@@ -128,8 +136,8 @@
 
           <th>Status<br>
             <select class="noto" id="status-filter">
-              <option value="pending" data-tooltip="Ausstehend">⏳austehend</option>
               <option value="all" data-tooltip="Alle" >📝 alle</option>
+              <option value="pending" data-tooltip="Ausstehend">⏳austehend</option>
               <option value="rejected" data-tooltip="Abgelehnt">❌ abgelehnt</option>
               <option value="approved" data-tooltip="Genehmigt">✅ genehmigt</option>
             </select>
@@ -158,15 +166,15 @@
         </tr>
       </thead>
 
-      <tbody style="scroll-behavior: auto; overflow: hidden;">
+      <tbody class="layout-bo-scroll">
         <tr>
-          <td colspan="7" style="text-align: center;">No pending requests to display.</td>
+          <td colspan="7" class="text-center">No pending requests to display.</td>
         </tr>
       </tbody>
     </table>
   </div>
-
-  <div style="display: flex; flex-direction:column;">
+  <!--
+  <div class="flex-column">
     <div>
         ⚠️ Warnungen: <br>
         <textarea id="selected-request-warnings" placeholder="Show warnings and comments here if a row is selected"></textarea>
@@ -182,5 +190,6 @@
         <textarea id="selected-approver-comments" placeholder="Show warnings and comments here if a row is selected"></textarea>
     </div>
   </div>  
+  -->
 </div>
 </div>

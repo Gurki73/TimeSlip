@@ -11,8 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
     resizeButton.classList.toggle('expanded', isExpanded);
   });
 
-
-
   let isDragging = false;
 
   divider.addEventListener('mousedown', (e) => {

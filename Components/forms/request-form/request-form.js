@@ -177,6 +177,41 @@ export async function initializeRequestForm(passedApi) {
   switchMode("approve");
 }
 
+function createRequestEventListeners() {
+  const pickStartBtn = document.getElementById("pick-request-start");
+  const pickEndBtn = document.getElementById("pick-request-end");
+  const startPicker = document.getElementById("request-start-picker");
+  const endPicker = document.getElementById("request-end-picker");
+
+  function updatePreview(type, date) {
+    const previewId = type === "start" ? "request-preview-start" : "request-preview-end";
+    const el = document.getElementById(previewId);
+    if (el) el.textContent = date;
+  }
+
+  function validate(start, end) {
+    console.log("Validating request dates:", start, end);
+    // your validation here
+  }
+
+  pickStartBtn?.addEventListener("click", () => {
+    const today = new Date().toISOString().split("T")[0];
+    startPicker.value = today;
+    updatePreview("start", today);
+    validate(today, endPicker.value);
+    startPicker.showPicker?.() || startPicker.focus();
+  });
+
+  pickEndBtn?.addEventListener("click", () => {
+    const today = new Date().toISOString().split("T")[0];
+    endPicker.value = today;
+    updatePreview("end", today);
+    validate(startPicker.value, today);
+    endPicker.showPicker?.() || endPicker.focus();
+  });
+}
+
+
 function calculateTotalDays() {
   if (!newRequest.start || !newRequest.end) return;
 
@@ -250,12 +285,13 @@ function initRequestEventListener() {
   const requestTypeSelect = document.getElementById('request-type-select');
   requestTypeSelect.addEventListener("change", (ev) => updateRequestType(ev));
 
+  /*
   const requestStartDate = document.getElementById('request-start');
   requestStartDate.addEventListener("change", (ev) => updateRequestStartDate(ev, requestStartDate));
 
   const requestEndDate = document.getElementById('request-end');
   requestEndDate.addEventListener("change", (ev) => { newRequest.end = ev.target.value });
-
+  */
 
   const requestShiftMorning = document.getElementById('request-morning');
   const requestShiftafternoon = document.getElementById('request-morning');
@@ -265,6 +301,8 @@ function initRequestEventListener() {
 
   const requesterMSG = document.getElementById('multiline-input');
   requesterMSG.addEventListener('keydown', (ev) => handleRequestMSG(ev));
+
+  createRequestEventListeners();
 }
 
 function isValidDate(dateString) {
@@ -491,18 +529,23 @@ async function loadAndRenderRequests() {
     const validFiles = await getAvailableRequestFiles(api);
     let requests = [];
 
-    console.log(validFiles);
-
-    for (const { year, month } of validFiles) {
-      const formattedMonth = String(month).padStart(2, '0');
-
-      const requestData = await loadRequests(year, formattedMonth);
-      requests = [...requests, ...requestData];
+    if (validFiles.length === 0) {
+      console.warn("⚠️ No valid request files found — loading sample data manually");
+      const year = 2025;
+      const month = 6;
+      const requestData = await loadRequests(api, year, String(month).padStart(2, '0'));
+      requests = requestData;
+    } else {
+      for (const { year, month } of validFiles) {
+        const formattedMonth = String(month).padStart(2, '0');
+        const requestData = await loadRequests(api, year, formattedMonth);
+        requests = [...requests, ...requestData];
+      }
     }
     allRequests = requests;
-
+    // console.log(" ALL REQUESTS ==> ", allRequests);
     const filteredRequests = filterRequests(allRequests);
-    console.log(filteredRequests);
+    console.log(" FILTERED REQUESTS ==> ", filteredRequests);
 
     renderRequestsTable(filteredRequests)
 
@@ -512,29 +555,26 @@ async function loadAndRenderRequests() {
 }
 
 function filterRequests(requests) {
-
-  const requestsCopy = [...requests];
+  console.log("📥 INSIDE FILTER request:", requests);
 
   const filters = {
-    type: document.getElementById("decision-type-select").value,
-    month: document.getElementById("month-filter").value,
-    status: document.getElementById("status-filter").value,
+    type: document.getElementById("decision-type-select")?.value || 'all',
+    month: document.getElementById("month-filter")?.value || 'all',
+    status: document.getElementById("status-filter")?.value || 'all',
   };
 
-  if (filters.type === 'all' &&
-    filters.vacationType === 'all' &&
-    filters.status === 'all') return requests;
+  console.log("🔍 Active filters:", filters);
 
-  return requestsCopy.filter(request => {
+  if (filters.type === 'all' && filters.month === 'all' && filters.status === 'all') {
+    return requests;
+  }
 
+  return requests.filter(request => {
     if (filters.type !== "all" && request.vacationType !== filters.type) return false;
 
     if (filters.month !== "all") {
-      const requestMonth = request.start.substring(5, 7);
-      if (requestMonth !== filters.month) {
-        console.log(`Request ${request.id} skipped by month filter: ${requestMonth}`);
-        return false;
-      }
+      const requestMonth = request.start?.substring(5, 7);
+      if (requestMonth !== filters.month) return false;
     }
 
     if (filters.status !== "all" && request.status !== filters.status) return false;
@@ -542,6 +582,7 @@ function filterRequests(requests) {
     return true;
   });
 }
+
 
 
 
@@ -592,7 +633,7 @@ function renderRequestsTable(requests) {
   // toggleFilterOptions("warning-filter", availableWarnings);
 
   if (requests.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align: center;">No pending requests to display.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center">No pending requests to display.</td></tr>`;
     return;
   }
 
@@ -606,16 +647,30 @@ function renderRequestsTable(requests) {
       <td class='noto'>${getStatusIcon(request.status)}</td>
       <td class='noto'>${request.requesterMSG ? "🗨️" : ""}</td>
       <td class='noto'>${request.approverMSG ? "🗨️" : ""}</td>
-      <td class='noto' style="display: flex; flex-direction: row;">
-          ${request.status === "pending" ? `
-              <button class='noto' onclick="approveRequest('${request.id}')">✅</button>
-              <button class='noto' onclick="rejectRequest('${request.id}')">❌</button>
-          ` : ""}
-      </td>
+      <td class='noto flex-row'></td>
       <td>${getWarningsIcon(request)}</td>
     `;
+
+    // Add buttons dynamically without inline JS
+    if (request.status === "pending") {
+      const approveButton = document.createElement("button");
+      approveButton.className = "noto";
+      approveButton.textContent = "✅";
+      approveButton.addEventListener("click", () => approveRequest(request.id));
+
+      const rejectButton = document.createElement("button");
+      rejectButton.className = "noto";
+      rejectButton.textContent = "❌";
+      rejectButton.addEventListener("click", () => rejectRequest(request.id));
+
+      const buttonCell = row.querySelector("td:nth-child(8)");
+      buttonCell.appendChild(approveButton);
+      buttonCell.appendChild(rejectButton);
+    }
+
     row.addEventListener("mouseenter", () => showMessages(request));
     row.addEventListener("mouseleave", clearMessages);
+
     tbody.appendChild(row);
   });
 }

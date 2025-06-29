@@ -1,34 +1,3 @@
-
-/* theme.css 
-:root {
-    --role-0-color: var(--bg-white);
-    
-    --role-1-color: var(--accent-active);  
-    --role-2-color: blue;           
-    --role-3-color: purple;  
-
-    --role-4-color: limegreen;      
-    --role-5-color: darkgoldenrod;  
-    --role-6-color: darkgreen;      
-
-    --role-7-color: hotpink; 
-    --role-8-color: salmon;
-    --role-9-color: darkred;
-    
-    --role-10-color: gray;  
-    --role-11-color: darkslateblue;
-    --role-12-color: black;
-
-    --role-13-color:darkorange;
-
-    --button-active-color: #a1d2ff;
-    --button-inactive-color: #dbefff;
-    --button-hover-color: #7ebeff;
-
-    --list-item-color: antiquewhite;
-    --office-closed-color: tomato;
-}
-*/
 :root {
     --role-0-color: #f5f5f5; /* var(--bg-white)-ish */
   
@@ -73,13 +42,37 @@
     --text-color: darkslategray;
 
     --calendar-day-closed-bg: hotpink;
-    --calendar-day-regular-bg: blue;
+    --calendar-day-regular-bg: ghostwhite;
     --calendar-day-weekend-bg: pink;
-    --calendar-day-holiday-bg: lightpink;
+    --calendar-day-holiday-bg: tomato;
 
     --calendar-shift-early-bg: lightgray;
     --calendar-shift-day-bg: darkgray;
     --calendar-shift-late-bg: lightgray;
 
+    --color-calendar:  #f08080;
+    --color-calendar-form: lightsteelblue;
+    --color-rules: #f0f8ff;
+    --color-tasks: #7fffd4;
+    --color-employee:  #c0c0c0;
+    --color-request: #e67e22;
+    --color-text-primary: #2980b9;
+    --color-text-secondary:  #8e44ad;
+    --color-text-accent: #e67e22;
+    --color-text-info: #34495e;
+
+    --color-text-request: #e67e22;;
+    --color-text-employee: #8e44ad;
+    --color-text-tasks: #16a085;
+    --color-text-rules: #2980b9;
+    --color-text-calendar: #e74c3c;
+
+    --color-tabulator: burlywood;
+    --color-layout-container-light: lightgray;
+    --color-layout-container-medium: gray;
+    --color-layout-container-dark: darkgray;
+
+    --color-help: #cc9933; /* used in main help container */
+    --color-help-toc: #f5deb3; /* wheat, or define your own ocher tone */
   }
   

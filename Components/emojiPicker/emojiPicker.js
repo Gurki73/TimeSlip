@@ -4,7 +4,7 @@ export function createEmojiPicker(emojiArray, targetButton, colorIndex, callback
   if (existingPicker) {
     existingPicker.remove();
   }
-  
+
   if (!emojiArray || !Array.isArray(emojiArray) || emojiArray.length === 0) {
     console.warn('Emoji array is invalid or empty');
     return;
@@ -19,27 +19,33 @@ export function createEmojiPicker(emojiArray, targetButton, colorIndex, callback
   const emojiPickerCol = n;
 
   const emojiPicker = document.createElement('div');
-  emojiPicker.classList.add('emoji-picker');
+  emojiPicker.classList.add('emoji-picker', 'emoji-picker-container');
+
 
   const topBarWrapper = document.createElement('div');
-  topBarWrapper.classList.add('top-bar-wrapper');
+  topBarWrapper.classList.add('top-bar-wrapper', 'emoji-picker-top-bar-wrapper');
   topBarWrapper.setAttribute('data-index', colorIndex);
 
   const topBar = document.createElement('div');
-  topBar.classList.add('top-bar');
+  topBar.classList.add('top-bar', 'emoji-picker-top-bar');
   topBar.textContent = 'bitte ein neues Emoji auswählen';
 
   const closeButton = document.createElement('button');
-  closeButton.classList.add('close-btn');
+  closeButton.setAttribute('tabindex', '0');
+  closeButton.setAttribute('aria-label', 'Exit emoji picker');
+  closeButton.classList.add('close-btn', 'emoji-picker-close-btn');
   closeButton.textContent = '×';
-  closeButton.onclick = () => emojiPicker.remove();
+  closeButton.onclick = () => {
+    callback(null);
+    emojiPicker.remove();
+  };
   topBar.appendChild(closeButton);
 
   topBarWrapper.appendChild(topBar);
   emojiPicker.appendChild(topBarWrapper);
 
   const emojiGrid = document.createElement('div');
-  emojiGrid.classList.add('emoji-grid');
+  emojiGrid.classList.add('emoji-grid', 'emoji-picker-grid');
 
   let emojiIndex = 0;
   for (let row = 0; row < emojiPickerRow; row++) {
@@ -48,7 +54,7 @@ export function createEmojiPicker(emojiArray, targetButton, colorIndex, callback
       if (!emoji) break;
 
       const emojiButton = document.createElement('div');
-      emojiButton.classList.add('emoji');
+      emojiButton.classList.add('emoji', 'emoji-picker-emoji');
       emojiButton.textContent = emoji;
 
       emojiButton.classList.add(`row-${row}`);
@@ -58,6 +64,9 @@ export function createEmojiPicker(emojiArray, targetButton, colorIndex, callback
       emojiButton.classList.add('noto');
       emojiButton.style.zIndex = 9999;
       emojiButton.onclick = () => handleEmojiSelection(emoji, emojiPicker, callback);
+      emojiButton.setAttribute('tabindex', '0'); // Allows focus via keyboard
+      emojiButton.setAttribute('role', 'button'); // Assistive tech compatibility
+      emojiButton.setAttribute('aria-label', `Emoji ${emoji}`); // Improves screen reader UX
 
       emojiGrid.appendChild(emojiButton);
     }
@@ -73,6 +82,15 @@ export function createEmojiPicker(emojiArray, targetButton, colorIndex, callback
   emojiPicker.style.left = `${rect.left + window.scrollX + (-n * 25)}px`;
 
   document.body.appendChild(emojiPicker);
+
+  setTimeout(() => {
+    const firstEmoji = emojiPicker.querySelector('.emoji-picker-emoji');
+    if (firstEmoji) {
+      firstEmoji.focus();
+    } else {
+      closeButton.focus(); // fallback
+    }
+  }, 0);
 
   const headerColor = getComputedStyle(topBar).backgroundColor;
 
@@ -94,7 +112,7 @@ export function createEmojiPicker(emojiArray, targetButton, colorIndex, callback
 // }, closeAfterTimeLimit);
 
 function handleEmojiSelection(emoji, pickerElement, callback) {
-    callback(emoji);  // Pass the selected emoji to the callback
-    pickerElement.remove();  // Close the picker after selection
+  callback(emoji);  // Pass the selected emoji to the callback
+  pickerElement.remove();  // Close the picker after selection
 }
 

@@ -1,4 +1,4 @@
-const DATA_DIR = '../data/schoolHolidays';
+const DATA_DIR = '../schoolHolidays';
 
 const waitForAPI = () => {
   return new Promise((resolve) => {
@@ -24,7 +24,7 @@ function parseToCSV(data) {
   const rows = data.map(holiday =>
     `${holiday.name[0].text},${holiday.startDate},${holiday.endDate}`
   ).join('\n');
-  
+
   return header + rows;
 }
 
@@ -59,26 +59,38 @@ async function readCSV(filePath) {
   }
 }
 
-export async function GetSchoolHoliday(api,state, year) {
-  const filePath = `data/schoolHolidays/${state}_${year}_holidays.csv`;
+export async function GetSchoolHoliday(api, state, year) {
+  let homeKey = localStorage.getItem('clientDefinedDataFolder') || 'home';
+  const relativePath = `schoolHolidays/${state}_${year}_holidays.csv`;
+  console.log("Try to load school holidays from client folder: ", relativePath);
+  try {
+    const fileData = await api.loadCSV(homeKey, relativePath);
 
-  console.log(' school holliday loader api ==> ' + api);
-  // if (await csvExists(filePath)) {
-  //   return await readCSV(filePath);
-  // }
-    try {
-    
-    const data = await api.getSchoolHolidays(`DE-${state}`, year);
-
-    // Map data according to API response structure
-    return data.map(item => ({
-      name: item.name,
-      startDate: item.startDate,
-      endDate: item.endDate
-    }));
+    if (fileData) {
+      console.log('✅ Loaded role data from', homeKey, relativePath);
+      console.log("file data ==> ", fileData);
+      parseToCSV(fileData);
+    } else {
+      console.log("no school holiday data recived");
+    }
   } catch (error) {
-    console.error('Failed to fetch or save data:', error);
-    return [];
+    console.error('❌ Failed to load school holidays:', error);
   }
 }
 
+export async function apiHealthCheck(api, url = 'https://openholidaysapi.org/healthcheck') {
+  console.log("performing health check for: ", url);
+  const result = await api.healthCheck(url);
+  return result;
+}
+
+export async function DownloadSchoolHoliday(api, state, year) {
+  return await api.getSchoolHolidays(state, year); // invokes IPC
+}
+
+// 📂 Loads local data from disk
+export async function LoadSchoolHoliday(api, state, year) {
+  const homeKey = localStorage.getItem('clientDefinedDataFolder') || 'home';
+  const relativePath = `schoolHolidays/${state}_${year}_holidays.csv`;
+  return await api.loadCSV(homeKey, relativePath);
+}

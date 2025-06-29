@@ -31,7 +31,7 @@
   border: double;
   border-color: silver;
   outline: none;
-  font-size: 18px;
+  font-size: 1.125rem;
   margin-bottom: 5px;
   margin-left: 0px;
   border-radius: 4px;
@@ -47,7 +47,7 @@
   display: inline-flex;
   align-items: center;
   font-family: 'NotoEmoji', sans-serif;
-  font-size: 18px;
+  font-size: 1.125rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -113,4 +113,45 @@
   .legend-name {
     display: none; /* Hide names on small screens, keep only icons */
   }
+}
+
+.legend-list {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  overflow: hidden;
+}
+
+/* Bounce In Effect */
+.legend-item {
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease-out;
+}
+
+/* Staggered Animation */
+.legend-item:nth-child(1) { transition-delay: 0.05s; }
+.legend-item:nth-child(2) { transition-delay: 0.1s; }
+.legend-item:nth-child(3) { transition-delay: 0.15s; }
+.legend-item:nth-child(4) { transition-delay: 0.2s; }
+.legend-item:nth-child(5) { transition-delay: 0.25s; }
+.legend-item:nth-child(6) { transition-delay: 0.3s; }
+.legend-item:nth-child(7) { transition-delay: 0.35s; }
+.legend-item:nth-child(8) { transition-delay: 0.4s; }
+
+/* Active State (Triggers Animation) */
+.collapsible.active + .collapsible-content .legend-item {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Slide Out Effect for Collapse */
+.collapsible-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out;
+}
+
+.collapsible.active + .collapsible-content {
+  max-height: 500px; /* Adjust based on your content size */
 }

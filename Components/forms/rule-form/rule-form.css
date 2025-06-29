@@ -115,7 +115,7 @@ input.error, select.error {
 
 .rule-table th[data-highlight="true"]::before {
     content: "📎";
-    font-size: x-large;
+    font-size: 1.5rem;
     margin-right: 5px;
 }
 
@@ -157,8 +157,26 @@ input.error, select.error {
 
 .clippy-highlight::before {
     font-family: 'Segoe UI Symbol', 'Segoe UI', sans-serif;
-    font-size: x-large;
+    font-size: 1.5rem;
     content: "\1F4CE"; /* Unicode for 📎 */
     cursor: pointer;
     margin-right: 5px;
+}
+
+.repeat-icon {
+    color: yellow;
+    font-size: 1.5rem;
+}
+
+.rule-role-element {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.rule-role-label {
+  width: 100%;
+  text-align: center;
+  font-size: 1.2em;
+  margin-bottom: 10px;
 }

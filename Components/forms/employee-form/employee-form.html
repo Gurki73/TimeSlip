@@ -1,18 +1,23 @@
 <div class="employee-form-container" id="employee-form-container">
 
-    <!-- Privacy and Warning Section -->
-    <div id="privacy-warning-panel" class="form-column noto">
-        <p>
-          ⚠️ <b>Datenschutzhinweis:</b> <br> 
-          Beachten Sie, dass diese Anwendung sensible Daten enthält. 
-          Bitte stellen Sie sicher, dass die Daten gemäß den 
-          gesetzlichen Bestimmungen geschützt sind.
-        </p>
-        <p>
-          Diese Anwendung ist nur für autorisierte Benutzer bestimmt.
-          Eine unsachgemäße Verwendung kann rechtliche Konsequenzen haben.
-        </p>
-    </div>
+   <!-- Privacy and Warning Section -->
+<div id="privacy-warning-panel" class="form-column noto">
+    <p>
+      ⚠️ <b>Datenschutzhinweis:</b> <br> 
+      Beachten Sie, dass diese Anwendung sensible Daten enthält. 
+      Bitte stellen Sie sicher, dass die Daten gemäß den 
+      gesetzlichen Bestimmungen geschützt sind.
+    </p>
+    <p>
+      Diese Anwendung ist nur für autorisierte Benutzer bestimmt.
+      Eine unsachgemäße Verwendung kann rechtliche Konsequenzen haben.
+    </p>
+    <p>
+      💾 <b>Wichtig:</b> Diese Anwendung speichert Ihre Daten ausschließlich lokal auf Ihrem Computer.
+      Es findet keine Übertragung oder Speicherung in der Cloud oder im Internet statt.
+    </p>
+</div>
+
     
     <!-- Employee Selection -->
     <div id="employee-list-column">
@@ -35,10 +40,10 @@
         <div id="employee-details-left">
             <div class="employee-flex-row">
                 <button id="employee-emoji-picker-btn" class="emoji-picker-btn noto" title="Emoji ändern">❓</button>
-                <input type="text" id="employee-name" style="max-width: 120px;" value="${employee.name}" placeholder="Enter employee name">
+                <input type="text" id="employee-name" class="layout-column-small" value="${employee.name}" placeholder="Enter employee name">
             </div>
 
-            <div style="background-color: silver; height: 5px; margin-top: 10px; margin-bottom: 10px;"> </div>
+            <div class="text-line-spacer layout-container-light"> </div>
             
             <div class="employee-flex-row">
                 <span>U-anspr.</span>
@@ -54,7 +59,7 @@
                 [Tage]
             </div>
 
-            <div style="background-color: silver; height: 5px; margin-top: 10px; margin-bottom: 10px;"> </div>
+            <div class="text-line-spacer layout-container-light"> </div>
 
             <div class="employee-flex-row">
                 <span>Anfang</span>
@@ -68,7 +73,7 @@
             
             <div class="employee-flex-row">
                 <span> <i>opt.</i> Geburtstag</span>
-                <div style="display: flex; flex-direction: row ;">
+                <div class="flex-row">
                     <input type="number" min="1" max="31" step="1" class="employee-details-number" id="employee-form-birthday-day">
                     <input type="number" min="1" max="31" step="1" class="employee-details-number" id="employee-form-birthday-month">
                 </div>
@@ -87,21 +92,21 @@
                 <div id="employee-ratio">
                     <div>
                        <span class="noto"> <h3>🧩 Aufgaben </h3></span>
-                       <div style="display: flex; flex-direction: row; background-color: lightgray;">
+                       <div class="flex-row .layout-container-light">
                             <span id="employee-details-icon-main" class="employee-details-icon noto">❓</span>
                             <select id="employee-details-role-main" class="noto">
                             </select>
                            <input type="range" id="employee-form-role1" min="0" max="10" value="7" step="1">
                        </div>
 
-                       <div style="display: flex; flex-direction: row; background-color: darkgray;">
+                       <div class="flex-row .layout-container-dark">
                         <span id="employee-details-icon-secondary" class="employee-details-icon noto">❓</span>
                             <select id="employee-details-role-secondary" class="noto">
                             </select>
                            <input type="range" id="employee-form-role2" min="0" max="10" value="2" step="1">
                         </div>
 
-                        <div style="display: flex; flex-direction: row; background-color: grey;">
+                        <div class="flex-row .layout-container-medium">
                             <span id="employee-details-icon-trinary" class="employee-details-icon noto">❓</span>
                             <select id="employee-details-role-trinary" class="noto">
                             </select>
@@ -160,7 +165,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td style="color: red;"><b>So:</b></td>
+                        <td class="text-red"><b>So:</b></td>
                         <td>
                             <select id="employee-form-shift-sun">
                             </select>

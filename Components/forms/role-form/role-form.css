@@ -1,3 +1,9 @@
+.role-flex-row {
+  display: flex;
+  align-items: flex-start; /* Align children to top */
+  gap: 20px; /* spacing between columns */
+}
+
 .task-container {
   display: flex;
   flex-direction: column;
@@ -120,25 +126,27 @@ input:disabled {
 
 /* General styling for the post-it note */
 .post-it-note {
-  background-color: #FAEBD7; /* Antique White */
-  border: 1px solid #f2c400; /* Yellow border */
+  background-color: #FAEBD7;
+  border: 1px solid #f2c400;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
-  max-width: 500px;
   font-family: 'Arial', sans-serif;
-  font-size: 16px;
+  font-size: 1rem;
   color: var(--text-color);
   margin: 15px;
-  max-width: 15%;
-  
+
+  max-height: 400px;      /* Set your preferred max height */
+  overflow-y: auto;       /* Enable vertical scroll */
+  width: 15%;             /* Better than using max-width for layout */
+  position: relative;     /* Needed for ::before absolute positioning */
 }
 
 /* Styling for the heading */
 .post-it-note h3.noto {
   font-family: 'NotoEmoji', sans-serif;
   font-weight: bold;
-  font-size: 18px;
+  font-size: 1.125rem;
   margin-bottom: 10px;
 }
 
@@ -146,13 +154,13 @@ input:disabled {
 .post-it-note p {
   line-height: 1.6;
   margin: 10px 0;
-  font-size: small;
+  font-size: 0.825rem;
 }
 
 /* Optional: Add a sticky note icon or styling to make it more "post-it" like */
 .post-it-note::before {
   content: '📌';
-  font-size: 18px;
+  font-size: 1.125rem;
   margin-right: 10px;
   position: absolute;
   top: 10px;
@@ -166,4 +174,22 @@ input:disabled {
   -webkit-user-select: none; 
   -moz-user-select: none; 
   -ms-user-select: none; 
+}
+
+@media (max-width: 768px) {
+  .flex-row {
+    flex-direction: column;
+  }
+  .post-it-note {
+    width: 100%;
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
+.error-message {
+  color: #f44336; /* red error */
+  font-weight: 600;
+  margin-top: 0.5em;
+  font-size: 0.9rem;
 }

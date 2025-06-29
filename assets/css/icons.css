@@ -2,7 +2,7 @@
   /* General Styles */
   --btn-padding: 8px 16px;
   --btn-margin: 5px;
-  --btn-font-size: 14px;
+  --btn-font-size: --btn-font-size: 0.875rem;;
   --btn-border-radius: 15px;
   --btn-border-color: grey;
   --btn-bg-color: #f4f4f4;
@@ -21,4 +21,42 @@
   --icon-safe: url('/assets/svg/safe-svgrepo-com.svg');
   --icon-calendar: url('/assets/svg/calendar-svgrepo-com.svg');
   --icon-admin: url('/assets/svg/cog-wheel-settings-svgrepo-com.svg');
+}
+
+@keyframes warningPulseFontSize {
+  0%, 100% {
+    background-color: red;
+    color: red;
+    text-shadow: 0 0 2px yellow;
+  }
+  25% {
+    font-size: 1.1rem;
+    color: yellow;
+    text-shadow: 0 0 6px red;
+  }
+  50% {
+    background-color: yellow;
+    color: orange;
+    text-shadow: 0 0 4px yellow;
+  }
+  75% {
+    font-size: 0.9rem;
+    color: red;
+    text-shadow: 0 0 8px yellow;
+  }
+}
+
+
+.warning-icon {
+  display: inline-block;
+  animation: warningPulse 0.8s infinite cubic-bezier(0.4, 0, 0.6, 1);
+  font-size: 0.9rem;
+  font-weight: bold;
+  line-height: 1;
+  text-align: center;
+  vertical-align: middle;
+  background-color: tomato;
+  border-radius: 15%;
+  cursor: help;
+  user-select: none;
 }

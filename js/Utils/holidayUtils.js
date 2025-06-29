@@ -9,7 +9,6 @@ const germanFixedHolidays = [
   { name: "Mariä Himmelfahrt", emoji: "👑", day: 15, month: 8, bundesländer: ["BY", "SL"] },
   { name: "Reformationstag", emoji: "📜", day: 31, month: 10, bundesländer: ["BB", "MV", "SN", "ST", "TH"] },
   { name: "Allerheiligen", emoji: "🌺", day: 1, month: 11, bundesländer: ["BW", "BY", "NW", "RP", "SL"] },
-  { name: "Fronleichnam", emoji: "⛪", day: 8, month: 6, bundesländer: ["BY", "HE", "NW", "RP", "SL"] },
   { name: "Dreikönigstag", emoji: "👑", day: 6, month: 1, bundesländer: ["BY", "BW", "ST"] },
 ];
 
@@ -17,7 +16,9 @@ const germanVariableHolidays = [
   { name: "Karfreitag", emoji: "✝️", offset: -2, bundesländer: ["All States"] },
   { name: "Ostersonntag", emoji: "🐰", offset: 0, bundesländer: ["All States"] },
   { name: "Ostermontag", emoji: "🐰", offset: +1, bundesländer: ["All States"] },
+  { name: "Pfingstsonntag", emoji: "🕊️", offset: 49, bundesländer: ["All States"] },
   { name: "Pfingstmontag", emoji: "🌸", offset: +50, bundesländer: ["All States"] },
+  { name: "Fronleichnam", emoji: "⛪", offset: 60, bundesländer: ["BY", "HE", "NW", "RP", "SL"] },
   { name: "Christi Himmelfahrt", emoji: "🌥️", offset: +39, bundesländer: ["All States"] },
   { name: "Buß- und Bettag", emoji: "🙏", offset: -7, bundesländer: ["SN"] },
 ];
@@ -50,7 +51,6 @@ function getHolidayDetails(date, state) {
   );
 
   if (matchingHoliday) {
-    console.log("Fixed holiday match found:", matchingHoliday.name);
     return { isValid: true, emoji: matchingHoliday.emoji, name: matchingHoliday.name };
   }
 
@@ -70,8 +70,6 @@ function getHolidayDetails(date, state) {
   });
 
   if (variableHoliday) {
-    console.log("Variable holiday match found:", variableHoliday.name);
-    // return variableHoliday;
     return { isValid: true, emoji: variableHoliday.emoji, name: variableHoliday.name }
   }
 
@@ -126,6 +124,48 @@ function getAllHolidaysForYear(year, state) {
 
   return holidays;
 }
+
+export function getAllHolidaysForYearWithoutState(year) {
+  const holidays = [];
+
+  const easterSunday = calculateEasterSunday(year);
+
+  // Fixed holidays — all, regardless of state
+  for (const h of germanFixedHolidays) {
+    holidays.push({
+      date: `${year}-${String(h.month).padStart(2, '0')}-${String(h.day).padStart(2, '0')}`,
+      name: h.name,
+      emoji: h.emoji
+    });
+  }
+
+  // Variable holidays — based on Easter offset
+  for (const h of germanVariableHolidays) {
+    const holidayDate = new Date(easterSunday);
+    holidayDate.setDate(easterSunday.getDate() + h.offset);
+    holidays.push({
+      date: `${holidayDate.getFullYear()}-${String(holidayDate.getMonth() + 1).padStart(2, '0')}-${String(holidayDate.getDate()).padStart(2, '0')}`,
+      name: h.name,
+      emoji: h.emoji
+    });
+  }
+
+  // Non-official holidays
+  const nonOfficial = nonOfficialHolidays(year, "All States");
+  for (const h of nonOfficial) {
+    holidays.push({
+      date: h.date,
+      name: h.name,
+      emoji: h.emoji
+    });
+  }
+
+  // Sort by date for consistency
+  holidays.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  return holidays;
+}
+
 
 function nonOfficialHolidays(year, state) {
   const holidays = [];
@@ -212,6 +252,47 @@ function calculateOktoberfestStart(year) {
   return firstSaturday;
 }
 
+export function getHolidayGreetingForToday() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${year}-${month}-${day}`;
+
+  const allHolidays = getAllHolidaysForYearWithoutState(year);
+  const todayHoliday = allHolidays.find(h => h.date === todayStr);
+  if (!todayHoliday) return null;
+
+  const greetingsMap = {
+    "Weihnachtstag": "Frohe Weihnachten! 🎄",
+    "Zweiter Weihnachtstag": "Frohe Weihnachten und schöne Feiertage! 🎄",
+    "Neujahrstag": "Ein glückliches neues Jahr! 🎉",
+    "Tag der Arbeit": "Einen schönen Tag der Arbeit! 🌼",
+    "Tag der Deutschen Einheit": "Frohen Tag der Deutschen Einheit! 🏛️",
+    "Mariä Himmelfahrt": "Gesegneten Mariä Himmelfahrt! 👑",
+    "Reformationstag": "Einen besinnlichen Reformationstag! 📜",
+    "Allerheiligen": "Einen besinnlichen Allerheiligen-Tag! 🌺",
+    "Fronleichnam": "Gesegneten Fronleichnam! ⛪",
+    "Dreikönigstag": "Frohen Dreikönigstag! 👑",
+    "Ostersonntag": "Frohe Ostern! 🐰",
+    "Karfreitag": "Einen besinnlichen Karfreitag! ✝️",
+    "Ostermontag": "Frohen Ostermontag! 🐣",
+    "Christi Himmelfahrt": "Gesegneten Christi Himmelfahrt! 🌥️",
+    "Pfingstsonntag": "Frohen Pfingstsonntag! 🕊️",
+    "Pfingstmontag": "Frohen Pfingstmontag! 🌸",
+    "Buß- und Bettag": "Einen besinnlichen Buß- und Bettag! 🙏",
+    "Rosenmontag": "Helau und Alaaf zum Rosenmontag! 🤡",
+    "Oktoberfest": "O’zapft is! 🍺",
+    "Heiligabend": "Frohe Weihnachten! 🌟",
+    "Walpurgisnacht": "Fröhliche Walpurgisnacht! 🧙‍♀️",
+    "Halloween": "Happy Halloween! 🎃",
+    "Silvester": "Einen guten Rutsch ins neue Jahr! 🍾",
+    "Nikolaus": "Fröhlichen Nikolaus! 🎅"
+  };
+
+  const greeting = greetingsMap[todayHoliday.name];
+  return greeting ? `${todayHoliday.emoji} ${greeting}` : null;
+}
 
 export {
   monthNames,

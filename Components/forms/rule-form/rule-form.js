@@ -457,12 +457,10 @@ function handleTopCellTimeFrame(id) {
 function handleTopCellRoles(id) {
 
     const roleElement = document.createElement('div');
-    roleElement.classList.add('noto');
-    roleElement.style = "display: flex; flex-direction: column; align-items: flex-start;";
+    roleElement.classList.add('noto', 'rule-role-element');
 
     const roleLabel = document.createElement('div');
-    roleLabel.classList.add('noto');
-    roleLabel.style = "width: 100%; text-align: center; font-size: 1.2em; margin-bottom: 10px;";
+    roleLabel.classList.add('noto', 'rule-role-label');
 
     if (['g1', 'g2'].includes(id.toLowerCase())) {
         roleLabel.innerHTML = id.toLowerCase() === 'g1' ? '🧩 <b>und</b> 🧩' : '🧩 <b>oder</b> 🧩';
@@ -632,7 +630,7 @@ function handleTopCellNumberInput(id) {
             break;
 
         case 'w3':
-            numLabel.innerHTML = ' x pro 🕒 <i style="color:silver;">(Monat/Woche)</i>';
+            numLabel.innerHTML = ' x pro 🕒 <i class="text-info">(Monat/Woche)</i>';
             container.append(input1, numLabel);
             break;
 

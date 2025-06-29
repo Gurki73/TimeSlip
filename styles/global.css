@@ -17,15 +17,19 @@ body, html {
 }
 
 #left-panel {
-  width: 60px;
+  width: var(--left-panel-width, 60px); /* Default width is 60px */
   background-color: azure;
   display: flex;
   flex-direction: column;
   height: 97%;
-  overflow-x: hidden; 
-  position: relative; 
-  box-sizing: border-box; 
+  overflow-x: hidden;
+  position: relative;
+  box-sizing: border-box;
   transition: width 0.3s ease;
+}
+
+#left-panel.expanded {
+  width: 16%;
 }
 
   
@@ -47,20 +51,19 @@ body, html {
     box-sizing: border-box;
   }
   
-  
-  #left-panel.expanded {
-    width: 16%; 
-  }
-  
-  #right-panel {
+ #right-panel {
+    overflow: hidden;
     background-color: var(--bg-white);
-    flex: 1; 
+    flex: 1;
     display: flex;
     flex-direction: column;
     height: 100%;
-    width:100%;
-  }
+    width: 100%;
+    transition: width 0.3s ease;
+}
+
 .top-row {
+  overflow: hidden;
   width:100%;
   min-height: 20%;
   max-height: 80%;
@@ -74,7 +77,7 @@ body, html {
 
 #right-panel .top-row, 
 #right-panel .bottom-row {
-  overflow-y: auto; 
+  overflow-y: hidden; 
   overflow-x: hidden; 
   flex-shrink: 0; 
 }
@@ -233,7 +236,7 @@ body, html {
   border-radius: 10px;
   /* color: darkslategray; */
   color: var(--text-color);
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 500;
   text-align: left;
   cursor: pointer;
@@ -296,7 +299,17 @@ body, html {
     transform: rotate(360deg);
   }
 }
-
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
 #feedback-console {
   position: fixed;
   bottom: 0;
@@ -304,14 +317,17 @@ body, html {
   background-color: darkslategray;
   color: limegreen;
   font-family: 'Courier New', Courier, monospace;
-  font-size: 10px;
+  font-size: 0.625rem;
   padding: 2px;
   text-align: center;
   z-index: 1000;
   display: none; 
 }
+#feedback-console.error {
+  color: tomato; /* clear, attention-grabbing error color */
+}
 
-.welcome-list-item li{
+.welcome-list-item {
   display: inline-block;
   align-items: left;           /* Align vertically in the middle */
   padding: 0 10px;               /* Add some horizontal padding */
@@ -326,11 +342,207 @@ body, html {
 .squiggle.mirrored {
   transform: scaleX(-1);
 }
-
+.flex-column { 
+  display: flex; 
+  flex-direction:column;
+}
 .flex-row {
   display: flex;
   flex-direction: row;
   align-items: center; /* Optional for vertical alignment */
   gap: 8px; /* Space between items */
 }
+.layout-bo-scroll {
+  scroll-behavior: auto;
+  overflow: hidden;
+}
 
+.layout-column-tiny {
+  width:150px;
+}
+.layout-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  padding: 20px
+}
+.layout-column-small {
+  max-width: 120px;
+}
+.layout-list-item {
+  display: flex;
+  align-items: center;
+}
+/* cards */
+.layout-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  margin: 5px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 2px solid #dcdcdc;
+  width: 250px;
+  min-height: 300px; /* Ensures consistent height */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: var(--bg-white);
+}
+
+.layout-card > h4 {
+  margin: 0 0 10px 0;
+}
+
+.layout-card > ul,
+.layout-card > p {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  flex-grow: 1;
+}
+
+.layout-card > ul {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.layout-full-sice {
+  width:100%;
+  height:100%;
+}
+.layout-card.calendar {
+  background-color: var(--color-calendar);
+  color: var(--text-color);
+}
+.layout-card.request {
+  background-color: var(--color-request);
+  color: var(--text-color);
+}
+.layout-card.employee {
+  background-color: var(--color-employee);
+  color: var(--text-color);
+}
+.layout-card.tasks {
+  background-color: var(--color-tasks);
+  color: var(--text-color);
+}
+.layout-card.rules {
+  background-color: var(--color-rules);
+  color: var(--text-color);
+}
+.layout.space-between {
+  justify-content: space-between
+}
+.layout-container-light {
+  background-color: var(--color-layout-container-light);
+}
+.layout-container-medium {
+  background-color: var(--color-layout-container-medium);
+}
+.layout-container-dark {
+  background-color: var(--color-layout-container-dark);
+}
+/* Header Text */
+.text-large {
+  font-size: 1.5rem;
+}
+.text-line-spacer { 
+  height: 5px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.text-arial {
+  font-family: Arial, sans-serif;
+}
+.text-red {
+  color: red;
+}
+.text-center {
+  text-align: center;
+}
+.text-header-4 {
+  font-size: 1.125rem;
+  text-align: center;
+  font-weight: bold;
+  text-align: center;
+  color: var(--text-color);
+}
+
+.text-header1 {
+  font-family: Arial, sans-serif;
+  color: var(--text-color);
+}
+
+.text-small {
+  font-size: 0.875rem;
+  color: #34495e;
+}
+.text-request {
+  color: var(--color-text-request);
+}
+.text-employee {
+ color: var(--color-text-employee);
+}
+.text-tasks {
+ color: var(--color-text-tasks);
+}
+.text-rules {
+ color: var(--color-text-rules);
+}
+.text-claendar {
+  color: var(--color-text-calendar);
+}
+
+
+
+/* Image Styling */
+.image-header {
+  width: 50px;
+  margin-bottom: 10px;
+}
+
+.resize-ew {
+    cursor: ew-resize !important;
+}
+.resize-ns {
+    cursor: ns-resize !important;
+}
+
+select {
+  border-radius: 4px;
+}
+/* Focus Pulse */
+:focus-visible {
+  outline: 3px solid #d97706; /* orange-brown */
+  outline-offset: 2px;
+  animation: focus-pulse 1.0s ease-in-out infinite alternate;
+}
+
+@keyframes focus-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 5px #d97706;
+  }
+  100% {
+    transform: scale(1.025);
+    box-shadow: 0 0 15px #ff9800; /* brighter orange */
+  }
+}
+
+select:focus-visible {
+  outline: 3px solid #d97706;
+  outline-offset: 2px;
+  animation: focus-pulse-color 0.4s ease-in-out infinite alternate;
+}
+
+@keyframes focus-pulse-color {
+  0% {
+    outline-color: #d97706;
+    box-shadow: 0 0 5px rgb(31, 21, 10);
+  }
+  100% {
+    outline-color:rgb(37, 19, 9);
+    box-shadow: 0 0 15px #ff9800;
+  }
+}

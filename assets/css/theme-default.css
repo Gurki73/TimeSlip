@@ -13,10 +13,26 @@
     --role-11-color: darkslateblue;
     --role-12-color: black;
     --role-13-color: darkorange;
-    --button-active-color: #a1d2ff;
-    --button-inactive-color: #dbefff;
-    --button-hover-color: #7ebeff;
-    --list-item-color: antiquewhite;
-    --office-closed-color: tomato;
+    --background-color: #ffffff;          /* Pure white */
+    --text-color: #000000;                /* Pure black for max contrast */
+    
+    --primary-accent-color: #0072b2;      /* Strong blue (colorblind safe) */
+    --secondary-accent-color: #d55e00;    /* Strong orange */
+    
+    --button-active-color: #0072b2;       /* Blue */
+    --button-inactive-color: #999999;     /* Medium gray */
+    --button-hover-color: #005f8d;        /* Darker blue */
+    
+    /* Calendar Day Backgrounds */
+    --calendar-day-closed-bg: #f0e442;   /* Yellow (colorblind safe) */
+    --calendar-day-regular-bg: #56b4e9;  /* Light blue */
+    --calendar-day-weekend-bg: #009e73;  /* Green */
+    --calendar-day-holiday-bg: #e69f00;  /* Orange */
+    
+    --holiday-color: #cc79a7;             /* Pink-purple */
+    --weekend-color: #0072b2;             /* Blue */
+    --office-closed-color: #999999;       /* Gray */
+    
+    --text-muted-color: #666666;    
   }
   

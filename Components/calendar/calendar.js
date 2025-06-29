@@ -1,45 +1,92 @@
 import { loadRoleData, roles, allRoles } from '../../js/loader/role-loader.js';
 import { loadEmployeeData, employees } from '../../js/loader/employee-loader.js';
-import { loadCalendarData, loadStateData, companyHolidays, officeDays } from '../../js/loader/calendar-loader.js';
+import { loadCalendarData, loadStateData, loadCompanyHolidayData, loadOfficeDaysData } from '../../js/loader/calendar-loader.js';
 import { getHolidayDetails, nonOfficialHolidays, monthNames, germanFixedHolidays, germanVariableHolidays } from '../../js/Utils/holidayUtils.js';
 import { updateStateFlag } from '../../js/Utils/flagUtils.js';
 import { loadRequests } from '../../js/loader/request-loader.js';
+import { keyToBools } from '../forms/calendar-form/calendar-form.js';
 
 let currentMonthIndex;
 let currentYear;
 let weeks;
 let isInOffice;
 let currentState;
+let officeDays;
+let companyHolidays;
+let cachedApi = null;
+let rulesetMonth = [], rulesetWeek = [], rulesetDay = [], rulesetShift = [];
+
+// MOK DATA FOR RULE TEST WITHOUT VALIDATION AND STORAGE
+const MOKRule = {
+  W: { id: "W0", bottomLimit: 0, upperLimit: Infinity },
+  T: { id: "T2", indices: [1, 2, 3, 4, 5, 6] }, // Mon–Sat
+  A: { id: "A0", bottomLimit: 2, upperLimit: 3 }, // Required chef count
+  G: { id: "G0", indices: [4] }, // "1" = chef role index
+  D: { id: "D0", uperLimit: 0, indices: 0 },
+  E: { id: "obviate" },
+  w: { id: "obviate", bottomLimit: 0, upperLimit: Infinity },
+  t: { id: "obviate", calendarEntries: [] },
+  a: { id: "obviate", bottomLimit: 0, upperLimit: Infinity },
+  g: { id: "obviate", roleIndices: [] },
+  d: { id: "obviate", upperLimit: 1, indices: [] }
+};
+const MOKRuleset = [MOKRule];
+
 
 export async function initializeCalendar(api) {
   if (!api) {
     console.error('❌ window.api is not available in calendar.js');
     return;
   }
+  cachedApi = api;
+  let isOnboarding = false;
+  // 🧠 Step 1: Check for path cache
+  let dataFolder = localStorage.getItem('clientDefinedDataFolder');
+  if (!dataFolder) {
+    console.warn('⚠ No cached data folder found, attempting recovery...');
+    dataFolder = await api.getRecoveredPath();
 
-  Promise.all([
-    loadRoleData(),
-    loadEmployeeData(),
-    loadCalendarData()
-  ])
-    .then(() => { })
-    .catch((error) => {
-      console.error('Error loading calendardata:', error);
-    });
-
-  currentState = await loadStateData();
-  const navigator = document.getElementById('calendar-navigation2');
-  if (!navigator) {
-    console.warn("Calendar navigator not found in the top right corner.");
-    return;
+    if (dataFolder) {
+      localStorage.setItem('clientDefinedDataFolder', dataFolder);
+    } else {
+      console.log('🗀 No recovery possible. Will fallback to sample data.');
+      isOnboarding = true
+    }
   }
+  if (!currentYear) currentYear = new Date().getFullYear();
+  try {
+    const [roles, employees, calendarData, officeDaysData, companyHolidays] = await Promise.all([
+      loadRoleData(),
+      loadEmployeeData(),
+      loadCalendarData(api, currentYear),
+      loadOfficeDaysData(api, isOnboarding),
+      loadCompanyHolidayData(api, currentYear)
+    ]);
 
-  initializeCalendarData();
-  createCalendarNavigation();
-  // generateAndRenderCalendar(currentMonthIndex, currentYear);
-  updateCalendarDisplay();
+
+    currentState = await loadStateData();
+    officeDays = officeDaysData;
+
+    initializeCalendarData();
+    createCalendarNavigation();
+    updateCalendarDisplay();
+
+    const colorTheme = localStorage.getItem('colorTheme');
+    const zoomFactor = localStorage.getItem('zoomFactor');
+    const clientDefinedDataFolder = localStorage.getItem('clientDefinedDataFolder');
+
+    const cacheDump = {
+      colorTheme: colorTheme ?? 'default (light)',
+      zoomFactor: zoomFactor ?? 'default (1.0)',
+      clientDefinedDataFolder: clientDefinedDataFolder ?? 'Not set',
+    };
+
+    api.send('update-cache', cacheDump);
+
+  } catch (error) {
+    console.error('❌ Error loading initial calendar data:', error);
+  }
 }
-
 
 function initializeCalendarData() {
   isInOffice = true;
@@ -48,16 +95,48 @@ function initializeCalendarData() {
   currentYear = currentDate.getFullYear();
 }
 
+function applyCalendarStyles() {
+  const calendarContainer = document.querySelector('.calendar-container');
+  if (!calendarContainer) return;
 
-function updateCalendarDisplay() {
+  const totalCols = 8.5;
+  const shrinkCells = officeDays.filter(day => day === 'never').length + 1;
+  const regularCells = totalCols - shrinkCells; // Exclude KW column
+
+  const shrinkWidthPercent = 5; // e.g., 5% for closed days
+  const remainingWidthPercent = 100 - (shrinkWidthPercent * shrinkCells);
+  const regularWidthPercent = remainingWidthPercent / regularCells;
+
+  calendarContainer.style.setProperty('--regular-width', `${regularWidthPercent}%`);
+  calendarContainer.style.setProperty('--shrink-width', `${shrinkWidthPercent}%`);
+}
+
+export function setDateRemote(year, month = currentMonthIndex) {
+  currentYear = year;
+  currentMonthIndex = month;
+  updateCalendarDisplay();
+}
+
+export function updateCalendarDisplay() {
   generateAndRenderCalendar(currentMonthIndex, currentYear);
   document.getElementById('calendar-month').textContent = monthNames[currentMonthIndex];
-  document.getElementById('calendar-year').textContent = currentYear;;
+  document.getElementById('calendar-year').textContent = currentYear;
+
+  // Trigger fade animation via class toggle
+  const feedback = document.getElementById('calendar-feedback');
+  if (!feedback) return;
+
+  feedback.classList.add('active');
+
+  setTimeout(() => {
+    feedback.classList.remove('active');
+  }, 1700); // fade out after 700ms
 }
+
 
 function generateAndRenderCalendar(newMonthIndex, newYear) {
 
-  // updateFeedback("current month:" + currentMonthIndex + "  current year:" + currentYear);
+  applyCalendarStyles();
   weeks = generateCalendar(newMonthIndex, newYear);
   renderCalendarMonth(weeks);
 }
@@ -202,6 +281,8 @@ async function renderCalendarMonth(weeks) {
     return;
   }
 
+  updateRuleset();
+
   calendarMonth.innerHTML = '';
   const { headerRow, columnWidths } = renderCalendarHeader();
   calendarMonth.appendChild(headerRow);
@@ -211,9 +292,11 @@ async function renderCalendarMonth(weeks) {
 
   try {
     const formattedMonth = String(currentMonthIndex + 1).padStart(2, '0');
-    monthRequests = await loadRequests(currentYear, formattedMonth);
+    monthRequests = await loadRequests(cachedApi, currentYear, formattedMonth);
+    monthRequests = filterRequestsByMonth(monthRequests, formattedMonth, currentYear);
   } catch (error) {
-    console.error("Error loading month requests:");
+    console.warn("Error loading month requests:");
+    monthRequests = [];
   }
 
 
@@ -222,6 +305,51 @@ async function renderCalendarMonth(weeks) {
     calendarMonth.appendChild(weekRow);
   });
 }
+
+function filterRequestsByMonth(requests, month, year) {
+  return requests.filter(req => {
+    const startDate = new Date(req.start);
+    const endDate = new Date(req.end);
+
+    // Month is 1-based string, convert to number:
+    const targetMonth = Number(month) - 1; // JS months: 0-11
+    const targetYear = Number(year);
+
+    // Get start and end of the month:
+    const monthStart = new Date(targetYear, targetMonth, 1);
+    const monthEnd = new Date(targetYear, targetMonth + 1, 0);
+
+    // Check if request overlaps this month:
+    const overlaps = startDate <= monthEnd && endDate >= monthStart;
+
+    // Filter out rejected:
+    const isApprovedOrPending = req.status !== 'rejected';
+
+    return overlaps && isApprovedOrPending;
+  });
+}
+
+
+function getUsedShiftsInWeek(officeDays) {
+  let isEarly = false, isDay = false, isLate = false;
+
+  officeDays.forEach(dayKey => {
+    if (dayKey === 'never') return;
+
+    try {
+      const { early, day, late } = keyToBools(dayKey);
+      if (early) isEarly = true;
+      if (day) isDay = true;
+      if (late) isLate = true;
+    } catch (err) {
+      console.warn(`Invalid shift key: ${dayKey}`);
+    }
+  });
+
+  return { isEarly, isDay, isLate };
+}
+
+
 
 function renderCalendarHeader() {
 
@@ -250,108 +378,162 @@ function renderCalendarHeader() {
   return { headerRow, columnWidths };
 }
 
-function renderDayCell(day, index, officeDayStatus, monthRequests) {
+function renderDayCell(day, index, shiftStatusForDay, usedShifts, monthRequests) {
 
   const fullDate = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   const holidayDetails = getHolidayDetails(fullDate, currentState);
   const companyClosed = getCompanyHoliday(fullDate);
   const dayCell = document.createElement('div');
+  const attendance = createEmptyAttendanceMatrix();
+
   dayCell.className = 'day-column';
 
-  if (!day) {
-    dayCell.classList.add('empty');
-    if (officeDayStatus === 'never') {
-      dayCell.classList.add('shrink');
-      dayCell.style.background = 'transparent';
-    }
-    return { cell: dayCell, render: false };
-  }
-  const dayCellHeaderObject = createDayCellHeader(day, dayCell, holidayDetails, companyClosed);
-
-  dayCell.appendChild(dayCellHeaderObject.hRow);
-
-  if (!dayCellHeaderObject.isValid) return { cell: dayCell, render: false };
+  const isNever = !shiftStatusForDay.early && !shiftStatusForDay.day && !shiftStatusForDay.late;
 
   let renderEmployees = true;
 
-  if (officeDayStatus === 'never') {
+  if (!day) {
+    dayCell.classList.add('empty');
+    if (isNever) {
+      dayCell.classList.add('shrink');
+      dayCell.style.background = 'transparent';
+    }
+    return { cell: dayCell, render: false, attendance };
+  }
+
+  if (isNever) {
     dayCell.classList.add('shrink');
     renderEmployees = false;
   }
 
+  const dayCellHeaderObject = createDayCellHeader(day, dayCell, holidayDetails, companyClosed);
+  dayCell.appendChild(dayCellHeaderObject.hRow);
+  if (!dayCellHeaderObject.isValid) return { cell: dayCell, render: false, attendance };
+
+
   if (index === 6) dayCell.classList.add('sunday');
-  if (officeDayStatus === 'morning') dayCell.classList.add('morning-shift');
-  if (officeDayStatus === 'aftenoon') dayCell.classList.add('afternoon-shift');
+
+  if (shiftStatusForDay.early && !shiftStatusForDay.day && !shiftStatusForDay.late) {
+    dayCell.classList.add('morning-shift');
+  }
+  if (shiftStatusForDay.late && !shiftStatusForDay.day && !shiftStatusForDay.early) {
+    dayCell.classList.add('afternoon-shift');
+  }
 
   if (renderEmployees) {
-    const shifts = createShifts(day, index, monthRequests);
-    dayCell.appendChild(shifts);
+    const shiftResult = createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts);
+    dayCell.appendChild(shiftResult.shifts);
+    mergeAttendance(attendance, shiftResult.attendance);
+
+    // WARNING: We query inside the virtual dayCell element here,
+    // because it’s not yet attached to the real DOM, so document.getElementById would return null.
+    const warningSpan = dayCell.querySelector(`#day-${day}-warning`);
+
+    if (warningSpan) {
+      // 👇 Debug info: raw attendance counts for role 4
+      // warningSpan.textContent = `${attendance[4][0]}/${attendance[4][1]}/${attendance[4][2]}`;
+
+      // ✅ Rule validation
+      const violations = checkRulesForDay(index, attendance);
+      violations.forEach(v => {
+        const icon = document.createElement('span');
+        icon.innerHTML = v.icon;
+        icon.title = v.title;
+        icon.classList.add('violation-icon');
+        warningSpan.appendChild(icon);
+      });
+    }
+
+    return { cell: dayCell, render: true, attendance };
   }
-  return { cell: dayCell, render: true };
+  // If we reach here, no employees to render but still return dayCell
+  return { cell: dayCell, render: false, attendance };
 }
 
-function createShifts(day, index, monthRequests) {
+
+
+function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts) {
   const shifts = document.createElement('div');
   shifts.style.width = "100%";
-  const moringShift = createMorningShift(day, index, monthRequests);
-  shifts.appendChild(moringShift);
-  const dayShift = createDayShift(day, index, monthRequests);
-  shifts.appendChild(dayShift);
-  const afternoonShift = createAfternoonShift(day, index, monthRequests);
-  shifts.appendChild(afternoonShift);
 
-  return shifts;
-}
+  const attendance = createEmptyAttendanceMatrix();
 
-function createMorningShift(day, index, monthRequests) {
-  const morningShift = document.createElement('span');
-  morningShift.classList.add('shift', 'noto');
-  morningShift.title = 'vormittags';
-
-
-  if (officeDays[index] === 'afternoon') {
-    morningShift.innerHTML = "🔒";
-    morningShift.title = "vormittags geschlossen";
-    morningShift.style.background = "lightpink";
-    return morningShift;
+  if (usedShifts.isEarly) {
+    const { shiftElement: morningShift, attendance: attendanceMorning } = createMorningShift(day, index, monthRequests, shiftStatusForDay.early);
+    mergeAttendance(attendance, attendanceMorning);
+    shifts.appendChild(morningShift);
   }
-  morningShift.classList.add('morning-shift');
-  morningShift.innerHTML = '.';
-  populateShift('morning', morningShift, day, index, monthRequests);
-  return morningShift;
+  if (usedShifts.isDay) {
+    const { shiftElement: dayShift, attendance: attendanceDay } = createDayShift(day, index, monthRequests, shiftStatusForDay.day);
+    mergeAttendance(attendance, attendanceDay);
+    shifts.appendChild(dayShift);
+  }
+  if (usedShifts.isLate) {
+    const { shiftElement: lateShift, attendance: attendanceAfternoon } = createAfternoonShift(day, index, monthRequests, shiftStatusForDay.late);
+    mergeAttendance(attendance, attendanceAfternoon);
+    shifts.appendChild(lateShift);
+  }
+
+  return { shifts, attendance };
 }
 
-function createAfternoonShift(day, index, monthRequests) {
+
+function createMorningShift(day, index, monthRequests, isOpen) {
+
+  const shift = document.createElement('span');
+
+  shift.classList.add('shift', 'noto');
+  shift.title = 'vormittags';
+
+  if (!isOpen) {
+    shift.innerHTML = "🔒";
+    shift.title = "vormittags geschlossen";
+    shift.style.background = "var(--calendar-day-closed-bg)";
+    const attendance = createEmptyAttendanceMatrix();
+    return { shiftElement: shift, attendance };
+  }
+
+  shift.classList.add('morning-shift');
+  shift.innerHTML = '.';
+  const attendance = populateShift('morning', shift, day, index, monthRequests);
+  return { shiftElement: shift, attendance };
+}
+
+function createAfternoonShift(day, index, monthRequests, isOpen) {
+
   const afternoonShift = document.createElement('span');
   afternoonShift.classList.add('shift', 'noto');
   afternoonShift.title = "nachmittags";
 
-  if (officeDays[index] === 'morning') {
+  if (!isOpen) {
     afternoonShift.innerHTML = "🔒";
     afternoonShift.title = "nachmittags geschlossen";
-    afternoonShift.style.background = "lightpink";
-    return afternoonShift;
+    afternoonShift.style.background = "var(--calendar-day-closed-bg)";
+    const attendance = createEmptyAttendanceMatrix();
+    return { shiftElement: afternoonShift, attendance };
   }
   afternoonShift.classList.add('afternoon-shift');
   afternoonShift.innerHTML = '.';
-  populateShift('afternoon', afternoonShift, day, index, monthRequests);
-  return afternoonShift;
+  const attendance = populateShift('afternoon', afternoonShift, day, index, monthRequests);
+  return { shiftElement: afternoonShift, attendance };
 }
 
-function createDayShift(day, index, monthRequests) {
+function createDayShift(day, index, monthRequests, isOpen) {
+
   const dayShift = document.createElement('span');
   dayShift.innerHTML = ".";
   dayShift.title = 'ganztags';
   dayShift.classList.add('shift', 'noto');
-  if (officeDays[index] === 'morning' || officeDays[index] === 'afternoon') {
-    dayShift.style.background = "lightpink";
+  if (!isOpen) {
+    dayShift.style.background = "var(--calendar-day-closed-bg)";
     dayShift.innerHTML = "🔒";
     dayShift.title = "halbtags geschlossen"
-    return dayShift;
+    const attendance = createEmptyAttendanceMatrix();
+    return { shiftElement: dayShift, attendance };
   }
   dayShift.classList.add('day-shift');
-  populateShift('full', dayShift, day, index, monthRequests);
-  return dayShift;
+  const attendance = populateShift('full', dayShift, day, index, monthRequests);
+  return { shiftElement: dayShift, attendance };
 }
 
 function checkEmployeeRequested(employee, monthRequests, day) {
@@ -382,15 +564,20 @@ function checkEmployeeRequested(employee, monthRequests, day) {
 
 
 function populateShift(type, shift, day, index, monthRequests) {
-  employees.forEach(employee => {
+  const attendance = createEmptyAttendanceMatrix();
 
+  employees.forEach(employee => {
     if (employee.workDays[index] === 'never') return;
 
-    const checkResult = checkEmployeeRequested(employee, monthRequests, day)
+    const checkResult = checkEmployeeRequested(employee, monthRequests, day);
+
     if (checkResult.overlap !== isInOffice || checkResult.status === 'pending') {
-      if (employee.workDays[index] === type ||
+      // Check if employee's scheduled shift matches current type or is full day when office is partially open
+      if (
+        employee.workDays[index] === type ||
         (employee.workDays[index] === 'full' && officeDays[index] !== 'full')
       ) {
+        // Create emoji element for UI
         const emoji = document.createElement('mark');
         emoji.title = employee.name;
         emoji.innerHTML = employee.personalEmoji;
@@ -405,17 +592,36 @@ function populateShift(type, shift, day, index, monthRequests) {
           emoji.innerHTML += "🎂";
           emoji.title = `${employee.name}´s Geburtstag`;
         }
+
         const roleColor = getComputedStyle(document.documentElement)
           .getPropertyValue(`--role-${employee.mainRoleIndex}-color`)
           .trim();
         emoji.style.backgroundColor = roleColor;
 
         shift.appendChild(emoji);
+
+        // --- ATTENDANCE COUNTING ---
+        // Determine rank index: replace this with your actual rank logic
+        // For example, employee might have employee.rankIndex or some preference order
+        const rankIndex = employee.rankIndex !== undefined ? employee.rankIndex : 0;
+
+        // Increment attendance count for role and rank
+        if (
+          attendance[employee.mainRoleIndex] !== undefined &&
+          attendance[employee.mainRoleIndex][rankIndex] !== undefined
+        ) {
+          attendance[employee.mainRoleIndex][rankIndex] += 1;
+        } else {
+          console.warn(
+            `Invalid attendance index: role=${employee.mainRoleIndex}, rank=${rankIndex}`
+          );
+        }
       }
     }
   });
-}
 
+  return attendance;
+}
 
 function createDayCellHeader(day, dayCell, holidayDetails, companyClosed) {
 
@@ -428,16 +634,15 @@ function createDayCellHeader(day, dayCell, holidayDetails, companyClosed) {
 
   dayCellHeader.appendChild(dayDate);
 
-  const warningIndicator = document.createElement('div');
-  warningIndicator.classList.add = 'warning-indicator noto';
-  warningIndicator.textContent = 'test';
+  const warningIndicator = document.createElement('span');
+  warningIndicator.classList = 'warning-icon noto';
+  warningIndicator.innerHTML = '';
+  warningIndicator.id = `day-${day}-warning`;
   dayCellHeader.appendChild(warningIndicator);
 
   const specialDay = document.createElement('div');
   specialDay.className = 'special-day noto';
   let renderEmployees = true;
-
-  // console.log(holidayDetails);
 
   if (holidayDetails.isValid) {
     specialDay.textContent = holidayDetails.emoji;
@@ -457,26 +662,157 @@ function createDayCellHeader(day, dayCell, holidayDetails, companyClosed) {
   return { isValid: renderEmployees, hRow: dayCellHeader };
 }
 
+function checkRulesForWeek(weeklyAttendance) {
+  const violations = [];
+
+  rulesetWeek.forEach(rule => {
+    // No weekday filtering, as it's for the whole week
+
+    const relevantRoles = rule.G?.indices || [];
+
+    const min = rule.A?.bottomLimit ?? 0;
+    const max = rule.A?.upperLimit ?? Infinity;
+
+    // Sum attendance for all relevant roles across the week
+    let total = 0;
+    relevantRoles.forEach(roleIndex => {
+      const roleAttendance = weeklyAttendance[roleIndex] || [0, 0, 0];
+      total += roleAttendance[0] + roleAttendance[1] + roleAttendance[2];
+    });
+
+    const roleNames = relevantRoles.map(index => roles[index]?.name || `Rolle ${index}`);
+
+    if (total < min) {
+      violations.push({
+        icon: "🚨",
+        title: `Zu wenige ${roleNames.join(", ")} in der Woche: ${total} von min. ${min}`
+      });
+    }
+    if (total > max) {
+      violations.push({
+        icon: "⚠️",
+        title: `Zu viele ${roleNames.join(", ")} in der Woche: ${total} von max. ${max}`
+      });
+    }
+  });
+
+  return violations;
+}
+
+
+function checkRulesForDay(weekdayIndex, attendance) {
+  const violations = [];
+
+  // 🧨 Office Closed Check
+  if (officeDays[weekdayIndex] === 'never') {
+    const totalAttendance = Object.values(attendance).reduce((sum, roleAttendance) => {
+      const [a, b, c] = roleAttendance || [0, 0, 0];
+      return sum + a + b + c;
+    }, 0);
+
+    if (totalAttendance > 0) {
+      violations.push({
+        icon: "💥",
+        title: `Achtung! ${totalAttendance} Mitarbeitende geplant, aber Büro ist geschlossen.`,
+        critical: true
+      });
+    }
+  }
+  if (officeDays[weekdayIndex] === 'never') {
+    return violations;
+  }
+
+  // ... existing rule checks
+  rulesetDay.forEach(rule => {
+    const validDays = rule.T?.indices || [];
+    if (!validDays.includes(weekdayIndex)) return;
+
+    const relevantRoles = rule.G?.indices || [];
+
+    const min = rule.A?.bottomLimit ?? 0;
+    const max = rule.A?.upperLimit ?? Infinity;
+
+    let total = 0;
+    relevantRoles.forEach(roleIndex => {
+      const roleAttendance = attendance[roleIndex] || [0, 0, 0];
+      total += roleAttendance[0] + roleAttendance[1] + roleAttendance[2];
+    });
+
+    const roleNames = relevantRoles.map(index => roles[index]?.name || `Rolle ${index}`);
+
+    if (total < min) {
+      violations.push({
+        icon: "🚨",
+        title: `Zu wenige ${roleNames.join(", ")}: ${total} von min. ${min}`
+      });
+    }
+    if (total > max) {
+      violations.push({
+        icon: "⚠️",
+        title: `Zu viele ${roleNames.join(", ")}: ${total} von max. ${max}`
+      });
+    }
+  });
+
+  return violations;
+}
+
+
 function renderWeekRow(week, monthRequests) {
   const weekRow = document.createElement('div');
   weekRow.classList.add('calendar-row');
 
   const kwCell = document.createElement('div');
-  kwCell.textContent = `${week.weekNumber}`;
-  kwCell.className = 'kw-column shrink';
+  kwCell.className = 'kw-column';
+
+  const kwNumberLabel = document.createElement('div');
+  kwNumberLabel.textContent = `KW ${week.weekNumber}`;
+  kwCell.appendChild(kwNumberLabel);
+
+  // NEW: Add warning span under the label
+  const weekWarningSpan = document.createElement('div');
+  weekWarningSpan.classList = 'warning-icon noto';
+  weekWarningSpan.id = `week-${week.weekNumber}-warning`;
+  weekWarningSpan.innerHTML = 'test'; // Empty, to fill later
+  kwCell.appendChild(weekWarningSpan);
+
   weekRow.appendChild(kwCell);
 
+  const usedShifts = getUsedShiftsInWeek(officeDays); // or scoped slice if needed
+  const shiftStatusForDayForWeek = week.days.map((_, index) => keyToBools(officeDays[index]));
+
+  const weeklyAttendance = createEmptyAttendanceMatrix();
+
   week.days.forEach((day, index) => {
-    const officeDayStatus = officeDays[index];
-    const dayCellObj = renderDayCell(day, index, officeDayStatus, monthRequests);
+    const shiftStatusForDay = shiftStatusForDayForWeek[index];
+    const dayCellObj = renderDayCell(day, index, shiftStatusForDay, usedShifts, monthRequests);
 
     weekRow.appendChild(dayCellObj.cell);
+
+    if (dayCellObj.attendance) {
+      mergeAttendance(weeklyAttendance, dayCellObj.attendance);
+    }
   });
+  const weeklyViolations = checkRulesForWeek(weeklyAttendance);
+  const warningSpan = weekRow.querySelector(`#week-${week.weekNumber}-warning`);
+
+  if (warningSpan) {
+    weeklyViolations.forEach(v => {
+      const icon = document.createElement('span');
+      icon.innerHTML = v.icon;
+      icon.title = v.title;
+      icon.classList.add('violation-icon');
+      warningSpan.appendChild(icon);
+    });
+  }
 
   return weekRow;
 }
 
+
 function getCompanyHoliday(date) {
+
+  if (!companyHolidays) return false;
 
   for (const holiday of companyHolidays) {
     const holidayStart = new Date(holiday.startDate);
@@ -508,3 +844,68 @@ function getSchoolHoliday(date) {
   return null;
 }
 
+function showCalendarUpdateFeedback() {
+  const feedbackEl = document.querySelector('.fade-feedback');
+  feedbackEl.classList.add('active');
+  setTimeout(() => {
+    feedbackEl.classList.remove('active');
+  }, 1000);
+}
+
+function updateRuleset() {
+  rulesetMonth = [];
+  rulesetWeek = [];
+  rulesetDay = [];
+  rulesetShift = [];
+
+  const ruleset = MOKRuleset;
+
+  ruleset.forEach(rule => {
+    const timeframes = [];
+
+    // T and t may be defined with IDs like "T2" or "t2"
+    if (rule.T?.id && rule.T.id !== "obviate") {
+      const tf = rule.T.id.match(/\d+/)?.[0]; // Extract number part
+      if (tf) timeframes.push(tf);
+    }
+
+    if (rule.t?.id && rule.t.id !== "obviate") {
+      const tf = rule.t.id.match(/\d+/)?.[0]; // Extract number part
+      if (tf) timeframes.push(tf);
+    }
+
+    for (const T of timeframes) {
+      switch (T) {
+        case "1":
+          rulesetShift.push(rule);
+          break;
+        case "2":
+          rulesetDay.push(rule);
+          break;
+        case "3":
+          rulesetWeek.push(rule);
+          break;
+        case "4":
+          rulesetMonth.push(rule);
+          break;
+        case "5":
+          rulesetDay.push(rule); // e.g., holidays or special
+          break;
+        default:
+          break;
+      }
+    }
+  });
+}
+
+function createEmptyAttendanceMatrix() {
+  return Array(14).fill(null).map(() => [0, 0, 0]);
+}
+
+function mergeAttendance(target, source) {
+  for (let role = 0; role < target.length; role++) {
+    for (let rank = 0; rank < target[role].length; rank++) {
+      target[role][rank] += source[role][rank];
+    }
+  }
+}

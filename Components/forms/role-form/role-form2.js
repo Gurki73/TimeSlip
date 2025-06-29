@@ -15,7 +15,7 @@ let api;
 
 export async function initializeRoleForm(passedApi) {
   setApi(passedApi);
-  await loadInitialData();
+  await loadInitialData(api);
   const formContainer = getFormContainer();
   if (!formContainer) return;
   await loadRoleForm(formContainer);
@@ -27,9 +27,9 @@ function setApi(passedApi) {
   if (!api) console.error("Api was not passed ==> " + api);
 }
 
-async function loadInitialData() {
+async function loadInitialData(api) {
   try {
-    await Promise.all([loadRoleData()]);
+    await Promise.all([loadRoleData(api)]);
   } catch (error) {
     console.error('Error loading data:', error);
   }
@@ -66,6 +66,7 @@ function renderRoleTable() {
   const table = document.createElement('table');
   table.className = 'role-table';
 
+  // Render main 12 roles (3x4 grid)
   for (let row = 0; row < 3; row++) {
     const tableRow = document.createElement('tr');
 
@@ -79,15 +80,18 @@ function renderRoleTable() {
       if (role) {
         const roleDiv = createRoleDiv(role, roleIndex);
         cell.appendChild(roleDiv);
+
+        addEventListeners(roleDiv, roleIndex);
       }
+
       tableRow.appendChild(cell);
     }
 
     table.appendChild(tableRow);
   }
 
+  // Render special 13th role (task button row)
   const tableRow = document.createElement('tr');
-
   const roleIndex = 13;
   const role = allRoles[roleIndex];
 
@@ -105,15 +109,15 @@ function renderRoleTable() {
     ${roleIndex}.
     <button class="transparentButton unaccessable emoji-button-${roleIndex} noto">${emojiToUse}</button>
     ⇨
-    <input class="name-role unaccessable name-role-${roleIndex}" type="text" value="${roleName}" oninput="markRoleAsChanged(${roleIndex})" />
+    <input class="name-role unaccessable name-role-${roleIndex}" type="text" value="${roleName}" />
   `;
 
   cell.appendChild(roleDiv);
-
   tableRow.appendChild(cell);
   table.appendChild(tableRow);
 
   container.appendChild(table);
+
 }
 
 function createRoleDiv(role, roleIndex) {
@@ -123,59 +127,142 @@ function createRoleDiv(role, roleIndex) {
 
   const emojiToUse = role.emoji || emoji[roleIndex % emoji.length];
   const roleName = role.name || '';
-  const deleteButtonStyle = (roleName === '?' && emojiToUse === '❓') ? 'display: none;' : '';
-  const storeButtonStyle = roleChanges[roleIndex] ? '' : 'display: none;';
+
+  const { shouldShowDelete, shouldShowStore } = updateRoleButtonsVisibility(roleIndex);
 
   roleDiv.innerHTML = `
-    ${roleIndex}.
-    <button class="transparentButton emoji-button-${roleIndex} noto">${emojiToUse}</button>
-    ⇨
-    <input class="name-role name-role-${roleIndex}" type="text" value="${roleName}" oninput="markRoleAsChanged(${roleIndex})" />
-    <button class="mybutton-small store-button-${roleIndex} noto" type="button" style="${storeButtonStyle}" title="Änderungen speichern">💾</button>
-    <button class="mybutton-small delete-button-${roleIndex} noto" type="button" style="${deleteButtonStyle}" title="${roleName} löschen">🚮</button>
-  `;
+  ${roleIndex}.
+  <button
+    class="transparentButton emoji-button-${roleIndex} noto"
+    aria-label="Rollen-Emoji für ${roleName || 'unnannte Rolle'}"
+    type="button"
+  >${emojiToUse}</button>
+  ⇨
+  <input
+    class="name-role name-role-${roleIndex}"
+    type="text"
+    value="${roleName}"
+    aria-label="Rollenname Eingabefeld für Rolle ${roleIndex}"
+  />
+  <button
+    class="mybutton-small store-button noto ${!shouldShowStore ? 'hidden' : ''}"
+    data-index="${roleIndex}"
+    type="button"
+    title="Änderungen speichern"
+    aria-label="Änderungen speichern für Rolle ${roleName || roleIndex}"
+  >💾</button>
+  <button
+    class="mybutton-small delete-button noto ${!shouldShowDelete ? 'hidden' : ''}"
+    data-index="${roleIndex}"
+    type="button"
+    title="${roleName} löschen"
+    aria-label="Rolle ${roleName || roleIndex} löschen"
+  >🚮</button>
+`;
 
   addEventListeners(roleDiv, roleIndex);
   return roleDiv;
 }
 
 function addEventListeners(roleDiv, roleIndex) {
-  roleDiv.querySelector(`.emoji-button-${roleIndex}`).addEventListener('click', () => changeEmoji(roleIndex));
-  roleDiv.querySelector(`.name-role-${roleIndex}`).addEventListener('keydown', (event) => handleRoleInputKeydown(event, roleIndex));
-  roleDiv.querySelector(`.delete-button-${roleIndex}`).addEventListener('click', () => deleteRoleAndShowStoreButton(roleIndex));
-  roleDiv.querySelector(`.store-button-${roleIndex}`).addEventListener('click', () => storeRole(roleIndex));
+  if (roleDiv.dataset.listenersBound === 'true') {
+    // Already bound, skip
+    return;
+  }
+  roleDiv.dataset.listenersBound = 'true';
+
+  try {
+    roleDiv.querySelector(`.emoji-button-${roleIndex}`).addEventListener('click', () => changeEmoji(roleIndex));
+  } catch (error) {
+    console.error(`Failed to bind emoji button for role ${roleIndex}:`, error);
+  }
+
+  try {
+    roleDiv.querySelector(`.name-role-${roleIndex}`).addEventListener('keydown', (event) => handleRoleInputKeydown(event, roleIndex));
+  } catch (error) {
+    console.error(`Failed to bind role input for role ${roleIndex}:`, error);
+  }
+
+  try {
+    const deleteButton = roleDiv.querySelector('.delete-button');
+    if (deleteButton) {
+      deleteButton.addEventListener('click', (event) => {
+        const index = event.target.getAttribute('data-index');
+        deleteRoleAndShowStoreButton(index);
+      });
+    }
+  } catch (error) {
+    console.error(`Failed to bind delete button:`, error);
+  }
+
+  try {
+    const storeButton = roleDiv.querySelector('.store-button');
+    if (storeButton) {
+      storeButton.addEventListener('click', (event) => {
+        const index = event.target.getAttribute('data-index');
+        storeRole(index);
+      });
+    }
+  } catch (error) {
+    console.error(`Failed to bind store button:`, error);
+  }
+
+
+  try {
+    roleDiv.querySelector(`.name-role-${roleIndex}`).addEventListener('focus', (event) => {
+      const input = event.target;
+      if (input.value === '?') {
+        input.value = '';
+      }
+    });
+  } catch (error) {
+    console.error(`Failed to bind focus event for role ${roleIndex}:`, error);
+  }
+}
+
+function validateRoleName(index) {
+  const input = document.querySelector(`.name-role-${index}`);
+  const name = input.value.trim();
+  const isUnique = !allRoles.some((r, i) => i !== index && r.name?.trim() === name);
+
+  if (!isUnique) {
+    input.setCustomValidity('Diesen Namen gibt es schon. Wähle einen anderen.');
+    input.reportValidity();
+    return false;
+  } else {
+    input.setCustomValidity('');
+    return true;
+  }
 }
 
 function handleRoleInputKeydown(event, index) {
   if (event.key === 'Enter') {
-    // Exit the input field (blur the field)
-    event.target.blur();
-
-    // Call a custom function when Enter is pressed
-    processRoleInput(index);
+    event.target.blur();            // commit value
+    processRoleInput(index);        // write into allRoles
+    const ok = validateRoleName(index);
+    if (!ok) {
+      // focus back on the offending input
+      event.target.focus();
+      return;
+    }
+    markRoleAsChanged(index);
+    // only advance focus once name is valid
+    setTimeout(() => focusNext(index), 0);
   }
 }
+
 function markRoleAsChanged(index) {
+  console.log("role js - mark change ", index);
   roleChanges[index] = true;
+  focusNext(index);
 }
 
-/**
- * Process the input for a specific role
- * @param {number} index - The index of the role
- */
 function processRoleInput(index) {
-  console.log(`Processing input for role at index ${index}`);
   const inputElement = document.querySelector(`.name-role-${index}`);
   const newValue = inputElement.value.trim();
-
-  // Perform any specific action with the new value
-  console.log(`New value for role ${index}: ${newValue}`);
-
-  // Update the role and re-render if necessary
-  allRoles[index].name = newValue;
-  roleChanges[index] = true;
-  renderRoleTable()
+  allRoles[index].name = newValue || '?';
 }
+
 
 function changeEmoji(index) {
   const role = allRoles[index];
@@ -197,13 +284,12 @@ function changeEmoji(index) {
 }
 
 function deleteRoleAndShowStoreButton(index) {
-  console.log(`Deleting role at index ${index}`);
-
   allRoles[index].emoji = '❓';
   allRoles[index].name = '?';
   roleChanges[index] = true;
   renderRoleTable();
 }
+
 
 function storeRole(index) {
   const role = allRoles[index];
@@ -219,3 +305,52 @@ function storeRole(index) {
   generateRoleCSV(api);
 
 }
+
+function updateRoleButtonsVisibility(index) {
+  const role = allRoles[index];
+  const name = role.name?.trim();
+  const emoji = role.emoji;
+  const isValidName = name !== undefined && name.trim() !== '' && name.trim() !== '?';
+  const isValidEmoji = emoji !== undefined && emoji.trim() !== '' && emoji.trim() !== '❓';
+
+  const isChanged = roleChanges[index];
+  const isNameUnique = !allRoles.some((r, i) => i !== index && r.name?.trim() === name);
+
+  const shouldShowDelete = isValidName || isValidEmoji;
+  const shouldShowStore = isValidName && isValidEmoji && isChanged && isNameUnique;
+
+  return { shouldShowDelete, shouldShowStore }
+}
+
+function focusNext(roleIndex) {
+  const container = document.getElementById('role-form-container');
+
+  const nameInput = container.querySelector(`.name-role-${roleIndex}`);
+  const emojiBtn = container.querySelector(`.emoji-button-${roleIndex}`);
+  const saveButton = container.querySelector(`.store-button[data-index="${roleIndex}"]`);
+
+  const { shouldShowDelete, shouldShowStore } = updateRoleButtonsVisibility(roleIndex);
+  const role = allRoles[roleIndex];
+  const isValidName = role.name?.trim() !== '' && role.name?.trim() !== '?';
+  const isValidEmoji = role.emoji?.trim() !== '' && role.emoji?.trim() !== '❓';
+
+  if (shouldShowDelete) {
+    if (shouldShowStore) {
+      console.log(" save button should receive focus ");
+      renderRoleTable();
+      requestAnimationFrame(() => {
+        saveButton?.focus();
+      });
+      return;
+    }
+    if (!isValidName) {
+      console.log(" Name text input should recive focus ");
+      nameInput.focus();
+    } else if (!isValidEmoji) {
+      console.log(" emojiPicker should recive focus ");
+      emojiBtn.focus();
+    }
+  }
+}
+
+

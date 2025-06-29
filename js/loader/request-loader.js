@@ -1,21 +1,60 @@
-async function loadRequests(year, month) {
-
+async function loadRequests(api, year, month) {
+    let homeKey = localStorage.getItem('clientDefinedDataFolder') || 'home';
+    const relativePath = `requests/${year}_${month}_requests.csv`;
+    console.log("Try to load role data from client folder ");
     try {
-        const response = await fetch(`data/requests/${year}_${month}_requests.csv`);
+        const fileData = await api.loadCSV(homeKey, relativePath);
+
+        if (fileData) {
+            console.log('✅ Loaded role data from', homeKey, relativePath);
+            return parseRequestsCSV(fileData);
+        } else {
+            console.warn('⚠️ No request data found, using sample fallback.');
+            const result = await loadSampleRequests(api, year, month);
+            return result;
+        }
+    } catch (error) {
+        console.warn('❌ Failed to load request data:', error);
+        const result = await loadSampleRequests(api, year, month);
+        return result;
+    }
+}
+
+async function loadSampleRequests(api, year, month) {
+    const relativePath = `requests/${year}_${month}_requests.csv`;
+    const samplePath = "./samples/requests/sampleRequests.csv";
+
+    /*
+    const exists = await api.checkPath('sample', relativePath);
+
+    if (!exists) {
+        console.warn(`⚠️ Sample request file not found: ${samplePath}`);
+        return [];
+    }
+    */
+    try {
+        const response = await fetch(samplePath);
         if (!response.ok) {
+            console.warn(`⚠️ Sample request file not found: ${samplePath}`);
             return [];
         }
         const data = await response.text();
+        console.log(`✅ Loaded sample request data from ${samplePath}`);
         return parseRequestsCSV(data);
     } catch (error) {
+        console.warn(`❌ Error loading sample request data:`, error);
         return [];
     }
 }
 
+
 function parseRequestsCSV(data) {
+    // console.log('[parseRequestsCSV] raw data:', data);
+
     const rows = data.split('\n').filter(row => row.trim() !== '');
-    return rows.slice(1).map(row => {
+    const result = rows.slice(1).map(row => {
         const [id, employeeID, vacationType, start, end, shift, requesterMSG, approverMSG, status, decisionDate, requestedAt] = row.split(',');
+
         return {
             id: id.trim(),
             employeeID: employeeID.trim(),
@@ -30,13 +69,17 @@ function parseRequestsCSV(data) {
             requestedAt: requestedAt.trim()
         };
     });
+
+    // console.log('[parseRequestsCSV] parsed result:', result);
+    return result;
 }
+
 
 async function appendRequestToCSV(api, request) {
     const year = request.start.split('-')[0];
     const month = request.start.split('-')[1];
     const fileName = `${year}_${month}_requests.csv`;
-    const filePath = `data/requests/${fileName}`;
+    const filePath = `requests/${fileName}`;
 
     const csvHeader = 'id,employeeID,vacationType,start,end,shift,requesterMSG,approverMSG,status,decisionDate,requestedAt';
     const csvRow = `${request.id},${request.employeeID},${request.vacationType},${request.start},${request.end},${request.shift},${request.requesterMSG},${request.approverMSG},${request.status},${request.decisionDate},${request.requestedAt}`;
@@ -53,7 +96,7 @@ async function appendRequestToCSV(api, request) {
     let csvContent = fileContent.trim() ? `${fileContent.trim()}\n${csvRow}` : `${csvHeader}\n${csvRow}`;
 
     try {
-        const folderPath = 'data/requests';
+        const folderPath = 'requests';
         await api.saveCSV(folderPath, fileName, csvContent);
         console.log(`Request appended successfully to ${fileName}`);
     } catch (err) {
@@ -75,7 +118,7 @@ async function updateRequest(api, id, changes) {
     const fileName = `${year}_${month}_requests.csv`; // Fixed filename
 
     try {
-        const response = await fetch(`data/requests/${fileName}`);
+        const response = await fetch(`requests/${fileName}`);
         if (!response.ok) throw new Error(`File not found: ${fileName}`);
 
         let data = await response.text();
@@ -89,7 +132,7 @@ async function updateRequest(api, id, changes) {
 
         rows[index] = `${updated.id},${updated.employeeID},${updated.vacationType},${updated.start},${updated.end},${updated.shift},${updated.requesterMSG},${updated.approverMSG},${updated.status},${updated.decisionDate},${updated.requestedAt}`;
 
-        await api.saveCSV(`data/requests/`, fileName, rows.join('\n'));
+        await api.saveCSV(`requests/`, fileName, rows.join('\n'));
         console.log(`✅ Request ${id} updated successfully`);
     } catch (err) {
         console.warn(`🚨 Error updating request ${id}:`, err);

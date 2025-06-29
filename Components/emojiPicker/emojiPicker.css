@@ -56,7 +56,9 @@
 }
 
 .emoji-picker .emoji {
-  font-size: 24px;
+  font-family: 'NotoEmoji';
+  font-weight: bold;
+  font-size: 2rem;
   cursor: pointer;
   padding: 5px;
   border-radius: 5px;
@@ -65,8 +67,71 @@
   z-index: 10000;
 }
 
+/* Scoped under a container ID or class */
+.emoji-picker-container {
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 8px;
+  z-index: 9999;
+}
+
+.emoji-picker-top-bar-wrapper {
+  background-color: var(--role-hover-color, #f0f0f0);
+  border-bottom: 1px solid #ddd;
+  padding: 4px 8px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.emoji-picker-top-bar {
+  flex-grow: 1;
+}
+
+.emoji-picker-close-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.emoji-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 24px);
+  gap: 4px;
+  padding: 8px;
+}
+
+.emoji-picker-emoji {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.emoji-picker-emoji:hover {
+  background-color: var(--hover-color, #eee);
+}
+
 .emoji-picker .emoji:hover {
   background-color: var(--hover-color);
+}
+
+.emoji-picker-emoji:focus,
+.emoji-picker .emoji:focus {
+  outline: none;
+  background-color: var(--hover-color, #eee); /* Same as hover */
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2); /* Optional: subtle focus ring */
 }
 
 /* Dynamic color for top bar */

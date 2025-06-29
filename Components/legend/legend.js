@@ -2,6 +2,7 @@
 
 import { loadRoleData, roles } from '../../js/loader/role-loader.js';
 import { loadEmployeeData, employees, getTotalEmployeesByRole } from '../../js/loader/employee-loader.js';
+import { getHolidayGreetingForToday } from '../../js/Utils/holidayUtils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -20,9 +21,21 @@ function initializeLegend() {
   const legendContainer = document.getElementById('legend');
   if (!legendContainer) return console.error('Legend container not found');
 
+  // Inject dynamic holiday greeting
+  updateWelcomeGreeting();
+
   legendContainer.innerHTML = '';
   renderCollapsibleSection(legendContainer, '🎨 ⇨ Aufgaben', renderRoles);
   renderCollapsibleSection(legendContainer, '😊 ⇨ Mitarbeiter', renderEmployees);
+}
+
+function updateWelcomeGreeting() {
+  const header = document.getElementById('greetingID');
+  if (!header) return;
+  const greeting = getHolidayGreetingForToday();
+  if (greeting) {
+    header.textContent = greeting;
+  }
 }
 
 function syncCollapsibleState() {

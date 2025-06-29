@@ -41,35 +41,55 @@
 
 <html lang="de">
   <head>
-    <meta charset="UTF-16">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mitarbeiter Kalender</title>
-    <link rel="stylesheet" href='styles/global.css'>
-    <link rel="stylesheet" href='assets/css/theme-dark.css'>
-    <link rel="stylesheet" href='assets/css/theme-default.css'>
-    <link rel="stylesheet" href='assets/css/theme-patel.css'>
-    <link rel="stylesheet" href='Components/legend/legend.css'>
-    <link rel="stylesheet" href='Components/calendar/calendar.css'>
-    <link rel="stylesheet" href='Components/emojiPicker/emojiPicker.css'>
-    <link rel="stylesheet" href='Components/Slider/slider.css'>
-    <link rel="stylesheet" href='assets/css/colors.css'>
-    <link rel="stylesheet" href='assets/css/buttons.css'>
-    <link rel="stylesheet" href='assets/css/icons.css'>
-    <link rel="stylesheet" href='Components/forms/role-form/role-form.css'>
-    <link rel="stylesheet" href='Components/forms/rule-form/rule-form.css'>
-    <link rel="stylesheet" href='Components/forms/calendar-form/calendar-form.css'>
-    <link rel="stylesheet" href='Components/forms/admin-form/admin-form.css'>
-    <link rel="stylesheet" href='Components/forms/request-form/request-form.css'>
-    <link rel="stylesheet" href='Components/forms/employee-form/employee-form.css'>
+      <meta charset="UTF-16">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+      <!-- Main Content Security Policy -->
+      <meta http-equiv="Content-Security-Policy" content="
+          default-src 'self';
+          script-src 'self' 'nonce-PLACEHOLDER_NONCE';
+          style-src 'self' 'nonce-PLACEHOLDER_NONCE';
+          connect-src 'self' https://your-api.com;
+          object-src 'none';
+      ">
+
+      <title>Mitarbeiter Kalender</title>
+
+      <!-- Stylesheets -->
+      <link rel="stylesheet" href="styles/global.css">
+      <link rel="stylesheet" href="assets/css/theme-dark.css">
+      <link rel="stylesheet" href="assets/css/theme-default.css">
+      <link rel="stylesheet" href="assets/css/theme-patel.css">
+      <link rel="stylesheet" href="Components/legend/legend.css">
+      <link rel="stylesheet" href="Components/calendar/calendar.css">
+      <link rel="stylesheet" href="Components/emojiPicker/emojiPicker.css">
+      <link rel="stylesheet" href="Components/Slider/slider.css">
+      <link rel="stylesheet" href="assets/css/colors.css">
+      <link rel="stylesheet" href="assets/css/buttons.css">
+      <link rel="stylesheet" href="assets/css/icons.css">
+      <link rel="stylesheet" href="Components/forms/role-form/role-form.css">
+      <link rel="stylesheet" href="Components/forms/rule-form/rule-form.css">
+      <link rel="stylesheet" href="Components/forms/calendar-form/calendar-form.css">
+      <link rel="stylesheet" href="Components/forms/admin-form/admin-form.css">
+      <link rel="stylesheet" href="Components/forms/request-form/request-form.css">
+      <link rel="stylesheet" href="Components/forms/employee-form/employee-form.css">
+      <link rel="stylesheet" href="Components/help/help.css">
+
   </head>
 
   <body class="theme-dark">
 
     <div id="main-container2">
-      <div id="left-panel" class="split-panel left">
-        <div id="legend"></div> 
+      <aside id="left-panel" class="split-panel left" tabindex="-1" aria-labelledby="sidebar-label">
+
+        <h2 id="sidebar-label" class="visually-hidden">Seitenleiste Navigation</h2>
+        
+        <div  id="legend" tabindex="-1" aria-label="Legende für Symbole und Farbcodes" aria-hidden="true">
+        </div> 
+        
         <div class="horizontal-divider-no-resize"></div>
-        <div id="sidebar">
+        
+        <nav id="sidebar" tabindex="-1">
           <button class="nav-button" data-form="request-form">
             <img src="./assets/svg/file-document-svgrepo-com.svg" alt="Urlaub Icon" class="nav-icon">
             <span><span class="underline">U</span>rlaub</span>
@@ -99,31 +119,45 @@
             <img src="./assets/svg/cog-wheel-settings-svgrepo-com.svg" alt="Werkzeuge Icon" class="nav-icon">
             <span><span class="underline">W</span>erkzeuge</span>
           </button>
-        </div>        
-      </div> 
+        </nav>        
+      </aside> 
+
       <div id="vertical-divider">
-        <button id="resize-toggle" class="resize-button"> </button>
+        <button
+          tabindex="0"
+          id="resize-toggle"
+          class="resize-button"
+          aria-controls="left-panel"
+          aria-expanded="true"
+          aria-label="Seitenleiste ein- oder ausblenden">
+        </button>
       </div>
+
       <div id="right-panel" class="split-panel right">
-        <div id="calendar" class="top-row">
-          <div style="width:100%; height:100%">
-            <br> hier sollte ein Kalendar erscheinen :-/
-            <br><br> <div class="spinner"></div>
-         </div>
+        <main id="calendar" class="top-row" tabindex="-1" aria-live="polite" aria-busy="true">
+          <div class="layout-full-size">
+            <div class="spinner" aria-hidden="true"></div>
+            <span class="sr-only" id="loading-message">Kalender wird geladen…</span>
+          </div>
+        </main>
      
-        </div>
         <div id="horizontal-divider"></div>
-        <div id="form-container" class="bottom-row" >
-          <div class="welcome-page" style="font-family: Arial, sans-serif; color: #333;">
-            <h4 style="text-align: center; color: #2c3e50;">Willkommen bei der Urlaubsplaner-App</h4>
-            <div style="display: flex; flex-wrap: wrap; justify-content: space-evenly; width: 100%; height: 100%; padding: 20px;">
+        <section id="form-container" class="bottom-row" >
+          <section class="welcome-page text-arial" role="complementary">
+            <h1 class="text-header-4" id="greetingID">Willkommen beim Mitarbeiter Kalender</h1>
+            <p class="text-header-4 ">
+              Ihrem Werkzeug zur einfachen Belegschafts-Planung, 
+              Rufe die Anleitung <i class="noto">🛟</i> mit [F1] oder unter Menü <i class="noto">⇨</i> Hilfe  auf 
+              --- Drücke [F5] falls der Kalendar nicht vollständig geladen wurde,
+            </p>
+            <div class="layout-full-size flex-row ">
                 <!-- Urlaub Icon Card -->
-                  <div style="background-color: #fafad2; margin: 5px; padding: 5px; border-radius: 12px; border: 2px solid #dcdcdc; height: 100%; width: 250px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-                    <img src="./assets/svg/file-document-svgrepo-com.svg" alt="Urlaub Icon" class="nav-icon" style="width: 50px; margin-bottom: 10px;">
-                    <h4 style="color: #e67e22;">
-                    <mark class="squiggle noto">𑇤</mark>
-                    Urlaubsanträge
-                    <mark class="squiggle.mirrored noto">𑇤</mark></h4>
+                  <div class="layout-card layout-card.request" role="region">
+                    <h4 class="text-request layout-row">
+                      <img src="./assets/svg/file-document-svgrepo-com.svg" alt="" aria-hidden="true" tabindex="-1" class="nav-icon image-header">
+                      Urlaubsanträge 
+                      <img src="./assets/svg/file-document-svgrepo-com.svg" alt="" aria-hidden="true" tabindex="-1" class="nav-icon image-header">
+                    </h4>
                     <ul class="welcome-list-item" >
                         <li class="noto">📄 Anträge stellen</li>
                         <li class="noto">🔄 Status ändern</li>
@@ -131,9 +165,12 @@
                 </div>
                 
                 <!-- Mitarbeiter Icon Card -->
-                <div style="background-color: #c0c0c0; margin: 5px; padding: 5px; border-radius: 12px; border: 2px solid #dcdcdc; height: 100%; width: 250px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-                    <img src="./assets/svg/person-team-svgrepo-com.svg" alt="Mitarbeiter Icon" class="nav-icon" style="width: 50px; margin-bottom: 10px;">
-                    <h4 style="color: #8e44ad;">Mitarbeiter</h4>
+                <div class="layout-card layout-card.employee" role="region">
+                  <h4 class="text-employee layout-row" >
+                      <img src="./assets/svg/person-team-svgrepo-com.svg" alt="" aria-hidden="true" tabindex="-1" class="nav-icon image-header">
+                      Mitarbeiter 
+                      <img src="./assets/svg/person-team-svgrepo-com.svg" alt="" aria-hidden="true" tabindex="-1" class="nav-icon image-header">
+                    </h4>
                     <ul class="welcome-list-item" >
                         <li class="noto">➕ Mitarbeiter erstellen</li>
                         <li class="noto">🔧 Aufgaben zuweisen</li>
@@ -144,9 +181,12 @@
                 </div>
                 
                 <!-- Aufgaben Icon Card -->
-                <div style="background-color: #7fffd4; margin: 5px; padding: 5px; border-radius: 12px; border: 2px solid #dcdcdc; height: 100%; width: 250px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-                    <img src="./assets/svg/puzzle-piece-svgrepo-com.svg" alt="Aufgaben Icon" class="nav-icon" style="width: 50px; margin-bottom: 10px;">
-                    <h4 style="color: #16a085;">Aufgaben</h4>
+                <div class="layout-card layout-card.tasks" role="region" aria-labelledby="text-tasks">
+                    <h4 class="text-tasks layout-row" id="text-tasks">
+                      <img src="./assets/svg/puzzle-piece-svgrepo-com.svg" alt="" aria-hidden="true" tabindex="-1" class="nav-icon image-header">
+                      Aufgaben 
+                      <img src="./assets/svg/puzzle-piece-svgrepo-com.svg" alt="" aria-hidden="true" tabindex="-1" class="nav-icon image-header">
+                    </h4>
                     <ul class="welcome-list-item" >
                         <li class="noto">🎨 Aufgabenfarben zuweisen</li>
                         <li class="noto">📝 Aufgaben benennen</li>
@@ -155,10 +195,13 @@
                 </div>
                 
                 <!-- Regeln Icon Card -->
-                <div style="background-color: #f0f8ff; margin: 5px; padding: 5px; border-radius: 12px; border: 2px solid #dcdcdc; height: 100%; width: 250px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-                    <img src="./assets/svg/knowledge-graph-relationship-svgrepo-com.svg" alt="Regeln Icon" class="nav-icon" style="width: 50px; margin-bottom: 10px;">
-                    <h4 style="color: #2980b9;">Regeln</h4>
-                    <p style="font-size: 14px; color: #34495e;">
+                <div class="layout-card layout-card.rules" role="region">
+                    <h4 class="text-rules layout-row">
+                      <img src="./assets/svg/knowledge-graph-relationship-svgrepo-com.svg" alt="" aria-hidden="true" tabindex="-1" class="nav-icon image-header">
+                      Regeln 
+                      <img src="./assets/svg/knowledge-graph-relationship-svgrepo-com.svg" alt="" aria-hidden="true" tabindex="-1" class="nav-icon image-header">
+                    </h4>
+                    <p class="text-small">
                         Eine Regel ist eine Bedingung, die für den reibungslosen Ablauf und die Sicherheit der Mitarbeiter 
                         gewährleistet werden sollte. Es können Ausnahmen und Toleranzen definiert werden. Ein Regelverstoß 
                         löst eine Warnung im Kalender und in den Einträgen aus.
@@ -170,39 +213,51 @@
                 </div>
                 
                 <!-- Kalender Icon Card -->
-                <div style="background-color: #f08080; margin: 5px; padding: 5px; border-radius: 12px; border: 2px solid #dcdcdc; height: 100%; width: 250px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-                    <img src="./assets/svg/calendar-svgrepo-com.svg" alt="Kalender Icon" class="nav-icon" style="width: 50px; margin-bottom: 10px;">
-                    <h4 style="color: #e74c3c;">Kalender</h4>
-                    <p style="font-size: 14px; color: #34495e;">
+                <div class="layout-card layout-card.calendar" role="region">
+                    <h4 class="text-calendar layout-row">
+                      <img src="./assets/svg/calendar-svgrepo-com.svg" alt="" aria-hidden="true" tabindex="-1" class="nav-icon image-header">
+                      Kalender 
+                      <img src="./assets/svg/calendar-svgrepo-com.svg" alt="" aria-hidden="true" tabindex="-1" class="nav-icon image-header">
+                    </h4>
+                    <p class="text-small">
                         Der Kalender kann individuell angepasst werden, um Ihre spezifischen Anforderungen zu erfüllen.
                     </p>
                     
                     <ul class="welcome-list-item" >
-                        <li class="noto" style="display: flex; align-items: center;">📅 Bundesland wählen</li>
-                        <li class="noto" style="display: flex; align-items: center;">⏱️ Öffnungszeiten festlegen</li>
-                        <li class="noto" style="display: flex; align-items: center;">🏖️ Betriebsferien eingeben</li>
-                        <li class="noto" style="display: flex; align-items: center;">👨‍💻 Schichten festlegen</li>
-                        <li class="noto" style="display: flex; align-items: center;">📆 Brücken- und besondere Tage verwalten</li>
+                        <li class="noto layout-list-item">📅 Bundesland wählen</li>
+                        <li class="noto layout-list-item">⏱️ Öffnungszeiten festlegen</li>
+                        <li class="noto layout-list-item">🏖️ Betriebsferien eingeben</li>
+                        <li class="noto layout-list-item">👨‍💻 Schichten festlegen</li>
+                        <li class="noto layout-list-item">📆 Brücken- und besondere Tage verwalten</li>
                     </ul>
                 </div>
             </div>
-        </div>
-        </div>  
+          </section>
+        </section>  
       </div>
     </div>
 
-    <div id="feedback-console">
-      Ready for action... 
-    </div>
-    <!-- <script src="./js/renderer.js"></script> -->  
+    <footer id="feedback-console" role="status" aria-live="polite" tabindex="-1">
+      Ready for action...
+    </footer>
+   
     <script type="module" src="./js/links.js"> </script>
-    <script defer>
-      function updateFeedback(message) {
-        const feedbackConsole = document.getElementById('feedback-console');
-        feedbackConsole.innerHTML = message;
-        feedbackConsole.style.display = 'block';
+    <script nonce="PLACEHOLDER_NONCE">
+      function updateFeedback(message, type = "info") {
+          const feedbackConsole = document.getElementById('feedback-console');
+          feedbackConsole.className = (type === "error") ? "error" : "";
+          feedbackConsole.innerHTML = message;
+
+          if (type === "error") {
+              feedbackConsole.setAttribute("aria-live", "assertive");
+              feedbackConsole.focus();  
+          } else {
+              feedbackConsole.setAttribute("aria-live", "polite");
+          }
+              feedbackConsole.className = type;
       }
       updateFeedback("System is ready...");
     </script>
+
   </body>
 </html>

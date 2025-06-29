@@ -1,8 +1,12 @@
-<div style="display:flex; flex-direction: row;">
-    <div class="task-container" id="role-form-container">role form container</div>
-    <div class="post-it-note">
-        <h3 class="noto"> 📌 Aufgaben & Rollen</h3>
-        <p>Hier werden Aufgaben und Rollen definiert, die für den reibungslosen Ablauf benötigt werden (also kein Kaffee-Küchen-Dienst). In dem Mitarbeiter-Formular werden diese Aufgaben auf die Mitarbeiter verteilt, und im Regeln-Formular werden Bedingungen festgelegt, wann und wie die Aufgaben mit Mitarbeitern zu besetzen sind.</p>
-        <p>Jeder Aufgabe ist eine Farbe zugeordnet, diese Farben werden im Kalender und bei Mitarbeiter-Emojis verwendet.</p>
-    </div>
-</div>
+<section class="role-flex-row" role="region" aria-labelledby="role-form-title" aria-describedby="role-help-text">
+  <div class="task-container" id="role-form-container">
+    <h2 id="role-form-title" class="sr-only">Rollen und Aufgaben Formular</h2>
+    <!-- Form content goes here -->
+  </div>
+
+  <aside class="post-it-note" role="note" id="role-help-text">
+    <h3 class="noto">Aufgaben & Rollen</h3>
+    <p>Hier definierst du Aufgaben und Rollen für den Ablauf. Diese werden Mitarbeitenden zugewiesen und in Regeln zeitlich gesteuert.</p>
+    <p>Farben helfen bei der Darstellung in Kalendern und Mitarbeiter-Icons.</p>
+  </aside>
+</section>

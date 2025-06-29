@@ -1,0 +1,213 @@
+#help-page-root {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.help-page-header {
+    background-color: var(--color-help);
+}
+.help-row {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+.help-page-main {
+  line-height: 2rem;
+  max-height: 60%;
+  overflow-y: scroll;
+  overflow-x: auto;
+  padding: 1rem;
+  display: flex;
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+.help-page-toc {
+  background-color: var(--color-help-toc);
+  width: 12rem; /* fixed width, tweakable */
+  min-height: 100%;
+  overflow-x:  hidden;
+  flex-shrink: 0;
+  padding: 1rem;
+}  
+.help-icon {
+  font-weight: 1.2rem;
+  border-radius: 5px;
+  border-color: var(--text-color);
+  border-style: double;
+}
+/* Common styling for employee tag */
+.employee-tag {
+  display: inline-block;
+  padding: 0.02rem 0.1rem;       /* slightly smaller padding on sides */
+  border-radius: 0.4rem;
+  margin: 0;                    /* no margin */
+  color: var(--text-color);
+  background-blend-mode: multiply;
+}
+
+/* Dynamic background color classes */
+.help-role-color-0 { background-color: var(--role-0-color); }
+.help-role-color-1 { background-color: var(--role-1-color); }
+.help-role-color-2 { background-color: var(--role-2-color); }
+.help-role-color-3 { background-color: var(--role-3-color); }
+.help-role-color-4 { background-color: var(--role-4-color); }
+.help-role-color-5 { background-color: var(--role-5-color); }
+.help-role-color-6 { background-color: var(--role-6-color); }
+.help-role-color-7 { background-color: var(--role-7-color); }
+.help-role-color-8 { background-color: var(--role-8-color); }
+.help-role-color-9 { background-color: var(--role-9-color); }
+.help-role-color-10 { background-color: var(--role-10-color); }
+.help-role-color-11 { background-color: var(--role-11-color); }
+.help-role-color-12 { background-color: var(--role-12-color); }
+.help-role-color-13 { background-color: var(--role-13-color); }
+/* ... etc. */
+.help-role-text-0 { color: var(--text-color); }
+.help-role-text-1 { color: var(--role-1-color); }
+.help-role-text-2 { color: var(--role-2-color); }
+.help-role-text-3 { color: var(--role-3-color); }
+.help-role-text-4 { color: var(--role-4-color); }
+.help-role-text-5 { color: var(--role-5-color); }
+.help-role-text-6 { color: var(--role-6-color); }
+.help-role-text-7 { color: var(--role-7-color); }
+.help-role-text-8 { color: var(--role-8-color); }
+.help-role-text-9 { color: var(--role-9-color); }
+.help-role-text-10 { color: var(--role-10-color); }
+.help-role-text-11 { color: var(--role-11-color); }
+.help-role-text-12 { color: var(--role-12-color); }
+.help-role-text-13 { color: var(--role-13-color); }
+
+#help-toc ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#help-toc li {
+  margin-bottom: 0.5em;
+}
+
+#help-toc a {
+  text-decoration: none;
+  color: var(--text-color);
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
+}
+
+#help-toc a:hover {
+  text-decoration: underline;
+  color: var(--accent-color);
+}
+
+/* STORY-MODUS STYLES */
+.story {
+  display: inline-block;
+  background-color: var(--bg-soft-white); /* weich, nicht grell */
+  border-left: 4px solid var(--role-13-color); /* dezentes Orange für Story */
+  padding: 0.75em 1em;
+  margin-block: 0.5em;
+  border-radius: 8px;
+  font-style: italic;
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+/* Grundlayout für Story-Absätze */
+.story {
+  display: block; /* oder inline-block, aber block ist cleaner */
+  background-color: var(--bg-soft-white);
+  border-left: 4px solid var(--role-13-color);
+  padding: 0.75em 1em;
+  margin-block: 0.5em;
+  border-radius: 8px;
+  font-style: italic;
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+/* inline-Elemente innerhalb der Story */
+.long,
+.tiny {
+  display: inline;
+}
+
+/* optional: spezielle Formatierungen */
+.tiny {
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+.story strong {
+  font-weight: bold;
+  color: var(--accent-active);
+}
+
+
+/* When storymode is OFF → hide .story */
+.no-storymode .story {
+  display: none !important;
+}
+
+/* When textlength is 'tiny' → hide .long, show .tiny */
+.textlength-tiny .long {
+  display: none !important;
+}
+.textlength-tiny .tiny {
+  display: inline;
+}
+
+/* When textlength is 'long' → hide .tiny, show .long */
+.textlength-long .tiny {
+  display: none !important;
+}
+.textlength-long .long {
+  display: inline;
+}
+
+.help-toggle {
+  background-image: url('../../assets/svg/next-svgrepo-com.svg');
+  background-repeat: no-repeat;
+  background-size: contain;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.help-toggle[aria-expanded="true"] {
+  transform: rotate(90deg);
+}
+
+#help-chapter-1-content,
+#help-chapter-2-content,
+#help-chapter-3-content,
+#help-chapter-4-content,
+#help-chapter-5-content,
+#help-chapter-6-content,
+#help-chapter-7-content,
+#help-chapter-8-content {
+  display: block;
+}
+
+.help
+button[aria-expanded="true"] + #help-chapter-1-content {
+  display: block;
+}
+.helpChapterHidden {
+  display: none !important;
+}
+
+.helpChapter {
+  padding: 1rem;
+  margin: 1 rem;
+  border-radius: 1rem;
+  border-style: groove;
+  border-color: blue;
+  margin-bottom: 2.5rem;
+}

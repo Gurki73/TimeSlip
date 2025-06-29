@@ -13,10 +13,26 @@
     --role-11-color: #b0a7e2;
     --role-12-color: #3a3a3a;
     --role-13-color: #ffd1a1;
-    --button-active-color: #a1d2ff;
-    --button-inactive-color: #dbefff;
-    --button-hover-color: #7ebeff;
-    --list-item-color: #fdf1e2;
-    --office-closed-color: #f4a8a8;
+    --background-color: #f8f3f1;          /* Very soft cream */
+    --text-color: #5d4954;                /* Muted plum */
+    
+    --primary-accent-color: #a991b8;      /* Pastel purple */
+    --secondary-accent-color: #6a5d7b;    /* Darker muted purple */
+    
+    --button-active-color: #9e7bb5;       /* Medium pastel purple */
+    --button-inactive-color: #d6cadd;     /* Very light purple-gray */
+    --button-hover-color: #b89acc;        /* Hover pastel */
+    
+    /* Calendar Day Backgrounds */
+    --calendar-day-closed-bg: #f2d7ee;   /* Light pastel pink */
+    --calendar-day-regular-bg: #d9d6f5;  /* Very light pastel blue */
+    --calendar-day-weekend-bg: #cce3d9;  /* Light pastel green */
+    --calendar-day-holiday-bg: #f4c7c3;  /* Soft pastel red */
+    
+    --holiday-color: #d07878;             /* Muted red */
+    --weekend-color: #7cae7a;             /* Muted green */
+    --office-closed-color: #c7b6a3;       /* Soft tan */
+    
+    --text-muted-color: #a49ca5;   
   }
   

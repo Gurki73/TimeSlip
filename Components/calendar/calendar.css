@@ -1,3 +1,8 @@
+.calendar-container {
+  --regular-width: 150px;  /* Default */
+  --shrink-width: 90px;
+}
+
 .calendar-nav {
   display: flex;
   align-items: center;
@@ -18,7 +23,7 @@
 }
 
 #calendar-month, #calendar-year {
-  font-size: 25px;
+  font-size: 1.5rem;
   color: var(--text-color);
   display: inline-block; 
 }
@@ -92,7 +97,8 @@
   position: relative;
 }
 
-.day-column {
+.day-column,
+.empty {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -106,12 +112,12 @@
 }
 
 .day-number {
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: bold;
 }
 
 .special-day {
-  font-size: 16px;
+  font-size: 1rem;
   text-align: right;
 }
 
@@ -120,7 +126,7 @@
   justify-content: center;
   align-items: center;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 0.875rem;
   padding: 4px;
 }
 
@@ -128,8 +134,8 @@
 .kw-column.shrink, 
 .day-column.shrink,
 .empty.shrink {
-  min-width: 35px !important;
-  max-width: 35px !important;
+  min-width: var(--shrink-width, 5%);
+  max-width: var(--shrink-width, 5%);
   flex-grow: 0;
 }
 .closed-office {
@@ -144,12 +150,11 @@
 }
 
 .kw-column.shrink {
-  background-color: gray;
+  background-color: var(--bg-inactive);
   font-weight: bold;
   display: flex;  
   justify-content: center; 
   align-items: center;   
-  height: 100%;          
 }
 
 .day-column.shrink {
@@ -194,30 +199,42 @@
 .calendar-row {
   height: 6rem;
 }
+#calendar {
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
 
 .calendar-weekday-header {
-  min-height: 2rem;
-  max-height: 3rem;
-  padding-bottom: 10px;
-  justify-content: center; 
-  align-items: center;  
+  font-weight: bolder;
+  display: flex;
+  border-radius: 8px;
+  gap: 5px;
+  margin: 4px;
+  width: 100%;
+  height: 2rem; /* Match calendar-row */
+  box-sizing: border-box;
+  overflow: hidden;  /* Optional: hides any spill */
+  align-items: center; /* Ensures text aligns vertically */
 }
 
 .kw-column {
-  background-color: gray;
-  color: white;
+  background-color: var(--bg-inactive) !important;
+  color: var(--text-color) !important;
   font-weight: bold;
   text-align: center;
+  width: 5% !important;
+  min-width: 5% !important;
+  max-width: 5% !important;
   flex-grow: 0;
+  flex-shrink: 0;
 }
 
 .day-column,
 .kw-column,
 .empty {
-  padding: 8px;
   border-radius: 8px;
   text-align: center;
-  min-width: 100px;
 }
 
 /* Responsiveness and Overflow Control */
@@ -229,13 +246,16 @@
   overflow: auto;
   position: relative;
 }
-
+.calendar-spacing {
+  width: 15%;
+}
 .day-column.shrink,
 .kw-column.shrink,
 .empty.shrink {
   height: 100%;
-  min-width: 90px !important;
-  max-width: 90px !important;
+  min-height: 2rem;
+  min-width: var(--shrink-width, 5%);
+  max-width: var(--shrink-width, 5%);
   padding: 0 !important;
   margin: 0 !important;
   flex-grow: 0 !important; 
@@ -244,25 +264,17 @@
 .day-column:not(.shrink),
 .empty:not(.shrink) {
   flex-grow: 1;
-}
-
-.day-column-top,
-.day.kw-column,
-.empty {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  padding: 0;
-  margin: 0;
+  min-width: var(--regular-width, 15%);
+  max-width: var(--regular-width, 15%);
 }
 
 .empty {
   background-color: transparent;
-  border-style: dotted;
-  border-color: lightgray;
-  padding-left: 20px;
-  padding-right: 20px;
+  border: 3px dotted lightgray;
+  margin-left: -3px;
+  margin-right: -3px;
 }
+
 .empty.shrink {
   margin-left: -3px !important;
   margin-right: -3px !important;
@@ -303,4 +315,21 @@
   border-color: white;
   border-style: solid;
   border-width: 1px;
+}
+
+.fade-feedback {
+  position: absolute; /* or relative inside calendar container */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: yellow; /* or a soft color */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+}
+
+.fade-feedback.active {
+  opacity: 0.35;
 }
