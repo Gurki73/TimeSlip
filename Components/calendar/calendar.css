@@ -289,8 +289,10 @@
 }
 
 .shift {
+  align-items: center;
   display: flex;
   flex-direction: row;
+  height: 1.35rem;
   min-width: 100%;
   font-size: 1.05rem;
   border-color: silver;
@@ -311,10 +313,15 @@
 }
 
 .calendar-emoji {
+  font-size: 0.8rem;
+  height: 0.9rem;
   border-radius: 2px;
   border-color: white;
   border-style: solid;
   border-width: 1px;
+  padding: 1px;
+  margin: 1px;
+  border-radius: 4px;
 }
 
 .fade-feedback {

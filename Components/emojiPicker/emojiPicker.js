@@ -46,6 +46,9 @@ export function createEmojiPicker(emojiArray, targetButton, colorIndex, callback
 
   const emojiGrid = document.createElement('div');
   emojiGrid.classList.add('emoji-grid', 'emoji-picker-grid');
+  emojiPicker.setAttribute('tabindex', '-1'); // just in case
+  emojiGrid.setAttribute('tabindex', '-1');
+
 
   let emojiIndex = 0;
   for (let row = 0; row < emojiPickerRow; row++) {
@@ -63,7 +66,13 @@ export function createEmojiPicker(emojiArray, targetButton, colorIndex, callback
       emojiButton.setAttribute('data-index', emojiIndex - 1);
       emojiButton.classList.add('noto');
       emojiButton.style.zIndex = 9999;
-      emojiButton.onclick = () => handleEmojiSelection(emoji, emojiPicker, callback);
+      emojiButton.addEventListener('click', () => handleEmojiSelection(emoji, emojiPicker, callback));
+      emojiButton.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault(); // prevent scrolling on space
+          handleEmojiSelection(emoji, emojiPicker, callback);
+        }
+      });
       emojiButton.setAttribute('tabindex', '0'); // Allows focus via keyboard
       emojiButton.setAttribute('role', 'button'); // Assistive tech compatibility
       emojiButton.setAttribute('aria-label', `Emoji ${emoji}`); // Improves screen reader UX

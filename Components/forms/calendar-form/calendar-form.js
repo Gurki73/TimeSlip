@@ -35,7 +35,7 @@
  *  - NRW: "Treffsicher durch den Sommer – Schützenfestzeit!"
  *  - Lower Saxony: "Zielen, Feiern und Gemeinschaft – unser Schützenfest."
  */
-import { loadCalendarData, saveStateData, loadStateData, loadCompanyHolidayData, setBranch, updateOfficeDays } from '../../../js/loader/calendar-loader.js';
+import { loadCalendarData, saveStateData, loadStateData, loadCompanyHolidayData, setBranch, updateOfficeDays, loadOfficeDaysData } from '../../../js/loader/calendar-loader.js';
 import { getHolidayDetails, getAllHolidaysForYear, nonOfficialHolidays, monthNames, germanFixedHolidays, germanVariableHolidays } from '../../../js/Utils/holidayUtils.js';
 import { updateStateFlag } from '../../../js/Utils/flagUtils.js';
 import { GetSchoolHoliday, apiHealthCheck, DownloadSchoolHoliday } from '../../../js/Utils/schoolHollydayUpdater.js';
@@ -123,6 +123,7 @@ export async function initializeCalendarForm(passedApi) {
 
   createEventListener();
   updateHolidaysForYear(currentYear, ruleFormState);
+  updateBridgeDaysForYear(currentYear, ruleFormState);
   renderCompanyHolidays(api, currentYear);
   checkAndRenderSchoolHolidays(api);
 }
@@ -717,6 +718,7 @@ function updateHolidaysForYear(year) {
       checkbox.type = 'checkbox';
       checkbox.classList.add('holiday-checkbox');
       checkbox.dataset.holidayKey = key;
+      checkbox.value = holiday.id || key;
       checkbox.addEventListener('change', () => {
         const isChecked = checkbox.checked;
         dataBox.classList.toggle('checked', isChecked);
@@ -778,7 +780,6 @@ function updateHolidaysForYear(year) {
     console.error('Failed to load holidays:', error);
   }
 }
-
 
 async function checkAndRenderSchoolHolidays(api) {
 
@@ -1240,5 +1241,108 @@ function getDefaultHolidayDates() {
     startDate: start.toISOString().slice(0, 10),
     endDate: end.toISOString().slice(0, 10)
   };
+}
+
+function isOfficeClosed(dayIndex) {
+  const openDays = loadOfficeDaysData();
+  const value = openDays[dayIndex];
+  return value === "never";
+}
+
+function getWeekdayIndex(date) {
+  // JS: Sunday is 0 → convert to Monday=0
+  return (date.getDay() + 6) % 7;
+}
+
+function addDays(date, numDays) {
+  const newDate = new Date(date);
+  newDate.setDate(newDate.getDate() + numDays);
+  return newDate;
+}
+
+function formatDate(date) {
+  return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function findBridgeDays(holidays) {
+  const bridgeDays = [];
+
+  const holidayDates = new Set(holidays.map(h => h.date)); // For quick lookup
+  const holidayMap = new Map(holidays.map(h => [h.date, h]));
+
+  holidays.forEach(holiday => {
+    const holidayDate = new Date(holiday.date);
+
+    // === Check next day ===
+    const nextDay = addDays(holidayDate, 1);
+    const nextDayStr = nextDay.toISOString().split("T")[0];
+
+    if (!holidayDates.has(nextDayStr)) {
+      const dayAfterNext = addDays(nextDay, 1);
+      const dayAfterIndex = getWeekdayIndex(dayAfterNext);
+      if (isOfficeClosed(dayAfterIndex) || holidayDates.has(dayAfterNext.toISOString().split("T")[0])) {
+        const nextDayIndex = getWeekdayIndex(nextDay);
+        if (!isOfficeClosed(nextDayIndex)) {
+          bridgeDays.push({
+            date: nextDayStr,
+            context: `Brückentag nach ${holiday.name}`
+          });
+        }
+      }
+    }
+
+    // === Check previous day ===
+    const prevDay = addDays(holidayDate, -1);
+    const prevDayStr = prevDay.toISOString().split("T")[0];
+
+    if (!holidayDates.has(prevDayStr)) {
+      const dayBeforePrev = addDays(prevDay, -1);
+      const dayBeforeIndex = getWeekdayIndex(dayBeforePrev);
+      if (isOfficeClosed(dayBeforeIndex) || holidayDates.has(dayBeforePrev.toISOString().split("T")[0])) {
+        const prevDayIndex = getWeekdayIndex(prevDay);
+        if (!isOfficeClosed(prevDayIndex)) {
+          bridgeDays.push({
+            date: prevDayStr,
+            context: `Brückentag vor ${holiday.name}`
+          });
+        }
+      }
+    }
+  });
+
+  return bridgeDays;
+}
+
+function updateBridgeDaysForYear(year, state) {
+  const holidays = getAllHolidaysForYear(year, state);
+  const bridgeDays = findBridgeDays(holidays);
+
+  const bridgeList = document.getElementById('bridge-days');
+  if (!bridgeList) {
+    console.warn('Bridge list container not found!');
+    return;
+  }
+
+  bridgeList.innerHTML = ''; // Clear existing list
+
+  bridgeDays.forEach(item => {
+    const date = new Date(item.date);
+    const li = document.createElement('li');
+
+    const directionEmoji = item.context.includes("nach") ? "🔜" : "🔚";
+    const holidayName = item.context.replace(/^Brückentag (nach|vor) /, "");
+    const tooltip = `Brückentag ${item.context} (${holidayName})`;
+
+    li.innerHTML = `
+    <mark class="noto">🌉<mark> <span title="${tooltip}">
+      ${formatDate(date)} ${directionEmoji}
+    </span>
+    <label style="margin-left: 1em;">
+      <input type="checkbox" data-bridge-day="${item.date}" checked>
+    </label>
+  `;
+
+    bridgeList.appendChild(li);
+  });
 }
 

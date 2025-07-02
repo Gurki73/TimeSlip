@@ -44,39 +44,33 @@ function parseCSV(data) {
     roles = allRoles.filter(role => role.name && role.name !== '?');
 }
 
-async function generateRoleCSV(api) {
+export async function saveRoleData(api) {
     const csvHeader = 'name,colorIndex,emoji';
     const csvContent = [
         csvHeader,
         ...allRoles.map(role => `${role.name || '?'},${role.colorIndex || 0},${role.emoji || '❓'}`)
     ].join('\n');
 
-    const homeKey = 'userData'; // or 'home', etc.
-    const relativePath = 'role.csv'; // ✅ whole path inside homeKey
+    // Use the cached folder key or default to 'home'
+    const folderKey = localStorage.getItem('clientDefinedDataFolder') || 'home';
+    const filename = 'role.csv';
 
     try {
-        const savedDirectory = await api.saveCSV(homeKey, relativePath, csvContent);
+        const savedDirectory = await api.saveCSV(folderKey, filename, csvContent);
         if (savedDirectory) {
             console.log('☑ CSV saved successfully to:', savedDirectory);
+            // Update localStorage with the saved path
             localStorage.setItem('clientDefinedDataFolder', savedDirectory);
         } else {
             console.warn('⚠ Failed to save CSV file.', savedDirectory);
         }
     } catch (err) {
-        console.error('✗ Error saving file:', err);
+        console.error('✗ Error saving role data:', err);
     }
 }
 
+
 // TODO: Add fullscreen preference in local storage (or settings cache)sl
 
-function generateUniqueFileName() {
 
-    const baseURL = window.location.origin;
-    const pathname = window.location.pathname.split('/');
-    const folderPath = pathname.slice(1, -1).join('/');
-
-    const uniquePath = folderPath ? `${folderPath}` : `data/`;
-    return uniquePath;
-}
-
-export { loadRoleData, roles, allRoles, generateRoleCSV };
+export { loadRoleData, roles, allRoles };

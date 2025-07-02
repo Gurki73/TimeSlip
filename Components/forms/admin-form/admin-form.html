@@ -1,17 +1,41 @@
-<div id="tool-conatainer">
+<div id="tool-container" role="region" aria-label="Admin Tool Panel" tabindex="0">
   <h1>Admin Tool</h1>
-    <div class="admin-buttons">
-        <button id="excel-import">📥 Excel Import</button>
-        <button id="excel-export">📤 Excel Export</button>
-        <button id="customization">🎨 Customization</button>
-        <button id="clear-cache" class="danger-button">🧼 Clear Data Path Cache
-          <small class="warning-note">⚠️ Use only if data path cache is corrupted or testing recovery logic.</small>
-        </button>
-        <span>
-          <button id="buy-coffee" class="coffee-button"></button>
-          <br>
-          https://buymeacoffee.com/gurky73
-        </span>
-      </div>
+  <section class="admin-buttons" aria-label="Admin actions">
+    <button id="excel-import" title="Excel Import (Ctrl+Shift+I)" aria-keyshortcuts="Control+Shift+I">
+      📥 Excel Import <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>I</kbd>
+    </button>
+
+    <button id="excel-export" title="Excel Export (Ctrl+Shift+E)" aria-keyshortcuts="Control+Shift+E">
+      📤 Excel Export <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>E</kbd>
+    </button>
+
+    <button id="color-customization" title="Customize colors">
+      🎨 Color Customization
+    </button>
+
+    <button id="emoji-customization" title="Customize emojis">
+      😄 Emoji Customization
+    </button>
+
+    <button id="clear-cache" class="danger-button" title="Clear data path cache">
+      🧼 Clear Data Path Cache
+      <small class="warning-note" role="alert" aria-live="assertive">
+        ⚠️ Use only if data path cache is corrupted or testing recovery logic.
+      </small>
+    </button>
+  </section>
+
+  <section aria-label="Support and donations" class="support-section">
+    <button id="buy-coffee" class="coffee-button" aria-label="Buy me a coffee">
+      ☕ Buy Me A Coffee
+    </button>
+    <div class="donation-link">
+      <a href="https://buymeacoffee.com/gurky73" target="_blank" rel="noopener noreferrer">
+        https://buymeacoffee.com/gurky73
+      </a>
+    </div>
+  </section>
+
   <script src="admin-script.js"></script>
 </div>
+

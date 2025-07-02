@@ -1,4 +1,4 @@
-import { loadRoleData, roles, allRoles, generateRoleCSV } from '../../../js/loader/role-loader.js';
+import { loadRoleData, roles } from '../../../js/loader/role-loader.js';
 import { employees } from '../../../js/loader/employee-loader.js';
 import { officeDays } from '../../../js/loader/calendar-loader.js';
 import { loadRequests, appendRequestToCSV, updateRequest, getAvailableRequestFiles } from '../../../js/loader/request-loader.js';

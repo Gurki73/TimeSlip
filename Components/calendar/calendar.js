@@ -494,7 +494,7 @@ function createMorningShift(day, index, monthRequests, isOpen) {
   }
 
   shift.classList.add('morning-shift');
-  shift.innerHTML = '.';
+  shift.innerHTML = '';
   const attendance = populateShift('morning', shift, day, index, monthRequests);
   return { shiftElement: shift, attendance };
 }
@@ -513,7 +513,7 @@ function createAfternoonShift(day, index, monthRequests, isOpen) {
     return { shiftElement: afternoonShift, attendance };
   }
   afternoonShift.classList.add('afternoon-shift');
-  afternoonShift.innerHTML = '.';
+  afternoonShift.innerHTML = '';
   const attendance = populateShift('afternoon', afternoonShift, day, index, monthRequests);
   return { shiftElement: afternoonShift, attendance };
 }
@@ -521,7 +521,7 @@ function createAfternoonShift(day, index, monthRequests, isOpen) {
 function createDayShift(day, index, monthRequests, isOpen) {
 
   const dayShift = document.createElement('span');
-  dayShift.innerHTML = ".";
+  dayShift.innerHTML = "";
   dayShift.title = 'ganztags';
   dayShift.classList.add('shift', 'noto');
   if (!isOpen) {

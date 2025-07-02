@@ -1,6 +1,6 @@
-let employees = [];
+export let employees = [];
 
-async function loadEmployeeData(api) {
+export async function loadEmployeeData(api) {
 
     let homeKey = localStorage.getItem('clientDefinedDataFolder') || 'home';
     const relativePath = 'employee.csv';
@@ -73,32 +73,7 @@ function parseCSV(data) {
     });
 }
 
-async function generateEmployeeCSV(api) {
-    const csvHeader = 'id,name,personalEmoji,mainRoleIndex,secondaryRoleIndex,tertiaryRoleIndex,availableDaysOff,remainingDaysOff,overtime,mon,tue,wed,thu,fri,sat,sun,roleSplitMain,roleSplitSecondary,roleSplitTertiary,startDate,endDate,birthday,birthMonth,shiftMon,shiftTue,shiftWed,shiftThu,shiftFri,shiftSat,shiftSun';
 
-    const csvContent = [
-        csvHeader,
-        ...employees.map(employee =>
-            `${employee.id || ''},${employee.name},${employee.personalEmoji},${employee.mainRoleIndex || ''},${employee.secondaryRoleIndex || ''},${employee.tertiaryRoleIndex || ''},${employee.availableDaysOff},${employee.remainingDaysOff},${employee.overtime},${employee.workDays[0]},${employee.workDays[1]},${employee.workDays[2]},${employee.workDays[3]},${employee.workDays[4]},${employee.workDays[5]},${employee.workDays[6]},${employee.roleSplitMain},${employee.roleSplitSecondary},${employee.roleSplitTertiary},${employee.startDate},${employee.endDate},${employee.birthday},${employee.birthMonth},${employee.shifts.mon || ''},${employee.shifts.tue || ''},${employee.shifts.wed || ''},${employee.shifts.thu || ''},${employee.shifts.fri || ''},${employee.shifts.sat || ''},${employee.shifts.sun || ''}`
-        )
-    ].join('\n');
-
-    const uniquePathName = generateUniqueFileName(); // Generate unique path
-    const uniqueFileName = 'employee.csv';
-
-    try {
-        await api.saveCSV(uniquePathName, uniqueFileName, csvContent);
-    } catch (err) {
-        console.warn('Error saving employee data:', err);
-    }
-}
-
-function generateUniqueFileName() {
-    const pathname = window.location.pathname.split('/');
-    const folderPath = pathname.slice(1, -1).join('/');
-
-    return folderPath ? `${folderPath}/` : `data/`;
-}
 
 export function getTotalEmployeesByRole(roleID) {
 
@@ -117,7 +92,49 @@ export function getTotalEmployeesByRole(roleID) {
     return roleCount * 0.1; // Convert split ratio to fraction
 }
 
+export async function saveEmployeeData(api, employeeData) {
+    const folderKey = localStorage.getItem('clientDefinedDataFolder') || 'home';
+    const filename = 'employee.csv';
 
+    const csvHeader = 'id,name,personalEmoji,mainRoleIndex,secondaryRoleIndex,tertiaryRoleIndex,availableDaysOff,remainingDaysOff,overtime,mon,tue,wed,thu,fri,sat,sun,roleSplitMain,roleSplitSecondary,roleSplitTertiary,startDate,endDate,birthday,birthMonth';
 
+    const csvContent = [
+        csvHeader,
+        ...employeeData.map(emp => {
+            const workDays = emp.workDays || ['never', 'never', 'never', 'never', 'never', 'never', 'never'];
+            return [
+                emp.id ?? '',
+                emp.name,
+                emp.personalEmoji,
+                emp.mainRoleIndex ?? '',
+                emp.secondaryRoleIndex ?? '',
+                emp.tertiaryRoleIndex ?? '',
+                emp.availableDaysOff ?? 0,
+                emp.remainingDaysOff ?? 0,
+                emp.overtime ?? 0,
+                ...workDays,
+                emp.roleSplitMain ?? 0,
+                emp.roleSplitSecondary ?? 0,
+                emp.roleSplitTertiary ?? 0,
+                emp.startDate ?? '',
+                emp.endDate ?? '',
+                emp.birthday ?? '',
+                emp.birthMonth ?? ''
+            ].join(',');
+        })
+    ].join('\n');
 
-export { loadEmployeeData, employees, generateEmployeeCSV };
+    try {
+        const savedDir = await api.saveCSV(folderKey, filename, csvContent);
+        if (savedDir) {
+            console.log('Employee data saved successfully.');
+            localStorage.setItem('clientDefinedDataFolder', savedDir);
+        } else {
+            console.warn('Failed to save employee data.');
+        }
+    } catch (error) {
+        console.error('Error saving employee data:', error);
+        throw error;
+    }
+}
+

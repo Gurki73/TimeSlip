@@ -24,7 +24,7 @@
     --button-hover-color: #005f8d;        /* Darker blue */
     
     /* Calendar Day Backgrounds */
-    --calendar-day-closed-bg: #f0e442;   /* Yellow (colorblind safe) */
+    --calendar-day-closed-bg: lightpink;   /* Yellow (colorblind safe) */
     --calendar-day-regular-bg: #56b4e9;  /* Light blue */
     --calendar-day-weekend-bg: #009e73;  /* Green */
     --calendar-day-holiday-bg: #e69f00;  /* Orange */

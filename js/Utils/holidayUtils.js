@@ -1,26 +1,26 @@
 const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 
 const germanFixedHolidays = [
-  { name: "Neujahrstag", emoji: "🎉", day: 1, month: 1, bundesländer: ["All States"] },
-  { name: "Tag der Arbeit", emoji: "🌼", day: 1, month: 5, bundesländer: ["All States"] },
-  { name: "Tag der Deutschen Einheit", emoji: "🏛️", day: 3, month: 10, bundesländer: ["All States"] },
-  { name: "Weihnachtstag", emoji: "🎄", day: 25, month: 12, bundesländer: ["All States"] },
-  { name: "Zweiter Weihnachtstag", emoji: "🎄", day: 26, month: 12, bundesländer: ["All States"] },
-  { name: "Mariä Himmelfahrt", emoji: "👑", day: 15, month: 8, bundesländer: ["BY", "SL"] },
-  { name: "Reformationstag", emoji: "📜", day: 31, month: 10, bundesländer: ["BB", "MV", "SN", "ST", "TH"] },
-  { name: "Allerheiligen", emoji: "🌺", day: 1, month: 11, bundesländer: ["BW", "BY", "NW", "RP", "SL"] },
-  { name: "Dreikönigstag", emoji: "👑", day: 6, month: 1, bundesländer: ["BY", "BW", "ST"] },
+  { id: "newy", name: "Neujahrstag", emoji: "🎉", day: 1, month: 1, bundesländer: ["All States"] },
+  { id: "may1", name: "Tag der Arbeit", emoji: "🌼", day: 1, month: 5, bundesländer: ["All States"] },
+  { id: "unit", name: "Tag der Deutschen Einheit", emoji: "🏛️", day: 3, month: 10, bundesländer: ["All States"] },
+  { id: "xma1", name: "Weihnachtstag", emoji: "🎄", day: 25, month: 12, bundesländer: ["All States"] },
+  { id: "xma2", name: "Zweiter Weihnachtstag", emoji: "🎄", day: 26, month: 12, bundesländer: ["All States"] },
+  { id: "asmp", name: "Mariä Himmelfahrt", emoji: "👑", day: 15, month: 8, bundesländer: ["BY", "SL"] },
+  { id: "refm", name: "Reformationstag", emoji: "📜", day: 31, month: 10, bundesländer: ["BB", "MV", "SN", "ST", "TH"] },
+  { id: "allh", name: "Allerheiligen", emoji: "🌺", day: 1, month: 11, bundesländer: ["BW", "BY", "NW", "RP", "SL"] },
+  { id: "epip", name: "Dreikönigstag", emoji: "👑", day: 6, month: 1, bundesländer: ["BY", "BW", "ST"] },
 ];
 
 const germanVariableHolidays = [
-  { name: "Karfreitag", emoji: "✝️", offset: -2, bundesländer: ["All States"] },
-  { name: "Ostersonntag", emoji: "🐰", offset: 0, bundesländer: ["All States"] },
-  { name: "Ostermontag", emoji: "🐰", offset: +1, bundesländer: ["All States"] },
-  { name: "Pfingstsonntag", emoji: "🕊️", offset: 49, bundesländer: ["All States"] },
-  { name: "Pfingstmontag", emoji: "🌸", offset: +50, bundesländer: ["All States"] },
-  { name: "Fronleichnam", emoji: "⛪", offset: 60, bundesländer: ["BY", "HE", "NW", "RP", "SL"] },
-  { name: "Christi Himmelfahrt", emoji: "🌥️", offset: +39, bundesländer: ["All States"] },
-  { name: "Buß- und Bettag", emoji: "🙏", offset: -7, bundesländer: ["SN"] },
+  { id: "good", name: "Karfreitag", emoji: "✝️", offset: -2, bundesländer: ["All States"] },
+  { id: "easr", name: "Ostersonntag", emoji: "🐰", offset: 0, bundesländer: ["All States"] },
+  { id: "easm", name: "Ostermontag", emoji: "🐰", offset: +1, bundesländer: ["All States"] },
+  { id: "pent", name: "Pfingstsonntag", emoji: "🕊️", offset: 49, bundesländer: ["All States"] },
+  { id: "pmon", name: "Pfingstmontag", emoji: "🌸", offset: +50, bundesländer: ["All States"] },
+  { id: "body", name: "Fronleichnam", emoji: "⛪", offset: 60, bundesländer: ["BY", "HE", "NW", "RP", "SL"] },
+  { id: "ascn", name: "Christi Himmelfahrt", emoji: "🌥️", offset: +39, bundesländer: ["All States"] },
+  { id: "pray", name: "Buß- und Bettag", emoji: "🙏", offset: -7, bundesländer: ["SN"] },
 ];
 
 function calculateEasterSunday(year) {
@@ -171,11 +171,11 @@ function nonOfficialHolidays(year, state) {
   const holidays = [];
 
   const fixedHolidays = [
-    { name: "Walpurgisnacht", emoji: "🧙‍♀️", day: 30, month: 4, bundesländer: ["TH", "NI"], renderOnly: true },
-    { name: "Halloween", emoji: "🎃", day: 31, month: 10, bundesländer: ["All States"], renderOnly: true },
-    { name: "Silvester", emoji: "🍾", day: 31, month: 12, bundesländer: ["All States"], renderOnly: true },
-    { name: "Nikolaus", emoji: "🎅", day: 6, month: 12, bundesländer: ["All States"], renderOnly: true },
-    { name: "Heiligabend", emoji: "🌟", day: 24, month: 12, bundesländer: ["All States"], renderOnly: true }
+    { id: "walp", name: "Walpurgisnacht", emoji: "🧙‍♀️", day: 30, month: 4, bundesländer: ["TH", "NI"], renderOnly: true },
+    { id: "hwen", name: "Halloween", emoji: "🎃", day: 31, month: 10, bundesländer: ["All States"], renderOnly: true },
+    { id: "nyev", name: "Silvester", emoji: "🍾", day: 31, month: 12, bundesländer: ["All States"], renderOnly: true },
+    { id: "niko", name: "Nikolaus", emoji: "🎅", day: 6, month: 12, bundesländer: ["All States"], renderOnly: true },
+    { id: "xma0", name: "Heiligabend", emoji: "🌟", day: 24, month: 12, bundesländer: ["All States"], renderOnly: true }
   ];
 
   fixedHolidays.forEach(h => {
@@ -193,6 +193,7 @@ function nonOfficialHolidays(year, state) {
 
   const dynamicHolidays = [
     {
+      id: "rose",
       name: "Rosenmontag",
       emoji: "🤡",
       offset: -47,
@@ -200,6 +201,7 @@ function nonOfficialHolidays(year, state) {
       renderOnly: true
     },
     {
+      id: "oktf",
       name: "Oktoberfest",
       emoji: "🍺",
       startOffset: -16, // Example: starts 16 days before the first Sunday in October

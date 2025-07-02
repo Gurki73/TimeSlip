@@ -18,7 +18,7 @@ body, html {
 
 #left-panel {
   width: var(--left-panel-width, 60px); /* Default width is 60px */
-  background-color: azure;
+  background-color: var(--color-layout-container-dark);
   display: flex;
   flex-direction: column;
   height: 97%;
@@ -513,8 +513,12 @@ select {
   border-radius: 4px;
 }
 /* Focus Pulse */
-:focus-visible {
-  outline: 3px solid #d97706; /* orange-brown */
+input:focus-visible,
+button:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a[href]:focus-visible {
+  outline: 3px solid #d97706;
   outline-offset: 2px;
   animation: focus-pulse 1.0s ease-in-out infinite alternate;
 }

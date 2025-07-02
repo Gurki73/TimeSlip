@@ -171,4 +171,31 @@ async function getAvailableRequestFiles(api) {
     }
 }
 
+async function saveRequests(api, year, month, requests) {
+    const folderKey = localStorage.getItem('clientDefinedDataFolder') || 'home';
+    const filename = `requests/${year}_${month}_requests.csv`;
+    const csvHeader = 'id,employeeID,vacationType,start,end,shift,requesterMSG,approverMSG,status,decisionDate,requestedAt';
+
+    const csvContent = [
+        csvHeader,
+        ...requests.map(r =>
+            `${r.id},${r.employeeID},${r.vacationType},${r.start},${r.end},${r.shift},${r.requesterMSG},${r.approverMSG},${r.status},${r.decisionDate},${r.requestedAt}`
+        )
+    ].join('\n');
+
+    try {
+        const savedDir = await api.saveCSV(folderKey, filename, csvContent);
+        if (savedDir) {
+            console.log(`Requests saved successfully to ${filename}`);
+            localStorage.setItem('clientDefinedDataFolder', savedDir);
+        } else {
+            console.warn(`Failed to save requests file: ${filename}`);
+        }
+    } catch (error) {
+        console.error(`Error saving requests file ${filename}:`, error);
+        throw error;
+    }
+}
+
+
 export { loadRequests, appendRequestToCSV, updateRequest, getAvailableRequestFiles };

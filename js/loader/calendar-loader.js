@@ -266,6 +266,73 @@ async function saveCompanyHolidaysCSV(api, year, holidayData) {
     }
 }
 
+//#region Public Holiday
+function parsePublicHolidaysCSV(csvText) {
+    const lines = csvText.trim().split('\n').filter(line => line.trim());
+
+    const header = lines[0].split(',').map(h => h.trim().toLowerCase());
+
+    if (!header.includes('id') || !header.includes('isopen')) {
+        throw new Error('CSV header must include "id" and "isOpen" columns');
+    }
+
+    return lines.slice(1).map(line => {
+        const cols = line.split(',').map(c => c.trim());
+        const record = {};
+        header.forEach((colName, i) => {
+            record[colName] = cols[i];
+        });
+        const isOpenRaw = record.isopen.toLowerCase();
+        const isOpen = ['true', 'yes', '1'].includes(isOpenRaw);
+        return { id: record.id, isOpen };
+    });
+}
+
+function serializePublicHolidaysCSV(data) {
+    const header = ['id', 'isOpen'];
+    const lines = data.map(({ id, isOpen }) => `${id},${isOpen}`);
+    return [header.join(','), ...lines].join('\n');
+}
+
+export async function savePublicHolidays(api, publicHolidays) {
+    const folderKey = localStorage.getItem('clientDefinedDataFolder') || 'home';
+    const filename = 'publicHolidays.csv';
+    try {
+        const csvContent = serializePublicHolidaysCSV(publicHolidays); // **serialize**, not parse
+        await api.saveCSV(folderKey, filename, csvContent);
+        console.log('Public holidays saved successfully.');
+    } catch (error) {
+        console.error('Error saving public holidays:', error);
+    }
+}
+
+export async function loadPublicHolidays(api) {
+    const folderKey = localStorage.getItem('clientDefinedDataFolder') || 'home';
+    const filename = 'publicHolidays.csv';
+    try {
+        const fileData = await api.loadCSV(folderKey, filename);
+        if (fileData) {
+            return parsePublicHolidaysCSV(fileData); // **parse**, not serialize
+        } else {
+            console.warn('No public holidays data found, using default sample.');
+            return await loadSamplePublicHolidays();
+        }
+    } catch (error) {
+        console.warn('Failed to load public holidays:', error);
+        return await loadSamplePublicHolidays();
+    }
+}
+
+async function loadSamplePublicHolidays() {
+    const response = await fetch('samples/publicHolidays.csv');
+    if (!response.ok) {
+        throw new Error('Failed to load sample public holidays');
+    }
+    const csvText = await response.text();
+    return parsePublicHolidaysCSV(csvText);
+}
+//#endregion
+
 
 export {
     loadCalendarData,

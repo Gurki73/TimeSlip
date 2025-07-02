@@ -264,6 +264,12 @@ async function createWindow() {
                             click: (menuItem, browserWindow) => {
                                 showAcknowledgementsDialog(browserWindow, 'svgRepo');
                             }
+                        },
+                        {
+                            label: 'SheetJS',
+                            click: (menuItem, browserWindow) => {
+                                showAcknowledgementsDialog(browserWindow, 'sheetjs');
+                            }
                         }
 
                     ]
@@ -380,6 +386,18 @@ function showAcknowledgementsDialog(browserWindow, topic) {
                 '  A large collection of free SVG graphics.\n\n' +
                 'Vielen Dank an die Community für die Bereitstellung dieser Ressourcen!\n' +
                 'Thank you to the community for providing these resources!'
+        },
+        sheetjs: {
+            title: 'Danksagungen / Acknowledgements',
+            message: 'Diese App verwendet folgende Bibliothek:\nThis app uses the following library:',
+            detail:
+                '- SheetJS (https://sheetjs.com/):\n' +
+                '  Eine weit verbreitete Bibliothek zum Lesen und Schreiben von Excel-Dateien.\n' +
+                '  A widely-used library for reading and writing Excel files.\n\n' +
+                'Wir danken den Entwicklern für diese leistungsstarke Open-Source-Bibliothek.\n' +
+                'We thank the developers for this powerful open-source library.\n\n' +
+                'SheetJS wird unter der Apache-2.0-Lizenz bereitgestellt.\n' +
+                'SheetJS is provided under the Apache-2.0 license.'
         }
     };
 

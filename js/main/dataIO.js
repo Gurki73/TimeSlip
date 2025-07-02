@@ -12,6 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const RECOVERY_MARKER = '.mitarbeiterkalender';
 const writeLocks = new Set();
+const backupCooldownMap = new Map(); // path → timestamp
 
 const BLACKLISTED_PATHS = [
     app.getPath('downloads'),
@@ -93,6 +94,7 @@ export function saveCSV(homeKey, relativePath, content) {
     }
 
     const fullPath = path.join(resolvedClientFolder, relativePath);
+    backupCSVIfNeeded(fullPath, content);
     const success = writeCSVFileSafely(fullPath, content, resolvedClientFolder);
 
     return success ? fullPath : null;
@@ -386,4 +388,43 @@ export function parseToCSV(data) {
         `${h.name[0]?.text || 'Unbenannt'},${h.startDate},${h.endDate}`
     ).join('\n');
     return header + rows;
+}
+
+function backupCSVIfNeeded(filePath, content, cooldownSeconds = 300, maxBackups = 5) {
+    const now = Date.now();
+    const lastBackup = backupCooldownMap.get(filePath) || 0;
+
+    if ((now - lastBackup) < cooldownSeconds * 1000) {
+        console.log(`⏱️ Skipping backup (cooldown active): ${filePath}`);
+        return;
+    }
+
+    try {
+        const dir = path.dirname(filePath);
+        const baseName = path.basename(filePath);
+        const timestamp = new Date().toISOString().replace(/[:]/g, '-').split('.')[0];
+        const backupName = `${baseName}.bak.${timestamp}.csv`;
+        const backupPath = path.join(dir, backupName);
+
+        fs.writeFileSync(backupPath, content, 'utf8');
+        backupCooldownMap.set(filePath, now);
+        console.log(`📦 Backup written: ${backupPath}`);
+
+        // Enforce max backups
+        const files = fs.readdirSync(dir);
+        const backupFiles = files
+            .filter(f => f.startsWith(`${baseName}.bak.`))
+            .sort();
+
+        if (backupFiles.length > maxBackups) {
+            const toDelete = backupFiles.slice(0, backupFiles.length - maxBackups);
+            for (const f of toDelete) {
+                fs.unlinkSync(path.join(dir, f));
+                console.log(`🗑️ Deleted old backup: ${f}`);
+            }
+        }
+
+    } catch (err) {
+        console.warn(`⚠️ Failed to write backup for ${filePath}:`, err);
+    }
 }

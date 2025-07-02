@@ -34,5 +34,13 @@
     --office-closed-color: #8d6e63;       /* Medium brown */
     
     --text-muted-color: #757575;          /* Gray for less important text */
+
+    --color-layout-container-light: black;
+    --color-layout-container-medium: rgb(39, 15, 15);
+    --color-layout-container-dark: darkslategray;
+    
+    --bg-white: black;
+    --bg-soft-white: darkslateblue;
+    --bg-inactive: darkslategray;
 }
   

@@ -1,4 +1,4 @@
-import { loadRoleData, roles, allRoles, generateRoleCSV } from '../../../js/loader/role-loader.js';
+import { loadRoleData, roles, allRoles, saveRoleData } from '../../../js/loader/role-loader.js';
 import { createEmojiPicker } from '../../../Components/emojiPicker/emojiPicker.js';
 
 let roleChanges = Array(12).fill(false);
@@ -302,7 +302,7 @@ function storeRole(index) {
 
   console.log(`Role at index ${index} stored:`, role);
 
-  generateRoleCSV(api);
+  saveRoleData(api);
 
 }
 
