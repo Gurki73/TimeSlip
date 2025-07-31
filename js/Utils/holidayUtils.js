@@ -3,10 +3,10 @@ const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli'
 const germanFixedHolidays = [
   { id: "newy", name: "Neujahrstag", emoji: "🎉", day: 1, month: 1, bundesländer: ["All States"] },
   { id: "may1", name: "Tag der Arbeit", emoji: "🌼", day: 1, month: 5, bundesländer: ["All States"] },
-  { id: "unit", name: "Tag der Deutschen Einheit", emoji: "🏛️", day: 3, month: 10, bundesländer: ["All States"] },
+  { id: "unit", name: "Tag der Einheit", emoji: "🏛️", day: 3, month: 10, bundesländer: ["All States"] },
   { id: "xma1", name: "Weihnachtstag", emoji: "🎄", day: 25, month: 12, bundesländer: ["All States"] },
-  { id: "xma2", name: "Zweiter Weihnachtstag", emoji: "🎄", day: 26, month: 12, bundesländer: ["All States"] },
-  { id: "asmp", name: "Mariä Himmelfahrt", emoji: "👑", day: 15, month: 8, bundesländer: ["BY", "SL"] },
+  { id: "xma2", name: "2. Weihnachtstag", emoji: "🎄", day: 26, month: 12, bundesländer: ["All States"] },
+  { id: "asmp", name: "M. Himmelfahrt", emoji: "👑", day: 15, month: 8, bundesländer: ["BY", "SL"] },
   { id: "refm", name: "Reformationstag", emoji: "📜", day: 31, month: 10, bundesländer: ["BB", "MV", "SN", "ST", "TH"] },
   { id: "allh", name: "Allerheiligen", emoji: "🌺", day: 1, month: 11, bundesländer: ["BW", "BY", "NW", "RP", "SL"] },
   { id: "epip", name: "Dreikönigstag", emoji: "👑", day: 6, month: 1, bundesländer: ["BY", "BW", "ST"] },
@@ -19,8 +19,8 @@ const germanVariableHolidays = [
   { id: "pent", name: "Pfingstsonntag", emoji: "🕊️", offset: 49, bundesländer: ["All States"] },
   { id: "pmon", name: "Pfingstmontag", emoji: "🌸", offset: +50, bundesländer: ["All States"] },
   { id: "body", name: "Fronleichnam", emoji: "⛪", offset: 60, bundesländer: ["BY", "HE", "NW", "RP", "SL"] },
-  { id: "ascn", name: "Christi Himmelfahrt", emoji: "🌥️", offset: +39, bundesländer: ["All States"] },
-  { id: "pray", name: "Buß- und Bettag", emoji: "🙏", offset: -7, bundesländer: ["SN"] },
+  { id: "ascn", name: "Himmelfahrt", emoji: "🌥️", offset: +39, bundesländer: ["All States"] },
+  { id: "pray", name: "Buß- & Bettag", emoji: "🙏", offset: -7, bundesländer: ["SN"] },
 ];
 
 function calculateEasterSunday(year) {

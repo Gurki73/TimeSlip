@@ -41,10 +41,10 @@
 
     --text-color: darkslategray;
 
-    --calendar-day-closed-bg: hotpink;
-    --calendar-day-regular-bg: ghostwhite;
-    --calendar-day-weekend-bg: pink;
-    --calendar-day-holiday-bg: tomato;
+    --calendar-day-closed-bg: #d87093;      /* PaleVioletRed */
+    --calendar-day-regular-bg: silver;
+    --calendar-day-weekend-bg: #f8d3dd;     /* Slightly lighter pink than before */
+    --calendar-day-holiday-bg: #f0a1b1;     /* Just a bit darker than weekend */
 
     --calendar-shift-early-bg: lightgray;
     --calendar-shift-day-bg: darkgray;

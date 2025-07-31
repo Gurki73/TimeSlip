@@ -25,8 +25,9 @@ async function loadCalendarData(api, year) {
 
 //# region office days
 let prilimaryOfficeDays = [];
+let lastOnboardingState = null;
 
-const onboarding = ['full', 'never', 'never', 'full', 'full', 'full', 'full',];
+const onboarding = ['two', 'never', 'never', 'full', 'full', 'full', 'full',];
 const gastro = ['never', 'afternoon', 'full', 'full', 'full', 'full', 'full',];
 const health = ['full', 'full', 'morning', 'full', 'full', 'never', 'never'];
 const office = ['full', 'full', 'full', 'full', 'full', 'never', 'never'];
@@ -36,16 +37,17 @@ const hospitality = ['full', 'full', 'full', 'full', 'full', 'full', 'full'];
 const shop = ['full', 'full', 'full', 'full', 'full', 'full', 'never', 'shop'];
 
 async function loadOfficeDaysData(api, isOnboarding = false) {
-    if (prilimaryOfficeDays.length > 0) {
-        return prilimaryOfficeDays;
-    }
 
-    // 💡 Override with onboarding data
     if (isOnboarding) {
         console.log('🎓 Onboarding mode detected — using onboarding office days');
         prilimaryOfficeDays = onboarding;
         return prilimaryOfficeDays;
     }
+    if (prilimaryOfficeDays.length > 0 && lastOnboardingState === isOnboarding) {
+        return prilimaryOfficeDays;
+    }
+
+    lastOnboardingState = isOnboarding;
 
     let homeKey = localStorage.getItem('clientDefinedDataFolder') || 'home';
     const relativePath = 'officeDays.csv';

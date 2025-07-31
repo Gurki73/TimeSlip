@@ -72,20 +72,30 @@
 .closed-list,
 .school-list {
   max-width: fit-content;
-  background: var(--bg-white);
+  background-color: var(--bg-white);
   padding: 0.5rem;
   border-radius: 0.5rem;
 }
 
-.weekday-list-colapsed,
-.shift-list-colapsed,
-.holiday-list-colapsed,
-.bridgeday-list-colapsed,
-.closed-list-colapsed,
-.school-list-colapsed {
+.weekday-list-collapsed,
+.shift-list-collapsed,
+.holiday-list-collapsed,
+.bridgeday-list-collapsed,
+.closed-list-collapsed,
+.school-list-collapsed {
   max-width: 90px;
+  background-color: var(--bg-inactive) !important; 
+  
 }
 
+.holiday-expanded {
+  width: 16rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;   /* ← centers everything vertically */
+  justify-content: space-between;
+  overflow-x: hidden;
+}
 
 .weekday-item {
   display: flex;
@@ -141,7 +151,22 @@
   border-radius: 4px;
   margin: 2px 0;
   gap: 0.5rem;
+  width: 95%;
+  height: 1.4rem;
+  font-size: 0.9rem;
 }
+
+.data-box.ambigious {
+  background: linear-gradient(
+    60deg,
+    var(--calendar-day-closed-bg) 0%,
+    var(--calendar-day-regular-bg) 100%
+  );
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  animation: pulse-gradient 3s ease-in-out infinite;
+}
+
 
 .data-box label {
   display: flex;
@@ -199,6 +224,9 @@
 }
 .lock-icon.unlocked::before {
   content: "🔑";
+}
+.lock-icon.ambigious::before {
+  content: "❓";
 }
 
 .shift-button.active {

@@ -1,45 +1,31 @@
-/**
- * ================================
- * Besondere Tage: Dialects & Schützenfest (Future Enhancements)
- * ================================
- * 
- * Summary:
- * We've brainstormed unique and regionalized titles/tooltips for "Besondere Tage"
- * that reflect the local flavor and culture. These playful additions 
- * (especially in dialects!) aim to make the app feel more personal and fun 
- * for users, even though they are not strictly necessary for functionality.
- * 
- * The idea is to go beyond functionality to delight users, showing "love" 
- * in small ways that could enhance brand perception.
- * 
- * Dialect-Specific Tooltip Examples:
- * ----------------------------------
- * 1. Bavaria: "Hier feiern wir gern doppelt" (Playful Bavarian tone)
- * 2. Thuringia: "Hexen in der Walpurgisnacht" (Highlighting Walpurgisnacht)
- * 3. Berlin: "FeiertagsVibes: Extra-Tage im Kalender" (Urban/modern vibe)
- * 4. Baden-Württemberg: "Deine goldenen Gelegenheiten" (Sophisticated mood)
- * 5. NRW: "Heimliche Favoriten im Kalender" (Playful but simple)
- * 6. Hesse: "Feiertags-Upgrades" (Concise and upbeat)
- * 7. Default: "Brückentage und Besondere Tage" (Neutral fallback)
- * 
- * Schützenfest:
- * -------------
- * We decided to add Schützenfest as a regional celebration for:
- *  - North Rhine-Westphalia
- *  - Lower Saxony
- * 
- * Emoji: 🎯 (target), 🔫 (toy gun), or 🥨 (festive pretzel vibe).
- * Timing: Tentative default to July 15th for simplicity (could be refined to 
- * actual festival dates or calculated dynamically later).
- * Tooltips:
- *  - NRW: "Treffsicher durch den Sommer – Schützenfestzeit!"
- *  - Lower Saxony: "Zielen, Feiern und Gemeinschaft – unser Schützenfest."
- */
-import { loadCalendarData, saveStateData, loadStateData, loadCompanyHolidayData, setBranch, updateOfficeDays, loadOfficeDaysData } from '../../../js/loader/calendar-loader.js';
-import { getHolidayDetails, getAllHolidaysForYear, nonOfficialHolidays, monthNames, germanFixedHolidays, germanVariableHolidays } from '../../../js/Utils/holidayUtils.js';
+import { saveStateData, loadStateData, loadCompanyHolidayData, setBranch, updateOfficeDays, loadOfficeDaysData } from '../../../js/loader/calendar-loader.js';
+import { getAllHolidaysForYear } from '../../../js/Utils/holidayUtils.js';
 import { updateStateFlag } from '../../../js/Utils/flagUtils.js';
 import { GetSchoolHoliday, apiHealthCheck, DownloadSchoolHoliday } from '../../../js/Utils/schoolHollydayUpdater.js';
 import { updateCalendarDisplay, setDateRemote } from '../../calendar/calendar.js';
+import { checkOnboardingState } from '../../../js/Utils/onboarding.js';
+import * as Util from './calendar-form-utils.js';
+
+/**
+ * 🎉 Special Days & Schützenfest (Future Enhancements)
+ * 
+ * Plan: Add playful, region-specific tooltips and optional calendar events 
+ * to create a more delightful and culturally tuned user experience.
+ * 
+ * Tooltip Examples:
+ * - Bavaria: "We love to celebrate twice here"
+ * - Thuringia: "Witches on Walpurgis Night"
+ * - Berlin: "Holiday vibes"
+ * - Default: "Bridge days and special days"
+ * 
+ * Schützenfest:
+ * - Applies to NRW & Lower Saxony (🎯 or 🥨 emoji)
+ * - Tentative date: July 15
+ * - Example tooltips:
+ *    • NRW: "On target all summer – Schützenfest time!"
+ *    • Lower Saxony: "Aim, celebrate, and connect – our Schützenfest."
+ */
+
 
 const dayIds = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
@@ -64,26 +50,40 @@ let currentYear = new Date().getFullYear();
 let ruleFormState;
 let api;
 let companyHolidays = [];
+let officeDays = [];
 
 export async function initializeCalendarForm(passedApi) {
-
   api = passedApi;
-  if (!api) console.error(" Api was not passed ==> " + api);
+  if (!api) console.error("Api was not passed ==> " + api);
 
-  Promise.all([
-    getAllHolidaysForYear,
-    updateStateFlag,
-    GetSchoolHoliday()
-  ])
-    .then(() => { })
-    .catch((error) => {
-      console.error('Error loading data:', error);
-    });
+  const { isOnboarding, dataFolder } = await checkOnboardingState(api);
 
-  companyHolidays = await loadCompanyHolidayData(api, currentYear);
+  try {
+    // Correct: all data is fetched in parallel
+    const [
+      _holidays,
+      _flag,
+      _school,
+      officeDaysData,
+      companyHolidaysData
+    ] = await Promise.all([
+      getAllHolidaysForYear(),
+      updateStateFlag(),
+      GetSchoolHoliday(),
+      loadOfficeDaysData(api, isOnboarding),
+      loadCompanyHolidayData(api, currentYear)
+    ]);
 
+    officeDays = officeDaysData;
+    companyHolidays = companyHolidaysData;
+    console.log("calendar FORM office onboarding ==> ", isOnboarding);
+    console.log("calendar FORM office days ==> ", officeDays);
+  } catch (error) {
+    console.error('❌ Error loading data in calendar-form:', error);
+  }
+
+  // Continue with UI logic...
   ruleFormState = loadStateData();
-  applyStateChange(ruleFormState);
   const formContainer = document.getElementById('form-container');
   if (!formContainer) {
     console.error('Form container not found');
@@ -104,6 +104,8 @@ export async function initializeCalendarForm(passedApi) {
     return;
   }
 
+  applyStateChange(ruleFormState);
+  restoreOfficeDaysUI(officeDays);
   const stateSelect = document.getElementById('state-select');
   const stateFlagElement = document.getElementById('calendar-form-state-flag');
   const yearSpan = document.getElementById('calendar-form-year');
@@ -167,6 +169,7 @@ function initCheckboxLockToggles() {
       container.classList.toggle('checked', isChecked);
 
       document.querySelectorAll(`.data-box[data-shift="${key}"]`).forEach((box) => {
+        box.classList.remove('ambigious');
         box.classList.toggle('checked', isChecked);
       });
 
@@ -353,11 +356,15 @@ function initBranchSelectLogic() {
     } else {
       previousValue = newValue;
     }
+
+
     updateHeader(newValue);
     console.log(newValue);
     const officeDaysUpdate = setBranch(newValue)
     updateWeekdayAndShiftCheckboxes(officeDaysUpdate);
   });
+
+
 }
 
 function createCompanyHolidayEventListeners() {
@@ -484,14 +491,14 @@ function updateWeekdayAndShiftCheckboxes(officeDaysUpdate) {
   const aggregate = { early: false, day: false, late: false };
   officeDaysUpdate.forEach(key => {
     if (key === 'never') return;
-    const bools = keyToBools(key);
+    const bools = Util.keyToBools(key);
     aggregate.early = aggregate.early || bools.early;
     aggregate.day = aggregate.day || bools.day;
     aggregate.late = aggregate.late || bools.late;
   });
 
   // 3) Convert aggregate bools back to shift key
-  const combinedShiftKey = boolsToKey(aggregate);
+  const combinedShiftKey = Util.boolsToKey(aggregate);
 
   // 4) Update global shift checkboxes accordingly
   ['early', 'day', 'late'].forEach(shiftKey => {
@@ -505,6 +512,10 @@ function updateWeekdayAndShiftCheckboxes(officeDaysUpdate) {
       cb.dispatchEvent(new Event('change', { bubbles: true }));
     }
   });
+
+  const boolMatrix = convertShiftKeysToMatrix(officeDays);
+  const weeklyShifts = analyzeShiftMatrix(boolMatrix);
+  const shiftSelect = document.getElementById('shift-weekday');
 }
 
 
@@ -537,35 +548,42 @@ function updateShiftSelectOptions() {
 
 }
 
+function convertShiftKeysToMatrix(officeDaysUpdate) {
+  return officeDaysUpdate.map(Util.keyToBools);
+}
 
-export function keyToBools(key) {
-  switch (key) {
-    case 'never': return { early: false, day: false, late: false };
-    case 'morning': return { early: true, day: false, late: false };
-    case 'day': return { early: false, day: true, late: false };
-    case 'afternoon': return { early: false, day: false, late: true };
-    case 'two': return { early: true, day: false, late: true };
-    case 'earlyDay': return { early: true, day: true, late: false };
-    case 'lateDay': return { early: false, day: true, late: true };
-    case 'full': return { early: true, day: true, late: true };
-    default:
-      throw new Error(`Unknown shift key: ${key}`);
+
+function analyzeShiftMatrix(boolMatrix) {
+  // Filter only open days (where any shift is true)
+  const openDays = boolMatrix.filter(day =>
+    day.early || day.day || day.late
+  );
+
+  if (openDays.length === 0) {
+    return {
+      early: { emoji: '🔒', status: false },
+      day: { emoji: '🔒', status: false },
+      late: { emoji: '🔒', status: false },
+    };
   }
-}
 
-function boolsToKey({ early, day, late }) {
-  if (!early && !day && !late) return 'never';
-  if (early && !day && !late) return 'morning';
-  if (!early && day && !late) return 'day';
-  if (!early && !day && late) return 'afternoon';
-  if (early && !day && late) return 'two';
-  if (early && day && !late) return 'earlyDay';
-  if (!early && day && late) return 'lateDay';
-  if (early && day && late) return 'full';
-  // (should never reach here)
-  throw new Error(`Invalid shift booleans: ${early},${day},${late}`);
-}
+  const result = {};
+  ['early', 'day', 'late'].forEach(shift => {
+    const values = openDays.map(day => day[shift]);
+    const allTrue = values.every(v => v === true);
+    const allFalse = values.every(v => v === false);
 
+    if (allTrue) {
+      result[shift] = { emoji: '🔑', status: true };       // open
+    } else if (allFalse) {
+      result[shift] = { emoji: '🔒', status: false };      // closed
+    } else {
+      result[shift] = { emoji: '❓', status: true };        // inconsistent but still "open"
+    }
+  });
+
+  return result;
+}
 
 //#region Warnings
 function showYearWarning(onConfirm, onCancel) {
@@ -725,8 +743,27 @@ function updateHolidaysForYear(year) {
       });
 
       const labelText = document.createElement('span');
-      labelText.classList.add('label-text', 'noto');
-      labelText.innerHTML = `${formattedDate} ${holiday.emoji} ⇨ ${holiday.name}`;
+      // labelText.classList.add('label-text', 'noto');
+      // labelText.innerHTML = `${formattedDate} ${holiday.emoji} ⇨ ${holiday.name}`;
+
+      const dateSpan = document.createElement('span');
+      dateSpan.textContent = formattedDate;
+
+      const emojiSpanExt = document.createElement('span');
+      emojiSpanExt.classList.add('noto');
+      emojiSpanExt.textContent = ` ${holiday.emoji}`;
+
+      const arrowSpan = document.createElement('span');
+      arrowSpan.textContent = '⇨';
+
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = ` ${holiday.name}`;
+
+      // Append all spans to labelText
+      labelText.appendChild(dateSpan);
+      labelText.appendChild(emojiSpanExt);
+      labelText.appendChild(arrowSpan);
+      labelText.appendChild(nameSpan);
 
       label.appendChild(checkbox);
       label.appendChild(labelText);
@@ -1337,7 +1374,7 @@ function updateBridgeDaysForYear(year, state) {
     <mark class="noto">🌉<mark> <span title="${tooltip}">
       ${formatDate(date)} ${directionEmoji}
     </span>
-    <label style="margin-left: 1em;">
+    <label>
       <input type="checkbox" data-bridge-day="${item.date}" checked>
     </label>
   `;
@@ -1346,3 +1383,113 @@ function updateBridgeDaysForYear(year, state) {
   });
 }
 
+function restoreOfficeDaysUI(officeDays) {
+  if (!Array.isArray(officeDays) || officeDays.length !== 7) {
+    console.warn("Invalid officeDays array:", officeDays);
+    return;
+  }
+
+  let globalShift = { early: true, day: true, late: true }; // will be used to find common shift checkboxes
+
+  officeDays.forEach((key, index) => {
+    const day = dayIds[index];
+    const bools = Util.keyToBools(key);
+    const el = document.querySelector(`.data-box[data-day="${day}"]`);
+    const checkbox = document.getElementById(`input-weekday-${day}`);
+    const lockIcon = el?.querySelector('.lock-icon'); // 🔍 get the lock icon inside the box
+
+    if (!el || !checkbox) return;
+
+    if (key !== "never") {
+      checkbox.checked = true;
+      el.classList.add("checked");
+      lockIcon?.classList.add("unlocked");
+    } else {
+      checkbox.checked = false;
+      el.classList.remove("checked");
+      lockIcon?.classList.remove("unlocked");
+    }
+
+    const weekdayCheckbox = document.querySelector(`#input-weekday-${day}`);
+    if (weekdayCheckbox) {
+      // Only check if at least one shift is active
+      const anyShift = bools.early || bools.day || bools.late;
+      weekdayCheckbox.checked = anyShift;
+      weekdayCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+    } else {
+      console.warn(`Weekday checkbox not found for ${day}`);
+    }
+
+    // Combine shifts for global shift section (logical AND across all days)
+    globalShift.early = globalShift.early && bools.early;
+    globalShift.day = globalShift.day && bools.day;
+    globalShift.late = globalShift.late && bools.late;
+  });
+
+  const shiftMatrix = convertShiftKeysToMatrix(officeDays);
+  const shiftSelect = document.getElementById('shift-weekday');
+
+  let displayShifts; // this will be { early: { emoji, status }, ... }
+
+  switch (shiftSelect.value) {
+    case "shift-all":
+      displayShifts = analyzeShiftMatrix(shiftMatrix);
+      break;
+
+    case "shift-mon":
+    case "shift-tue":
+    case "shift-wed":
+    case "shift-thu":
+    case "shift-fri":
+    case "shift-sat":
+    case "shift-sun":
+      const dayKey = shiftSelect.value.replace("shift-", "");
+      const index = dayIds.indexOf(dayKey);
+      const bools = shiftMatrix[index];
+
+      displayShifts = {
+        early: { emoji: bools.early ? '🔑' : '🔒', status: bools.early },
+        day: { emoji: bools.day ? '🔑' : '🔒', status: bools.day },
+        late: { emoji: bools.late ? '🔑' : '🔒', status: bools.late }
+      };
+      break;
+
+    default:
+      console.warn("Unknown shift select value:", shiftSelect.value);
+      displayShifts = null;
+  }
+
+
+  ['early', 'day', 'late'].forEach(shift => {
+    const checkbox = document.querySelector(`#input-shift-${shift}`);
+    const { status, emoji } = displayShifts[shift];
+
+    // ✅ 1. Update checkbox
+    if (checkbox) {
+      checkbox.checked = status; // true/false
+      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    // ✅ 2. Update .lock-icon classes to reflect emoji state
+    const lockIcons = document.querySelectorAll(`.lock-icon[data-lock-key="${shift}"]`);
+    lockIcons.forEach(icon => {
+      icon.classList.remove('unlocked', 'ambigious'); // reset
+
+      if (emoji === '🔑') {
+        icon.classList.add('unlocked');
+      } else if (emoji === '❓') {
+        icon.classList.add('ambigious');
+      }
+      // 🔒 is default — no class needed
+      const wrapper = checkbox.closest('.data-box');
+      if (wrapper) {
+        wrapper.classList.remove('ambigious');
+        if (emoji === '❓') {
+          wrapper.classList.add('ambigious');
+        }
+      }
+    });
+  });
+
+
+}

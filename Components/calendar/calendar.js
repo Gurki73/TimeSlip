@@ -4,7 +4,8 @@ import { loadCalendarData, loadStateData, loadCompanyHolidayData, loadOfficeDays
 import { getHolidayDetails, nonOfficialHolidays, monthNames, germanFixedHolidays, germanVariableHolidays } from '../../js/Utils/holidayUtils.js';
 import { updateStateFlag } from '../../js/Utils/flagUtils.js';
 import { loadRequests } from '../../js/loader/request-loader.js';
-import { keyToBools } from '../forms/calendar-form/calendar-form.js';
+import { keyToBools } from '../forms/calendar-form/calendar-form-utils.js';
+import { checkOnboardingState } from '../../js/Utils/onboarding.js';
 
 let currentMonthIndex;
 let currentYear;
@@ -39,20 +40,8 @@ export async function initializeCalendar(api) {
     return;
   }
   cachedApi = api;
-  let isOnboarding = false;
-  // 🧠 Step 1: Check for path cache
-  let dataFolder = localStorage.getItem('clientDefinedDataFolder');
-  if (!dataFolder) {
-    console.warn('⚠ No cached data folder found, attempting recovery...');
-    dataFolder = await api.getRecoveredPath();
+  const { isOnboarding, dataFolder } = await checkOnboardingState(api);
 
-    if (dataFolder) {
-      localStorage.setItem('clientDefinedDataFolder', dataFolder);
-    } else {
-      console.log('🗀 No recovery possible. Will fallback to sample data.');
-      isOnboarding = true
-    }
-  }
   if (!currentYear) currentYear = new Date().getFullYear();
   try {
     const [roles, employees, calendarData, officeDaysData, companyHolidays] = await Promise.all([
@@ -63,9 +52,11 @@ export async function initializeCalendar(api) {
       loadCompanyHolidayData(api, currentYear)
     ]);
 
-
     currentState = await loadStateData();
     officeDays = officeDaysData;
+    console.log("calendar office onboarding ==> ", isOnboarding);
+
+    console.log("calendar office days ==> ", officeDays);
 
     initializeCalendarData();
     createCalendarNavigation();
@@ -180,7 +171,7 @@ export function setOfficeStatus(isInOffice) {
   const myToogleAdvance = document.getElementById('toggle-attendance')
   if (isInOffice) {
     myToogleAdvance.textContent = 'Anwesend';
-    myToogleAdvance.style.backgroundColor = 'var(--accent-active)';
+    myToogleAdvance.style.backgroundColor = 'var(--calendar-day-regular-bg:)';
   } else {
     myToogleAdvance.textContent = 'Abwesend';
     myToogleAdvance.style.backgroundColor = 'var(--calendar-day-holiday-bg)';
@@ -410,7 +401,7 @@ function renderDayCell(day, index, shiftStatusForDay, usedShifts, monthRequests)
   dayCell.appendChild(dayCellHeaderObject.hRow);
   if (!dayCellHeaderObject.isValid) return { cell: dayCell, render: false, attendance };
 
-
+  if (index === 5) dayCell.classList.add('saturday');
   if (index === 6) dayCell.classList.add('sunday');
 
   if (shiftStatusForDay.early && !shiftStatusForDay.day && !shiftStatusForDay.late) {

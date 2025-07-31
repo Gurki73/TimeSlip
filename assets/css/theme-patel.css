@@ -24,10 +24,10 @@
     --button-hover-color: #b89acc;        /* Hover pastel */
     
     /* Calendar Day Backgrounds */
-    --calendar-day-closed-bg: #f2d7ee;   /* Light pastel pink */
-    --calendar-day-regular-bg: #d9d6f5;  /* Very light pastel blue */
-    --calendar-day-weekend-bg: #cce3d9;  /* Light pastel green */
-    --calendar-day-holiday-bg: #f4c7c3;  /* Soft pastel red */
+    --calendar-day-closed-bg: #d87093;     /* PaleVioletRed – softer than hotpink */
+    --calendar-day-regular-bg: silver;     /* Keep as is */
+    --calendar-day-weekend-bg: #f3c6d2;     /* A desaturated pink, lighter and distinct */
+    --calendar-day-holiday-bg: #e98ba0;  
     
     --holiday-color: #d07878;             /* Muted red */
     --weekend-color: #7cae7a;             /* Muted green */
