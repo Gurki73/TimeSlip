@@ -1,5 +1,9 @@
 import { loadRoleData, roles, allRoles, saveRoleData } from '../../../js/loader/role-loader.js';
 import { createEmojiPicker } from '../../../Components/emojiPicker/emojiPicker.js';
+import { createBranchSelect, branchPresetsRoles } from '../../../js/Utils/branch-select.js';
+import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js';
+import { resetAndBind } from '../../../js/Utils/bindEventListner.js';
+import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 
 let roleChanges = Array(12).fill(false);
 const emoji = [
@@ -19,8 +23,52 @@ export async function initializeRoleForm(passedApi) {
   const formContainer = getFormContainer();
   if (!formContainer) return;
   await loadRoleForm(formContainer);
+  updateDivider("bg-tasks");
   renderRoleTable();
 }
+
+function updateDivider(className) {
+  const divider = document.getElementById('horizontal-divider');
+  divider.innerHTML = '';
+
+  const leftGap = document.createElement('div');
+  leftGap.className = 'left-gap';
+
+  const h2 = document.createElement('h2');
+  h2.id = 'role-form-title';
+  h2.className = 'sr-only';
+  h2.innerHTML = `<span class="noto">🧩</span> Rollen und Aufgaben Formular <span class="noto">🧩</span>`;
+
+  const buttonContainer = document.createElement('div');
+  buttonContainer.id = 'form-buttons';
+
+  const helpBtn = createHelpButton('chapter-roles');
+  helpBtn.setAttribute('aria-label', 'Hilfe öffnen für Rollen-Formular');
+
+  const branchSelect = createBranchSelect({
+    onChange: (val) => {
+      console.log('Branch changed to:', val);
+      applyBranchPreset(val);
+    }
+  });
+  branchSelect.setAttribute('aria-label', 'Branche auswählen');
+
+  const saveBtn = createSaveAllButton({
+    onClick: () => {
+      console.log('Save all clicked!');
+    }
+  });
+  saveBtn.setAttribute('aria-label', 'Alle Änderungen speichern');
+
+  buttonContainer.append(helpBtn, branchSelect, saveBtn);
+
+  divider.append(leftGap, h2, buttonContainer);
+
+  divider.className = '';
+  divider.classList.add(className);
+}
+
+
 
 function setApi(passedApi) {
   api = passedApi;
@@ -34,6 +82,29 @@ async function loadInitialData(api) {
     console.error('Error loading data:', error);
   }
 }
+
+function applyBranchPreset(branch) {
+  const preset = branchPresetsRoles[branch];
+  if (!preset || !preset.teams) return;
+
+  Object.entries(preset.teams).forEach(([teamKey, roles]) => {
+    const teamName = roles[0];       // first entry = team name
+    const roleNames = roles.slice(1); // remaining = roles
+
+    // Example: team input and roles inputs must have consistent IDs / data attributes
+    const teamInput = document.querySelector(`#team-${teamKey}-name`);
+    const roleInputs = document.querySelectorAll(`.role-input[data-team="${teamKey}"]`);
+
+    if (teamInput) teamInput.value = teamName;
+
+    roleInputs.forEach((input, i) => {
+      input.value = roleNames[i] || "";
+    });
+  });
+
+  console.log(`[RoleForm] Applied preset for branch "${branch}"`);
+}
+
 
 function getFormContainer() {
   const formContainer = document.getElementById('form-container');
@@ -55,173 +126,85 @@ async function loadRoleForm(formContainer) {
   }
 }
 
-function renderRoleTable() {
-  const container = document.getElementById('role-form-container');
-  if (!container) {
-    console.warn("Render role form not found");
-    return;
-  }
-  container.innerHTML = '';
+async function renderRoleTable() {
+  const cells = document.querySelectorAll('.role-cell');
+  const templateHTML = await (await fetch('Components/forms/role-form/role-template.html')).text();
 
-  const table = document.createElement('table');
-  table.className = 'role-table';
+  cells.forEach(cell => {
+    const roleIndex = parseInt(cell.dataset.roleIndex, 10);
+    const role = allRoles[roleIndex];
+    if (!role) return;
 
-  // Render main 12 roles (3x4 grid)
-  for (let row = 0; row < 3; row++) {
-    const tableRow = document.createElement('tr');
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = templateHTML.trim();
+    const roleDiv = wrapper.firstElementChild;
 
-    for (let col = 0; col < 4; col++) {
-      const roleIndex = (row + col * 3) + 1;
-      const role = allRoles[roleIndex];
+    roleDiv.dataset.role = role.colorIndex || '0';
+    roleDiv.dataset.index = roleIndex;
 
-      const cell = document.createElement('td');
-      cell.className = 'role-cell';
+    roleDiv.querySelector('.role-index').textContent = roleIndex;
 
-      if (role) {
-        const roleDiv = createRoleDiv(role, roleIndex);
-        cell.appendChild(roleDiv);
+    const emojiBtn = roleDiv.querySelector('.emoji-button');
+    emojiBtn.textContent = role.emoji || emoji[roleIndex % emoji.length];
+    emojiBtn.setAttribute('aria-label', `Rollen-Emoji für ${role.name || 'unnannte Rolle'}`);
+    emojiBtn.dataset.index = roleIndex;
 
-        addEventListeners(roleDiv, roleIndex);
-      }
+    const nameInput = roleDiv.querySelector('.name-role');
+    nameInput.value = role.name || '';
+    nameInput.setAttribute('aria-label', `Rollenname Eingabefeld für Rolle ${roleIndex}`);
+    nameInput.dataset.index = roleIndex;
 
-      tableRow.appendChild(cell);
-    }
+    const { shouldShowDelete, shouldShowStore } = updateRoleButtonsVisibility(roleIndex);
 
-    table.appendChild(tableRow);
-  }
+    const storeBtn = roleDiv.querySelector('.store-button');
+    storeBtn.classList.toggle('hidden', !shouldShowStore);
+    storeBtn.dataset.index = roleIndex;
 
-  // Render special 13th role (task button row)
-  const tableRow = document.createElement('tr');
-  const roleIndex = 13;
-  const role = allRoles[roleIndex];
+    const deleteBtn = roleDiv.querySelector('.delete-button');
+    deleteBtn.classList.toggle('hidden', !shouldShowDelete);
+    deleteBtn.dataset.index = roleIndex;
 
-  const cell = document.createElement('td');
-  cell.className = 'role-cell';
+    addEventListeners(roleDiv, roleIndex);
 
-  const roleDiv = document.createElement('div');
-  roleDiv.className = 'task-button';
-  roleDiv.setAttribute('data-role', role.colorIndex || '0');
-
-  const emojiToUse = role.emoji || emoji[roleIndex % emoji.length];
-  const roleName = role.name || '';
-
-  roleDiv.innerHTML = `
-    ${roleIndex}.
-    <button class="transparentButton unaccessable emoji-button-${roleIndex} noto">${emojiToUse}</button>
-    ⇨
-    <input class="name-role unaccessable name-role-${roleIndex}" type="text" value="${roleName}" />
-  `;
-
-  cell.appendChild(roleDiv);
-  tableRow.appendChild(cell);
-  table.appendChild(tableRow);
-
-  container.appendChild(table);
-
+    cell.innerHTML = '';
+    cell.appendChild(roleDiv);
+  });
 }
 
-function createRoleDiv(role, roleIndex) {
-  const roleDiv = document.createElement('div');
-  roleDiv.className = 'task-button';
-  roleDiv.setAttribute('data-role', role.colorIndex || '0');
-
-  const emojiToUse = role.emoji || emoji[roleIndex % emoji.length];
-  const roleName = role.name || '';
-
-  const { shouldShowDelete, shouldShowStore } = updateRoleButtonsVisibility(roleIndex);
-
-  roleDiv.innerHTML = `
-  ${roleIndex}.
-  <button
-    class="transparentButton emoji-button-${roleIndex} noto"
-    aria-label="Rollen-Emoji für ${roleName || 'unnannte Rolle'}"
-    type="button"
-  >${emojiToUse}</button>
-  ⇨
-  <input
-    class="name-role name-role-${roleIndex}"
-    type="text"
-    value="${roleName}"
-    aria-label="Rollenname Eingabefeld für Rolle ${roleIndex}"
-  />
-  <button
-    class="mybutton-small store-button noto ${!shouldShowStore ? 'hidden' : ''}"
-    data-index="${roleIndex}"
-    type="button"
-    title="Änderungen speichern"
-    aria-label="Änderungen speichern für Rolle ${roleName || roleIndex}"
-  >💾</button>
-  <button
-    class="mybutton-small delete-button noto ${!shouldShowDelete ? 'hidden' : ''}"
-    data-index="${roleIndex}"
-    type="button"
-    title="${roleName} löschen"
-    aria-label="Rolle ${roleName || roleIndex} löschen"
-  >🚮</button>
-`;
-
-  addEventListeners(roleDiv, roleIndex);
-  return roleDiv;
-}
 
 function addEventListeners(roleDiv, roleIndex) {
-  if (roleDiv.dataset.listenersBound === 'true') {
-    // Already bound, skip
-    return;
-  }
-  roleDiv.dataset.listenersBound = 'true';
+  // Emoji button
+  const emojiBtn = roleDiv.querySelector('.emoji-button');
+  resetAndBind(emojiBtn, 'click', () => changeEmoji(roleIndex));
 
-  try {
-    roleDiv.querySelector(`.emoji-button-${roleIndex}`).addEventListener('click', () => changeEmoji(roleIndex));
-  } catch (error) {
-    console.error(`Failed to bind emoji button for role ${roleIndex}:`, error);
-  }
-
-  try {
-    roleDiv.querySelector(`.name-role-${roleIndex}`).addEventListener('keydown', (event) => handleRoleInputKeydown(event, roleIndex));
-  } catch (error) {
-    console.error(`Failed to bind role input for role ${roleIndex}:`, error);
-  }
-
-  try {
-    const deleteButton = roleDiv.querySelector('.delete-button');
-    if (deleteButton) {
-      deleteButton.addEventListener('click', (event) => {
-        const index = event.target.getAttribute('data-index');
-        deleteRoleAndShowStoreButton(index);
-      });
-    }
-  } catch (error) {
-    console.error(`Failed to bind delete button:`, error);
-  }
-
-  try {
-    const storeButton = roleDiv.querySelector('.store-button');
-    if (storeButton) {
-      storeButton.addEventListener('click', (event) => {
-        const index = event.target.getAttribute('data-index');
-        storeRole(index);
-      });
-    }
-  } catch (error) {
-    console.error(`Failed to bind store button:`, error);
-  }
-
-
-  try {
-    roleDiv.querySelector(`.name-role-${roleIndex}`).addEventListener('focus', (event) => {
-      const input = event.target;
-      if (input.value === '?') {
-        input.value = '';
-      }
+  // Name input
+  const nameInput = roleDiv.querySelector('.name-role');
+  const freshInput = resetAndBind(nameInput, 'keydown', (event) => handleRoleInputKeydown(event, roleIndex));
+  if (freshInput) {
+    freshInput.addEventListener('focus', (event) => {
+      if (event.target.value === '?') event.target.value = '';
     });
-  } catch (error) {
-    console.error(`Failed to bind focus event for role ${roleIndex}:`, error);
   }
+
+  // Delete button
+  const deleteButton = roleDiv.querySelector('.delete-button');
+  resetAndBind(deleteButton, 'click', (event) => {
+    const index = event.target.getAttribute('data-index');
+    deleteRoleAndShowStoreButton(index);
+  });
+
+  // Store button
+  const storeButton = roleDiv.querySelector('.store-button');
+  resetAndBind(storeButton, 'click', (event) => {
+    const index = event.target.getAttribute('data-index');
+    storeRole(index);
+  });
 }
 
+
+
 function validateRoleName(index) {
-  const input = document.querySelector(`.name-role-${index}`);
+  const input = document.querySelector(`.name-role[data-index="${index}"]`);
   const name = input.value.trim();
   const isUnique = !allRoles.some((r, i) => i !== index && r.name?.trim() === name);
 
@@ -258,7 +241,7 @@ function markRoleAsChanged(index) {
 }
 
 function processRoleInput(index) {
-  const inputElement = document.querySelector(`.name-role-${index}`);
+  const inputElement = document.querySelector(`.name-role[data-index="${index}"]`);
   const newValue = inputElement.value.trim();
   allRoles[index].name = newValue || '?';
 }
@@ -267,7 +250,8 @@ function processRoleInput(index) {
 function changeEmoji(index) {
   const role = allRoles[index];
 
-  const emojiButton = document.querySelector(`.emoji-button-${index}`);
+  // ✅ select using data-index
+  const emojiButton = document.querySelector(`.emoji-button[data-index="${index}"]`);
 
   const handleEmojiSelectionChange = (selectedEmoji) => {
     if (selectedEmoji) {
@@ -283,6 +267,7 @@ function changeEmoji(index) {
   createEmojiPicker(emoji, emojiButton, index, handleEmojiSelectionChange);
 }
 
+
 function deleteRoleAndShowStoreButton(index) {
   allRoles[index].emoji = '❓';
   allRoles[index].name = '?';
@@ -295,7 +280,8 @@ function storeRole(index) {
   const role = allRoles[index];
   roleChanges[index] = false;
 
-  const inputElement = document.querySelector(`.name-role-${index}`);
+  const inputElement = document.querySelector(`.name-role[data-index="${index}"]`);
+
   const newName = inputElement.value.trim();
 
   role.name = newName || '?';
@@ -303,7 +289,7 @@ function storeRole(index) {
   console.log(`Role at index ${index} stored:`, role);
 
   saveRoleData(api);
-
+  renderRoleTable();
 }
 
 function updateRoleButtonsVisibility(index) {
@@ -325,9 +311,10 @@ function updateRoleButtonsVisibility(index) {
 function focusNext(roleIndex) {
   const container = document.getElementById('role-form-container');
 
-  const nameInput = container.querySelector(`.name-role-${roleIndex}`);
-  const emojiBtn = container.querySelector(`.emoji-button-${roleIndex}`);
+  const nameInput = container.querySelector(`.name-role[data-index="${roleIndex}"]`);
+  const emojiBtn = container.querySelector(`.emoji-button[data-index="${roleIndex}"]`);
   const saveButton = container.querySelector(`.store-button[data-index="${roleIndex}"]`);
+
 
   const { shouldShowDelete, shouldShowStore } = updateRoleButtonsVisibility(roleIndex);
   const role = allRoles[roleIndex];

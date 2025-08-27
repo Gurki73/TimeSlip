@@ -626,25 +626,6 @@ function showShiftWarning(onConfirm, onCancel) {
   };
 }
 
-function showBranchWarning(onConfirm, onCancel) {
-  const dialog = document.getElementById('branch-warning-dialog');
-  dialog.classList.remove('hidden');
-
-  const confirmBtn = document.getElementById('dialog-confirm');
-  const cancelBtn = document.getElementById('dialog-cancel');
-
-  const closeDialog = () => dialog.classList.add('hidden');
-
-  confirmBtn.onclick = () => {
-    closeDialog();
-    onConfirm();
-  };
-
-  cancelBtn.onclick = () => {
-    closeDialog();
-    onCancel();
-  };
-}
 //#endregion
 
 

@@ -55,7 +55,6 @@ export async function initializeCalendar(api) {
     currentState = await loadStateData();
     officeDays = officeDaysData;
     console.log("calendar office onboarding ==> ", isOnboarding);
-
     console.log("calendar office days ==> ", officeDays);
 
     initializeCalendarData();
@@ -66,10 +65,17 @@ export async function initializeCalendar(api) {
     const zoomFactor = localStorage.getItem('zoomFactor');
     const clientDefinedDataFolder = localStorage.getItem('clientDefinedDataFolder');
 
+    // 🔹 NEW: Check Auto Save state (default = false if not set)
+    const autoSaveEnabled = localStorage.getItem('autoSaveEnabled') === 'true';
+    console.log('⚙️ Auto Save state on startup:', autoSaveEnabled);
+
+    window.dispatchEvent(new CustomEvent('autoSaveChanged', { detail: { enabled: autoSaveEnabled } }));
+
     const cacheDump = {
       colorTheme: colorTheme ?? 'default (light)',
       zoomFactor: zoomFactor ?? 'default (1.0)',
       clientDefinedDataFolder: clientDefinedDataFolder ?? 'Not set',
+      autoSave: autoSaveEnabled,
     };
 
     api.send('update-cache', cacheDump);
@@ -78,6 +84,7 @@ export async function initializeCalendar(api) {
     console.error('❌ Error loading initial calendar data:', error);
   }
 }
+
 
 function initializeCalendarData() {
   isInOffice = true;

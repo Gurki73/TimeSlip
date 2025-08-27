@@ -1,10 +1,12 @@
 
 // General JavaScript
+
 import './renderer.js';
 import './resizer.js';
 //import './shortcuts.js';
 import './Utils/schoolHollydayUpdater.js'
 import './Utils/flagUtils.js'
+// import './Utils/bindEventListner.js'
 
 // forms
 import '../Components/forms/request-form/request-form.js';
@@ -25,7 +27,9 @@ import '../Components/calendar/calendar.js';
 // elements
 // import '../Components/emojiPicker/emojiPicker.js';
 // import '../Components/Slider/slider.js';
-
+// import './Utils/HelpPageButton.js'
+// import './Utils/branch-select.js'
+// import './Utils/saveAllButton.js'
 
 // loader
 import './loader/role-loader.js';

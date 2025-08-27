@@ -1,4 +1,5 @@
 import { loadCalendarIntoContainer } from '../../js/renderer.js'
+import { resetAndBind } from '../../js/Utils/bindEventListner.js';
 
 const helpRoles = [
     // 0 - Special: no assignment
@@ -51,27 +52,33 @@ const helpEmployees = [
     { emoji: "🚁", name: "Helga", nickname: "Heli", roles: [7, 2, 5] },     // Helicopter mom
 ];
 
-// 👇 Inject tags after page has loaded
-export function initializeHelp() {
-    console.log("initializeHelp() called...");
+export async function initializeHelp(container, topicId) {
+    if (!container) return;
 
-    if (document.readyState === "loading") {
-        // DOM still loading, wait for event
-        document.addEventListener("DOMContentLoaded", () => {
-            console.log("🟢 DOMContentLoaded event triggered.");
-            runHelpSetup();
-        });
-    } else {
-        // DOM is already ready
-        console.log("🟢 DOM was already loaded.");
-        runHelpSetup();
+    try {
+        const response = await fetch('Components/help/help.html');
+        if (!response.ok) throw new Error('Failed to load help page');
+
+        const html = await response.text();
+        container.innerHTML = html;
+
+        // Initialize any JS logic for TOC, collapsibles, etc.
+        initEventListener();
+        initHelpCollapse();
+        initTOCScroll();
+        focusFirstTOCEntry();
+
+        if (topicId) {
+            const target = container.querySelector(`#${topicId}`);
+            if (target) target.scrollIntoView({ behavior: 'smooth' });
+        }
+
+    } catch (err) {
+        console.error('Error loading help page:', err);
+        container.innerHTML = `<p>Unable to load help page.</p>`;
     }
-
-    initEventListener();
-    initHelpCollapse();
-    initTOCScroll();
-    focusFirstTOCEntry();
 }
+
 
 function focusFirstTOCEntry() {
     const firstLink = document.querySelector("#help-toc a");
@@ -207,18 +214,19 @@ function highlightCurrentChapter() {
 }
 
 function initEventListener() {
-    const helpExitButton = document.getElementById('help-exit-button');
-    if (helpExitButton) {
-        helpExitButton.addEventListener('click', () => {
-            const container = document.getElementById('calendar');
-            loadCalendarIntoContainer(container);
-        });
-    }
+
+    const exitBtn = document.getElementById('help-exit-button');
+    resetAndBind(exitBtn, 'click', () => {
+        const container = document.getElementById('calendar');
+        loadCalendarIntoContainer(container);
+    });
 
     initHelpToggles();
+
     initTOCScroll();
     highlightCurrentChapter();
 }
+
 
 function scanAndReplaceHelpContent(container) {
     const placeholders = container.querySelectorAll("p, li, span, div");

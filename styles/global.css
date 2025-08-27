@@ -126,18 +126,23 @@ body, html {
     margin-bottom: 10px;
   }
 
-  #horizontal-divider {
-    height: 8px;
-    border-color: var(--bg-soft-white);
-    border-style: double;
-    background-color: var(--accent-active);
-    cursor: row-resize;
-    width: 100%;
-    position: relative;
-    z-index: 10;
-  }
+ #horizontal-divider {
+  color: var(--bg-soft-white);
+  height: 3rem;
+  border-color: var(--bg-soft-white);
+  border-style: double;
+  cursor: row-resize;
+  width: 100%;
+  position: relative;
+  z-index: 10;
+
+ display: flex;
+  align-items: center;        /* vertical centering */
+  justify-content: space-between; /* spread left–center–right */
+  padding: 0 1rem;            /* little breathing space left/right */
+}
   
-  .divider {
+.divider {
     width: 10px;
     background-color: #ccc;
   }
@@ -466,7 +471,6 @@ body, html {
   text-align: center;
   font-weight: bold;
   text-align: center;
-  color: var(--text-color);
 }
 
 .text-header1 {
@@ -550,3 +554,11 @@ select:focus-visible {
     box-shadow: 0 0 15px #ff9800;
   }
 }
+
+.hint {
+    font-size: 0.85rem;
+    color: var(--accent-inactive);
+    margin-top: 0.3rem;
+    font-style: italic;
+}
+

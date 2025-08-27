@@ -1,3 +1,5 @@
+import { initializeHelp } from '../Components/help/help.js';
+
 let formInitializers = {};
 let isDragging = false;
 let currentResizer = null;
@@ -244,17 +246,15 @@ function setupIPCListeners() {
     const calendarContainer = document.getElementById('calendar');
     loadCalendarIntoContainer(calendarContainer);
   });
-  // ✅ New: Handle "open-help" event
-  window.api.receive('open-help', (topic) => {
+  window.api.receive('open-help', (topicId) => {
     console.log(`‽ Help requested for topic: ${topic}`);
 
-    // Display help (can be customized or connected to modal/help system)
     const helpContainer = document.getElementById('calendar');
-    if (helpContainer) {
-      helpContainer.innerHTML = `<h2>Help: ${topic}</h2><p>This is placeholder help content.</p>`;
-      helpContainer.style.display = 'block';
+    const container = document.getElementById('calendar');
+    if (container) {
+      initializeHelp(container, topicId);
     } else {
-      alert(`Help requested: ${topic}`);
+      alert(`Help requested: ${topicId}`);
     }
   });
 }

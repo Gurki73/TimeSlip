@@ -19,6 +19,7 @@ let employeeFormDataChanged;
 let employeeFormDataNew;
 let currentOfficeDays;
 let api;
+let currentEmployee = 0;
 
 export async function initializeEmployeeForm(passedApi) {
 
@@ -59,9 +60,121 @@ export async function initializeEmployeeForm(passedApi) {
 
   renderEmployeeListColumn(container);
   renderEmployeeList();
-  selectEmployee(employees[0]);
+  selectEmployee(employees[currentEmployee]);
+  initEmployeeSliders();
 
 }
+
+function initEmployeeSliders() {
+  const sliders = [
+    document.getElementById('employee-form-role1'),
+    document.getElementById('employee-form-role2'),
+    document.getElementById('employee-form-role3')
+  ];
+  const valueLabels = [
+    document.getElementById('role1-value'),
+    document.getElementById('role2-value'),
+    document.getElementById('role3-value')
+  ];
+
+  function updateLabel(idx) {
+    valueLabels[idx].innerHTML = `${sliders[idx].value * 10}% <span class="noto">⌚</span>`;
+  }
+
+  let reorderTimeout;
+
+  sliders.forEach((slider, i) => {
+    slider.addEventListener('input', () => {
+      updateSliders(sliders, i);        // balance values
+      sliders.forEach((_, idx) => updateLabel(idx)); // update % text
+
+      // debounce reordering
+      clearTimeout(reorderTimeout);
+      reorderTimeout = setTimeout(() => {
+        reorderRoles();
+      }, 2500); // 2.5 seconds after last input
+    });
+  });
+}
+
+function reorderRoles() {
+
+  var employee = employees[currentEmployee]
+
+  console.log("[employee form] reorder after time out");
+
+  const roles = [
+    { type: 'main', value: employee.roleSplitMain, index: employee.mainRoleIndex },
+    { type: 'secondary', value: employee.roleSplitSecondary, index: employee.secondaryRoleIndex },
+    { type: 'tertiary', value: employee.roleSplitTertiary, index: employee.tertiaryRoleIndex }
+  ];
+
+  roles.sort((a, b) => b.value - a.value);
+
+  // Update employee object
+  employee.mainRoleIndex = roles[0].index;
+  employee.secondaryRoleIndex = roles[1].index;
+  employee.tertiaryRoleIndex = roles[2].index;
+
+  employee.roleSplitMain = roles[0].value;
+  employee.roleSplitSecondary = roles[1].value;
+  employee.roleSplitTertiary = roles[2].value;
+
+  selectEmployee(employee);
+}
+
+
+function setSliderLimits(sliders) {
+  const activeSliders = sliders.filter(s => !s.disabled);
+  const taskCount = activeSliders.length;
+
+  if (taskCount === 1) {
+    activeSliders[0].value = 10;
+    activeSliders[0].disabled = true;
+  } else {
+    activeSliders.forEach(s => {
+      s.disabled = false;
+      s.min = 1;
+      s.max = (10 - taskCount + 1); // 9 for 2 tasks, 8 for 3 tasks
+    });
+  }
+}
+
+
+function updateSliders(sliders, changedIndex) {
+
+  setSliderLimits(sliders);
+
+  const total = sliders.reduce((sum, s) => sum + Number(s.value), 0);
+  console.log("[employee form] before: ", changedIndex, total);
+  if (total === 10) return;
+
+  let diff = total - 10;
+  const otherIndexes = [0, 1, 2].filter(i => i !== changedIndex);
+
+  if (diff > 0) {
+    otherIndexes
+      .sort((a, b) => sliders[a].value - sliders[b].value)
+      .forEach(idx => {
+        const take = Math.min(diff, sliders[idx].value);
+        sliders[idx].value -= take;
+        diff -= take;
+      });
+  } else if (diff < 0) {
+    otherIndexes
+      .sort((a, b) => sliders[b].value - sliders[a].value)
+      .forEach(idx => {
+        const give = Math.min(-diff, 10 - sliders[idx].value);
+        sliders[idx].value += give;
+        diff += give;
+      });
+  }
+
+  const total2 = sliders.reduce((sum, s) => sum + Number(s.value), 0);
+  console.log("[employee form] after: ", total2);
+}
+
+
 function deleteEmoji(emoji) {
   const index = employeeEmojiOptions.indexOf(emoji);
   if (index > -1) {
@@ -149,6 +262,7 @@ function createNewEmployee() {
 
   console.log("new employee btn clicked");
   const lastIndex = employees.length - 1;
+  currentEmployee = lastIndex;
   const lastEmployee = employees[lastIndex];
 
   if (isValidEmployeeEmoji(lastEmployee.personalEmoji, null)) {
@@ -233,6 +347,7 @@ function renderEmployeeList() {
 
 function selectExsitingEmployee(employee) {
   employeeFormDataNew = false;
+  currentEmployee = employees.indexOf(employee);
   selectEmployee(employee);
 }
 
@@ -363,90 +478,119 @@ function populateWeekdaySelection(employee) {
 function selectEmployee(employee) {
   const form = document.getElementById('employee-form-details');
   if (!form) {
-    console.log('Employee details form not found!');
+    console.warn('Employee details form not found!');
     return;
   }
-  const resetButton = document.querySelector('.reset-button');
-  const storeButton = document.querySelector('.store-button');
-  const deleteButton = document.querySelector('.delete-button');
-  const employeeEmojiSelect = document.getElementById('employee-emoji-picker-btn');
-  employeeEmojiSelect.innerHTML = employee.personalEmoji;
-  employeeEmojiSelect.setAttribute('data-role', employee.mainRoleIndex);
 
-  const employeeNameField = document.getElementById('employee-name');
-  employeeNameField.value = employee.name;
+  // 1. Store selected employee
+  currentEmployee = employees.indexOf(employee);
 
-  const vacationLeft = document.getElementById('employee-form-vacation-left');
-  vacationLeft.value = employee.remainingDaysOff;
+  // 2. Basic info
+  updateBasicInfo(employee);
 
-  const vacationTotal = document.getElementById('employee-form-vacation-total');
-  vacationTotal.value = employee.availableDaysOff;
+  // 3. Roles
+  updateRoleIcons();
+  updateRoleSelects();
+  updateRoleSliders();
 
-  const overTime = document.getElementById('employee-form-overtime-input');
-  overTime.value = employee.overtime;
-
-  const employeeStart = document.getElementById('employee-form-start-work');
-  employeeStart.value = employee.startDate;
-
-  const employeeEnd = document.getElementById('employee-form-end-work');
-  employeeEnd.value = employee.endDate;
-
-  const employeeBirthDay = document.getElementById('employee-form-birthday-day');
-  employeeBirthDay.value = employee.birthday;
-
-  const employeeBirthMonth = document.getElementById('employee-form-birthday-month');
-  employeeBirthMonth.value = employee.birthMonth;
-
-
-
-  const mainRoleIcon = document.getElementById("employee-details-icon-main");
-  mainRoleIcon.setAttribute('data-role', employee.mainRoleIndex);
-  mainRoleIcon.innerHTML = roles[employee.mainRoleIndex].emoji;
-  const secondaryRoleIcon = document.getElementById("employee-details-icon-secondary");
-  secondaryRoleIcon.setAttribute('data-role', employee.secondaryRoleIndex);
-  secondaryRoleIcon.innerHTML = roles[employee.secondaryRoleIndex].emoji;
-  const trinaryRoleIcon = document.getElementById("employee-details-icon-trinary");
-  trinaryRoleIcon.setAttribute('data-role', employee.tertiaryRoleIndex);
-  trinaryRoleIcon.innerHTML = roles[employee.tertiaryRoleIndex].emoji;
-
-  const mainRoleSelect = document.getElementById("employee-details-role-main");
-  const secondaryRoleSelect = document.getElementById("employee-details-role-secondary");
-  const trinaryRoleselect = document.getElementById("employee-details-role-trinary");
-
-  populateRoleSelects(employee, mainRoleSelect, secondaryRoleSelect, trinaryRoleselect);
-
-  const mainRoleRatio = document.getElementById("employee-form-role1");
-  mainRoleRatio.setAttribute('data-role', employee.mainRoleIndex);
-  mainRoleRatio.value = employee.roleSplitMain;
-
-  const secondaryRoleRatio = document.getElementById("employee-form-role2");
-  secondaryRoleRatio.setAttribute('data-role', employee.secondaryRoleIndex);
-  secondaryRoleRatio.value = employee.roleSplitSecondary;
-
-  const trinaryRoleRatio = document.getElementById("employee-form-role3");
-  trinaryRoleRatio.setAttribute('data-role', employee.tertiaryRoleIndex);
-  trinaryRoleRatio.value = employee.roleSplitTertiary
-
-  checkRatios(employee, mainRoleRatio, secondaryRoleRatio, trinaryRoleRatio);
+  // 4. Extras
+  checkRatios(
+    employee,
+    document.getElementById("employee-form-role1"),
+    document.getElementById("employee-form-role2"),
+    document.getElementById("employee-form-role3")
+  );
   populateWeekdaySelection(employee);
 
-  resetButton.addEventListener('click', () => resetForm(employee));
-  storeButton.addEventListener('click', () => storeFormData(employee));
-  deleteButton.addEventListener('click', () => deleteEmployee(employee));
-
-  employeeEmojiSelect.addEventListener('click', function () {
-    bindEmojiPickerToEmployee(employee);
-  });
-
-  const emojiValid = isValidEmployeeEmoji(employee.personalEmoji, employeeEmojiSelect);
-  const nameValid = isValidEmployeeName(employee.name, employeeNameField);
-  const mainRoleValid = isValidEmployeeMainRoleIndex(employee.mainRoleIndex, mainRoleField);
-
-  updateButtonVisibility(emojiValid, nameValid, mainRoleValid, employee);
+  // 5. Event bindings
+  bindEmojiClick(employee);
+  validateEmployeeFields(employee);
 }
 
-function populateRoleSelects(employee, first, secondary, trinary) {
+// ----- helpers -----
 
+function updateBasicInfo(employee) {
+  document.getElementById('employee-emoji-picker-btn').innerHTML = employee.personalEmoji;
+  document.getElementById('employee-emoji-picker-btn').setAttribute('data-role', employee.mainRoleIndex);
+
+  document.getElementById('employee-name').value = employee.name;
+  document.getElementById('employee-form-vacation-left').value = employee.remainingDaysOff;
+  document.getElementById('employee-form-vacation-total').value = employee.availableDaysOff;
+  document.getElementById('employee-form-overtime-input').value = employee.overtime;
+  document.getElementById('employee-form-start-work').value = employee.startDate;
+  document.getElementById('employee-form-end-work').value = employee.endDate;
+  document.getElementById('employee-form-birthday-day').value = employee.birthday;
+  document.getElementById('employee-form-birthday-month').value = employee.birthMonth;
+}
+
+function updateRoleIcons() {
+  var employee = employees[currentEmployee];
+  setRoleIcon("employee-details-icon-main", employee.mainRoleIndex);
+  setRoleIcon("employee-details-icon-secondary", employee.secondaryRoleIndex);
+  setRoleIcon("employee-details-icon-trinary", employee.tertiaryRoleIndex);
+}
+
+function setRoleIcon(elementId, roleIndex) {
+  const el = document.getElementById(elementId);
+  if (!roles[roleIndex]) return;
+  el.setAttribute('data-role', roleIndex);
+  el.innerHTML = roles[roleIndex].emoji;
+}
+
+function updateRoleSelects() {
+  const main = document.getElementById("employee-details-role-main");
+  const secondary = document.getElementById("employee-details-role-secondary");
+  const trinary = document.getElementById("employee-details-role-trinary");
+
+  populateRoleSelects(main, secondary, trinary);
+}
+
+function updateRoleSliders() {
+  var employee = employees[currentEmployee];
+  setRoleSlider("employee-form-role1", employee.mainRoleIndex, employee.roleSplitMain);
+  setRoleSlider("employee-form-role2", employee.secondaryRoleIndex, employee.roleSplitSecondary);
+  setRoleSlider("employee-form-role3", employee.tertiaryRoleIndex, employee.roleSplitTertiary);
+}
+
+function initPersonalData() {
+  const monthNames = [
+    "Januar", "Februar", "März", "April", "Mai", "Juni",
+    "Juli", "August", "September", "Oktober", "November", "Dezember"
+  ];
+
+  const monthInput = document.getElementById("employee-form-birthday-month");
+  const monthLabel = document.getElementById("employee-form-birthday-month-label");
+
+  monthInput.addEventListener("input", () => {
+    const val = parseInt(monthInput.value, 10);
+    if (val >= 1 && val <= 12) {
+      monthLabel.textContent = monthNames[val - 1];
+    } else {
+      monthLabel.textContent = "";
+    }
+  });
+
+}
+function setRoleSlider(elementId, roleIndex, value) {
+  const slider = document.getElementById(elementId);
+  slider.setAttribute('data-role', roleIndex);
+  slider.value = value;
+}
+
+function bindEmojiClick(employee) {
+  const emojiBtn = document.getElementById('employee-emoji-picker-btn');
+  emojiBtn.addEventListener('click', () => bindEmojiPickerToEmployee(employee));
+}
+
+function validateEmployeeFields(employee) {
+  isValidEmployeeEmoji(employee.personalEmoji, document.getElementById('employee-emoji-picker-btn'));
+  isValidEmployeeName(employee.name, document.getElementById('employee-name'));
+}
+
+
+function populateRoleSelects(first, secondary, trinary) {
+
+  var employee = employees[currentEmployee];
   first.innerHTML = '';
   secondary.innerHTML = '';
   trinary.innerHTML = '';

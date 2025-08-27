@@ -1,36 +1,115 @@
-.admin-buttons {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-evenly;
-  gap: 20px;
-  max-width: 80%;
-  margin: 0 auto;
+/* Container */
+#tool-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  background-color: var(--bg-soft-white);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  font-family: system-ui, sans-serif;
+  color: var(--text-color);
 }
 
+/* Titles */
+#tool-container h1 {
+  font-size: 1.6rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--accent-muted);
+  padding-bottom: 0.5rem;
+}
+
+#tool-container h2 {
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+  color: var(--color-text-info);
+}
+
+/* Button groups */
+.admin-buttons,
+.button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  justify-content: flex-start;
+}
+
+/* General button */
 button {
   font-size: 1rem;
-  padding: 10px 20px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--accent-muted);
+  border-radius: 0.75rem;
   cursor: pointer;
-  transition: background-color 0.3s, color 0.3s;
+  background-color: var(--button-inactive-color);
+  color: var(--text-color);
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  min-width: 180px;
+  text-align: left;
 }
 
 button:hover {
   background-color: var(--accent-hover);
-  color: var(--text-color);
+  color: var(--bg-white);
+  transform: translateY(-1px);
 }
 
 button:active {
-  background-color: #ddd;
+  background-color: var(--button-active-color);
+  transform: translateY(0);
 }
 
+/* Danger button */
+button.danger-button,
+button.danger {
+  background-color: var(--office-closed-color);
+  color: var(--bg-white);
+  border: 1px solid var(--color-text-calendar);
+}
+
+button.danger-button:hover,
+button.danger:hover {
+  background-color: var(--calendar-day-holiday-bg);
+  color: var(--bg-white);
+}
+
+/* Coffee button (special image one) */
 .coffee-button {
-  width: 120px;
-  height: 120px;
+  width: 140px;
+  height: 140px;
   background-image: url('../../../assets/png/BuyMeACoffee.png'); 
   background-size: cover;
   background-repeat: no-repeat;
-  border: none;
+  border-radius: 1rem;
+  border: 2px solid var(--accent-muted);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
   cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.coffee-button:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+}
+
+/* Support section */
+.support-section {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.donation-link a {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--accent-active);
+  text-decoration: none;
+}
+
+.warning-note {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--color-text-calendar);
+  margin-top: 0.25rem;
 }

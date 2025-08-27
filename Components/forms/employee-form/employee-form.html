@@ -72,12 +72,18 @@
             </div>
             
             <div class="employee-flex-row">
-                <span> <i>opt.</i> Geburtstag</span>
-                <div class="flex-row">
-                    <input type="number" min="1" max="31" step="1" class="employee-details-number" id="employee-form-birthday-day">
-                    <input type="number" min="1" max="31" step="1" class="employee-details-number" id="employee-form-birthday-month">
-                </div>
-            </div>
+    <br>
+    <div class="hint">💡 Nur als Erinnerung im Kalender – keine weitere Auswirkung</div>
+    <br>
+    <span><i>opt.</i> Geburtstag</span>
+    <div class="flex-row">
+        <input type="number" min="1" max="31" step="1" class="employee-details-number" id="employee-form-birthday-day">
+        
+        <input type="number" min="1" max="12" step="1" class="employee-details-number" id="employee-form-birthday-month">
+        <span id="employee-form-birthday-month-label" class="month-label"></span>
+    </div>
+</div>
+
         </div>
         <div>
         <!-- Middle Section -->
@@ -89,32 +95,46 @@
                     <button id="employee-store-button" class="noto" type="button" title="Änderungen speichern">💾</button>
                 </div>
               
-                <div id="employee-ratio">
-                    <div>
-                       <span class="noto"> <h3>🧩 Aufgaben </h3></span>
-                       <div class="flex-row .layout-container-light">
-                            <span id="employee-details-icon-main" class="employee-details-icon noto">❓</span>
-                            <select id="employee-details-role-main" class="noto">
-                            </select>
-                           <input type="range" id="employee-form-role1" min="0" max="10" value="7" step="1">
-                       </div>
+                <fieldset id="employee-ratio">
+                    <legend class="noto"><h3>🧩 Aufgaben</h3></legend>
+                                
+                    <div class="flex-row layout-container-light double-row">
+                        <span id="employee-details-icon-main" class="employee-details-icon noto">❓</span>
+                        <select id="employee-details-role-main" class="noto"></select>
 
-                       <div class="flex-row .layout-container-dark">
-                        <span id="employee-details-icon-secondary" class="employee-details-icon noto">❓</span>
-                            <select id="employee-details-role-secondary" class="noto">
-                            </select>
-                           <input type="range" id="employee-form-role2" min="0" max="10" value="2" step="1">
+                        <div class="slider-container">
+                            <span class="slider-value" id="role1-value">70% <span class="noto">⌚</span></span>
+                            <input type="range" id="employee-form-role1" min="0" max="10" value="7" step="1">
+                    
                         </div>
-
-                        <div class="flex-row .layout-container-medium">
-                            <span id="employee-details-icon-trinary" class="employee-details-icon noto">❓</span>
-                            <select id="employee-details-role-trinary" class="noto">
-                            </select>
-                           <input type="range" id="employee-form-role3" min="0" max="10" value="1" step="1">
-                       </div>
-
                     </div>
-                </div>
+                    <div class="flex-row layout-container-dark double-row">
+                        <span id="employee-details-icon-secondary" class="employee-details-icon noto">❓</span>
+                        <select id="employee-details-role-secondary" class="noto"></select>
+                    
+                        <div class="slider-container">
+                            <span class="slider-value" id="role2-value">70% <span class="noto">⌚</span></span>
+                            <input type="range" id="employee-form-role2" min="0" max="10" value="2" step="1">
+                        </div>
+                    </div>
+                
+                    <div class="flex-row layout-container-medium double-row">
+                        <span id="employee-details-icon-trinary" class="employee-details-icon noto">❓</span>
+                        <select id="employee-details-role-trinary" class="noto"></select>
+                    
+                        <div class="slider-container">
+                            <span class="slider-value" id="role3-value">70% <span class="noto">⌚</span></span>
+                            <input type="range" id="employee-form-role3" min="0" max="10" value="1" step="1">
+                        </div>
+                    </div>
+                    <p class="hint">
+                        <span class="noto">💡</span>
+                        Die Aufteilung zeigt nur Ihre <strong>Rollen-Präferenzen</strong> an. 
+                        Die tatsächliche Einteilung richtet sich später nach den Einsatzregeln 
+                        (z. B. 1 Koch & 1 Kellner pro Schicht) und der Verfügbarkeit.
+                    </p>
+                </fieldset>
+
             </div>
         </div>
         <!-- Right Section -->

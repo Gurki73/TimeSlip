@@ -160,6 +160,7 @@ input:disabled {
 /* Optional: Add a sticky note icon or styling to make it more "post-it" like */
 .post-it-note::before {
   content: '📌';
+  font-family: 'NotoEmoji', sans-serif;
   font-size: 1.125rem;
   margin-right: 10px;
   position: absolute;
@@ -185,6 +186,53 @@ input:disabled {
     max-height: none;
     overflow-y: visible;
   }
+}
+
+.role-cell {
+  border-left: 2px solid;
+  border-right: 2px solid;
+  margin: 6px;
+}
+.role-cell[data-role-index="13"] .task-button {
+  width: 90%; /* match others */
+}
+
+.role-cell-empty {
+  border-left: 2px solid transparent;
+  border-right: 2px solid transparent;
+  margin-top: 4px;
+}
+
+.role-cell-bottom{
+  border-bottom: 2px solid;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius:4px;
+  margin-bottom: 8px;
+}
+
+.team-header th {
+  background-color: #f4f4f4;
+  text-align: center;
+  border: 2px solid;
+  padding: 5px;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+}
+.team-blue   { 
+  border-color: blue;
+  color: darkblue;
+ }
+.team-green  { 
+  border-color: green;
+  color:  darkgreen;
+}
+.team-red    { 
+  border-color: darkred;
+  color: red; 
+}
+.team-black  { 
+  border-color: black;
+  color: black;
 }
 
 .error-message {

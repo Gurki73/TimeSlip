@@ -1,12 +1,53 @@
+<!-- role-form.html -->
 <section class="role-flex-row" role="region" aria-labelledby="role-form-title" aria-describedby="role-help-text">
   <div class="task-container" id="role-form-container">
-    <h2 id="role-form-title" class="sr-only">Rollen und Aufgaben Formular</h2>
-    <!-- Form content goes here -->
+    <table class="role-table" aria-label="Rollenübersicht">
+      <thead>
+        <tr class="team-header">
+          <th class="team-blue">Bereich Blau</th>
+          <th class="team-green">Bereich Grün</th>
+          <th class="team-red">Bereich Rot</th>
+          <th class="team-black">Bereich Schwarz</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <!-- Roles 1–12 -->
+        <tr>
+          <td class="role-cell team-blue" data-role-index="1"></td>
+          <td class="role-cell team-green" data-role-index="4"></td>
+          <td class="role-cell team-red" data-role-index="7"></td>
+          <td class="role-cell team-black" data-role-index="10"></td>
+        </tr>
+        <tr>
+          <td class="role-cell team-blue" data-role-index="2"></td>
+          <td class="role-cell team-green" data-role-index="5"></td>
+          <td class="role-cell team-red" data-role-index="8"></td>
+          <td class="role-cell team-black" data-role-index="11"></td>
+        </tr>
+        <tr>
+          <td class="role-cell team-blue role-cell-bottom" data-role-index="3"></td>
+          <td class="role-cell team-green role-cell-bottom" data-role-index="6"></td>
+          <td class="role-cell team-red role-cell-bottom" data-role-index="9"></td>
+          <td class="role-cell team-black role-cell-bottom" data-role-index="12"></td>
+        </tr>
+        <!-- Special 13th role -->
+        <tr>
+          <td class="role-cell-empty" data-role-index="13"></td>
+          <td class="role-cell-empty" data-role-index="14"> </td>
+          <td class="role-cell-empty" data-role-index="15"> </td>
+          <td class="role-cell-empty" data-role-index="16"> </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
   <aside class="post-it-note" role="note" id="role-help-text">
-    <h3 class="noto">Aufgaben & Rollen</h3>
-    <p>Hier definierst du Aufgaben und Rollen für den Ablauf. Diese werden Mitarbeitenden zugewiesen und in Regeln zeitlich gesteuert.</p>
-    <p>Farben helfen bei der Darstellung in Kalendern und Mitarbeiter-Icons.</p>
+    <h3 class="hint noto">Aufgaben & Rollen</h3>
+    <p class="hint">
+      Hier definieren Sie Aufgaben und Rollen für den organisatorischen Ablauf.
+      Diese werden Mitarbeitenden zugewiesen und durch Regeln zeitlich gesteuert.
+      Farben unterstützen die Darstellung in Kalendern und in Mitarbeiter-Icons.
+    </p>
   </aside>
 </section>

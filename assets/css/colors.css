@@ -63,9 +63,10 @@
 
     --color-text-request: #e67e22;;
     --color-text-employee: #8e44ad;
-    --color-text-tasks: #16a085;
+    --color-text-tasks: darkgreen;
     --color-text-rules: #2980b9;
     --color-text-calendar: #e74c3c;
+    --color-text-welcome: cornflowerblue;
 
     --color-tabulator: burlywood;
     --color-layout-container-light: lightgray;
@@ -75,4 +76,25 @@
     --color-help: #cc9933; /* used in main help container */
     --color-help-toc: #f5deb3; /* wheat, or define your own ocher tone */
   }
+
+
+.bg-welcome {
+  background-color: var(--color-text-welcome);
+}
+.bg-request {
+  background-color: var(--color-text-request);
+}
+.bg-employee {
+  background-color: var(--color-text-employee);
+}
+.bg-tasks {
+  background-color: var(--color-text-tasks);
+}
+.bg-rules {
+  background-color: var(--color-text-rules);
+}
+.bg-calendar {
+  background-color: var(--color-text-calendar);
+}
+
   
