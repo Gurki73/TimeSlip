@@ -3,7 +3,7 @@ const crypto = require('crypto');
 
 const validSendChannels = ['resize-event', 'load-form', 'return-cache-dump', 'update-cache'];
 const validReceiveChannels = ['resize-response', 'form-loaded', 'set-theme', 'get-cache-dump', 'update-cache',
-  'open-help', 'checklist-update', 'refresh-calendar'];
+  'open-help', 'checklist-update', 'refresh-calendar', 'mode-changed',];
 const validInvokeChannels = ['load-data', 'save-data', 'check-path', 'save-csv', 'get-recovered-path', 'set-cache-value',
   'get-cache-value', 'health-check', 'get-school-holidays'];
 
@@ -12,6 +12,7 @@ const CACHE_WHITELIST = [
   'zoomFactor',
   'windowSize',
   'clientDataFolder',
+  'autoSave',
 ];
 
 const nonce = crypto.randomBytes(16).toString('base64');

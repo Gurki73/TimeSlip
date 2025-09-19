@@ -1,9 +1,13 @@
+import { Role } from './role.js';
+
 let roles = [];
 let allRoles = [];
 
+
 export async function loadRoleData(api) {
     if (!api) {
-        console.error('❌ window.api not available');
+        console.error('[role-loader.js] window.api not available');
+        console.trace(); // 🔎 shows which function called this
         return;
     }
 

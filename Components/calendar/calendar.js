@@ -1,4 +1,4 @@
-import { loadRoleData, roles, allRoles } from '../../js/loader/role-loader.js';
+import { loadRoleData, roles } from '../../js/loader/role-loader.js';
 import { loadEmployeeData, employees } from '../../js/loader/employee-loader.js';
 import { loadCalendarData, loadStateData, loadCompanyHolidayData, loadOfficeDaysData } from '../../js/loader/calendar-loader.js';
 import { getHolidayDetails, nonOfficialHolidays, monthNames, germanFixedHolidays, germanVariableHolidays } from '../../js/Utils/holidayUtils.js';
@@ -45,7 +45,7 @@ export async function initializeCalendar(api) {
   if (!currentYear) currentYear = new Date().getFullYear();
   try {
     const [roles, employees, calendarData, officeDaysData, companyHolidays] = await Promise.all([
-      loadRoleData(),
+      loadRoleData(api),
       loadEmployeeData(),
       loadCalendarData(api, currentYear),
       loadOfficeDaysData(api, isOnboarding),

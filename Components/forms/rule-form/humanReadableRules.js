@@ -28,6 +28,7 @@ function getLimitText(bottom, upper) {
 }
 
 export function updateHumanRule(machineRuleObject) {
+    console.log("[humanreadable] maschine rule obj ==>", machineRuleObject);
     const humanTextField = document.getElementById('typing-text');
     if (!humanTextField) return;
 
@@ -35,6 +36,8 @@ export function updateHumanRule(machineRuleObject) {
 
     humanTextField.innerHTML = humanRule || '⚠️ No rule found!';
     applyTypingEffect(humanTextField);
+
+    return humanRule;
 }
 
 function replaceNumbers(text, item) {
@@ -50,7 +53,13 @@ function replaceNumbers(text, item) {
 }
 
 function parseAndMap(inputObj) {
+    console.log("input object = ", inputObj);
     return Object.values(inputObj).map(item => {
+        if (!item || !item.id) {
+            console.warn("Skipping item with missing ID:", item);
+            return "";
+        }
+
         const id = item.id;
         const prefix = id.charAt(0).toLowerCase();
         const dictEntry = appDictionary[prefix]?.[id.toLowerCase()];
@@ -64,8 +73,6 @@ function parseAndMap(inputObj) {
         return replaceNumbers(text, item);
     });
 }
-
-
 
 function cleanUpText(text) {
     return text.replace(/\s+/g, ' ').trim();

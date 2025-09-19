@@ -1,4 +1,8 @@
-export let inMemoryCache = {};
+export let inMemoryCache = {
+    currentMode: 'sandbox',
+    unsavedChanges: false,
+};
+
 
 export function updateInMemoryCache(cacheDump) {
     if (typeof cacheDump !== 'object' || cacheDump === null) {

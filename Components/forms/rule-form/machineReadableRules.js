@@ -79,7 +79,7 @@ function createRegularRule(inputObject) {
             followingRoles: [],
         }
     };
-    return regularRule;
+    return machineRule;;
 }
 
 

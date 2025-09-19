@@ -92,7 +92,6 @@ export async function initializeRequestForm(passedApi) {
   if (!api) console.error(" Api was not passed ==> " + api);
 
   Promise.all([
-    roles,
     officeDays
   ])
     .then(() => { })

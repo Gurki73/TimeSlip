@@ -87,11 +87,11 @@ function applyBranchPreset(branch) {
   const preset = branchPresetsRoles[branch];
   if (!preset || !preset.teams) return;
 
-  Object.entries(preset.teams).forEach(([teamKey, roles]) => {
-    const teamName = roles[0];       // first entry = team name
-    const roleNames = roles.slice(1); // remaining = roles
+  const allRoles = roles;
+  Object.entries(preset.teams).forEach(([teamKey, teamRoles]) => {
+    const teamName = teamRoles[0];        // first entry = team name
+    const roleNames = teamRoles.slice(1); // remaining = roles
 
-    // Example: team input and roles inputs must have consistent IDs / data attributes
     const teamInput = document.querySelector(`#team-${teamKey}-name`);
     const roleInputs = document.querySelectorAll(`.role-input[data-team="${teamKey}"]`);
 
@@ -101,9 +101,8 @@ function applyBranchPreset(branch) {
       input.value = roleNames[i] || "";
     });
   });
-
-  console.log(`[RoleForm] Applied preset for branch "${branch}"`);
 }
+
 
 
 function getFormContainer() {

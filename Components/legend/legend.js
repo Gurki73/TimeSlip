@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Promise.all([loadRoleData(), loadEmployeeData()])
     .then(() => {
-
+      roles;
       initializeLegend();
       syncCollapsibleState();
     })
@@ -94,8 +94,15 @@ function renderCollapsibleSection(container, title, renderContentFunction) {
 
 
 function renderRoles(container) {
+
+  if (!container) {
+    console.warn('[legend.js] renderRoles: container #legend-roles not found');
+    return;
+  }
+
   const list = document.createElement('ul');
   list.classList.add('legend-list');
+
 
   roles.forEach((role, index) => {
     if (role.emoji === "❓") return;
@@ -136,6 +143,12 @@ function renderRoles(container) {
 }
 
 function renderEmployees(container) {
+
+  if (!container) {
+    console.warn('[legend.js] renderEmployees: container #legend-employees not found');
+    return;
+  }
+
   const list = document.createElement('ul');
   list.classList.add('legend-list');
 

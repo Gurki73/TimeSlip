@@ -204,7 +204,7 @@ function initTheme() {
 // ----------- IPC Event Handlers -----------
 
 function setupIPCListeners() {
-  window.api.receive('download-checklist-update', (step, status) => {
+  window.api.receive('checklist-update', (step, status) => {
     const event = new CustomEvent('checklist-update', { detail: { step, status } });
     window.dispatchEvent(event);
   });
@@ -239,6 +239,15 @@ function setupIPCListeners() {
       console.log(`💾 localStorage updated → ${key}`);
     } catch (err) {
       console.error('❌ Failed to update localStorage:', err);
+    }
+  });
+
+  window.api.receive('mode-changed', (mode) => {
+    document.body.setAttribute('data-mode', mode);
+
+    const feedback = document.getElementById('feedback-console');
+    if (feedback) {
+      feedback.classList.toggle('sandbox', mode === 'sandbox');
     }
   });
 
@@ -288,6 +297,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Init theme last (could be before or after loadFormModules, but separate is cleaner)
   initTheme();
+
 
   // Notify main process of initial window size
   window.api.send('resize-event', {

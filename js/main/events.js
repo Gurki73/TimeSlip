@@ -6,6 +6,7 @@ import fs from 'fs';
 import axios from 'axios';
 import { inMemoryCache, updateInMemoryCache } from './shared.js';
 import * as dataLoader from './dataIO.js';
+import { getMainWindow } from './appWindow.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -50,11 +51,59 @@ export function registerEventHandlers(mainWindow) {
         }
     });
 
-    ipcMain.on('app-close', () => {
+    ipcMain.on('switch-mode', (event, targetMode) => {
+
+        if (!['sandbox', 'real'].includes(targetMode)) {
+            console.warn('⚠ Invalid mode:', targetMode);
+            return;
+        }
+
+        inMemoryCache.currentMode = targetMode;
+        console.log(`🔄 Mode switched → ${targetMode}`);
+
+        const mainWindow = getMainWindow();
         if (mainWindow) {
+            // Update title based on mode
+            const newTitle = targetMode === 'sandbox'
+                ? 'Mitarbeiter-Kalender (Lern-Modus)'
+                : 'Mitarbeiter-Kalender';
+            mainWindow.setTitle(newTitle);
+
+            // Notify renderer for purple border etc
+            mainWindow.webContents.send('mode-changed', targetMode);
+        }
+    });
+
+
+    ipcMain.on('app-close', async () => {
+        if (!mainWindow) return;
+
+        if (inMemoryCache.unsavedChanges) {
+            const { response } = await dialog.showMessageBox(mainWindow, {
+                type: 'warning',
+                buttons: ['Save & Quit', 'Quit Without Saving', 'Cancel'],
+                defaultId: 0,
+                cancelId: 2,
+                title: 'Unsaved Changes',
+                message: 'You have unsaved changes. What do you want to do?',
+            });
+
+            if (response === 0) {
+                // 🔜 Placeholder: trigger save routine
+                console.log('💾 Saving before quit (TODO)');
+                mainWindow.close();
+            } else if (response === 1) {
+                console.log('⚠️ Quit without saving');
+                mainWindow.close();
+            } else {
+                console.log('❌ Cancel quit');
+                return;
+            }
+        } else {
             mainWindow.close();
         }
     });
+
 
     ipcMain.on('open-external', async (event, url) => {
         if (!app.isReady()) {

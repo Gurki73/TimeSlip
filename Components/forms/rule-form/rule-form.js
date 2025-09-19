@@ -1,11 +1,10 @@
-import { roles as rolesPromise } from '../../../js/loader/role-loader.js';
+import { roles } from '../../../js/loader/role-loader.js';
 import { loadOfficeDaysData } from '../../../js/loader/calendar-loader.js';
 import { checkInput, resetRule, initVisibilityChecker } from './ruleChecker.js';
 import { toggleExceptionTable, updateWizzard } from './ruleFlowWizzard.js';
 import { updateMachineRule, initMachineRule } from './machineReadableRules.js';
 import { updateHumanRule } from './humanReadableRules.js';
 
-let ruleRoles;
 let ruleOfficeDays;
 let api;
 let eventDelegationInitialized = false;
@@ -16,8 +15,6 @@ export async function initializeRuleForm(passedApi) {
     if (!api) console.error(" Api was not passed ==> " + api);
 
     try {
-        const roles = await rolesPromise;
-        ruleRoles = roles;
         ruleOfficeDays = await loadOfficeDaysData();
     } catch (error) {
         console.error('Error during initialization:', error);
@@ -183,7 +180,7 @@ function handleTopCellDependency(id) {
     dependencyRoleSelection.classList.add('role-select', 'noto');
     dependencyRoleSelection.id = id + '-2';
 
-    ruleRoles.forEach((role, index) => {
+    roles.forEach((role, index) => {
         if (['❓', 'keine', '?', 'name'].includes(role.name)) return;
 
         const dependencyRoleOption = document.createElement('option');
@@ -469,7 +466,7 @@ function handleTopCellRoles(id) {
         const checkboxesContainer = document.createElement('div');
         checkboxesContainer.style = "display: flex; flex-wrap: wrap; gap: 10px;";
 
-        ruleRoles.forEach((role, index) => {
+        roles.forEach((role, index) => {
             if (['❓', 'keine', '?', 'name'].includes(role.name)) return;
 
             const roleCheck = document.createElement('div');
@@ -512,7 +509,7 @@ function handleTopCellRoles(id) {
         singleRoleSelection.id = `${id}-select`;
         singleRoleSelection.name = 'roleIndicee';
 
-        ruleRoles.forEach((role, index) => {
+        roles.forEach((role, index) => {
             if (['❓', 'keine', '?', 'name'].includes(role.name)) return;
 
             const singleRoleOption = document.createElement('option');
@@ -767,13 +764,13 @@ function handleInput(inputObject) {
     // }
 
     const checkedRule = checkInput(inputObject);
-    console.log("Checked Rule:", checkedRule);
+    console.log("[role-form] Checked Rule:", checkedRule);
 
-    const machineRule = updateMachineRule(checkedRule);
-    console.log("Machine Rule:", machineRule);
+    // const machineRule = updateMachineRule(checkedRule);
+    // console.log("[role-form] Machine Rule:", machineRule);
 
-    const humanRule = updateHumanRule(machineRule);
-    console.log("Human Rule:", humanRule);
+    const humanRule = updateHumanRule(checkedRule);
+    console.log("[role-form] Human Rule:", humanRule);
 
     updateWizzard(inputObject);
     // displayResults(checkedRule, machineRule, humanRule);
