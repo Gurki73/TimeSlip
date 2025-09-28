@@ -11,12 +11,7 @@ let irregularRule = {};
 // E6: MAXIMUM LIMIT – upper bound for staffed roles (e.g., no more than 3 chefs).
 
 export function initMachineRule() {
-    // Add event listener to the save button
-    const saveButton = document.getElementById("save-rule-button");
-    if (saveButton && !saveButton.hasAttribute("data-listener")) {
-        saveButton.addEventListener("click", handleSave);
-        saveButton.setAttribute("data-listener", "true");
-    }
+
 }
 
 export function updateMachineRule(inputObject) {
@@ -80,9 +75,4 @@ function createRegularRule(inputObject) {
         }
     };
     return machineRule;;
-}
-
-
-function handleSave() {
-    console.log("Save button clicked!");
 }

@@ -37,6 +37,16 @@ const newRule = {
     "d": { "id": "d0", "state": RuleState.PLACEHOLDER, "upperLimit": 1, "indices": [] }
 };
 
+const CompareResult = Object.freeze({
+    IDENTICAL: "identical",    // exact match
+    OVERLAP: "overlap",        // partial overlap
+    SUBSET: "subset",          // fully contained
+    DISJOINT: "disjoint",      // no overlap
+    GAP: "gap",                // adjacent but not overlapping (security relevant)
+    OPPOSITE: "opposite",       // direct contradiction (e.g. present vs absent)
+    ONE_EMPTY: "one-empty",    // one side missing → warning
+    IGNORE: "ignore"           // both sides empty → safe to skip
+});
 
 
 const ruleRelations = [
@@ -56,6 +66,85 @@ export function initVisibilityChecker() {
         checker.addEventListener('change', toggleSaveButtonVisibility);
     }
 }
+
+export function compareRanges(bot1, up1, bot2, up2) {
+    // handle empty
+    if ((bot1 == null || up1 == null) && (bot2 == null || up2 == null)) return CompareResult.EMPTY;
+    if ((bot1 == null || up1 == null) || (bot2 == null || up2 == null)) return CompareResult.ONE_EMPTY;
+
+    // identical
+    if (bot1 === bot2 && up1 === up2) return CompareResult.IDENTICAL;
+
+    // check for gap 
+    const gapSize = Math.max(bot2 - up1, bot1 - up2);
+    if (gapSize > 0) return CompareResult.GAP;
+    if (up1 < bot2 || up2 < bot1) return CompareResult.DISJOINT;
+
+    // check for subset
+    if ((bot1 >= bot2 && up1 <= up2) || (bot2 >= bot1 && up2 <= up1)) return CompareResult.SUBSET;
+
+    // partial overlap
+    return CompareResult.OVERLAP;
+}
+
+
+export function compareNumbers(num1, num2, gapTolerance = 1) {
+    if (num1 == null && num2 == null) return CompareResult.IDENTICAL;
+    if (num1 == null || num2 == null) return CompareResult.ONE_EMPTY;
+    if (num1 === num2) return CompareResult.IDENTICAL;
+    if (Math.abs(num1 - num2) > gapTolerance) return CompareResult.GAP;
+    return CompareResult.DISJOINT;
+}
+
+function compareDependenciesSimple(depA, depB) {
+    // Both missing → ignore
+    if (!depA && !depB) return CompareResult.IGNORE;
+
+    // One missing → one-empty
+    if (!depA || !depB) return CompareResult.ONE_EMPTY;
+
+    // Opposite: present vs absent
+    if ((depA.type === "D0" && depB.type === "D1") ||
+        (depA.type === "D1" && depB.type === "D0")) {
+        return CompareResult.OPPOSITE;
+    }
+
+    // Everything else → same
+    if (depA.type === depB.type) return CompareResult.IDENTICAL;
+
+    // Fallback: treat as same for now (could refine later)
+    return CompareResult.IDENTICAL;
+}
+
+function compareArrays(arr1 = [], arr2 = []) {
+    if (arr1.length === 0 && arr2.length === 0) {
+        return CompareResult.IGNORE; // both empty → ignore
+    }
+    if (arr1.length === 0 || arr2.length === 0) {
+        return CompareResult.ONE_EMPTY; // one empty → warning
+    }
+
+    const set1 = new Set(arr1);
+    const set2 = new Set(arr2);
+
+    const intersection = [...set1].filter(x => set2.has(x));
+
+    if (intersection.length === 0) {
+        // No GAP needed here because we compare arrays of discrete itemsi still 
+        return CompareResult.DISJOINT;
+    }
+
+    if (intersection.length === set1.size && intersection.length === set2.size) {
+        return CompareResult.IDENTICAL;
+    }
+
+    if (intersection.length === set1.size || intersection.length === set2.size) {
+        return CompareResult.SUBSET;
+    }
+
+    return CompareResult.OVERLAP;
+}
+
 
 function toggleSaveButtonVisibility(event) {
     const saveButton = document.getElementById('save-rule-button');
@@ -419,3 +508,45 @@ function isRuleOverlyRestrictive(id) {
 
 
 function testNewRuleInCalendar() { };
+
+/*
+    Or rule is only valid if ==>
+| Case                         | Roles     | Timeframe | Count      | Action                                |
+| ---------------------------- | --------- | --------- | ---------- | ------------------------------------- |
+| a) Gap in count              | Same      | Same      | Gap exists | like secrurity diver sample           |
+| b) Different roles           | Different | Same      | Any        | role can cover for other role         |
+| c) Different timeframe/count | Same      | Different | Different  | one day or the other but dif. counts  |
+
+*/
+
+export function sanityCheckOrRule(conditionA, conditionB) {
+    const rolesA = conditionA.roles || [];
+    const rolesB = conditionB.roles || [];
+
+    const sameRoles = compareArrays(rolesA, rolesB);
+    const sameTimeframe = JSON.stringify(conditionA.timeframe) === JSON.stringify(conditionB.timeframe);
+
+    const bottomA = conditionA.bottomLimit ?? 0;
+    const upperA = conditionA.upperLimit ?? Infinity;
+    const bottomB = conditionB.bottomLimit ?? 0;
+    const upperB = conditionB.upperLimit ?? Infinity;
+
+    // Check identical conditions
+    if (sameRoles && sameTimeframe && bottomA === bottomB && upperA === upperB) {
+        return "Invalid: Both conditions are identical → OR is redundant";
+    }
+
+    // Count conflict check
+    if (sameRoles && sameTimeframe && bottomA > upperB && bottomB > upperA) {
+        return "Invalid: Count limits conflict for same role and timeframe";
+    }
+
+    // Different roles & different timeframe
+    if (!sameRoles && !sameTimeframe) {
+        return "Invalid: OR with different roles and different timeframes → meaningless";
+    }
+
+    // Valid otherwise
+    return "Valid";
+}
+
