@@ -1,420 +1,76 @@
-<section id="calendar-form-container" role="form" aria-labelledby="calendar-form-title">
-    <h1 id="calendar-form-title" class="visually-hidden">Kalender-Konfiguration</h1>
-    <!-- Header Controls -->
-    <inputset class="calendar-form-header">
-       <mark class="noto" >📅</mark>
-      <p id="openinghours">Öffnungzeiten festlegen<p>
-      <div id="calendar-form-state-flag" class="state-flag-icon" aria-hidden="true"></div>
-      <label for="state-select">Bundesland</label>
-      <select id="state-select" aria-label="Bundesland auswählen">
-        <option value="SH">Schleswig-Holstein</option>
-        <option value="NI">Niedersachsen</option>
-        <option value="MV">Mecklenburg-Vorpommern</option>
-        <option value="HB">Bremen</option>
-        <option value="HH">Hamburg</option>
-        <option value="NW">Nordrhein-Westfalen</option>
-        <option value="BB">Brandenburg</option>
-        <option value="BE">Berlin</option>
-        <option value="ST">Sachsen-Anhalt</option>
-        <option value="HE">Hessen</option>
-        <option value="TH">Thüringen</option>
-        <option value="RP">Rheinland-Pfalz</option>
-        <option value="BW">Baden-Württemberg</option>
-        <option value="SN">Sachsen</option>
-        <option value="SL">Saarland</option>
-        <option value="BY">Bayern</option>
-      </select>
-
-      <label for="calendar-form-year">Jahr</label>
-      <input type="number" id="calendar-form-year" min="2025" value="2025">
-
-      <label for="branche-select">Branche</label>
-      <select id="branch-select" aria-label="Branche auswählen">
-        <option value="onboarding">Beispiel</option>
-        <option value="gastro">Gastronomie</option> 
-        <option value="health">Gesundheit</option> 
-        <option value="shop">Einzelhandel</option> 
-        <option value="office">Büro</option> 
-        <option value="logistics">Logistik</option>
-        <option value="industrial">Fertigung</option>  
-        <option value="hospitality">Übernachtung</option> 
-        <option value="custom">angepasst</option> 
-      </select>
-       <mark class="noto" >📅</mark>
-    </inputset>
-    <br>
-
-    
-    <div class="calendar-form">
-      <!-- Weekdays -->
-      <fieldset class="weekday-list calendar-flex-column">
-        <legend class="collapsible-legend">
-          <span>Wochentage</span>
-        </legend>
-        <button
-          id="collapse-weekday-toggle"
-          class="resize-button collapsible-toggle noto"
-          aria-expanded="true"
-          aria-label="Wochentage ein-/ausblenden">
-        </button>
-      
-        <div class="weekday-expanded" id="weekday-expanded">
-          <div class="store-button-row">
-            <!-- <span class="shift-label">Auswahl:</span> -->
-            <button id="store-weekdays" class="store-button noto hidden">💾</button>
-          </div>
-        
-          <div class="data-box" data-day="mon">
-            <label><input type="checkbox" id="input-weekday-mon" /><span class="label-text noto">Montag</span></label>
-            <span class="lock-icon unlocked  noto" data-lock-key="mon"></span>
-          </div>
-          <div class="data-box" data-day="tue">
-            <label><input type="checkbox" id="input-weekday-tue"/><span class="label-text noto">Dienstag</span></label>
-            <span class="lock-icon unlocked  noto" data-lock-key="tue"></span>
-          </div>
-          <div class="data-box" data-day="wed">
-            <label><input type="checkbox" id="input-weekday-wed"/><span class="label-text noto">Mittwoch</span></label>
-            <span class="lock-icon unlocked  noto" data-lock-key="wed"></span>
-          </div>
-          <div class="data-box" data-day="thu">
-            <label><input type="checkbox" id="input-weekday-thu"/><span class="label-text noto">Donnerstag</span></label>
-            <span class="lock-icon unlocked  noto" data-lock-key="thu"></span>
-          </div>
-          <div class="data-box" data-day="fri">
-            <label><input type="checkbox" id="input-weekday-fri"/><span class="label-text noto">Freitag</span></label>
-            <span class="lock-icon unlocked  noto" data-lock-key="fri"></span>
-          </div>
-          <div class="data-box" data-day="sat">
-            <label><input type="checkbox" id="input-weekday-sat" /><span class="label-text noto">Samstag</span></label>
-            <span class="lock-icon locked  noto" data-lock-key="sat"></span>
-          </div>
-          <div class="data-box" data-day="sun">
-            <label><input type="checkbox" id="input-weekday-sun"/><span class="label-text noto">Sonntag</span></label>
-            <span class="lock-icon locked  noto" data-lock-key="sun"></span>
-          </div>
+<section
+  id="calendar-form-container"
+  role="form"
+  aria-labelledby="calendar-form-title"
+>
+  <h1 id="calendar-form-title" class="visually-hidden">
+    Kalender-Konfiguration
+  </h1>
+  <div class="calendar-flex-row">
+    <!-- LEFT COLUMN -->
+    <div class="calendar-flex-column" id="left-column">
+      <!-- State + Year controls -->
+      <div id="state-year-container" class="calendar-controls-row"></div>
+      <fieldset>
+        <div class="flex-row">
+          <h3>reguläre Öffnungzeiten</h3>
+          <button id="btn-weekday-store" class="noto">💾</button>
         </div>
-      
-        <div class="weekday-list-collapsed hidden" id="weekday-collapsed">
-          <div class="data-box" data-day="mon">
-            <span title="Montag" class="noto">Mo
-              <span class="lock-icon unlocked  noto" data-lock-key="mon"></span>
-            </span>
-          </div>
-          <div class="data-box" data-day="tue">
-            <span title="Dienstag" class="noto">Di
-              <span class="lock-icon unlocked  noto" data-lock-key="tue"></span>
-            </span>
-          </div>
-          <div class="data-box" data-day="wed">
-            <span title="Mittwoch" class="noto">Mi
-              <span class="lock-icon unlocked  noto" data-lock-key="wed"></span>
-            </span>
-          </div>
-          <div class="data-box" data-day="thu">
-            <span title="Donnerstag" class="noto">Do
-              <span class="lock-icon unlocked  noto" data-lock-key="thu"></span>
-            </span>
-          </div>
-          <div class="data-box" data-day="fri">
-            <span title="Freitag" class="noto">Fr
-              <span class="lock-icon unlocked  noto" data-lock-key="fri"></span>
-            </span>
-          </div>
-          <div class="data-box" data-day="sat">
-            <span title="Samstag" class="noto">Sa
-              <span class="lock-icon locked  noto" data-lock-key="sat"></span>
-            </span>
-          </div>
-          <div class="data-box" data-day="sun">
-            <span title="Sonntag" class="noto">So
-              <span class="lock-icon locked  noto" data-lock-key="sun"></span>
-            </span>
-          </div>
-        </div>
+        <!-- Weekdays and Shifts collapsibles will be dynamically inserted here -->
+        <div class="calendar-form" id="left-collapsibles"></div>
       </fieldset>
-
-
-
-      <!-- Global Shifts -->
-      <fieldset class="shift-list calendar-flex-column">
-        <legend class="collapsible-legend">
-          <span>Schichten</span>
-        </legend>
-        <button
-            id="collapse-shift-toggle"
-            class="resize-button collapsible-toggle noto"
-            aria-expanded="true"
-            aria-label="Schichten ein-/ausblenden">
-        </button>  
-        <select id="shift-weekday">
-          <option value="shift-all">alle Arbeitstage</option>
-          <option value="shift-mon">Montag</option>
-          <option value="shift-tue">Dienstag</option>
-          <option value="shift-wed">Mittwoch</option>
-          <option value="shift-thu">Donnerstag</option>
-          <option value="shift-fri">Freitag</option>
-          <option value="shift-sat">Samstag</option>
-          <option value="shift-sun">Sonntag</option> 
-        </select>
-        <br>
-        <div class="shift-expanded" id="shift-expanded">
-          <div class="store-button-row">
-            <span class="shift-label">ganztags:</span>
-            <button id="store-shifts" class="store-button noto hidden">💾</button> <!-- hidden --> 
-          </div>
-          <div class="data-box" data-shift="day">
-            <label><input type="checkbox" id="input-shift-day" /><span class="label-text noto">Voll 🍽️</span></label>
-            <span class="lock-icon unlocked  noto emoji" data-lock-key="day"></span>
-          </div>
-          halbtags:
-          <div class="data-box" data-shift="early">
-            <label><input type="checkbox" id="input-shift-early" /><span class="label-text noto">Früh 🐓</span></label>
-            <span class="lock-icon unlocked  noto" data-lock-key="early"></span>
-          </div>
-          <div class="data-box" data-shift="late">
-            <label><input type="checkbox" id="input-shift-late" /><span class="label-text noto">Spät 🌙</span></label>
-            <span class="lock-icon locked  noto" data-lock-key="late"></span>
-          </div>
-        </div>
-        <div class="shift-list-collapsed hidden" id="shift-collapsed">
-          ganztags:
-          <div class="data-box" data-shift="day">
-            <span title="Tag" class="noto">🍽️
-              <span class="lock-icon unlocked  noto" data-lock-key="day"></span>
-            </span>
-          </div>
-          halbtags:
-            <div class="data-box" data-shift="early">
-            <span title="Früh" class="noto">🐓
-              <span class="lock-icon unlocked  noto" data-lock-key="early"></span>
-            </span>
-          </div>
-          <div class="data-box" data-shift="late">
-            <span title="Spät" class="noto">🌙
-              <span class="lock-icon locked  noto" data-lock-key="late"></span>
-            </span>
-          </div>
-        </div>
-      </fieldset>
-
-    
-      <!-- Holidays and Office Closed -->
-      <!-- Public Holidays -->
-      <fieldset class="holiday-list calendar-flex-column">
-        <legend class="collapsible-legend">
-          <span>Feiertage</span>
-        </legend>
-      
-        <button
-          id="collapse-holiday-toggle"
-          class="resize-button collapsible-toggle noto"
-          aria-expanded="true"
-          aria-label="Feiertage ein-/ausblenden">
-        </button>
-      
-        <!-- Expanded Holiday List -->
-        <div class="holiday-expanded" id="holiday-expanded">
-          <div class="store-button-row">
-            <label>
-              <input type="checkbox" id="toggle-all-holidays" />
-              <span class="label-text noto">Geöffnet an Feiertagen</span>
-            </label>
-            <button id="store-holidays" class="store-button noto hidden">💾</button>
-          </div>
-          <!-- Items will be generated here by JS -->
-        </div>
-      
-        <!-- Collapsed Holiday List -->
-        <div class="holiday-list-collapsed hidden" id="holiday-collapsed">
-          <!-- Compact items will be generated here by JS -->
-        </div>
-      </fieldset>
-    
-    <fieldset class="bridgeday-list calendar-flex-column">
-  <legend class="collapsible-legend">
-    <span>Brückentage</span>
-  </legend>
-  
-  <button
-    id="collapse-bridge-toggle"
-    class="resize-button collapsible-toggle noto"
-    aria-expanded="true"
-    aria-label="Brückentage ein-/ausblenden">
-  </button>
-
-  <!-- Expanded list -->
-  <div class="bridge-expanded" id="bridge-expanded">
-    <ul id="bridge-days" class="calendar-form-scrollbox" aria-label="Liste der Feiertage">
-      <li>01.02 ⇨ test</li>
-      <li>01.02 ⇨ test</li>
-      <li>01.02 ⇨ test</li>
-    </ul>
-  </div>
-
-  <!-- Collapsed summary -->
-  <div class="bridgeday-list-collapsed hidden" id="bridge-collapsed">
-    <ul class="calendar-form-scrollbox small-text">
-      <li>3 Brückentage</li>
-    </ul>
-  </div>
-</fieldset>
-
-<fieldset class="closed-list calendar-flex-column">
-  <legend class="collapsible-legend">
-    <span>Betriebsferien</span>
-  </legend>
-
-  <button
-    id="collapse-closed-toggle"
-    class="resize-button collapsible-toggle noto"
-    aria-expanded="true"
-    aria-label="Betriebsferien ein-/ausblenden">
-  </button>
-
-  <!-- Expanded View -->
-  <div class="closed-expanded">
-
-    <!-- Input Controls -->
-    <div class="company-holiday-input noto flex-row">
-      <button id="pick-start" class="noto" title="Startdatum wählen">🔜 Anfang ⇨ 📅</button>
-      <input type="date" id="start-date-picker" class="visually-hidden-date-picker" />
-      <button id="pick-end" class="noto" title="Enddatum wählen">🔚 ⇨ Ende 📅</button>
-      <input type="date" id="end-date-picker" class="visually-hidden-date-picker" />
     </div>
 
-    <!-- Preview Section -->
-    <br>
-    <div class="preview-label flex-row" id="companyHolidayPreview">
-      <i class="noto">🆕 </i> 
-      <span id="preview-start">--.--</span>
-      <i class="noto"> ⇨ </i>
-      <span id="preview-end">--.--</span>
-      <span id="preview-count"> ( 5 Tage ) </span>
-      <button id="store-closed" class="store-button noto ">💾</button>
-    </div>
-
-    <!-- Optional Split Year Preview -->
-    <div class="preview-label hidden" id="splitCompanyHoliday">
-      <div><i class="noto">🆕</i> <span id="split-start">--.--</span></div>
-      <div>🔚 <span id="split-end">--.--</span></div>
-    </div>
-
-    <br>
-
-    <!-- Stored Ranges -->
-    <div id="companyHolidayExpanded" class="company-holiday-list">
-      <!-- JS renders holiday periods here -->
+    <!-- RIGHT COLUMN -->
+    <div class="calendar-flex-column" id="right-column">
+      <!-- Other collapsibles: holidays, bridge days, company, school -->
+      <div class="calendar-form" id="right-collapsibles"></div>
     </div>
   </div>
-
-  <!-- Collapsed Summary -->
-  <div class="closed-list-collapsed hidden" id="closed-collapsed">
-    <div class="calendar-form-scrollbox small-text" id="companyHolidayCollapsed">
-      <!-- JS renders collapsed holidays here -->
-    </div>
-  </div>
-</fieldset>
-
-
-
-    
-
-    <!-- School Holidays 
-    <fieldset class="calendar-flex-column" role="region" aria-labelledby="school-holiday-title">
-      <legend id="school-holiday-title">Schulferien</legend>
-      <div id="school-holiday-container" class="scrollbox" aria-label="Schulferienanzeige">wait</div>
-    </fieldset>
-  </div> 
 </section>
 
-<div id="warning-dialog" class="dialog hidden" role="dialog" aria-modal="true">
-  <div class="dialog-box">
-    <div class="dialog-header"> <mark id="branch-exclamation">⁉️</mark> Achtung!</div>
-    <div class="dialog-body">
-      <p>Durch den Wechsel der Branche gehen alle benutzerdefinierten Einstellungen verloren.<br> Trotzdem fortfahren?</p>
+<!-- ===========================
+     TEMPLATES
+     =========================== -->
+<template id="tpl-rule-collapsible">
+  <fieldset class="rule-collapsible">
+    <legend class="rule-collapsible-legend">
+      <button
+        class="rule-collapsible-toggle"
+        aria-expanded="true"
+        type="button"
+      >
+        <span class="title"></span>
+        <span class="chev" aria-hidden="true">▾</span>
+      </button>
+    </legend>
+    <div class="rule-collapsible-content"></div>
+  </fieldset>
+</template>
+
+<template id="tpl-list">
+  <div class="list-calendar-settings">
+    <div class="list-controls">
+      <button class="btn-store hidden" title="Speichern">💾</button>
     </div>
-    <div class="dialog-actions">
-      <button id="dialog-confirm" class="confirm-button noto">✅ Ja, fortfahren</button>
-      <button id="dialog-cancel" class="cancel-button noto">❌ Abbrechen</button>
+    <div class="calendar-setting-scrollcontainer">
+      <div class="list-body" role="list"></div>
     </div>
   </div>
-</div>
--->
+</template>
 
-<fieldset class="school-list calendar-flex-column">
-  <legend class="collapsible-legend">
-    <span>Schulferien</span>
-  </legend>
-
-  <button
-    id="collapse-school-toggle"
-    class="resize-button collapsible-toggle noto"
-    aria-expanded="true"
-    aria-label="Schulferien ein-/ausblenden">
-  </button>
-
-  <!-- Expanded version -->
-  <div class="school-expanded" id="school-expanded">
-    <div id="school-holiday-container" class="scrollbox" aria-label="Schulferienanzeige">wait</div>
-  </div>
-
-  <!-- Collapsed version -->
-  <div class="school-list-collapsed hidden" id="school-collapsed">
-    <span class="noto small-text">Anzeigen …</span>
-  </div>
-</fieldset>
-
-
-<div id="warning-dialog" class="dialog hidden" role="dialog" aria-modal="true" aria-labelledby="warning-title" aria-describedby="warning-desc">
-  <div class="dialog-box">
-    <div class="dialog-header">
-      <mark id="warning-exclamation">⁉️</mark> Achtung!
+<template id="tpl-list-item">
+  <div class="data-row" role="listitem" data-key="">
+    <label class="row-left">
+      <input type="checkbox" class="row-checkbox" />
+      <span class="label-text"></span>
+    </label>
+    <div class="row-middle">
+      <span class="meta-line"></span>
     </div>
-    <div class="dialog-body" id="warning-desc"><p>Du hast keine Schichten oder Wochentage ausgewählt.<br> Möchtest du trotzdem speichern?</p>
-      
-    </div>
-    <div class="dialog-actions">
-      <button id="dialog-confirm" class="confirm-button noto">✅ Ja, fortfahren</button>
-      <button id="dialog-cancel" class="cancel-button noto">❌ Abbrechen</button>
+    <div class="row-right">
+      <span class="status-icon lock-icon" aria-hidden="true"></span>
+      <span class="extra-icon" aria-hidden="true"></span>
     </div>
   </div>
-</div>
-
-<div id="branch-warning-dialog" class="dialog hidden" role="dialog" aria-modal="true" aria-labelledby="warning-title" aria-describedby="warning-desc">
-  <div class="dialog-box">
-    <div class="dialog-header">
-      <mark id="warning-exclamation">⁉️</mark> Achtung!
-    </div>
-    <div class="dialog-body" id="warning-desc">
-      <p class="noto">
-        Es fehlen noch Angaben zu Ihren Öffnungszeiten:<br>
-        Sie haben entweder keine regulären Wochentage oder keine Schichten ausgewählt – oder sogar beides.<br>
-        Wollen Sie wirklich speichern? So ganz ohne Öffnungszeiten wirkt das ja fast, als wollten Sie das Geschäft schließen. 😅<br>
-        Oder lieber noch einmal überprüfen?
-      </p>
-    </div>
-    <div class="dialog-actions">
-      <button id="dialog-confirm" class="confirm-button noto">✅ Ja, fortfahren</button>
-      <button id="dialog-cancel" class="cancel-button noto">❌ Abbrechen</button>
-    </div>
-  </div>
-</div>
-
-<div id="year-warning-dialog" class="dialog hidden" ...>
-  <div class="dialog-box">
-    <div class="dialog-header">
-      <mark>📆</mark> Achtung!
-    </div>
-    <div class="dialog-body">
-      <p class="noto">
-        Das gewählte Jahr liegt in der Vergangenheit.<br>
-        Sie können keine Zeiträume in einem vergangenen Jahr eintragen.
-      </p>
-    </div>
-    <div class="dialog-actions">
-      <button id="year-dialog-confirm" class="confirm-button noto">✅ Verstanden</button>
-      <button id="year-dialog-cancel" class="cancel-button noto">❌ Abbrechen</button>
-    </div>
-  </div>
-</div>
-
+</template>

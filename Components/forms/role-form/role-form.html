@@ -1,13 +1,47 @@
 <!-- role-form.html -->
-<section class="role-flex-row" role="region" aria-labelledby="role-form-title" aria-describedby="role-help-text">
+<section
+  class="role-flex-row"
+  role="region"
+  aria-labelledby="role-form-title"
+  aria-describedby="role-help-text"
+>
   <div class="task-container" id="role-form-container">
     <table class="role-table" aria-label="Rollenübersicht">
       <thead>
         <tr class="team-header">
-          <th class="team-blue">Bereich Blau</th>
-          <th class="team-green">Bereich Grün</th>
-          <th class="team-red">Bereich Rot</th>
-          <th class="team-black">Bereich Schwarz</th>
+          <th class="team-blue">
+            <span
+              class="teamname-editable"
+              data-team="blue"
+              contenteditable="true"
+              >Bereich Blau</span
+            >
+          </th>
+          <th class="team-green">
+            <span
+              class="teamname-editable"
+              data-team="green"
+              contenteditable="true"
+              >Bereich Grün</span
+            >
+          </th>
+          <th class="team-red">
+            <span
+              class="teamname-editable"
+              data-team="red"
+              contenteditable="true"
+              >Bereich Rot</span
+            >
+          </th>
+          <th class="team-black">
+            <span
+              class="teamname-editable"
+              data-team="black"
+              contenteditable="true"
+              >Bereich Schwarz</span
+            >
+          </th>
+          <th class="team-azubi">Ausbildung</th>
         </tr>
       </thead>
 
@@ -18,36 +52,47 @@
           <td class="role-cell team-green" data-role-index="4"></td>
           <td class="role-cell team-red" data-role-index="7"></td>
           <td class="role-cell team-black" data-role-index="10"></td>
+          <td class="role-cell team-azubi" data-role-index="13"></td>
         </tr>
         <tr>
           <td class="role-cell team-blue" data-role-index="2"></td>
           <td class="role-cell team-green" data-role-index="5"></td>
           <td class="role-cell team-red" data-role-index="8"></td>
           <td class="role-cell team-black" data-role-index="11"></td>
+          <td class="role-cell-empty" data-role-index="14"></td>
         </tr>
         <tr>
-          <td class="role-cell team-blue role-cell-bottom" data-role-index="3"></td>
-          <td class="role-cell team-green role-cell-bottom" data-role-index="6"></td>
-          <td class="role-cell team-red role-cell-bottom" data-role-index="9"></td>
-          <td class="role-cell team-black role-cell-bottom" data-role-index="12"></td>
-        </tr>
-        <!-- Special 13th role -->
-        <tr>
-          <td class="role-cell-empty" data-role-index="13"></td>
-          <td class="role-cell-empty" data-role-index="14"> </td>
-          <td class="role-cell-empty" data-role-index="15"> </td>
-          <td class="role-cell-empty" data-role-index="16"> </td>
+          <td
+            class="role-cell team-blue role-cell-bottom"
+            data-role-index="3"
+          ></td>
+          <td
+            class="role-cell team-green role-cell-bottom"
+            data-role-index="6"
+          ></td>
+          <td
+            class="role-cell team-red role-cell-bottom"
+            data-role-index="9"
+          ></td>
+          <td
+            class="role-cell team-black role-cell-bottom"
+            data-role-index="12"
+          ></td>
         </tr>
       </tbody>
     </table>
   </div>
 
-  <aside class="post-it-note" role="note" id="role-help-text">
-    <h3 class="hint noto">Aufgaben & Rollen</h3>
+  <aside class="post-it-note hint" role="note" id="role-help-text">
+    <span class="noto hint flex-row"
+      >📌
+      <h3 class="hint">Aufgaben & Rollen</h3></span
+    ><br />
     <p class="hint">
-      Hier definieren Sie Aufgaben und Rollen für den organisatorischen Ablauf.
-      Diese werden Mitarbeitenden zugewiesen und durch Regeln zeitlich gesteuert.
-      Farben unterstützen die Darstellung in Kalendern und in Mitarbeiter-Icons.
+      Aufgaben beschreiben <b>Fähigkeiten</b>, unabhängig von einzelnen
+      Personen. Sie trennen <b>wer etwas kann</b> von
+      <b>wer welchen Job hat</b>. Farben helfen dabei, Rollen später im Kalender
+      und bei Mitarbeiter-Icons sichtbar zu machen.
     </p>
   </aside>
 </section>

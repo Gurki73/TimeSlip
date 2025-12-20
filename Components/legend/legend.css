@@ -1,7 +1,3 @@
-
-#legend {
-  overflow:hidden;
-}
 .legend-container {
   width: 100%; /* Occupy the full width of the parent container */
   height: 100%; /* Occupy the full height of the parent container */
@@ -11,18 +7,17 @@
   overflow: hidden;
   box-sizing: border-box; /* Include padding and borders in dimensions */
   gap: 10px; /* Space between sections */
-  
 }
 
 .collapsible {
-  background-color: var(--button-inactive-color);
+  background-color: var(--button-active-color);
   color: darkgrey;
   cursor: pointer;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
-  overflow: hidden;  
+  overflow: hidden;
   gap: 12px;
   padding: 10px;
   max-height: 35px;
@@ -39,63 +34,60 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  white-space: nowrap; 
-  text-overflow: ellipsis; 
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .collapsible-emoji {
   display: inline-flex;
   align-items: center;
-  font-family: 'NotoEmoji', sans-serif;
+  font-family: "NotoEmoji", sans-serif;
   font-size: 1.125rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 100%;         
-  flex-shrink: 1;          
+  max-width: 100%;
+  flex-shrink: 1;
 }
 
 .collapsible-icon {
-  background-image: url('../../assets/svg/next-svgrepo-com.svg');
+  background-image: url("../../assets/svg/next-svgrepo-com.svg");
   background-repeat: no-repeat;
   background-size: contain;
   width: 16px;
   height: 16px;
   margin-left: -5px;
-  flex-shrink: 0;  
+  flex-shrink: 0;
 }
 
 .collapsible.active .collapsible-icon {
-  transform: rotate(90deg); 
+  transform: rotate(90deg);
 }
 
 .collapsible.active {
-  background-color: var(--button-active-color);
-}
-
-.collapsible-content {
-  overflow-y: auto;
-  overflow-x: hidden;
-  max-height: calc(100% - 40px); /* Adjust for button height and padding */
-  padding: 5px 0;
+  background-color: var(--button-inactive-color);
 }
 
 .legend-list {
-  background-color: silver;
+  background-color: var(lor-layout-container-light);
   list-style: none;
   padding: 0;
   margin: 0;
+  overflow: hidden;
 }
 
 .legend-item {
-  font-family: 'NotoEmoji', sans-serif;
-  font-weight: 18px;
+  font-family: "NotoEmoji", sans-serif;
+  font-size: 18px; /* typo: use font-size, not font-weight for size */
   display: flex;
-  color: var(--bg-soft-white);
   align-items: center;
+  gap: 1.4em; /* ✅ adds space between emoji, arrow, and name */
+  color: var(--bg-soft-white);
   padding: 5px;
   border-radius: 4px;
   margin-bottom: 5px;
+  margin-right: 3px;
+  margin-left: 3px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -106,7 +98,6 @@
   display: flex;
   flex-direction: column; /* Stack button and content */
   min-height: 100px; /* Minimum height for sections */
-  
 }
 
 @media (max-width: 600px) {
@@ -115,29 +106,46 @@
   }
 }
 
-.legend-list {
-  padding: 0;
-  margin: 0;
-  list-style: none;
-  overflow: hidden;
-}
-
 /* Bounce In Effect */
 .legend-item {
   opacity: 0;
   transform: translateY(20px) scale(0.95);
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease-out;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    opacity 0.3s ease-out;
 }
 
 /* Staggered Animation */
-.legend-item:nth-child(1) { transition-delay: 0.05s; }
-.legend-item:nth-child(2) { transition-delay: 0.1s; }
-.legend-item:nth-child(3) { transition-delay: 0.15s; }
-.legend-item:nth-child(4) { transition-delay: 0.2s; }
-.legend-item:nth-child(5) { transition-delay: 0.25s; }
-.legend-item:nth-child(6) { transition-delay: 0.3s; }
-.legend-item:nth-child(7) { transition-delay: 0.35s; }
-.legend-item:nth-child(8) { transition-delay: 0.4s; }
+.legend-item:nth-child(1) {
+  transition-delay: 0.05s;
+}
+.legend-item:nth-child(2) {
+  transition-delay: 0.1s;
+}
+.legend-item:nth-child(3) {
+  transition-delay: 0.15s;
+}
+.legend-item:nth-child(4) {
+  transition-delay: 0.2s;
+}
+.legend-item:nth-child(5) {
+  transition-delay: 0.25s;
+}
+.legend-item:nth-child(6) {
+  transition-delay: 0.3s;
+}
+.legend-item:nth-child(7) {
+  transition-delay: 0.35s;
+}
+.legend-item:nth-child(8) {
+  transition-delay: 0.4s;
+}
+
+.collapsible-content {
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: calc(60% - 40px); /* Adjust for button height and padding */
+  padding: 5px 0;
+}
 
 /* Active State (Triggers Animation) */
 .collapsible.active + .collapsible-content .legend-item {
@@ -148,10 +156,46 @@
 /* Slide Out Effect for Collapse */
 .collapsible-content {
   max-height: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
   transition: max-height 0.3s ease-in-out;
 }
 
 .collapsible.active + .collapsible-content {
-  max-height: 500px; /* Adjust based on your content size */
+  max-height: 40vh;
+}
+
+.legend-arrow {
+  opacity: 0.5; /* subtle fade so emoji + name stand out */
+}
+
+.legend-name {
+  font-weight: 500; /* slightly bolder for readability */
+  color: var(--text-color, var(--bg-soft-white));
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    border-color: yellow; /* optional border flash */
+  }
+  50% {
+    transform: scale(1.25);
+    border-color: darkgoldenrod;
+  }
+}
+
+.highlight-pulse {
+  animation: pulse 1.3s ease-in-out 1.2;
+}
+
+.role-big {
+  font-size: 0.85rem !important; /* freeze emoji size */
+  min-height: 1.8rem;
+  width: 2.8rem;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+  border-color: gold;
+  transition: all 0.25s ease-in-out;
 }

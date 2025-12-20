@@ -1,182 +1,269 @@
 // legend.js
 
-import { loadRoleData, roles } from '../../js/loader/role-loader.js';
-import { loadEmployeeData, employees, getTotalEmployeesByRole } from '../../js/loader/employee-loader.js';
+import { loadRoleData } from '../../js/loader/role-loader.js';
+import { loadEmployeeData, getTotalEmployeesByRole } from '../../js/loader/employee-loader.js';
 import { getHolidayGreetingForToday } from '../../js/Utils/holidayUtils.js';
+import { updateFeedback } from '../../js/Utils/statusbar.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+let legendEmployees = [];
+let lengendRoles = [];
 
-  Promise.all([loadRoleData(), loadEmployeeData()])
-    .then(() => {
-      roles;
-      initializeLegend();
-      syncCollapsibleState();
-    })
-    .catch((error) => {
-      console.error('Error loading data:', error);
-    });
-});
 
-function initializeLegend() {
-  const legendContainer = document.getElementById('legend');
-  if (!legendContainer) return console.error('Legend container not found');
+export async function initializeLegend(api) {
+    const legendContainer = document.getElementById('legend');
+    if (!legendContainer) {
+        console.error('Legend container not found');
+        return;
+    }
 
-  // Inject dynamic holiday greeting
-  updateWelcomeGreeting();
+    if (!api) console.warn('⚠️ No API reference provided to initializeLegend(), using fallback');
 
-  legendContainer.innerHTML = '';
-  renderCollapsibleSection(legendContainer, '🎨 ⇨ Aufgaben', renderRoles);
-  renderCollapsibleSection(legendContainer, '😊 ⇨ Mitarbeiter', renderEmployees);
+    updateWelcomeGreeting();
+
+    legendContainer.innerHTML = '';
+
+    try {
+        renderCollapsibleSection(legendContainer, '🎨 ⇨ Aufgaben', renderRoles, 'lade Aufgaben...');
+        renderCollapsibleSection(legendContainer, '😊 ⇨ Mitarbeiter', renderEmployees, 'lade Mitarbeiter...');
+
+        const [roles, employees] = await Promise.all([
+            loadRoleData(api),
+            loadEmployeeData(api)
+        ]);
+
+        const year = document.getElementById(' ');
+        const month = document.getElementById('');
+
+        lengendRoles = roles;
+        legendEmployees = employees;
+
+        const roleContent = document.getElementById('legend-roles');
+        const employeeContent = document.getElementById('legend-employees');
+
+        renderRoles(roleContent);
+        renderEmployees(employeeContent);
+
+    } catch (err) {
+        console.error('❌ Failed to initialize legend:', err);
+    }
 }
 
-function updateWelcomeGreeting() {
-  const header = document.getElementById('greetingID');
-  if (!header) return;
-  const greeting = getHolidayGreetingForToday();
-  if (greeting) {
-    header.textContent = greeting;
-  }
-}
+function renderCollapsibleSection(container, title, renderContentFunction, loadingText = '') {
+    const collapsibleButton = document.createElement('button');
+    collapsibleButton.classList.add('collapsible');
 
-function syncCollapsibleState() {
-  const collapsibles = document.querySelectorAll('.collapsible');
+    const icon = document.createElement('span');
+    icon.classList.add('collapsible-icon');
+    collapsibleButton.appendChild(icon);
+    collapsibleButton.title = title;
 
-  collapsibles.forEach(collapsible => {
-    if (shouldBeOpen(collapsible)) {
-      collapsible.classList.add('active');
-      const collapsibleContent = collapsible.nextElementSibling;
-      collapsibleContent.style.display = 'block';
+    const titleLabel = document.createElement('span');
+    titleLabel.classList.add('collapsible-emoji');
+    titleLabel.innerHTML = ` ${title}`;
+    collapsibleButton.appendChild(titleLabel);
+
+    const collapsibleContent = document.createElement('div');
+    collapsibleContent.classList.add('collapsible-content');
+
+    // ✅ Add unique ID for easy selection later
+    if (title.includes('Mitarbeiter')) {
+        collapsibleContent.id = 'legend-employees';
     } else {
-      collapsible.classList.remove('active');
-      const collapsibleContent = collapsible.nextElementSibling;
-      collapsibleContent.style.display = 'none';
+        collapsibleContent.id = 'legend-roles';
     }
-  });
-}
 
-function shouldBeOpen(collapsible) {
-  return collapsible === document.querySelector('.collapsible');
-}
+    // 🔹 Generate a safe localStorage key based on title
+    const key = `legend_${title.includes('Mitarbeiter') ? 'employees' : 'roles'}_expanded`;
 
-function renderCollapsibleSection(container, title, renderContentFunction) {
-  const collapsibleButton = document.createElement('button');
-  collapsibleButton.classList.add('collapsible');
+    // 🔹 Restore last state
+    const lastState = localStorage.getItem(key);
+    const isExpanded = lastState === 'true'; // stored as string
+    collapsibleContent.style.display = isExpanded ? 'block' : 'none';
+    collapsibleButton.classList.toggle('active', isExpanded);
 
-  const icon = document.createElement('span');
-  icon.classList.add('collapsible-icon');
-  collapsibleButton.appendChild(icon);
-  collapsibleButton.title = title;
-
-  const titleLabel = document.createElement('span');
-  titleLabel.classList.add('collapsible-emoji');
-  titleLabel.innerHTML = ` ${title}`;
-
-  collapsibleButton.appendChild(titleLabel);
-
-  const collapsibleContent = document.createElement('div');
-  collapsibleContent.classList.add('collapsible-content');
-
-  renderContentFunction(collapsibleContent);
-
-  container.appendChild(collapsibleButton);
-  container.appendChild(collapsibleContent);
-
-  collapsibleButton.addEventListener('click', () => {
-    const isVisible = collapsibleContent.style.display === 'block';
-    collapsibleContent.style.display = isVisible ? 'none' : 'block';
-    collapsibleButton.classList.toggle('active', !isVisible);
-
-    if (!isVisible && renderContentFunction) {
-      renderContentFunction();
+    // 🌀 Show spinner / loading placeholder
+    if (loadingText) {
+        collapsibleContent.innerHTML = `<div class="spinner">${loadingText}</div>`;
+    } else {
+        renderContentFunction(collapsibleContent);
     }
-  });
+
+    // Attach to container
+    container.appendChild(collapsibleButton);
+    container.appendChild(collapsibleContent);
+
+    // 🔹 Handle click toggle
+    collapsibleButton.addEventListener('click', () => {
+        const nowVisible = collapsibleContent.style.display !== 'block';
+        collapsibleContent.style.display = nowVisible ? 'block' : 'none';
+        collapsibleButton.classList.toggle('active', nowVisible);
+        localStorage.setItem(key, String(nowVisible)); // persist
+
+        // Re-render content when expanded (optional)
+        if (nowVisible && renderContentFunction) {
+            renderContentFunction(collapsibleContent);
+        }
+    });
 }
 
+export function renderEmployees(container, employeesToRender = legendEmployees) {
+    if (!container) return;
+
+    if (!employeesToRender || employeesToRender.length === 0) {
+        container.innerHTML = '<div class="spinner">lade Mitarbeiter...</div>';
+        return;
+    }
+
+    const list = document.createElement('ul');
+    list.classList.add('legend-list');
+
+    const calendarContainer = document.getElementById('calendar-month-sheet');
+    let highlightTimeout;
+    let lastClick = 0;
+
+    employeesToRender.forEach(employee => {
+        if (!employee.name ||
+            employee.name === '?' ||
+            employee.name === 'name' ||
+            employee.personalEmoji === '🚮'
+        ) return;
+
+        const listItem = document.createElement('li');
+        listItem.classList.add('legend-item');
+
+        const roleColor = getComputedStyle(document.body)
+            .getPropertyValue(`--role-${employee.mainRoleIndex}-color`);
+
+        listItem.style.backgroundColor = roleColor;
+
+        const emoji = document.createElement('span');
+        emoji.innerText = employee.personalEmoji;
+        emoji.title = employee.name;
+        emoji.style.backgroundColor = roleColor;
+
+        const arrow = document.createElement('span');
+        arrow.classList.add('legend-arrow');
+        arrow.innerText = '⇨';
+
+        const employeeName = document.createElement('span');
+        employeeName.classList.add('legend-name');
+        employeeName.innerText = employee.name;
+
+        listItem.appendChild(emoji);
+        listItem.appendChild(arrow);
+        listItem.appendChild(employeeName);
+
+        listItem.addEventListener('click', () => {
+            const now = Date.now();
+            if (now - lastClick < 4000) return; // debounce 4s
+            lastClick = now;
+
+            if (!calendarContainer) return; // help page open etc.
+
+            clearTimeout(highlightTimeout);
+            document.querySelectorAll('.calendar-emoji.big').forEach(el => {
+                el.classList.remove('big');
+                el.classList.add('small');
+            });
+
+            const emojis = calendarContainer.querySelectorAll(`.emp-${employee.id}`);
+            emojis.forEach(el => {
+                el.classList.remove('small');
+                el.classList.add('big');
+                el.classList.add('highlight-pulse'); // optional blink effect
+            });
+
+            highlightTimeout = setTimeout(() => {
+                emojis.forEach(el => {
+                    el.classList.remove('big', 'highlight-pulse');
+                    el.classList.add('small');
+                });
+            }, 4000);
+        });
+
+        list.appendChild(listItem);
+    });
+
+    container.innerHTML = '';
+    container.appendChild(list);
+}
 
 function renderRoles(container) {
+    if (!container) return;
 
-  if (!container) {
-    console.warn('[legend.js] renderRoles: container #legend-roles not found');
-    return;
-  }
+    const list = document.createElement('ul');
+    list.classList.add('legend-list');
 
-  const list = document.createElement('ul');
-  list.classList.add('legend-list');
+    const calendarContainer = document.getElementById('calendar-month-sheet');
+    let highlightTimeout;
+    let lastClick = 0;
 
+    lengendRoles.forEach((role, index) => {
+        if (role.emoji === "❓" || ['keine', '?', 'name'].includes(role.name)) return;
 
-  roles.forEach((role, index) => {
-    if (role.emoji === "❓") return;
-    if (role.name === 'keine') return;
-    if (role.name === '?') return;
-    if (role.name === "name") return;
+        const listItem = document.createElement('li');
+        listItem.classList.add('legend-item');
 
-    const listItem = document.createElement('li');
-    listItem.classList.add('legend-item');
+        const roleColor = getComputedStyle(document.body)
+            .getPropertyValue(`--role-${role.colorIndex}-color`);
 
-    const roleColor = getComputedStyle(document.documentElement)
-      .getPropertyValue(`--role-${role.colorIndex}-color`);
-    listItem.style.backgroundColor = roleColor;
+        listItem.style.backgroundColor = roleColor;
 
-    const emoji = document.createElement('span');
-    emoji.innerText = role.emoji;
-    emoji.title = role.name;
+        const emoji = document.createElement('span');
+        emoji.innerText = role.emoji;
+        emoji.title = role.name;
 
-    const roleName = document.createElement('span');
-    roleName.classList.add('legend-name');
-    roleName.innerText = `   ⇨ ${role.name}`;
+        const arrow = document.createElement('span');
+        arrow.classList.add('legend-arrow');
+        arrow.innerText = '⇨';
 
-    const roleCount = getTotalEmployeesByRole(index);
+        const roleName = document.createElement('span');
+        roleName.classList.add('legend-name');
+        roleName.innerText = role.name;
 
-    const roleCountSpan = document.createElement('span');
-    roleCountSpan.classList.add('role-count');
-    roleCountSpan.innerHTML = ` [${roleCount}]`;
+        listItem.appendChild(emoji);
+        listItem.appendChild(arrow);
+        listItem.appendChild(roleName);
 
-    roleName.appendChild(roleCountSpan);
+        // 🧠 Click handler — highlight all calendar spans for this role
+        listItem.addEventListener('click', () => {
+            const now = Date.now();
+            if (now - lastClick < 4000) return; // debounce 4s
+            lastClick = now;
 
-    listItem.appendChild(emoji);
-    listItem.appendChild(roleName);
+            if (!calendarContainer) return;
 
-    list.appendChild(listItem);
-  });
+            clearTimeout(highlightTimeout);
+            // Reset any previous highlights
+            calendarContainer.querySelectorAll('.calendar-emoji.role-big').forEach(el => {
+                el.classList.remove('role-big', 'highlight-pulse');
+            });
 
-  container.appendChild(list);
+            // Highlight all emojis that share this role
+            const roleIndex = role.colorIndex;
+            const emojis = calendarContainer.querySelectorAll(`.role-${roleIndex}`);
+            emojis.forEach(el => {
+                el.classList.add('role-big', 'highlight-pulse',);
+            });
+
+            // Auto-reset after 4s
+            highlightTimeout = setTimeout(() => {
+                emojis.forEach(el => el.classList.remove('role-big', 'highlight-pulse'));
+            }, 4000);
+        });
+
+        list.appendChild(listItem);
+    });
+
+    container.innerHTML = '';
+    container.appendChild(list);
 }
 
-function renderEmployees(container) {
 
-  if (!container) {
-    console.warn('[legend.js] renderEmployees: container #legend-employees not found');
-    return;
-  }
-
-  const list = document.createElement('ul');
-  list.classList.add('legend-list');
-
-  employees.forEach(employee => {
-    if (employee.name === '?') return;
-    if (employee.name === "name") return;
-
-    const listItem = document.createElement('li');
-    listItem.classList.add('legend-item');
-
-    const roleColor = getComputedStyle(document.documentElement)
-      .getPropertyValue(`--role-${employee.mainRoleIndex}-color`);
-
-    listItem.style.backgroundColor = roleColor;
-
-    const emoji = document.createElement('span');
-    emoji.innerText = employee.personalEmoji;
-    emoji.title = employee.name;
-    emoji.style.backgroundColor = roleColor;
-    const employeeName = document.createElement('span');
-    employeeName.classList.add('legend-name');
-    employeeName.innerText = `   ⇨ ${employee.name}`;
-
-    listItem.appendChild(emoji);
-    listItem.appendChild(employeeName);
-
-    list.appendChild(listItem);
-  });
-
-  container.appendChild(list);
+function updateWelcomeGreeting() {
+    const header = document.getElementById('greetingID');
+    if (!header) return;
+    const greeting = getHolidayGreetingForToday();
+    if (greeting) header.innerHTML = greeting;
 }
+

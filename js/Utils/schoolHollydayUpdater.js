@@ -1,3 +1,5 @@
+import { loadFile, saveFile } from '../loader/loader.js';
+
 const DATA_DIR = '../schoolHolidays';
 
 const waitForAPI = () => {
@@ -19,7 +21,7 @@ const waitForAPI = () => {
 })();
 
 
-function parseToCSV(data) {
+export function parseToCSV(data) {
   const header = 'Holiday Name,Start Date,End Date\n';
   const rows = data.map(holiday =>
     `${holiday.name[0].text},${holiday.startDate},${holiday.endDate}`
@@ -60,37 +62,117 @@ async function readCSV(filePath) {
 }
 
 export async function GetSchoolHoliday(api, state, year) {
-  let homeKey = localStorage.getItem('clientDefinedDataFolder') || 'home';
+  if (state === 'XX') {
+    return [];
+  }
+  homeKey: "client";
   const relativePath = `schoolHolidays/${state}_${year}_holidays.csv`;
-  console.log("Try to load school holidays from client folder: ", relativePath);
-  try {
-    const fileData = await api.loadCSV(homeKey, relativePath);
 
+  try {
+    const fileData = await api.loadCSV('client', relativePath);
     if (fileData) {
-      console.log('✅ Loaded role data from', homeKey, relativePath);
-      console.log("file data ==> ", fileData);
-      parseToCSV(fileData);
+      return fileData;
     } else {
-      console.log("no school holiday data recived");
+      return [];
     }
   } catch (error) {
-    console.error('❌ Failed to load school holidays:', error);
+    console.warn('❌ Failed to load school holidays:', error);
+    return [];
   }
 }
 
+export function parseSchoolHolidayCsv(csvString, year) {
+  if (!csvString || typeof csvString !== "string") return [];
+
+  const lines = csvString.trim().split(/\r?\n/);
+  const headers = lines.shift().split(',').map(h => h.trim().toLowerCase());
+
+  const holidays = lines.map(line => {
+    const cols = line.split(',').map(c => c.trim());
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = cols[i]);
+
+    // --- Normalize name ---
+    let name = obj['holiday name'] || obj['name'] || 'Unbekannt';
+    name = shortenHolidayName(name);
+
+    return {
+      name,
+      startDate: obj['start date'] || '',
+      endDate: obj['end date'] || ''
+    };
+  });
+
+  // --- Filter by relevant year ---
+  const validHolidays = holidays.filter(h => {
+    const startY = new Date(h.startDate).getFullYear();
+    const endY = new Date(h.endDate).getFullYear();
+    return startY === year || endY === year;
+  });
+
+  // --- Add emoji for season ---
+  return validHolidays.map(h => ({
+    ...h,
+    emoji: getSeasonEmoji(h.startDate)
+  }));
+}
+
+function shortenHolidayName(name) {
+  // Remove the word "ferien" (case-insensitive) and trim spaces
+  name = name.replace(/ferien/gi, '').trim();
+
+  // Replace common patterns to be more compact
+  name = name
+    .replace(/\bWeihnachts\b/i, 'Weihnachten')
+    .replace(/\bOster\b/i, 'Ostern')
+    .replace(/\bSommer\b/i, 'Sommer')
+    .replace(/\bHerbst\b/i, 'Herbst')
+    .replace(/\bWinter\b/i, 'Winter')
+    .replace(/\bPfingst\b/i, 'Pfingsten');
+
+  // Capitalize first letter
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+function getSeasonEmoji(dateStr) {
+  const d = new Date(dateStr);
+  const m = d.getMonth() + 1;
+  if (m >= 12 || m <= 2) return '❄️'; // Winter
+  if (m >= 3 && m <= 5) return '🌹'; // Spring
+  if (m >= 6 && m <= 8) return '☀️'; // Summer
+  return '🍁'; // Autumn
+}
+
+
+
 export async function apiHealthCheck(api, url = 'https://openholidaysapi.org/healthcheck') {
-  console.log("performing health check for: ", url);
   const result = await api.healthCheck(url);
   return result;
 }
 
 export async function DownloadSchoolHoliday(api, state, year) {
-  return await api.getSchoolHolidays(state, year); // invokes IPC
+  const result = await api.getSchoolHolidays(state, year);
+  if (!result) {
+    HTMLFormControlsCollection.log(result);
+    return [];
+  }
+
+  // Handle possible wrapped format
+  if (Array.isArray(result)) return result;
+  if (Array.isArray(result.data)) return result.data;
+  if (result.success && Array.isArray(result.payload)) return result.payload;
+
+  console.warn("⚠️ Unexpected format from getSchoolHolidays:", result);
+  return [];
 }
 
-// 📂 Loads local data from disk
+
+
 export async function LoadSchoolHoliday(api, state, year) {
-  const homeKey = localStorage.getItem('clientDefinedDataFolder') || 'home';
+  const homeKey = 'client';
   const relativePath = `schoolHolidays/${state}_${year}_holidays.csv`;
-  return await api.loadCSV(homeKey, relativePath);
+
+  // Load cached file, fallback = empty array
+  const fileData = await loadFile(api, homeKey, relativePath, async () => []);
+  return fileData;
 }

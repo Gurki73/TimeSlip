@@ -1,277 +1,14 @@
-const sampleCompanyHolidays = {};
+import { boolsToKey } from '../../Components/forms/calendar-form/calendar-form-utils.js';
+import { loadFile, saveFile } from './loader.js';
 
+const sampleCompanyHolidays = {};
 let companyHolidays = {};
+let bridgeDayState = {};
 let officeDays = [];
 let state = '';
 
-async function loadCalendarData(api, year) {
-
-    if (!api) {
-        console.error('❌ window.api is not available in calendarLoader.js');
-        return;
-    }
-
-    try {
-        await Promise.all([
-            loadCompanyHolidayData(api, year),
-            (officeDays = await loadOfficeDaysData(api))
-        ]);
-    } catch (error) {
-        console.error('Error loading calendar data:', error);
-    }
-    state = loadStateData();
-    companyHolidays = [{ startDay: 2, startMonth: 1, endDay: 3, endMonth: 1 }];
-}
-
-//# region office days
-let prilimaryOfficeDays = [];
-let lastOnboardingState = null;
-
-const onboarding = ['two', 'never', 'never', 'full', 'full', 'full', 'full',];
-const gastro = ['never', 'afternoon', 'full', 'full', 'full', 'full', 'full',];
-const health = ['full', 'full', 'morning', 'full', 'full', 'never', 'never'];
-const office = ['full', 'full', 'full', 'full', 'full', 'never', 'never'];
-const logistics = ['full', 'full', 'full', 'full', 'full', 'full', 'never',];
-const industrial = ['full', 'full', 'full', 'full', 'full', 'never', 'never'];
-const hospitality = ['full', 'full', 'full', 'full', 'full', 'full', 'full'];
-const shop = ['full', 'full', 'full', 'full', 'full', 'full', 'never', 'shop'];
-
-async function loadOfficeDaysData(api, isOnboarding = false) {
-
-    if (isOnboarding) {
-        console.log('🎓 Onboarding mode detected — using onboarding office days');
-        prilimaryOfficeDays = onboarding;
-        return prilimaryOfficeDays;
-    }
-    if (prilimaryOfficeDays.length > 0 && lastOnboardingState === isOnboarding) {
-        return prilimaryOfficeDays;
-    }
-
-    lastOnboardingState = isOnboarding;
-
-    let homeKey = localStorage.getItem('clientDefinedDataFolder') || 'home';
-    const relativePath = 'officeDays.csv';
-
-    try {
-        const fileData = await api.loadCSV(homeKey, relativePath);
-
-        if (fileData) {
-            console.log('✅ Loaded office days data from', homeKey, relativePath);
-            return parseOfficeDaysCSV(fileData);
-        } else {
-            console.warn('⚠️ No office data found, using sample fallback.');
-            prilimaryOfficeDays = gastro;
-            return prilimaryOfficeDays;
-        }
-    } catch (error) {
-        console.warn('❌ Failed to load office day data:', error);
-        prilimaryOfficeDays = gastro;
-        return prilimaryOfficeDays;
-    }
-}
-
-export function setBranch(branch) {
-    switch (branch) {
-        case 'gastro':
-            prilimaryOfficeDays = gastro;
-            break;
-        case 'health':
-            prilimaryOfficeDays = office;
-            break;
-        case 'office':
-            prilimaryOfficeDays = office;
-            break;
-        case 'logistics':
-            prilimaryOfficeDays = logistics;
-            break;
-        case 'industrial':
-            prilimaryOfficeDays = industrial;
-            break;
-        case 'hospitality':
-            prilimaryOfficeDays = hospitality;
-            break;
-        case 'shop':
-            prilimaryOfficeDays = shop;
-            break
-        default:
-            prilimaryOfficeDays = onboarding;
-            break;
-
-    }
-    return prilimaryOfficeDays;
-}
-
-export function updateOfficeDays(day, key) {
-
-    prilimaryOfficeDays[day] = key;
-}
-
-function parseOfficeDaysCSV(data) {
-    const rows = data.split('\n').map(row => row.trim()).filter(row => row);
-
-    if (rows.length < 2) {
-        console.warn('Office Days CSV is empty or missing data.');
-        return;
-    }
-    const officeDaysRow = rows[1].split(',').map(day => day.trim());
-    if (officeDaysRow.length !== 7) {
-        console.error(`Office Days CSV does not have exactly 7 days. Found: ${officeDaysRow.length}`, officeDaysRow);
-        return;
-    }
-    officeDays = officeDaysRow;
-    return officeDays;
-}
-//# endregion 
-
-function loadStateData() {
-
-    const localState = localStorage.getItem('selectedState');
-    if (localState) {
-        console.log('Loaded state from localStorage: ', localState);
-        return localState;
-    }
-    // Fallback to default
-    const defaultState = 'NW'; // Nordrhein-Westfalen
-    console.warn(`No state found. Falling back to default: ${defaultState}`);
-    localStorage.setItem('selectedState', defaultState);
-    return defaultState;
-}
-
-function saveStateData(currentState) {
-    const trimmedState = currentState.trim();
-
-    state = trimmedState;
-    // Save to localStorage
-    localStorage.setItem('selectedState', trimmedState);
-    console.log('Saved state to localStorage: ', state);
-
-}
-
-function createCompanyHolidaySamples() {
-    const currentYear = new Date().getFullYear();
-    const nextYear = currentYear + 1;
-
-    sampleCompanyHolidays[currentYear] = [
-        {
-            startDate: new Date(`${currentYear}-10-10`),
-            endDate: new Date(`${currentYear}-10-10`)
-        },
-        {
-            startDate: new Date(`${currentYear}-07-22`),
-            endDate: new Date(`${currentYear}-07-26`)
-        },
-        {
-            startDate: new Date(`${currentYear}-12-26`),
-            endDate: new Date(`${currentYear}-12-31`)
-        }
-    ];
-
-    sampleCompanyHolidays[nextYear] = [
-        {
-            startDate: new Date(`${nextYear}-01-01`),
-            endDate: new Date(`${nextYear}-01-09`)
-        }
-    ];
-}
-
-function loadSampleCompanyHolidaysData(year) {
-    // Unlike other loaders, sampleCompanyHolidays are generated in JS
-    // because they depend on dynamic years (e.g., current + next).
-    // There's no static sample file like 'samples/companyHolidays/{year}.csv'.
-
-    if (Object.keys(sampleCompanyHolidays).length === 0) {
-        createCompanyHolidaySamples(); // Only runs once
-    }
-
-    return sampleCompanyHolidays[year] || [];
-}
-
-async function loadCompanyHolidayData(api, year) {
-
-    const homeKey = localStorage.getItem('clientDefinedDataFolder') || 'home';
-    const relativePath = `companyHolidays/${year}.csv`;
-
-    console.log("Try to load company holidays:", relativePath);
-
-    try {
-        const fileData = await api.loadCSV(homeKey, relativePath);
-
-        if (fileData) {
-            console.log('✅ Loaded company holidays from', homeKey, relativePath);
-            const parsed = parseCompanyHolidaysCSV(fileData);
-            companyHolidays[year] = parsed;
-            return parsed;
-        } else {
-            console.warn(`⚠️ No file found for year ${year}, falling back to sample.`);
-            return loadSampleCompanyHolidaysData(year);
-
-        }
-    } catch (error) {
-        console.warn(`❌ Error loading ${relativePath}, using sample fallback.`, error);
-        return loadSampleCompanyHolidaysData(year);
-    }
-}
-
-function parseCompanyHolidaysCSV(fileData) {
-    const rows = fileData
-        .split('\n')
-        .slice(1) // skip header
-        .map(row => row.trim())
-        .filter(Boolean); // skip empty rows
-
-    const holidays = rows.map(row => {
-        const [startDateStr, endDateStr] = row.split(',').map(cell => cell.trim());
-        const startDate = new Date(startDateStr);
-        const endDate = new Date(endDateStr || startDateStr); // fallback to same-day holiday
-
-        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-            console.warn('⛔ Invalid date in row:', row);
-            return null;
-        }
-
-        return { startDate, endDate };
-    }).filter(Boolean);
-
-    // Sort by startDate ascending
-    holidays.sort((a, b) => a.startDate - b.startDate);
-
-    return holidays;
-}
-
-function generateCompanyHolidayCSV(companyHolidayArray) {
-    const csvHeader = 'startDate,endDate';
-    const csvBody = companyHolidayArray.map(period => {
-        const start = period.startDate.toISOString().slice(0, 10); // yyyy-mm-dd
-        const end = period.endDate.toISOString().slice(0, 10);
-        return `${start},${end}`;
-    });
-
-    return [csvHeader, ...csvBody].join('\n');
-}
-
-async function saveCompanyHolidaysCSV(api, year, holidayData) {
-    const csvContent = generateCompanyHolidayCSV(holidayData);
-
-    const homeKey = localStorage.getItem('clientDefinedDataFolder') || 'home';
-    const relativePath = `companyHolidays/${year}.csv`;
-
-    try {
-        const savedDirectory = await api.saveCSV(homeKey, relativePath, csvContent);
-        if (savedDirectory) {
-            console.log(`✅ Saved company holidays for ${year} to:`, savedDirectory);
-            localStorage.setItem('clientDefinedDataFolder', savedDirectory);
-        } else {
-            console.warn('⚠️ Failed to save company holiday file.');
-        }
-    } catch (err) {
-        console.error('❌ Error saving company holidays file:', err);
-    }
-}
-
-//#region Public Holiday
 function parsePublicHolidaysCSV(csvText) {
     const lines = csvText.trim().split('\n').filter(line => line.trim());
-
     const header = lines[0].split(',').map(h => h.trim().toLowerCase());
 
     if (!header.includes('id') || !header.includes('isopen')) {
@@ -281,12 +18,9 @@ function parsePublicHolidaysCSV(csvText) {
     return lines.slice(1).map(line => {
         const cols = line.split(',').map(c => c.trim());
         const record = {};
-        header.forEach((colName, i) => {
-            record[colName] = cols[i];
-        });
+        header.forEach((colName, i) => (record[colName] = cols[i]));
         const isOpenRaw = record.isopen.toLowerCase();
-        const isOpen = ['true', 'yes', '1'].includes(isOpenRaw);
-        return { id: record.id, isOpen };
+        return { id: record.id, isOpen: ['true', 'yes', '1'].includes(isOpenRaw) };
     });
 }
 
@@ -296,54 +30,332 @@ function serializePublicHolidaysCSV(data) {
     return [header.join(','), ...lines].join('\n');
 }
 
-export async function savePublicHolidays(api, publicHolidays) {
-    const folderKey = localStorage.getItem('clientDefinedDataFolder') || 'home';
-    const filename = 'publicHolidays.csv';
+export async function loadPublicHolidaysSimple(api) {
     try {
-        const csvContent = serializePublicHolidaysCSV(publicHolidays); // **serialize**, not parse
-        await api.saveCSV(folderKey, filename, csvContent);
-        console.log('Public holidays saved successfully.');
-    } catch (error) {
-        console.error('Error saving public holidays:', error);
+        const csvText = await loadFile(api, 'client', 'calendar/publicHolidays.csv', '');
+        return csvText ? parsePublicHolidaysCSV(csvText) : [];
+    } catch (err) {
+        console.warn('Failed to load public holidays, using empty:', err);
+        return [];
     }
 }
 
-export async function loadPublicHolidays(api) {
-    const folderKey = localStorage.getItem('clientDefinedDataFolder') || 'home';
-    const filename = 'publicHolidays.csv';
+export async function savePublicHolidaysSimple(api, data) {
+    const csv = serializePublicHolidaysCSV(data);
+    await saveFile(api, 'calendar', 'publicHolidays.csv', csv);
+}
+
+
+
+//#region Office Days
+let prilimaryOfficeDays = [];
+let lastOnboardingState = null;
+
+const defaultOfficeDays = ['full', 'full', 'full', 'full', 'full', 'never', 'never'];
+const gastro = ['never', 'afternoon', 'full', 'full', 'full', 'full', 'full'];
+
+export async function loadOfficeDaysData(api, isOnboarding = false) {
+    if (isOnboarding) {
+        return defaultOfficeDays;
+    }
+
+    if (prilimaryOfficeDays.length > 0 && lastOnboardingState === isOnboarding)
+        return prilimaryOfficeDays;
+
+    lastOnboardingState = isOnboarding;
+
+    const folderPath = 'calendar';
+    const fileName = 'officeDays.csv';
+
     try {
-        const fileData = await api.loadCSV(folderKey, filename);
-        if (fileData) {
-            return parsePublicHolidaysCSV(fileData); // **parse**, not serialize
-        } else {
-            console.warn('No public holidays data found, using default sample.');
-            return await loadSamplePublicHolidays();
+        const fileData = await loadFile(api, 'client', 'calendar/officeDays.csv', async () => {
+            console.warn('⚠️ No office data found, using default sample');
+            return gastro.join(','); // optional: return as CSV string if parseOfficeDaysCSV expects that
+        });
+
+        const result = parseOfficeDaysCSV(fileData);
+
+        if (result.length < 1) {
+            console.warn('⚠️ Parsed office data is empty, using default gastro values');
+            return defaultOfficeDays;
         }
-    } catch (error) {
-        console.warn('Failed to load public holidays:', error);
-        return await loadSamplePublicHolidays();
+
+        return result;
+    } catch (err) {
+        console.warn('❌ Error loading office days data:', err);
+        return defaultOfficeDays;
     }
 }
 
-async function loadSamplePublicHolidays() {
-    const response = await fetch('samples/publicHolidays.csv');
-    if (!response.ok) {
-        throw new Error('Failed to load sample public holidays');
+//#region Bridge Days
+function parseBridgeDaysCSV(csvText) {
+    if (!csvText) return [];
+
+    const lines = csvText.trim().split('\n').filter(line => line.trim());
+    if (lines.length < 2) return [];
+
+    const header = lines[0].split(',').map(h => h.trim().toLowerCase());
+    if (!header.includes('id') || !header.includes('isopen')) {
+        console.warn('⚠️ BridgeDays CSV missing expected header id,isOpen');
+        return [];
     }
-    const csvText = await response.text();
-    return parsePublicHolidaysCSV(csvText);
+
+    return lines.slice(1).map(line => {
+        const cols = line.split(',').map(c => c.trim());
+        const record = {};
+        header.forEach((colName, i) => (record[colName] = cols[i]));
+        const isOpenRaw = record.isopen.toLowerCase();
+        return { id: record.id, isOpen: ['true', 'yes', '1'].includes(isOpenRaw) };
+    });
+}
+
+function serializeBridgeDaysCSV(dataArray) {
+    const header = ['id', 'isOpen'];
+    const lines = dataArray.map(({ id, isOpen }) => `${id},${isOpen}`);
+    return [header.join(','), ...lines].join('\n');
+}
+
+export async function loadBridgeDays(api) {
+    try {
+        const csvText = await loadFile(api, 'client', 'calendar/bridgeDays.csv', '');
+        const parsed = parseBridgeDaysCSV(csvText);
+        bridgeDayState = Object.fromEntries(parsed.map(({ id, isOpen }) => [id, isOpen]));
+        return parsed;
+    } catch (err) {
+        console.warn('Failed to load bridge days, returning empty:', err);
+        return [];
+    }
+}
+
+export async function saveBridgeDaysSimple(api, dataArray) {
+    const csv = serializeBridgeDaysCSV(dataArray);
+    await saveFile(api, 'calendar', 'bridgeDays.csv', csv);
 }
 //#endregion
 
 
-export {
-    loadCalendarData,
-    loadStateData,
-    saveStateData,
-    loadCompanyHolidayData,
-    saveCompanyHolidaysCSV,
-    loadOfficeDaysData,
-    state,
-    officeDays,
-};
+export function setBranch(branch) {
+    switch (branch) {
+        case 'gastro': prilimaryOfficeDays = gastro; break;
+        case 'health': prilimaryOfficeDays = office; break;
+        case 'office': prilimaryOfficeDays = office; break;
+        case 'logistics': prilimaryOfficeDays = logistics; break;
+        case 'industrial': prilimaryOfficeDays = industrial; break;
+        case 'hospitality': prilimaryOfficeDays = hospitality; break;
+        case 'shop': prilimaryOfficeDays = shop; break;
+        default: prilimaryOfficeDays = onboarding; break;
+    }
+    return prilimaryOfficeDays;
+}
 
+export function updateOfficeDays(day, key) {
+    prilimaryOfficeDays[day] = key;
+}
+
+function parseOfficeDaysCSV(data) {
+    if (!data) return [];
+    const rows = data.split('\n').map(r => r.trim()).filter(r => r);
+    if (rows.length < 2) return [];
+    const officeDaysRow = rows[1].split(',').map(d => d.trim());
+    officeDays = officeDaysRow.length === 7 ? officeDaysRow : [];
+    return officeDays;
+}
+//#endregion
+
+//#region Company Holidays
+function createCompanyHolidaySamplesCSV() {
+    const currentYear = new Date().getFullYear();
+    const nextYear = currentYear + 1;
+
+    const samples = [
+        { startDate: `${currentYear}-10-10`, endDate: `${currentYear}-10-10` },
+        { startDate: `${currentYear}-07-22`, endDate: `${currentYear}-07-26` },
+        { startDate: `${currentYear}-12-26`, endDate: `${currentYear}-12-31` },
+        { startDate: `${nextYear}-01-01`, endDate: `${nextYear}-01-09` },
+    ];
+
+    // Turn array into CSV string
+    const csvHeader = 'startDate,endDate';
+    const csvBody = samples.map(s => `${s.startDate},${s.endDate}`);
+    const csvString = [csvHeader, ...csvBody].join('\n');
+
+    return csvString;
+}
+
+function serializeCompanyHolidaysCSV(data) {
+    const header = ['startDate', 'endDate'];
+    const lines = data.map(({ startDate, endDate }) => `${startDate},${endDate}`);
+    return [header.join(','), ...lines].join('\n');
+}
+
+export async function saveCompanyHolidaysSimple(api, data) {
+    const csv = serializeCompanyHolidaysCSV(data);
+    await saveFile(api, 'calendar', 'companyHolidays.csv', csv);
+}
+
+function loadSampleCompanyHolidaysData(year) {
+
+    if (Object.keys(sampleCompanyHolidays).length === 0) return createCompanyHolidaySamplesCSV();
+    return sampleCompanyHolidays[year] || [];
+}
+
+export async function loadCompanyHolidayData(api, year) {
+    const dataMode = localStorage.getItem('dataMode') || 'auto';
+
+    // 1️⃣ Sample mode → always return sample data
+    if (dataMode === 'sample') {
+        const csv = createCompanyHolidaySamplesCSV();
+        return parseCompanyHolidaysCSV(csv);
+    }
+
+    // 2️⃣ Client mode → load real file
+    const folderPath = 'calendar/companyHolidays';
+    const fileName = `${year}.csv`;
+
+    try {
+        const fileData = await loadFile(
+            api,
+            'client',
+            `${folderPath}/${fileName}`,
+            async () => createCompanyHolidaySamplesCSV()
+        );
+
+        if (!fileData || fileData.trim() === '') {
+            console.warn(`⚠️ No company holiday file found for ${year}, returning empty array`);
+            return [];
+        }
+
+        const holidays = parseCompanyHolidaysCSV(fileData);
+
+        if (!holidays || holidays.length === 0) {
+            console.warn(`⚠️ Parsed empty holidays for ${year}`);
+            return [];
+        }
+
+        return holidays;
+
+    } catch (err) {
+        console.error(`❌ Failed to load company holidays for ${year}:`, err);
+        return [];
+    }
+}
+
+function parseCompanyHolidaysCSV(fileData) {
+    if (!fileData) return [];
+    const rows = fileData.split('\n').slice(1).map(r => r.trim()).filter(Boolean);
+    const holidays = rows.map(row => {
+        const [startDateStr, endDateStr] = row.split(',').map(c => c.trim());
+        const startDate = new Date(startDateStr);
+        const endDate = new Date(endDateStr || startDateStr);
+        return isNaN(startDate) || isNaN(endDate) ? null : { startDate, endDate };
+    }).filter(Boolean);
+    holidays.sort((a, b) => a.startDate - b.startDate);
+    companyHolidays = holidays;
+    return holidays;
+}
+
+function generateCompanyHolidayCSV(companyHolidayArray) {
+    const csvHeader = 'startDate,endDate';
+
+    const csvBody = companyHolidayArray.map(p => {
+        const start = (p.startDate instanceof Date)
+            ? p.startDate
+            : new Date(p.startDate);
+
+        const end = (p.endDate instanceof Date)
+            ? p.endDate
+            : new Date(p.endDate);
+
+        return `${start.toISOString().slice(0, 10)},${end.toISOString().slice(0, 10)}`;
+    });
+
+    return [csvHeader, ...csvBody].join('\n');
+}
+
+
+function calendarStateToCSV(state) {
+    const header = 'mo,di,mi,do,fr,sa,so';
+    const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+    const row = days.map(day => boolsToKey(state[day])).join(',');
+    return `${header}\n${row}`;
+}
+
+export async function saveOfficeDays(api, calendarState) {
+    const folderPath = 'calendar';
+    const fileName = 'officeDays.csv';
+
+    console.log(" save office days ", calendarState);
+
+    const csvContent = calendarStateToCSV(calendarState);
+
+    try {
+        const savedPath = await saveFile(api, folderPath, fileName, csvContent);
+        if (!savedPath) {
+            console.warn('⚠️ Failed to save calendar CSV.');
+        }
+    } catch (err) {
+        console.error('❌ Error saving calendar CSV:', err);
+    }
+}
+
+
+export async function saveCompanyHolidaysCSV(api, year, holidayData) {
+    const folderPath = 'calendar';
+    const fileName = `companyHolidays/${year}.csv`;
+    const csvContent = generateCompanyHolidayCSV(holidayData);
+    await saveFile(api, folderPath, fileName, csvContent);
+}
+//#endregion
+
+// loadStateData
+export async function loadStateData(api) {
+    if (!api) throw new Error('API reference missing for loadStateData');
+    const homeKey = localStorage.getItem('dataMode') || 'auto';
+    if (homeKey === 'sample') return 'NI';
+
+    try {
+        const txt = await loadFile(api, 'client', 'calendar/state.txt', null, true);
+        if (txt && txt.trim().length === 2) {
+            state = txt.trim().toUpperCase();
+            return state;
+        }
+        console.warn('⚠️ Invalid state.txt, falling back to default');
+        state = 'XX';
+        return state;
+    } catch (err) {
+        console.error('❌ Error loading state:', err);
+        state = 'XX';
+        return state;
+    }
+}
+
+// saveStateData
+export async function saveStateData(api, currentState) {
+    if (!api) throw new Error('API reference missing for saveStateData');
+    try {
+        state = currentState.trim().toUpperCase();
+        const savedPath = await saveFile(api, 'calendar', 'state.txt', state);
+        return savedPath;
+    } catch (err) {
+        console.error('❌ Error saving state:', err);
+        throw err;
+    }
+}
+
+
+export async function loadCalendarData(api, year) {
+    if (!api) throw new Error('API missing in calendar loader');
+    let holidays = [];
+    let officeDaysData = [];
+    try {
+        holidays = await loadCompanyHolidayData(api, year);
+        officeDaysData = await loadOfficeDaysData(api);
+    } catch (error) {
+        console.error('Error loading calendar data:', error);
+    }
+    const stateValue = loadStateData(api);
+    return { holidays, officeDays: officeDaysData, state: stateValue };
+}
+
+export { state, officeDays };

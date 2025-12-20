@@ -1,38 +1,35 @@
-import { loadRoleData, roles } from '../../../js/loader/role-loader.js';
-import { employees } from '../../../js/loader/employee-loader.js';
-import { officeDays } from '../../../js/loader/calendar-loader.js';
-import { loadRequests, appendRequestToCSV, updateRequest, getAvailableRequestFiles } from '../../../js/loader/request-loader.js';
+import { loadRoleData } from '../../../js/loader/role-loader.js';
+import { loadEmployeeData, filterEmployeesByEndDate, storeEmployeeChange } from '../../../js/loader/employee-loader.js';
+import { loadOfficeDaysData, loadPublicHolidaysSimple, loadStateData } from '../../../js/loader/calendar-loader.js';
+import { loadRequests, appendRequest, updateRequest, getAvailableRequestFiles, storeApproval } from '../../../js/loader/request-loader.js';
+import { filterPublicHolidaysByYearAndState, getAllHolidaysForYear } from '../../../js/Utils/holidayUtils.js';
+import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
+import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
+import { createBranchSelect, branchPresetsRoles } from '../../../js/Utils/branch-select.js';
+import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js';
+import { recalcWarnings, resetWarnings } from "./request-warnings.js";
+import { createDateRangePicker } from '../../../Components/customDatePicker/customDatePicker.js';
+
 
 let requestYear = 2000;
 let api;
-let currentEployee;
+let currentEmployee;
 let allRequests = [];
+let requestEmployees = [];
+let officeDays = [];
+let publicHolidays = [];
+let federalState = '';
 
-const warningList = [];
-
-const posWarnings = {
-  past: { rank: 5, warn: "📝 Der Start-Termin liegt in der Vergangenheit" },
-  over: { rank: 4, warn: "📝 Nicht genügend Überstunden" },
-  vacx: { rank: 3, warn: "⚠️ Nicht genügend Urlaubsanspruch" },
-  auto: { rank: 3, warn: "⚠️ Dieser Antrag wird automatisch genehmigt." },
-  urgn: { rank: 1, warn: "🚨 Eilig, Abwesenheit startet bald" },
-  nobo: { rank: 2, warn: "🛑 kein Angestellter ausgewählt" },
-  stat: { rank: 2, warn: "🛑 kein start Termin ausgewählt" },
-  shif: { rank: 2, warn: "🛑 halber Tag frei nur an Einzeltagen " },
-
+const rankEmojis = {
+  1: "📝",   // Hint / minor
+  2: "⚠️",   // Major
+  3: "⚠️",   // Major (different rank, same emoji)
+  4: "🛑",   // Critical
+  5: "🚨"    // Critical / urgent
 };
 
-const vacationTypes = {
-  vac: { autoApprove: false, reduceFrom: "vacation", warnKey: "vacx" }, // 🏖️ Urlaub
-  sik: { autoApprove: true, reduceFrom: "none", warnKey: 'auto' },       // 💉 Genesung
-  spe: { autoApprove: false, reduceFrom: "none", warnKey: null },       // 🎁 Sonderurlaub
-  otc: { autoApprove: false, reduceFrom: "overtime", warnKey: "over" }, // ⚖️ Ausgleichstag
-  but: { autoApprove: true, reduceFrom: "none", warnKey: 'auto' },        // 🚕 Geschäftreise
-  par: { autoApprove: false, reduceFrom: "none", warnKey: null },        // 🧸 Elternzeit
-  hom: { autoApprove: false, reduceFrom: "none", warnKey: null },        // 🏠 Home-Office
-  unp: { autoApprove: false, reduceFrom: "none", warnKey: null }        // 💸 Unbezahlt
-};
-
+const autoApprovedTypes = ["sik", "spe", "but", "par"];
+const hintOnlyTypes = ["hom"]; // gets a soft "info" hint
 
 const newRequest = {
   id: "",                  // Unique ID (timestamp when request was made)
@@ -48,34 +45,12 @@ const newRequest = {
   requestedAt: "",         // formated date dd,mm,yyyy
 }
 
-function checkBalance(type, warnKey) {
-  let availableDays = 0;
-
-  if (!currentEployee) {
-    addWarning('nobo');
-    return;
-  }
-  removeWarning('nobo');
-
-  if (type === "vacation") {
-    availableDays = currentEployee.availableDaysOff;
-  } else if (type === "overtime") {
-    availableDays = currentEployee.overtime;
-  }
-
-  if (newRequest.totalDays > availableDays) {
-    addWarning(warnKey);
-  } else {
-    removeWarning(warnKey);
-  }
-}
-
 function resetNewRequest() {
   newRequest.id = "";                  // Unique ID (timestamp when request was made)
-  newRequest.employeeID = "";          // Employee ID
+  newRequest.employeeId = "";          // Employee ID
   newRequest.vacationType = "vac";     // Type of leave (was: DayOffType)
-  newRequest.start = "";               // Start date
-  newRequest.end = "";                 // End date
+  newRequest.startDate = "";               // Start date
+  newRequest.endDate = "";                 // End date
   newRequest.shift = "";               // Shift day (true = half-day)
   newRequest.requesterMSG = "";        // Optional message from requester
   newRequest.approverMSG = "";         // Optional message from approver
@@ -86,190 +61,334 @@ function resetNewRequest() {
   newRequest.requestedAt = "";         // Timestamp when the request was created
 }
 
+let mode = 'create';
+
 export async function initializeRequestForm(passedApi) {
-
   api = passedApi;
-  if (!api) console.error(" Api was not passed ==> " + api);
+  if (!api) console.error("Api was not passed ==> " + api);
 
-  Promise.all([
-    officeDays
-  ])
-    .then(() => { })
-    .catch((error) => {
-      console.error('Error loading data:', error);
-    });
+  console.log("📌 Initializing request form...");
+  console.log("Current dataMode:", api.dataMode);
 
-  const formContainer = document.getElementById('form-container');
-  if (!formContainer) {
-    console.error('Form container not found');
-    return;
+  // 1️⃣ Load office days first (optional)
+  try {
+    officeDays = await loadOfficeDaysData(api);
+    console.log("✅ Loaded office days:", officeDays.length);
+  } catch (err) {
+    console.warn("⚠️ Failed to load office days:", err);
+    officeDays = [];
   }
 
-  formContainer.innerHTML = '';
+  // 2️⃣ Load employees
+  try {
+    requestEmployees = await loadEmployeeData(api);
+    console.log("✅ Loaded employees:", requestEmployees.length);
+  } catch (err) {
+    console.error("❌ Failed to load employees:", err);
+    requestEmployees = [];
+  }
+
+  try {
+    federalState = await loadStateData(api);
+    console.log("✅ federal state:", federalState);
+  } catch (err) {
+    console.error("❌ Failed to load federal state:", err);
+    federalState = '';
+  }
+
+  publicHolidays = await loadPublicHolidaysSimple(api);
+
+  // 3️⃣ Prepare form container
+  const formContainer = document.getElementById('form-container');
+  if (!formContainer) return console.error("Form container not found");
+  formContainer.innerHTML = ''; // clear old form
 
   try {
     const response = await fetch('Components/forms/request-form/request-form.html');
     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-
-    const formContent = await response.text();
-    formContainer.innerHTML = formContent;
-
+    formContainer.innerHTML = await response.text();
   } catch (err) {
-    console.error(`Loading request form failed: ${err}`);
+    console.error(`Failed to load request form HTML: ${err}`);
     return;
   }
 
-  const requestFormContainer = document.getElementById("request-form-container");
-  if (!requestFormContainer) {
-    console.warn(" request container not found");
-    return
+  // 4️⃣ Year filter
+  const yearFilter = document.getElementById('request-year');
+  requestYear = parseInt(localStorage.getItem('RequestListDate'), 10) || new Date().getFullYear();
+  if (yearFilter) {
+    yearFilter.value = requestYear;
+    yearFilter.title = "Jahr für Antragsliste wählen";
+    yearFilter.addEventListener('change', async () => {
+      const selectedYear = parseInt(yearFilter.value, 10) || new Date().getFullYear();
+      localStorage.setItem('RequestListDate', selectedYear);
+      await initializeRequestForm(api);
+    });
   }
 
-  const yearFilter = document.getElementById('year-filter');
-  requestYear = requestYear > 2000 ? requestYear : new Date().getFullYear();
-  if (yearFilter) yearFilter.value = requestYear;
+  // 5️⃣ Buttons
+  const refreshBtn = document.getElementById('refresh-request-form');
+  if (refreshBtn) refreshBtn.addEventListener('click', async () => await initializeRequestForm(api));
 
-  const approveRequestBtn = document.getElementById("create-request-mode-btn");
-  const createRequestBtn = document.getElementById("approve-request-mode-btn");
-
+  const createRequestBtn = document.getElementById("create-request-mode-btn");
+  const approveRequestBtn = document.getElementById("approve-request-mode-btn");
   const decisionContainer = document.getElementById("request-enter-container");
   const requestEnter = document.getElementById("decision");
 
-  const switchMode = (mode) => {
+  const switchMode = async (mode) => {
     if (mode === "approve") {
-      createRequestBtn.classList.remove("active");
-      createRequestBtn.classList.add("inactive");
+      createRequestBtn.classList.replace("inactive", "active");
+      approveRequestBtn.classList.replace("active", "inactive");
+      requestEnter.classList.replace("inactive", "active");
+      decisionContainer.classList.replace("active", "inactive");
 
-      approveRequestBtn.classList.add("active");
-      approveRequestBtn.classList.remove("inactive");
-
-      requestEnter.classList.add("inactive");
-      requestEnter.classList.remove("active");
-
-      decisionContainer.classList.remove("inactive");
-      decisionContainer.classList.add("active");
+      initDecisionEventListener();
+      initFilterListener();
+      await loadAndRenderRequests();
+    } else {
+      createRequestBtn.classList.replace("active", "inactive");
+      approveRequestBtn.classList.replace("inactive", "active");
+      requestEnter.classList.replace("active", "inactive");
+      decisionContainer.classList.replace("inactive", "active");
 
       renderRequesterList();
       initRequestEventListener();
-
-    } else {
-      createRequestBtn.classList.add("active");
-      createRequestBtn.classList.remove("inactive");
-
-      approveRequestBtn.classList.remove("active");
-      approveRequestBtn.classList.add("inactive");
-
-      requestEnter.classList.remove("inactive");
-      requestEnter.classList.add("active");
-
-      decisionContainer.classList.add("inactive");
-      decisionContainer.classList.remove("active");
-
-      initDecisionEventListener();
-      loadAndRenderRequests();
+      await loadAndRenderRequests(); // make sure requests use latest data
     }
   };
 
-  createRequestBtn.addEventListener("click", () => switchMode("create"));
-  approveRequestBtn.addEventListener("click", () => switchMode("approve"));
-
-  switchMode("approve");
-}
-
-function createRequestEventListeners() {
-  const pickStartBtn = document.getElementById("pick-request-start");
-  const pickEndBtn = document.getElementById("pick-request-end");
-  const startPicker = document.getElementById("request-start-picker");
-  const endPicker = document.getElementById("request-end-picker");
-
-  function updatePreview(type, date) {
-    const previewId = type === "start" ? "request-preview-start" : "request-preview-end";
-    const el = document.getElementById(previewId);
-    if (el) el.textContent = date;
-  }
-
-  function validate(start, end) {
-    console.log("Validating request dates:", start, end);
-    // your validation here
-  }
-
-  pickStartBtn?.addEventListener("click", () => {
-    const today = new Date().toISOString().split("T")[0];
-    startPicker.value = today;
-    updatePreview("start", today);
-    validate(today, endPicker.value);
-    startPicker.showPicker?.() || startPicker.focus();
+  createRequestBtn.addEventListener("click", async () => {
+    localStorage.setItem('requestForm_lastTab', 'create');
+    await switchMode("create");
   });
 
-  pickEndBtn?.addEventListener("click", () => {
-    const today = new Date().toISOString().split("T")[0];
-    endPicker.value = today;
-    updatePreview("end", today);
-    validate(startPicker.value, today);
-    endPicker.showPicker?.() || endPicker.focus();
+  approveRequestBtn.addEventListener("click", async () => {
+    localStorage.setItem('requestForm_lastTab', 'approve');
+    await switchMode("approve");
+  });
+
+  // 6️⃣ Load last tab
+  const lastTab = localStorage.getItem('requestForm_lastTab') || 'approve';
+  await switchMode(lastTab);
+
+  // 7️⃣ Finish
+  updateDivider("bg-request");
+  resetRequestWarnings();
+}
+
+function handleFilterChange() {
+  const filteredRequests = filterRequests(allRequests);
+  renderRequestsTable(filteredRequests);
+}
+
+function initFilterListener() {
+  const statusFilter = document.getElementById("status-filter");
+  const employeeFilter = document.getElementById("requester-filter");
+  const typeFilter = document.getElementById("decision-type-select");
+  const monthFilter = document.getElementById("month-filter");
+
+  [statusFilter, employeeFilter, typeFilter, monthFilter].forEach(select => {
+    if (!select) return;
+    select.removeEventListener("change", handleFilterChange);
+    select.addEventListener("change", handleFilterChange);
   });
 }
 
+function resetRequestWarnings() {
+  resetNewRequest();
+  resetRequestForm();
+  recalcWarnings();
+  updateDurationPreview();
+}
 
-function calculateTotalDays() {
-  if (!newRequest.start || !newRequest.end) return;
+function updateDivider(className) {
+  const divider = document.getElementById('horizontal-divider');
+  divider.innerHTML = '';
 
-  const startDate = new Date(newRequest.start);
-  const endDate = new Date(newRequest.end);
+  const leftGap = document.createElement('div');
+  leftGap.className = 'left-gap';
 
-  let totalDays = 0;
+  const h2 = document.createElement('h2');
+  h2.id = 'role-form-title';
+  h2.className = 'sr-only';
+  h2.innerHTML = `<span class="noto">📋</span> Urlaubsanträge stellen & genehmigen <span class="noto">✍🏻</span>`;
 
-  for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-    const weekdayIndex = d.getDay(); // 0 = Sunday, 6 = Saturday
+  const buttonContainer = document.createElement('div');
+  buttonContainer.id = 'form-buttons';
 
-    const officeSchedule = officeDays[weekdayIndex];
-    const employeeSchedule = currentEployee.workdays[weekdayIndex];
+  const helpBtn = createHelpButton('chapter-requests');
+  helpBtn.setAttribute('aria-label', 'Hilfe öffnen für Rollen-Formular');
 
-    if (employeeSchedule === "never") continue; // Employee does not work this day
+  const branchSelect = createBranchSelect({
+    onChange: (val) => {
+      console.log('Branch changed to:', val);
+      // applyBranchPreset(val);
+    }
+  });
+  // --- New global window buttons ---
+  const windowBtns = createWindowButtons(); // your new min/max buttons
 
-    let dayValue = 0; // How much to deduct
+  // Compose: add branchSelect, helpBtn, saveBtn, then windowBtns
+  buttonContainer.append(branchSelect, helpBtn, windowBtns);
 
-    if (officeSchedule === "never") continue; // Office closed, no deduction
+  divider.append(leftGap, h2, buttonContainer);
+}
 
-    if (officeSchedule === "full" && employeeSchedule === "full") {
-      dayValue = 1; // Both require a full day off
-    } else if (officeSchedule === "morning" || officeSchedule === "afternoon" ||
-      employeeSchedule === "morning" || employeeSchedule === "afternoon") {
-      dayValue = 0.5; // If either is part-time, deduct half a day
+function initDatePickers() {
+  // Initialize the date picker for Vacation Request form
+  createDateRangePicker({
+    startButton: "#pick-request-start",
+    endButton: "#pick-request-end",
+    startInput: "#request-start-picker",
+    endInput: "#request-end-picker",
+    previewStart: "#request-preview-start",
+    previewEnd: "#request-preview-end",
+    previewDuration: "#request-durration",
+    onChange: handleDateChange
+  });
+}
+
+function handleDateChange() {
+
+  console.log(" handle date change ");
+
+  const start = document.querySelector("#request-start-picker")?.value;
+  const end = document.querySelector("#request-end-picker")?.value;
+
+  if (!start || !end) {
+    document.querySelector("#request-durration").textContent = "";
+    return;
+  }
+
+  const days = calculateDaysOff(start, end);
+
+  // Update output
+  document.querySelector("#request-durration").textContent = days;
+}
+
+function calculateDaysOff(startDate, endDate, federalState) {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  // Normalize to midnight to avoid missing first/last day
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+
+  if (isNaN(start) || isNaN(end) || start > end) return 0;
+
+  const year = start.getFullYear();
+
+  const allHolidays = getAllHolidaysForYear(year, federalState) || [];
+
+  const holidayDates = allHolidays
+    .filter(h => h.isOpen === false)
+    .filter(h => h.bundesländer?.includes(federalState))
+    .map(h => h.date);
+
+  if (!currentEmployee) {
+    const idRaw = document.getElementById("requester-select").value;
+    const id = isNaN(idRaw) ? idRaw : Number(idRaw);
+    currentEmployee = requestEmployees.find(emp => emp.id === id);
+  }
+
+  const employeeWorkdays = currentEmployee.workDays;
+
+  const yearLimit = new Date(year, 11, 31);
+  yearLimit.setHours(0, 0, 0, 0);
+
+  const finalDate = end > yearLimit ? yearLimit : end;
+
+  let countedDays = 0;
+  const d = new Date(start);
+
+  let iterations = 0;
+
+  while (d <= finalDate && iterations < 366) {
+    const dayOfWeek = d.getDay();
+    const scheduled = employeeWorkdays?.[dayOfWeek] !== "never";
+
+    // Use LOCAL date instead of UTC to avoid off-by-one holiday errors
+    const iso = d.toLocaleDateString("en-CA"); // YYYY-MM-DD
+    const isHoliday = holidayDates.includes(iso);
+
+    if (scheduled && !isHoliday) countedDays++;
+
+    d.setDate(d.getDate() + 1);
+    iterations++;
+  }
+
+  return countedDays;
+}
+
+
+
+function createDurationMessage(startDate, endDate, employee, vacationType, reducePTO = false) {
+  const employeeWorkdays = employee.workDays;
+  const effectiveDays = calculateDaysOff(startDate, endDate, employeeWorkdays);
+
+  const typeLabels = {
+    vac: "Urlaub",
+    sik: "Genesung",
+    spe: "Sonderurlaub",
+    otc: "Ausgleichstag",
+    but: "Geschäftsreise",
+    par: "Elternzeit",
+    hom: "Home-Office",
+    unp: "unbezahlt"
+  };
+
+  const typeLabel = typeLabels[vacationType] || vacationType;
+  let msg = `${effectiveDays}`;
+  let msgUnit = ` Tage ${typeLabel}`;
+
+  if (reducePTO) {
+    switch (vacationType) {
+      case 'vac':
+        employee.remainingDaysOff -= effectiveDays;
+        break;
+      case 'otc':
+        employee.overtime -= effectiveDays;
+        break;
+      case 'unp':
+        const daysPerMonth = employeeWorkdays.filter(d => d !== 'never').length * 4;
+        const claimLoss = Math.floor((employee.availableDaysOff / 12) * (effectiveDays / daysPerMonth));
+        employee.availableDaysOff -= claimLoss;
+        msg += ` (geschätzter Urlaubsanspruchsverlust: ${claimLoss} Tage)`;
+        break;
     }
 
-    totalDays += dayValue;
+    storeEmployeeChange(api, employee, "update");
   }
-
-  newRequest.totalDays = totalDays;
-
-  checkBalance(vacationTypes[newRequest.vacationType].reduceFrom, vacationTypes[newRequest.vacationType].warnKey);
+  return { msg, msgUnit };
 }
-
 
 function renderRequesterList() {
   const requesterSelect = document.getElementById('requester-select');
   requesterSelect.classList.add("noto");
-  const requesterOption = document.createElement('option');
-  requesterOption.innerHTML = "bitte wählen";
-  requesterOption.value = 'xy';
-  requesterSelect.appendChild(requesterOption);
 
-  employees.forEach(employee => {
+  requesterSelect.innerHTML = '';
+
+  const validEmployees = filterEmployeesByEndDate(requestEmployees);
+  console.log("🔹 renderRequesterList -> validEmployees:", validEmployees);
+
+  validEmployees.forEach(employee => {
     if (['❓', 'keine', '?', 'name'].includes(employee.personalEmoji)) return;
 
-    const requesterOption = document.createElement('option');
-    const roleColor = getComputedStyle(document.documentElement).getPropertyValue(
-      `--role-${employee.mainRoleIndex}-color`
-    );
+    const opt = document.createElement('option');
+    const roleColor = getComputedStyle(document.body)
+      .getPropertyValue(`--role-${employee.mainRoleIndex}-color`);
 
-    requesterOption.style.backgroundColor = roleColor;
-    requesterOption.classList.add("noto");
-    requesterOption.innerHTML = `${employee.personalEmoji} ⇨ ${employee.name}`;
-    requesterOption.title = employee.name;
-    requesterOption.value = employee.id;
-    requesterSelect.appendChild(requesterOption);
+    opt.style.backgroundColor = roleColor;
+    opt.classList.add("noto");
+    opt.innerHTML = `${employee.personalEmoji} ⇨ ${employee.name}`;
+    opt.title = employee.name;
+    opt.value = employee.id;
+
+    opt.dataset.displayName = employee.name;
+
+    requesterSelect.appendChild(opt);
   });
+
+  requesterSelect.selectedIndex = 0;
 }
 
 
@@ -277,6 +396,7 @@ function initRequestEventListener() {
 
   const requestStoreButton = document.getElementById('requestStoreButton');
   requestStoreButton.addEventListener('click', () => storeRequest());
+  requestStoreButton.title = "Antrag speichern";
 
   const requesterSelection = document.getElementById('requester-select');
   requesterSelection.addEventListener("change", (ev) => switchRequester(ev));
@@ -284,24 +404,14 @@ function initRequestEventListener() {
   const requestTypeSelect = document.getElementById('request-type-select');
   requestTypeSelect.addEventListener("change", (ev) => updateRequestType(ev));
 
-  /*
-  const requestStartDate = document.getElementById('request-start');
-  requestStartDate.addEventListener("change", (ev) => updateRequestStartDate(ev, requestStartDate));
-
-  const requestEndDate = document.getElementById('request-end');
-  requestEndDate.addEventListener("change", (ev) => { newRequest.end = ev.target.value });
-  */
-
   const requestShiftMorning = document.getElementById('request-morning');
   const requestShiftafternoon = document.getElementById('request-morning');
-
-  requestShiftMorning.addEventListener("change", (ev) => switchShifts(ev, 'morning', requestShiftMorning, requestShiftafternoon));
-  requestShiftafternoon.addEventListener("change", (ev) => switchShifts(ev, 'afternoon', requestShiftMorning, requestShiftafternoon));
 
   const requesterMSG = document.getElementById('multiline-input');
   requesterMSG.addEventListener('keydown', (ev) => handleRequestMSG(ev));
 
-  createRequestEventListeners();
+  initDatePickers();
+
 }
 
 function isValidDate(dateString) {
@@ -315,51 +425,56 @@ function isValidDate(dateString) {
 
 function storeRequest() {
 
-  let isRequestComplete = true;
+  const requestToStore = {};
 
-  if (newRequest.employeeID === 'xy' || newRequest.employeeID === '') {
-    isRequestComplete = false;
-    addWarning('nobo');
-  } else {
-    removeWarning('nobo');
-  }
+  const previewStart = document.getElementById('request-preview-start').textContent;
+  const previewEnd = document.getElementById('request-preview-end').textContent;
 
-  if (!isValidDate(newRequest.start)) {
-    isRequestComplete = false;
-    addWarning('stat');
-  } else {
-    removeWarning('stat');
-  }
+  requestToStore.start = parsePreviewDate(previewStart);
+  requestToStore.end = parsePreviewDate(previewEnd);
 
-  if (isValidDate(newRequest.end && newRequest.shift !== 'full')) {
-    isRequestComplete = false;
-    addWarning('shif');
-  } else {
-    removeWarning('shif');
-  }
-
-  updateWarningsUI();
-  if (!isRequestComplete) {
-    console.log('request failed ');
+  if (!requestToStore.start || !requestToStore.end) {
+    console.error("❌ Invalid start/end dates:", previewStart, previewEnd);
+    showError("Bitte wählen Sie gültige Start- und Enddaten");
     return;
   }
 
-  if (!isValidDate(newRequest.end && (newRequest.shift === 'morning' || newRequest.shift === 'afternoon'))) {
-    newRequest.shift = 'full';
-    newRequest.end = newRequest.start;
-    isRequestComplete = false;
+  requestToStore.employeeID = parseInt(document.getElementById('requester-select').value, 10) || currentEmployee?.id || "";
+  requestToStore.id = Date.now().toString() + Math.floor(Math.random() * 1000).toString();
+  requestToStore.requestedAt = new Date().toISOString().split('T')[0];
+  requestToStore.requesterMSG = document.getElementById('multiline-input').value;
+  requestToStore.shift = "full";
+  requestToStore.status = "pending";
+  requestToStore.vacationType = document.getElementById('request-type-select').value;
+  requestToStore.approverMSG = "";
+  requestToStore.decisionDate = "";
+  requestToStore.effectiveDays = document.getElementById('request-durration').textContent;
+
+  const date = new Date(requestToStore.start);
+  const year = date.getFullYear();
+
+  if (autoApprovedTypes.includes(requestToStore.vacationType)) {
+    requestToStore.status = "approved";
+    requestToStore.decisionDate = new Date().toISOString().split('T')[0];
+    requestToStore.approverMSG = "Automatisch genehmigt";
   }
 
-  if (!isValidDate(newRequest.end)) {
-    newRequest.end = newRequest.start;
-    newRequest.day = 1;
+  if (isNaN(date)) {
+    console.error("❌ Invalid startDate:", requestToStore.startDate);
+    showError("Bitte wählen Sie ein gültiges Startdatum");
+    return;
   }
 
-  if (newRequest.shift === "morning" || newRequest.shift === 'afternoon') {
-    newRequest.end = newRequest.start;
-    newRequest.day = 0.5;
+  console.log(" new request before passing: ", requestToStore);
+
+  try {
+    appendRequest(api, Number(year), requestToStore);
+    resetRequestWarnings();
+  } catch (err) {
+    console.error(err);
+    showError("Failed to save request to disk");
   }
-  appendRequestToCSV(api, newRequest);
+  updateDurationPreview(true);
 }
 
 function handleRequestMSG(event) {
@@ -388,106 +503,71 @@ function switchShifts(event, ident, shiftMorning, shiftAfternoon) {
 
 function updateRequestStartDate(event, element) {
   element.classList.remove("request-date-warning");
-  newRequest.start = event.target.value;
+  newRequest.startDate = event.target.value;
 
-  const startDate = new Date(newRequest.start);
+  const startDate = new Date(newRequest.startDate);
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Remove time part for accurate comparison
 
-  removeWarning('stat');
-
-  if (startDate < today) {
-    element.classList.add("request-date-warning");
-    addWarning("past");
-  } else {
-    removeWarning("past");
-  }
-
-  updateWarningsUI();
+  recalcWarnings();
 }
-
-function addWarning(type) {
-  if (!warningList.includes(type)) {
-    warningList.push(type);
-  }
-}
-
-function removeWarning(type) {
-  const index = warningList.indexOf(type);
-  if (index !== -1) {
-    warningList.splice(index, 1);
-  }
-}
-
-function updateWarningsUI() {
-  const warningContainer = document.querySelector(".request-form-warn");
-  warningContainer.innerHTML = "⚠️ Warnungen ⚠️<ul>";
-
-  if (warningList.length === 0) {
-    warningContainer.innerHTML += "-";
-  } else {
-    warningList
-      .sort((a, b) => posWarnings[b].rank - posWarnings[a].rank) // Sort by rank (higher first)
-      .forEach((type) => {
-        warningContainer.innerHTML += `<li>${posWarnings[type].warn}</li>`;
-      });
-  }
-
-  warningContainer.innerHTML += "</ul>";
-}
-
 
 function resetRequestForm() {
-
   document.getElementById('request-type-select').selectedId = 'vac';
   document.getElementById('multiline-input').value = "";
   document.getElementById('request-vacation-left').innerHTML = "XX";
   document.getElementById('request-vacation-total').innerHTML = "XX";
   document.getElementById('request-overtime').innerHTML = "X";
-  document.getElementById('request-start').value = "";
-  document.getElementById('request-start').classList.add('request-date-warning');
-  document.getElementById('request-end').value = "";
-  document.getElementById('request-morning').checked = false;
-  document.getElementById('request-afternoon').checked = false;
+  document.getElementById('pick-request-start').value = "";
+  document.getElementById('pick-request-end').value = "";
   document.getElementById('requester-emoji').innerHTML = "❓";
   document.getElementById('requester-emoji').style.backgroundColor = "white";
-
 }
 
 function switchRequester(ev) {
+  const select = ev.target;
+  const selectedId = select.value;
+  const selectedOption = select.selectedOptions[0];
+  let newRequester = requestEmployees.find(emp => emp.id == selectedId);
 
-  const selectedId = ev.target.value;
-  let newRequester = employees.find(emp => emp.id == selectedId);
-
-  if (ev.target.value === 'xy') {
-    currentEployee = "";
-    addWarning('nobo');
-    updateWarningsUI();
+  if (selectedId === 'xy') {
+    currentEmployee = null;
     resetRequestForm();
     resetNewRequest();
+    recalcWarnings();
     return;
   }
-  removeWarning('nobo');
-  updateWarningsUI();
-  console.log(newRequester);
-  currentEployee = newRequester;
-  newRequest.employeeID = newRequester.id;
+
+  currentEmployee = newRequester;
+  newRequest.employeeID = newRequester.id; // ✅ updated line
+
   const requesterEmoji = document.getElementById('requester-emoji');
   requesterEmoji.innerHTML = newRequester.personalEmoji;
-  const roleColor = getComputedStyle(document.documentElement).getPropertyValue(
-    `--role-${newRequester.mainRoleIndex}-color`
-  );
+  const roleColor = getComputedStyle(document.body)
+    .getPropertyValue(`--role-${newRequester.mainRoleIndex}-color`);
   requesterEmoji.style.backgroundColor = roleColor;
+  requesterEmoji.classList.add("noto");
 
   document.getElementById('request-vacation-left').innerHTML = newRequester.remainingDaysOff;
   document.getElementById('request-vacation-total').innerHTML = newRequester.availableDaysOff;
   document.getElementById('request-overtime').innerHTML = newRequester.overtime;
 
   newRequest.id = Date.now();
-
   const formattedDate = formatDate(newRequest.id);
   newRequest.requestedAt = formattedDate;
   document.getElementById('request-id').innerHTML = formattedDate;
+
+  document.getElementById('request-type-select').focus();
+  updateDurationPreview();
+
+  const originalText = selectedOption.innerHTML;
+  const nameOnly = selectedOption.dataset.displayName;
+
+  selectedOption.innerHTML = nameOnly;
+
+  select.addEventListener('mousedown', () => {
+    selectedOption.innerHTML = originalText;
+  }, { once: true });
 }
 
 function formatDate(timestamp) {
@@ -500,98 +580,77 @@ function formatDate(timestamp) {
 
 function updateRequestType(event) {
   const selectedType = event.target.value;
-  newRequest.vacationType = selectedType;
 
-  const typeInfo = vacationTypes[selectedType];
-
-  if (!typeInfo) return;
-
-  if (typeInfo.autoApprove) {
-    addWarning('auto');
-  } else {
-    removeWarning('auto');
-  }
-
-  if (typeInfo.reduceFrom === "none") {
-    console.log("ℹ️ Keine Reduktion von Urlaub oder Überstunden.");
-    removeWarning(typeInfo.warnKey);
-  } else {
-    checkBalance(typeInfo.reduceFrom, typeInfo.warnKey);
-  }
-
-  updateWarningsUI();
+  /*
+  checkAutoApprovalWarning(selectedType);
+  recalcWarnings();
+  */
 }
 
 async function loadAndRenderRequests() {
+  const yearInput = document.getElementById('request-year');
+  const year = yearInput && !isNaN(parseInt(yearInput.value, 10))
+    ? parseInt(yearInput.value, 10)
+    : new Date().getFullYear();
 
+  let validFiles = [];
   try {
-    const validFiles = await getAvailableRequestFiles(api);
-    let requests = [];
-
-    if (validFiles.length === 0) {
-      console.warn("⚠️ No valid request files found — loading sample data manually");
-      const year = 2025;
-      const month = 6;
-      const requestData = await loadRequests(api, year, String(month).padStart(2, '0'));
-      requests = requestData;
-    } else {
-      for (const { year, month } of validFiles) {
-        const formattedMonth = String(month).padStart(2, '0');
-        const requestData = await loadRequests(api, year, formattedMonth);
-        requests = [...requests, ...requestData];
-      }
-    }
-    allRequests = requests;
-    // console.log(" ALL REQUESTS ==> ", allRequests);
-    const filteredRequests = filterRequests(allRequests);
-    console.log(" FILTERED REQUESTS ==> ", filteredRequests);
-
-    renderRequestsTable(filteredRequests)
-
-  } catch (error) {
-    console.warn("🚨 Error fetching request files:", error);
+    validFiles = await getAvailableRequestFiles(api);
+  } catch (err) {
+    console.warn("⚠️ Could not fetch available request files:", err);
   }
+
+  let requests = [];
+
+  // 🧭 If no valid files found, try loading manually (onboarding or fallback)
+  if (!validFiles || validFiles.length === 0) {
+    console.warn("⚠️ No valid request files found — loading sample or placeholder data");
+    requests = await loadRequests(api, year);
+  } else {
+    // ✅ Folder exists; try to load data for selected year
+    const fileForYear = validFiles.find(f => f.year === year);
+    if (fileForYear) {
+      requests = await loadRequests(api, year);
+    } else {
+      console.warn(`ℹ️ No file found for ${year}, returning placeholder`);
+      requests = [{ info: `Noch keine Anträge für ${year} gestellt` }];
+    }
+  }
+  const filteredRequests = filterRequests(requests);
+
+  console.log("📄 Loaded requests:", filteredRequests.length);
+
+  renderRequestsTable(filteredRequests);
 }
 
+
 function filterRequests(requests) {
-  console.log("📥 INSIDE FILTER request:", requests);
 
   const filters = {
+    status: document.getElementById("status-filter")?.value || 'all',
+    employee: document.getElementById("requester-filter")?.value || 'all', // NEW
     type: document.getElementById("decision-type-select")?.value || 'all',
     month: document.getElementById("month-filter")?.value || 'all',
-    status: document.getElementById("status-filter")?.value || 'all',
   };
 
-  console.log("🔍 Active filters:", filters);
-
-  if (filters.type === 'all' && filters.month === 'all' && filters.status === 'all') {
+  if (filters.employee === 'all' && filters.type === 'all' && filters.month === 'all' && filters.status === 'all') {
     return requests;
   }
 
   return requests.filter(request => {
+    if (filters.employee !== "all" && String(request.employeeID) !== filters.employee) return false; // filter employee
     if (filters.type !== "all" && request.vacationType !== filters.type) return false;
-
     if (filters.month !== "all") {
       const requestMonth = request.start?.substring(5, 7);
       if (requestMonth !== filters.month) return false;
     }
-
     if (filters.status !== "all" && request.status !== filters.status) return false;
 
     return true;
   });
 }
 
-
-
-
 function initDecisionEventListener() {
-  const toggleDurationBtn = document.getElementById("decisionDurationBtn");
-  toggleDurationBtn.addEventListener("click", () => {
-    toggleDurationBtn.dataset.order = toggleDurationBtn.dataset.order === "asc" ? "desc" : "asc";
-    toggleDurationBtn.innerText = toggleDurationBtn.dataset.order === "asc" ? "↥ aufsteigend" : "↧ absteigend";
-    loadAndRenderRequests();
-  });
 
   document.querySelectorAll("select").forEach(select => {
     select.addEventListener("change", (e) => {
@@ -609,27 +668,49 @@ function initDecisionEventListener() {
 
 function renderRequestsTable(requests) {
   const tbody = document.querySelector("#decision-table tbody");
+  if (!tbody) return;
   tbody.innerHTML = "";
 
-  let availableTypes = new Set();
-  let availableMonths = new Set();
-  let availableStatuses = new Set();
-  let availableWarnings = new Set();
+  // Collect available filters
+  const availableEmployees = new Set();
+  const availableTypes = new Set();
+  const availableMonths = new Set();
+  const availableStatuses = new Set();
+  const availableWarnings = new Set();
+
+
+
+  if (allRequests.length < 1) {
+    allRequests = requests.filter(r => r.start && r.employeeID);
+  }
+
+  console.log("all request ==> ", allRequests);
 
   allRequests.forEach(request => {
-    availableTypes.add(request.vacationType);   // Collect unique vacation types
-    availableMonths.add(request.start.substring(5, 7)); // Extract month from the date
-    availableStatuses.add(request.status);      // Collect unique statuses
-    if (request.violations > 0) availableWarnings.add(request.violations > 1 ? "multi" : "single");
+
+    if (!request || !request.start || !request.employeeID) {
+      console.warn("Skipping non-request object:", request);
+      return;
+    }
+
+    availableStatuses.add(request.status);
+    availableEmployees.add(request.employeeID);
+    availableTypes.add(request.vacationType);
+    availableMonths.add(request.start.substring(5, 7)); // <== line 683
+    if (request.violations > 0)
+      availableWarnings.add(request.violations > 1 ? "multi" : "single");
   });
 
   disableAllOptions();
 
-  // toggleFilterOptions("requester-filter", availableEmployees);
-  toggleFilterOptions("decision-type-select", availableTypes);
-  toggleFilterOptions("month-filter", availableMonths);
-  toggleFilterOptions("status-filter", availableStatuses);
-  // toggleFilterOptions("warning-filter", availableWarnings);
+  const employeeFilter = document.getElementById("requester-filter");
+  if (employeeFilter) {
+    populateEmployeeFilter([...availableEmployees]);
+  }
+  toggleFilterOptions("requester-filter", new Set([...availableEmployees].map(String)));
+  toggleFilterOptions("decision-type-select", new Set([...availableTypes].map(String)));
+  toggleFilterOptions("month-filter", new Set([...availableMonths].map(String)));
+  toggleFilterOptions("status-filter", new Set([...availableStatuses].map(String)));
 
   if (requests.length === 0) {
     tbody.innerHTML = `<tr><td colspan="9" class="text-center">No pending requests to display.</td></tr>`;
@@ -638,42 +719,142 @@ function renderRequestsTable(requests) {
 
   requests.forEach(request => {
     const row = document.createElement("tr");
+
+    // ✅ Create button container (if pending)
+    let firstColContent = "";
+    if (request.status === "pending") {
+      firstColContent = `
+        <div class="flex-row-2">
+          <button class="noto approveButton" data-id="${request.id}">✅</button>
+          <button class="noto rejectButton" data-id="${request.id}">❌</button>
+        </div>`;
+    } else {
+      firstColContent =
+        request.status === "approved"
+          ? `<span class="noto request-status-pill request-approved">✅ genehmigt</span>`
+          : `<span class="noto request-status-pill request-rejected">❌ abgelehnt</span>`;
+    }
+
+    const startFormatted = formatDateDMY(request.start);
+    const endFormatted = formatDateDMY(request.end);
+
+    if (request.effectiveDays == null || Number.isNaN(request.effectiveDays)) {
+      const employeeToFix = getEmployeeById(request.employeeID);
+      if (employeeToFix && request.start && request.end) {
+        const startDate = new Date(request.start);
+        const endDate = new Date(request.end);
+        request.effectiveDays = calculateDaysOff(startDate, endDate, employeeToFix.workdays);
+
+        const yearToFix = startDate.getFullYear();
+        updateRequest(api, request.id, request, yearToFix);
+      } else {
+        request.effectiveDays = 1;
+      }
+    }
+    if (request.effectiveDays < 1) request.effectiveDays = 1;
+    const effectiveDaysUnit = request.effectiveDays > 1 ? 'Tage' : 'Tag';
     row.innerHTML = `
-      <td class='noto'>${employees[request.employeeID].personalEmoji} ${employees[request.employeeID].name}</td>
+      <td class='noto flex-row-2'>${firstColContent}</td>
+      <td class='noto'>${(requestEmployees.find(e => e.id === request.employeeID)?.personalEmoji) || '❓'} ${(requestEmployees.find(e => e.id === request.employeeID)?.name) || 'Unbekannt'}</td>
       <td class='noto'>${getVacationIcon(request.vacationType)}</td>
-      <td class='noto'>${request.start} - ${request.end}</td>
-      <td class='noto'>${request.shift ? "½ Tag" : "Ganzer Tag"}</td>
-      <td class='noto'>${getStatusIcon(request.status)}</td>
-      <td class='noto'>${request.requesterMSG ? "🗨️" : ""}</td>
-      <td class='noto'>${request.approverMSG ? "🗨️" : ""}</td>
-      <td class='noto flex-row'></td>
+      <td>${startFormatted} bis<br>${endFormatted}</td>
+      <td>${request.effectiveDays} ${effectiveDaysUnit}</td>
+      <td class='request-msg-cell'>${request.requesterMSG || ""}</td>
+      <td class='noto approverCell'>${request.approverMSG || ""}</td>
       <td>${getWarningsIcon(request)}</td>
     `;
 
-    // Add buttons dynamically without inline JS
     if (request.status === "pending") {
-      const approveButton = document.createElement("button");
-      approveButton.className = "noto";
-      approveButton.textContent = "✅";
-      approveButton.addEventListener("click", () => approveRequest(request.id));
+      const approverTextarea = document.createElement("textarea");
+      approverTextarea.value = request.approverMSG || "";
+      approverTextarea.placeholder = "Enter approver message…";
 
-      const rejectButton = document.createElement("button");
-      rejectButton.className = "noto";
-      rejectButton.textContent = "❌";
-      rejectButton.addEventListener("click", () => rejectRequest(request.id));
+      const yearInput = document.getElementById('request-year');
+      const year = yearInput && !isNaN(parseInt(yearInput.value, 10))
+        ? parseInt(yearInput.value, 10)
+        : new Date().getFullYear();
 
-      const buttonCell = row.querySelector("td:nth-child(8)");
-      buttonCell.appendChild(approveButton);
-      buttonCell.appendChild(rejectButton);
+      let debounceTimer;
+      approverTextarea.addEventListener("input", () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          storeApproval(api, request.id, approverTextarea.value, null, year);
+        }, 600); // Wait 600ms after typing stops
+      });
+      row.querySelector(".approverCell").innerHTML = "";
+      row.querySelector(".approverCell").appendChild(approverTextarea);
     }
-
-    row.addEventListener("mouseenter", () => showMessages(request));
-    row.addEventListener("mouseleave", clearMessages);
 
     tbody.appendChild(row);
   });
+
+  const table = document.getElementById("decision-table");
+
+  table.removeEventListener("click", handleTableClick);
+  table.addEventListener("click", handleTableClick);
 }
 
+function getEmployeeById(employeeId) {
+  return requestEmployees.find(emp => emp.id === employeeId) ?? null;
+}
+
+function formatDateDMY(dateStr) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (isNaN(date)) return dateStr; // fallback if invalid
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0'); // months 0-11
+  const yyyy = date.getFullYear();
+  return `${dd}.${mm}.${yyyy}`;
+}
+
+async function handleTableClick(e) {
+  const target = e.target;
+
+  const yearInput = document.getElementById('request-year');
+  const year = yearInput && !isNaN(parseInt(yearInput.value, 10))
+    ? parseInt(yearInput.value, 10)
+    : new Date().getFullYear();
+
+  if (target.classList.contains("approveButton")) {
+    const id = target.dataset.id;
+    await storeApproval(api, id, null, "approved", year);
+    await loadAndRenderRequests();
+  }
+
+  if (target.classList.contains("rejectButton")) {
+    const id = target.dataset.id;
+    await storeApproval(api, id, null, "rejected", year);
+    await loadAndRenderRequests();
+  }
+}
+
+function populateEmployeeFilter(availableEmployeeIDs) {
+  const filterSelect = document.getElementById("requester-filter");
+  if (!filterSelect) return;
+
+  filterSelect.innerHTML = ""; // clear old options
+
+  const defaultOption = document.createElement('option');
+  defaultOption.value = 'all';
+  defaultOption.innerText = 'Alle Mitarbeiter';
+  filterSelect.appendChild(defaultOption);
+
+  requestEmployees.forEach(employee => {
+    if (!availableEmployeeIDs.includes(employee.id)) return; // skip if not in current requests
+
+    const option = document.createElement('option');
+    const roleColor = getComputedStyle(document.body).getPropertyValue(
+      `--role-${employee.mainRoleIndex}-color`
+    );
+    option.style.backgroundColor = roleColor;
+    option.classList.add("noto");
+    option.innerText = `${employee.personalEmoji} ⇨ ${employee.name}`;
+    option.title = employee.name;
+    option.value = employee.id;
+    filterSelect.appendChild(option);
+  });
+}
 
 function disableAllOptions() {
 
@@ -682,7 +863,7 @@ function disableAllOptions() {
     const options = select.querySelectorAll("option");
     options.forEach(option => {
       if (option.value !== "all") {
-        option.disabled = true;
+        // option.disabled = true;
         option.style.color = "lightgray";
         option.style.fontStyle = "italic";
       }
@@ -704,29 +885,12 @@ function toggleFilterOptions(filterId, availableValues) {
   });
 }
 
-
-function showMessages(request) {
-  document.getElementById("selected-request-warnings").value = getWarningsText(request);
-  document.getElementById("selected-requester-comment").value = request.requesterMSG || "";
-  document.getElementById("selected-approver-comments").value = request.approverMSG || "";
-}
-
-function clearMessages() {
-  document.getElementById("selected-request-warnings").value = "";
-  document.getElementById("selected-requester-comment").value = "";
-  document.getElementById("selected-approver-comments").value = "";
-}
-
 function getVacationIcon(type) {
   const icons = {
     "vac": "🏖️ Urlaub", "spe": "🎁 Sonderurlaub", "otc": "⚖️ Ausgleichstag", "but": "🚕  Geschäftreise",
     "hom": "🏠 Home Office", "sho": "📐 Berufsschule", "sik": "💉 Genesung", "par": "🧸 Elternzeit", "unp": "💸 unbezahlt"
   };
   return icons[type] || "❓";
-}
-
-function getStatusIcon(status) {
-  return status === "pending" ? "⏳" : status === "approved" ? "✅" : "❌";
 }
 
 function getWarningsIcon(request) {
@@ -748,62 +912,128 @@ function rejectRequest(id) {
 }
 
 async function handleRequestUpdate(id, newState) {
-  const buttonApprove = document.querySelector(`button[onclick="approveRequest('${id}')"]`);
-  const buttonReject = document.querySelector(`button[onclick="rejectRequest('${id}')"]`);
-  const messageInput = document.getElementById("selected-approver-comments");
-
-  // Disable buttons to prevent duplicate actions
-  buttonApprove.disabled = true;
-  buttonReject.disabled = true;
-
-  const approverMessage = messageInput.value.trim();
-  const decisionDate = new Date().toLocaleDateString("de-DE"); // Format: dd/mm/yyyy
+  const approverMessage = document.getElementById("selected-approver-comments")?.value.trim() || "";
+  const decisionDate = new Date().toLocaleDateString("de-DE");
 
   try {
     await updateRequest(api, id, {
       status: newState,
       approverMSG: approverMessage,
-      decisionDate: decisionDate
+      decisionDate,
     });
-
-    console.log(`Request ${id} updated to ${newState}`);
-    loadAndRenderRequests(); // Ensure UI reflects the changes
+    await loadAndRenderRequests();
   } catch (error) {
     console.error("Failed to update request:", error);
-  } finally {
-    // Enable buttons again after update
-    buttonApprove.disabled = false;
-    buttonReject.disabled = false;
   }
 }
 
-function handleDecision(requestId, newStatus) {
+export function updateDurationPreview(savePTOchange = false) {
+  const startInput = document.getElementById("request-start-picker");
+  const endInput = document.getElementById("request-end-picker");
+  const durEl = document.getElementById("request-durration");
+  const durElUnit = document.getElementById('request-durattion-unit');
+  const startEl = document.getElementById("request-preview-start");
+  const endEl = document.getElementById("request-preview-end");
 
-  const messageInput = document.getElementById("selected-approver-comments");
-  const approverMessage = messageInput ? messageInput.value.trim() : "";
-  const decisionDate = new Date().toLocaleDateString("de-DE");
+  const startVal = startInput?.value;
+  const endVal = endInput?.value;
+  const vacationType = document.getElementById("request-type-select")?.value;
 
-  const request = allRequests.find(r => r.id === requestId);
-  if (!request) {
-    console.error(`Request with ID ${requestId} not found.`);
+  recalcWarnings();
+  if (!currentEmployee) {
+    const idRaw = document.getElementById("requester-select").value;
+    const id = isNaN(idRaw) ? idRaw : Number(idRaw);
+    currentEmployee = requestEmployees.find(emp => emp.id === id);
+  }
+  if (!currentEmployee) {
+    console.warn(" no current employee available to calculate vacation durration");
     return;
   }
 
-  const [year, month] = request.start ? request.start.split('-') : [null, null];
+  console.log("currentEmployee:", currentEmployee);
+  calculateDaysOff(startVal, endVal, currentEmployee.workDays, publicHolidays);
 
-  if (!year || !month) {
-    console.error("Missing start date for request:", request);
+  startEl.textContent = startVal || "--.--";
+  endEl.textContent = endVal || "--.--";
+
+  if (!startVal) {
+    durEl.textContent = "?";
+    durElUnit.textContent = 'Tage';
     return;
   }
 
-  updateRequest(api, requestId, {
-    status: newStatus,
-    approverMSG: approverMessage,
-    decisionDate,
-    start: request.start // Ensure the update function gets `start`
-  }).then(() => {
-    console.log(`Request ${requestId} updated to ${newStatus}`);
-    loadAndRenderRequests(); // Reload data
-  }).catch(err => console.error("Update failed:", err));
+  if (!endVal) {
+    durEl.textContent = "1";
+    durElUnit.textContent = 'Tag';
+    return;
+  }
+
+  const startDate = new Date(startVal);
+  const endDate = new Date(endVal);
+
+  if (endDate < startDate) {
+    durEl.textContent = "❌";
+    durElUnit.textContent = 'ungültig';
+  } else if (!currentEmployee) {
+    durEl.textContent = "?";
+    durElUnit.textContent = 'Tage';
+  } else {
+    const message = createDurationMessage(
+      startVal,
+      endVal,
+      currentEmployee,
+      vacationType,
+      savePTOchange
+    );
+
+    durEl.textContent = message.msg;
+    durElUnit.textContent = message.msgUnit;
+  }
+  recalcWarnings();
+}
+
+function checkAutoApprovalWarning(selectedType) {
+
+  recalcWarnings();
+}
+
+function showError(message) {
+  let popup = document.createElement("div");
+  popup.className = "request-popup-error noto";
+  popup.textContent = message;
+  document.body.appendChild(popup);
+
+  setTimeout(() => popup.remove(), 2500); // disappears after 2.5s
+}
+
+export async function refundReservedDays(api, request) {
+  const employee = getEmployeeById(request.employeeID);
+  const effectiveDays = calculateDaysOff(request.startDate, request.endDate, employee.workDays);
+
+  switch (request.vacationType) {
+    case 'vac':
+      employee.remainingDaysOff += effectiveDays;
+      break;
+    case 'otc':
+      employee.overtime += effectiveDays;
+      break;
+    case 'unp':
+      const daysPerMonth = employee.workDays.filter(d => d !== 'never').length * 4;
+      const claimLoss = Math.floor((employee.availableDaysOff / 12) * (effectiveDays / daysPerMonth));
+      employee.availableDaysOff += claimLoss;
+      break;
+  }
+
+  await storeEmployeeChange(api, employee, "update");
+}
+
+function parsePreviewDate(previewText) {
+  if (!previewText || previewText.includes("--")) return null;
+
+  const parts = previewText.split(".");
+  if (parts.length !== 3) return null;
+
+  const [d, m, y] = parts;
+  return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`; // ISO format for storage
 }
 

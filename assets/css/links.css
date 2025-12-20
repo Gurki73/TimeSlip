@@ -1,37 +1,37 @@
 :root {
-    /* SVG icons */
-    --icon-calendar: url('../../assets/svg/calendar-svgrepo-com.svg');
-    --icon-delete: url('../../assets/svg/file-delete-svgrepo-com.svg');
-    --icon-previous: url('../../assets/svg/previous-svgrepo-com.svg');
-    --icon-settings: url('../../assets/svg/cog-wheel-settings-svgrepo-com.svg');
-    --icon-document: url('../../assets/svg/file-document-svgrepo-com.svg');
-    --icon-puzzle: url('../../assets/svg/puzzle-piece-svgrepo-com.svg');
-    --icon-connection: url('../../assets/svg/connection-relation-communication-svgrepo-com.svg');
-    --icon-knowledge-graph: url('../../assets/svg/knowledge-graph-relationship-svgrepo-com.svg');
-    --icon-safe: url('../../assets/svg/safe-svgrepo-com.svg');
-    --icon-discover: url('../../assets/svg/discover-svgrepo-com.svg');
-    --icon-next: url('../../assets/svg/next-svgrepo-com.svg');
-    --icon-writing: url('../../assets/svg/writing-svgrepo-com.svg');
-    --icon-operation: url('../../assets/svg/operation-svgrepo-com.svg');
-    --icon-add: url('../../assets/svg/file-add-svgrepo-com.svg');
-    --icon-person: url('../../assets/svg/person-team-svgrepo-com.svg');
-  
-    /* PNG fallback for region-specific icons */
-    --icon-baden-wuerttemberg: url('../../assets/png/wappen-badenWuertenberg.png');
-    --icon-hamburg: url('../../assets/png/wappen-hamburg.png');
-    --icon-rheinlandpfalz: url('../../assets/png/wappen-rheinlandPfalz.png');
-    --icon-thueringen: url('../../assets/png/wappen-thüringen.png');
-    --icon-bayern: url('../../assets/png/wappen-Bayern.png');
-    --icon-berlin: url('../../assets/png/wappen-berlin.png');
-    --icon-hessen: url('../../assets/png/wappen-hessen.png');
-    --icon-sachsen: url('../../assets/png/wappen-sachsen.png');
-    --icon-mevopo: url('../../assets/png/wappen-MeVoPO.png');
-    --icon-brandenburg: url('../../assets/png/wappen-brandenburg.png');
-    --icon-niedersachsen: url('../../assets/png/wappen-niedersachsen.png');
-    --icon-sachsen-anhalt: url('../../assets/png/wappen-sachsenAnhalt.png');
-    --icon-saarland: url('../../assets/png/wappen-Saarland.png');
-    --icon-bremen: url('../../assets/png/wappen-bremen.png');
-    --icon-nrw: url('../../assets/png/wappen-nrw.png');
-    --icon-schleswig-holstein: url('../../assets/png/wappen-schleswigHolstein.png');
-  }
-  
+  /* SVG icons */
+  --icon-calendar: url("../../assets/svg/calendar-svgrepo-com.svg");
+  --icon-delete: url("../../assets/svg/file-delete-svgrepo-com.svg");
+  --icon-previous: url("../../assets/svg/previous-svgrepo-com.svg");
+  --icon-settings: url("../../assets/svg/cog-wheel-settings-svgrepo-com.svg");
+  --icon-document: url("../../assets/svg/file-document-svgrepo-com.svg");
+  --icon-puzzle: url("../../assets/svg/puzzle-piece-svgrepo-com.svg");
+  --icon-connection: url("../../assets/svg/connection-relation-communication-svgrepo-com.svg");
+  --icon-knowledge-graph: url("../../assets/svg/knowledge-graph-svgrepo-com.svg");
+  --icon-safe: url("../../assets/svg/safe-svgrepo-com.svg");
+  --icon-discover: url("../../assets/svg/discover-svgrepo-com.svg");
+  --icon-next: url("../../assets/svg/next-svgrepo-com.svg");
+  --icon-writing: url("../../assets/svg/writing-svgrepo-com.svg");
+  --icon-operation: url("../../assets/svg/operation-svgrepo-com.svg");
+  --icon-add: url("../../assets/svg/file-add-svgrepo-com.svg");
+  --icon-person: url("../../assets/svg/person-team-svgrepo-com.svg");
+
+  /* PNG fallback for region-specific icons */
+  --icon-baden-wuerttemberg: url("../../assets/png/wappen-badenWuertenberg.png");
+  --icon-hamburg: url("../../assets/png/wappen-hamburg.png");
+  --icon-rheinlandpfalz: url("../../assets/png/wappen-rheinlandPfalz.png");
+  --icon-thueringen: url("../../assets/png/wappen-thüringen.png");
+  --icon-bayern: url("../../assets/png/wappen-Bayern.png");
+  --icon-berlin: url("../../assets/png/wappen-berlin.png");
+  --icon-hessen: url("../../assets/png/wappen-hessen.png");
+  --icon-sachsen: url("../../assets/png/wappen-sachsen.png");
+  --icon-mevopo: url("../../assets/png/wappen-MeVoPO.png");
+  --icon-brandenburg: url("../../assets/png/wappen-brandenburg.png");
+  --icon-niedersachsen: url("../../assets/png/wappen-niedersachsen.png");
+  --icon-sachsen-anhalt: url("../../assets/png/wappen-sachsenAnhalt.png");
+  --icon-saarland: url("../../assets/png/wappen-Saarland.png");
+  --icon-bremen: url("../../assets/png/wappen-bremen.png");
+  --icon-nrw: url("../../assets/png/wappen-nrw.png");
+  --icon-schleswig-holstein: url("../../assets/png/wappen-schleswigHolstein.png");
+  --icon-nimmerland: url("../../assets/png/wappen-nimmerland.png");
+}

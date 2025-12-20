@@ -1,35 +1,171 @@
 import { resetAndBind } from './bindEventListner.js';
 
-export function createBranchSelect({ id = 'branch-select', defaultValue = 'onboarding', onChange } = {}) {
-    const select = document.createElement('select');
-    select.id = id;
-    select.setAttribute('aria-label', 'Branche auswählen');
+/*
+export function createBranchToggle({
+    id = 'branch-toggle',
+    defaultValue = 'client'
+} = {}) {
 
-    const options = [
-        { value: 'onboarding', label: 'Beispiel' },
-        { value: 'gastro', label: 'Gastronomie' },
-        { value: 'health', label: 'Gesundheit' },
-        { value: 'shop', label: 'Einzelhandel' },
-        { value: 'office', label: 'Büro' },
-        { value: 'logistics', label: 'Logistik' },
-        { value: 'industrial', label: 'Fertigung' },
-        { value: 'hospitality', label: 'Übernachtung' },
-        { value: 'custom', label: 'angepasst' },
-    ];
+    let button = document.getElementById(id);
+    if (button) {
+        const clone = button.cloneNode(true); // remove old handlers
+        button.replaceWith(clone);
+        button = clone;
+    } else {
+        button = document.createElement('button');
+        button.id = id;
+        button.classList.add('branch-toggle');
+    }
 
-    options.forEach(opt => {
-        const option = document.createElement('option');
-        option.value = opt.value;
-        option.textContent = opt.label;
-        select.appendChild(option);
+    const STORAGE_KEY = 'dataMode';
+    let current = localStorage.getItem(STORAGE_KEY) || defaultValue;
+    let isCoolingDown = false;
+
+    const updateLabel = () => {
+        const toggleIcon = '<span class="noto">🔁</span>';
+        const isExample = current === 'sample';
+        const label = isExample ? 'Daten anzeigen' : 'Beispiel anzeigen';
+        button.innerHTML = `${toggleIcon} ${label}`;
+        button.classList.toggle('active', !isExample);
+        localStorage.setItem(STORAGE_KEY, current);
+    };
+
+    // --- click-only toggle, no global events, no onChange callbacks
+    button.addEventListener('click', (event) => {
+        if (isCoolingDown) {
+            event.preventDefault();
+            return;
+        }
+        isCoolingDown = true;
+        setTimeout(() => (isCoolingDown = false), 3000); // simple cooldown
+
+        current = current === 'sample' ? 'client' : 'sample';
+        updateLabel();
     });
 
-    select.value = defaultValue;
+    updateLabel();
+    return button;
+}
+*/
 
-    // attach shared logic
-    initBranchSelectLogic(select, onChange);
+export function createBranchToggle({
+    id = 'branch-toggle',
+    defaultValue = 'sample',
+    onChange
+} = {}) {
 
-    return select;
+    const STORAGE_KEY = 'dataMode';
+    let current = localStorage.getItem(STORAGE_KEY) || defaultValue;
+
+    const wrapper = document.createElement('div');
+    wrapper.id = id;
+    wrapper.classList.add('branch-radio-group');
+
+    // --- Create radio inputs
+    const sampleRadio = document.createElement('input');
+    sampleRadio.type = 'radio';
+    sampleRadio.name = 'dataMode';
+    sampleRadio.value = 'sample';
+    sampleRadio.id = `${id}-sample`;
+
+    const sampleLabel = document.createElement('label');
+    sampleLabel.htmlFor = sampleRadio.id;
+    sampleLabel.textContent = 'Beispiel';
+
+    const clientRadio = document.createElement('input');
+    clientRadio.type = 'radio';
+    clientRadio.name = 'dataMode';
+    clientRadio.value = 'client';
+    clientRadio.id = `${id}-client`;
+
+    const clientLabel = document.createElement('label');
+    clientLabel.htmlFor = clientRadio.id;
+    clientLabel.textContent = 'Daten';
+
+    // --- Add everything into wrapper
+    wrapper.appendChild(sampleRadio);
+    wrapper.appendChild(sampleLabel);
+    wrapper.appendChild(clientRadio);
+    wrapper.appendChild(clientLabel);
+
+    // --- Sync UI with state
+    const updateUI = () => {
+        sampleRadio.checked = current === 'sample';
+        clientRadio.checked = current === 'client';
+        localStorage.setItem(STORAGE_KEY, current);
+    };
+
+    // --- Notify the app
+    const emitChange = () => {
+        if (typeof onChange === 'function') onChange(current);
+        window.dispatchEvent(new CustomEvent('dataModeChanged', {
+            detail: { mode: current }
+        }));
+    };
+
+    // --- Event handlers
+    sampleRadio.addEventListener('change', () => {
+        current = 'sample';
+        updateUI();
+        emitChange();
+    });
+
+    clientRadio.addEventListener('change', () => {
+        current = 'client';
+        updateUI();
+        emitChange();
+    });
+
+    // --- Public method for external control
+    wrapper.setMode = (mode) => {
+        if (mode !== 'sample' && mode !== 'client') return;
+        current = mode;
+        updateUI();
+        emitChange();
+    };
+
+    // Initialize
+    if (!localStorage.getItem(STORAGE_KEY)) {
+        localStorage.setItem(STORAGE_KEY, current);
+    }
+    updateUI();
+
+    return wrapper;
+}
+
+export function createBranchSelect({ id = 'branch-select', defaultValue = 'onboarding', onChange } = {}) {
+
+    return createBranchToggle();
+
+    //    const select = document.createElement('select');
+    //    select.id = id;
+    //    select.setAttribute('aria-label', 'Branche auswählen');
+    //
+    //    const options = [
+    //        { value: 'onboarding', label: 'Beispiel' },
+    //        { value: 'gastro', label: 'Gastronomie' },
+    //        { value: 'health', label: 'Gesundheit' },
+    //        { value: 'shop', label: 'Einzelhandel' },
+    //        { value: 'office', label: 'Büro' },
+    //        { value: 'logistics', label: 'Logistik' },
+    //        { value: 'industrial', label: 'Fertigung' },
+    //        { value: 'hospitality', label: 'Übernachtung' },
+    //        { value: 'custom', label: 'angepasst' },
+    //    ];
+    //
+    //    options.forEach(opt => {
+    //        const option = document.createElement('option');
+    //        option.value = opt.value;
+    //        option.textContent = opt.label;
+    //        select.appendChild(option);
+    //    });
+    //
+    //    select.value = defaultValue;
+    //
+    //    // attach shared logic
+    //    initBranchSelectLogic(select, onChange);
+    //
+    //    return select;
 }
 
 function initBranchSelectLogic(select, onChange) {
@@ -76,7 +212,7 @@ export const branchPresetsRoles = {
     gastro: {
         1: { name: "Koch", emoji: "🍳" },
         2: { name: "Spüler", emoji: "🧽" },
-        4: { name: "Kellner", emoji: "🍽️" },
+        4: { name: "Kellner", emoji: "🥄" },
         5: { name: "Barkeeper", emoji: "🍸" },
         6: { name: "Lieferfahrer", emoji: "🛵" },
         7: { name: "Einkauf", emoji: "🛒" },
@@ -139,7 +275,7 @@ export const branchPresetsRoles = {
     hospitality: {
         1: { name: "Reinigung", emoji: "🛏️" },
         4: { name: "Koch", emoji: "🍳" },
-        5: { name: "Kellner", emoji: "🍽️" },
+        5: { name: "Kellner", emoji: "🥄" },
         7: { name: "Rezeption", emoji: "🛎️" },
         8: { name: "Manager", emoji: "☎️" },
         10: { name: "Animateur", emoji: "🤸" },

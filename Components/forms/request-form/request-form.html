@@ -1,179 +1,249 @@
 <div id="request-form-container">
+  <div class="flex-row">
+    <button id="refresh-request-form" class="noto">⟳</button>
+    <div
+      id="create-request-mode-btn"
+      class="active noto request-button request-button-wrapper flex-row"
+    >
+      📝 Urlaubsantrag stellen
+      <button id="requestStoreButton" class="noto">💾</button>
+    </div>
+    <button
+      id="approve-request-mode-btn"
+      class="inactive noto request-button flex-row"
+    >
+      ✅❌ Urlaubsantrag genehmigen
+      <label for="request-year">Jahr:</label>
+      <input
+        type="number"
+        id="request-year"
+        value="2025"
+        min="2000"
+        max="2099"
+      />
+    </button>
+  </div>
 
-<div>
-  <!--
-  <input type="number" id="year-filter" placeholder="2000" min="2025" max="2099" st^yle="max-width: 80px">
-  -->
-  <span class="layout-column-tiny"></span>
-  <button id="create-request-mode-btn" class="active noto request-button">📝 Urlaubsantrag stellen</button>
-  <button id="approve-request-mode-btn" class="inactive noto request-button">✅ Urlaubsantrag genehmigen ❌</button>
-  <!--
-  <button id="approve-all-btn" class="inactive, noto">💾 Alle Entscheidungen speichern</button>
-  -->
-</div>
-
-<div id="request-enter-container" class="active">
-
-  <div class="request-form-col request-form-dates">
-    <div class="flex-row">
-      <span id="requester-emoji" class="noto">❓</span>
-        <div>  
-          Antragsteller: <br>
-          <select id="requester-select"></select>
-        </div>  
+  <div id="request-enter-container" class="active">
+    <div class="request-form-col request-form-dates">
+      <div class="flex-row">
+        <span id="requester-emoji" class="noto">❓</span>
+        <div class="requester-select-wrapper">
+          Antragsteller: <br />
+          <select id="requester-select" class="'noto"></select>
+        </div>
       </div>
-    <div class="layout-tabulator text-line-spacer"></div> 
-    Urlaubsanspruch <span id="request-vacation-left">xx</span> / <span id="request-vacation-total">xx</span>
-    <br>
-    Überstunden <span id="request-overtime">xx</span> [Tage]
-    <div class="layout-tabulator text-line-spacer"></div>
-    Antrag erstellt am:  <span id="request-id">xx.xx.xxxx. xx.xx</span>
-  </div>
-
-  <div class="request-form-col">
-    <span class="request-date" class="flex-row layout-space-between;">
-      <label>Art Abwesentheit: </label>
-      <select id="request-type-select" class="noto text-large">
-        <option value="vac">🏖️ Urlaub</option>
-        <option value="sik">💉 Genesung</option>
-        <option value="spe">🎁 Sonderurlaub</option>
-        <option value="otc">⚖️ Ausgleichstag</option>
-        <option value="but">🚕 Geschäftreise</option>
-        <option value="par">🧸 Elternzeit</option>
-        <option value="hom">🏠 Home-Office</option>
-        <option value="hom">💸 unbezahlt</option>
-      </select>
-    </span>
-    <br>
-    <div class="request-date-picker noto flex-row">
-      <button id="pick-request-start" class="noto" title="Startdatum wählen">🔜 von ⇨ 📅</button>
-      <input type="date" id="request-start-picker" class="visually-hidden-date-picker" />
-        
-      <button id="pick-request-end" class="noto" title="Enddatum wählen">🔚 ⇨ bis 📅</button>
-      <input type="date" id="request-end-picker" class="visually-hidden-date-picker" />
-    </div>
-    
-    <div class="preview-label flex-row" id="requestPreview">
-      <span id="request-preview-start">--.--</span>
-      <i class="noto"> ⇨ </i>
-      <span id="request-preview-end">--.--</span>
+      <div class="layout-tabulator text-line-spacer"></div>
+      <div
+        class="employee-flex-row future-feature"
+        title="Geplantes zukünftiges Feature"
+        aria-label="Urlaubsanspruch und Überstunden, geplantes zukünftiges Feature, momentan deaktiviert"
+      >
+        <span class="disabled-label">Urlaubsanspruch</span>
+        <span id="request-vacation-left" class="disabled-label">xx</span> /
+        <span id="request-vacation-total" class="disabled-label">xx</span>
+        <br />
+        <span class="disabled-label">Überstunden</span>
+        <span id="request-overtime" class="disabled-label">xx</span>
+        <span class="disabled-label">[Tage]</span>
+      </div>
+      <br />
+      <div class="layout-tabulator text-line-spacer"></div>
+      Antrag erstellt am: <span id="request-id">xx.xx.xxxx. xx.xx</span>
     </div>
 
-    <br>
-    <span class="flex-row">
-        <input type="checkbox" id="request-morning"/>
-        <i class="noto">🐓</i> vormittags
-        <input type="checkbox" id="request-afternoon"/>
-        <i class="noto">🌙</i> nachmittags  
-        <button id="requestStoreButton" class="noto">💾</button>
-    </span>
+    <div class="request-form-col">
+      <span class="step1">Art Abwesentheit:</span>
+      <span class="request-date" class="flex-row layout-space-between">
+        <select id="request-type-select" class="noto text-large">
+          <option value="vac">🏖️ Urlaub</option>
+          <option value="sik">💉 Genesung</option>
+          <option value="spe">🎁 Sonderurlaub</option>
+          <option value="otc">⚖️ Ausgleichstag</option>
+          <option value="but">🚕 Geschäftreise</option>
+          <option value="par">🧸 Elternzeit</option>
+          <option value="hom">🏠 Home-Office</option>
+          <option value="unp">💸 unbezahlt</option>
+        </select>
+      </span>
+      <br />
+      <br />
+
+      <span class="step1">Zeitraum:</span>
+
+      <div class="request-date-picker flex-row">
+        <button id="pick-request-start" class="noto" title="Startdatum wählen">
+          🔜 von
+        </button>
+        <input
+          type="date"
+          id="request-start-picker"
+          class="visually-hidden-date-picker"
+        />
+        <span class="step1" id="request-preview-start">--.--</span>
+      </div>
+
+      <br />
+
+      <div class="request-date-picker flex-row">
+        <button id="pick-request-end" class="noto" title="Enddatum wählen">
+          bis 🔚
+        </button>
+        <input
+          type="date"
+          id="request-end-picker"
+          class="visually-hidden-date-picker"
+        />
+        <span class="step1" id="request-preview-end">--.--</span>
+      </div>
+
+      <br />
+
+      <div class="preview-label flex-row" id="requestPreview">
+        <span>Dauer:</span>
+        <span class="step1" class="noto"> ⇨ </span>
+        <span class="step1">=</span>
+        <span class="step1" id="request-durration">?</span>
+        <span Id="request-durattion-unit">Tage</span>
+      </div>
+
+      <br />
+    </div>
+
+    <div class="request-form-col">
+      <span class="step2">
+        zusätzl. Info Antragsteller <br />
+        <i> falls relevant </i>
+        <textarea
+          id="multiline-input"
+          name="multiline-input"
+          rows="3"
+          cols="30"
+          placeholder="Enter your text here..."
+        ></textarea>
+      </span>
+    </div>
+
+    <div class="request-form-warn noto">
+      ⚠️ Warnungen ⚠️
+      <ul></ul>
+    </div>
   </div>
 
-  <div class="request-form-col">
-    Kommentar Antragsteller <br>
-    <textarea id="multiline-input" name="multiline-input" rows="3" cols="30" placeholder="Enter your text here..."></textarea>
-  </div>
-  <div class="request-form-warn noto">
-    ⚠️ Warnungen ⚠️
-    <ul></ul>
-  </div>
-</div>
+  <!--   T A B L E -->
 
-<!--   T A B L E -->
+  <div id="decision" class="inactive">
+    <div id="decision-table-container">
+      <table id="decision-table">
+        <thead>
+          <tr>
+            <th>
+              <select class="noto" id="status-filter">
+                <option value="all" data-tooltip="Alle">jeder Status</option>
+                <option class="noto" value="pending" data-tooltip="Ausstehend">
+                  ⏳ austehend
+                </option>
+                <option class="noto" value="rejected" data-tooltip="Abgelehnt">
+                  ❌ abgelehnt
+                </option>
+                <option class="noto" value="approved" data-tooltip="Genehmigt">
+                  ✅ genehmigt
+                </option>
+              </select>
+            </th>
+            <th>
+              <select class="noto" id="requester-filter">
+                <option value="all">alle Mitarbeiter</option>
+                <option value="01">Dr. Bob</option>
+                <option value="02">Harald</option>
+                <option value="03">Jenny</option>
+              </select>
+            </th>
 
-<div id="decision" class="inactive">
-  <div id="decision-table-container">
-    <table id="decision-table">
-
-      <thead>
-        <tr>
-          <th>Mitarbeiter:<br>
-            <!--
-            <select id="requester-filter">
-              <option value="all">Alle Mitarbeiter</option>
-              <option value="01">Dr. Bob</option>
-              <option value="02">Harald</option>
-              <option value="03">Jenny</option>
-            </select>
-          -->
-          </th>
-
-          <th>Art:<br>
-            <select class="noto" id="decision-type-select">
-                <option class="noto" value="all">📝 Alle</option>
+            <th>
+              <select class="noto" id="decision-type-select">
+                <option value="all">alle Arten</option>
                 <option class="noto" value="vac">🏖️ Urlaub (frei)</option>
                 <option class="noto" value="spe">🎁 Sonderurlaub (frei)</option>
-                <option class="noto" value="otc">⚖️ Ausgleichstag (frei)</option>
-                <option class="noto" value="but">🚕 Geschäftreise (dienst)</option>
-                <option class="noto" value="hom">🏠 Home Office (dienst)</option>
-                <option class="noto" value="sho">📐 Berufsschule (dienst)</option>
-                <option class="noto" value="sik">💉 Genesung (ungeplant)</option>
-                <option class="noto" value="par">🧸 Elternzeit (ungeplant)</option>
-                <option class="noto" value="unp">💸 unbezahlt (ungeplant)</option>
+                <option class="noto" value="otc">
+                  ⚖️ Ausgleichstag (frei)
+                </option>
+                <option class="noto" value="but">
+                  🚕 Geschäftreise (dienst)
+                </option>
+                <option class="noto" value="hom">
+                  🏠 Home Office (dienst)
+                </option>
+                <option class="noto" value="sho">
+                  📐 Berufsschule (dienst)
+                </option>
+                <option class="noto" value="sik">
+                  💉 Genesung (ungeplant)
+                </option>
+                <option class="noto" value="par">
+                  🧸 Elternzeit (ungeplant)
+                </option>
+                <option class="noto" value="unp">
+                  💸 unbezahlt (ungeplant)
+                </option>
               </select>
-          </th>
+            </th>
 
-          <th>Zeitraum: <br>
-            <select id="month-filter">
-            <option value="all">Alle</option>
-            <option value="01">01 - Januar</option>
-            <option value="02">02 - Februar</option>
-            <option value="03">03 - März</option>
-            <option value="04">04 - April</option>
-            <option value="05">05 - Mai</option>
-            <option value="06">06 - Juni</option>
-            <option value="07">07 - July</option>
-            <option value="08">08 - August</option>
-            <option value="09">09 - September</option>
-            <option value="10">10 - Oktober</option>
-            <option value="11">11 - November</option>
-            <option value="12">12 - Dezember</option>
-          </select></th>
+            <th>
+              <select class="noto" id="month-filter">
+                <option value="all">ganzes Jahr</option>
+                <option value="01">01 - Januar</option>
+                <option value="02">02 - Februar</option>
+                <option value="03">03 - März</option>
+                <option value="04">04 - April</option>
+                <option value="05">05 - Mai</option>
+                <option value="06">06 - Juni</option>
+                <option value="07">07 - Juli</option>
+                <option value="08">08 - August</option>
+                <option value="09">09 - September</option>
+                <option value="10">10 - Oktober</option>
+                <option value="11">11 - November</option>
+                <option value="12">12 - Dezember</option>
+              </select>
+            </th>
 
-          <th>Dauer<br>
-            <button id="decisionDurationBtn">↥ Aufsteigend</button>
-        </th>
+            <th>
+              Dauer<br />
+              <!-- <button id="decisionDurationBtn">↥ Aufsteigend</button> -->
+            </th>
+            <th>
+              Kommentar <br />
+              Antragsteller
+            </th>
 
-          <th>Status<br>
-            <select class="noto" id="status-filter">
-              <option value="all" data-tooltip="Alle" >📝 alle</option>
-              <option value="pending" data-tooltip="Ausstehend">⏳austehend</option>
-              <option value="rejected" data-tooltip="Abgelehnt">❌ abgelehnt</option>
-              <option value="approved" data-tooltip="Genehmigt">✅ genehmigt</option>
-            </select>
-          </th>
-          <th>Kommentar <br>
-            Antragsteller
-          </th>
+            <th>
+              Kommentar <br />
+              Genemiger
+            </th>
 
-          <th>Kommentar <br>
-            Genemiger
-          </th>
-
-          <th>
-            Entscheidung
-          </th>
-
-          <th>Warnungen <br>
-            <!--            <select class="noto" id="warning-filter">
+            <th>
+              Warnungen <br />
+              <!--            <select class="noto" id="warning-filter">
               <option value="all" data-tooltip="Alle">📝 alle</option>
               <option value="urgent" data-tooltip="Eilg">🚨 eilig</option>
               <option value="single" data-tooltip="Regelverstoß">⚠️ einfach</option>
               <option value="multi" data-tooltip="Regelverstöße">🛑 mehrfach</option>
             </select>
           -->
-          </th>
-        </tr>
-      </thead>
+            </th>
+          </tr>
+        </thead>
 
-      <tbody class="layout-bo-scroll">
-        <tr>
-          <td colspan="7" class="text-center">No pending requests to display.</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  <!--
+        <tbody class="layout-bo-scroll">
+          <tr>
+            <td colspan="6" class="text-center">
+              No pending requests to display.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!--
   <div class="flex-column">
     <div>
         ⚠️ Warnungen: <br>
@@ -190,6 +260,5 @@
         <textarea id="selected-approver-comments" placeholder="Show warnings and comments here if a row is selected"></textarea>
     </div>
   </div>  
-  -->
-</div>
+  --></div>
 </div>

@@ -1,0 +1,82 @@
+/* ================================
+   EMOJI STARTER PACK FOR CALENDAR
+   ================================ */
+
+/* ------------------------
+   LOCK / UNLOCK STATES
+   ------------------------ */
+.lock-icon::before {
+  content: "🔒"; /* default: closed / locked */
+}
+
+.lock-icon.unlocked::before {
+  content: "🔑"; /* open / unlocked */
+}
+
+/* Optional future states: */
+.lock-icon.warning::before {
+  content: "⚠️"; /* warning or attention */
+}
+
+/* ------------------------
+   SHIFTS
+   ------------------------ */
+.shift-early::before {
+  content: "🐓"; /* Frühschicht */
+}
+
+.shift-day::before {
+  content: "☕"; /* Tagschicht */
+}
+
+.shift-late::before {
+  content: "🌙"; /* Spätschicht */
+}
+
+/* ------------------------
+   WARNINGS / INFO
+   ------------------------ */
+.warning::before {
+  content: "❗"; /* generic warning */
+}
+
+.info::before {
+  content: "ℹ️"; /* info / hint */
+}
+
+.icon-clippy::before {
+  content: "📎";
+  font-size: 1.5rem;
+  margin-right: 5px;
+}
+.icon-note::before {
+  content: "📌";
+  font-size: 1.125rem;
+  margin-right: 10px;
+}
+.icon-msg::before {
+  content: "💬";
+  cursor: pointer;
+}
+.icon-calendar::before {
+  content: "📅";
+}
+
+.icon-note::before {
+  content: "📌";
+  font-size: 1.125rem;
+  margin-right: 8px;
+}
+
+/* ------------------------
+   FUTURE IDEAS / NOTES
+   ------------------------
+- Bridge day icon: 🚧
+- Christmas: 🎄
+- Easter: 🐰
+- Public holiday generic: 🎉
+- Optional mini view indicators: small emoji or colored dot
+- Mood-based shifts: ☕︎, 🥐, 🌞
+- Apprenticeship closed warning: 🎓
+- Consider color coding via CSS classes for each type
+*/

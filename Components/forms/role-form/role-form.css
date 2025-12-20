@@ -14,7 +14,8 @@
   border-radius: 8px;
 }
 
-.task-list, .task-editor {
+.task-list,
+.task-editor {
   flex: 1;
 }
 
@@ -52,21 +53,48 @@
   border-style: double;
 }
 
-
-.task-button[data-role="0"] { background-color:  var(--role-0-color); }
-.task-button[data-role="1"] { background-color:  var(--role-1-color); }
-.task-button[data-role="2"] { background-color:  var(--role-2-color); }
-.task-button[data-role="3"] { background-color:  var(--role-3-color); }
-.task-button[data-role="4"] { background-color:  var(--role-4-color); }
-.task-button[data-role="5"] { background-color:  var(--role-5-color); }
-.task-button[data-role="6"] { background-color:  var(--role-6-color); }
-.task-button[data-role="7"] { background-color:  var(--role-7-color); }
-.task-button[data-role="8"] { background-color:  var(--role-8-color); }
-.task-button[data-role="9"] { background-color:  var(--role-9-color); }
-.task-button[data-role="10"] { background-color: var(--role-10-color); }
-.task-button[data-role="11"] { background-color: var(--role-11-color); }
-.task-button[data-role="12"] { background-color: var(--role-12-color); }
-.task-button[data-role="13"] { background-color: var(--role-13-color); }
+.task-button[data-role="0"] {
+  background-color: var(--role-0-color);
+}
+.task-button[data-role="1"] {
+  background-color: var(--role-1-color);
+}
+.task-button[data-role="2"] {
+  background-color: var(--role-2-color);
+}
+.task-button[data-role="3"] {
+  background-color: var(--role-3-color);
+}
+.task-button[data-role="4"] {
+  background-color: var(--role-4-color);
+}
+.task-button[data-role="5"] {
+  background-color: var(--role-5-color);
+}
+.task-button[data-role="6"] {
+  background-color: var(--role-6-color);
+}
+.task-button[data-role="7"] {
+  background-color: var(--role-7-color);
+}
+.task-button[data-role="8"] {
+  background-color: var(--role-8-color);
+}
+.task-button[data-role="9"] {
+  background-color: var(--role-9-color);
+}
+.task-button[data-role="10"] {
+  background-color: var(--role-10-color);
+}
+.task-button[data-role="11"] {
+  background-color: var(--role-11-color);
+}
+.task-button[data-role="12"] {
+  background-color: var(--role-12-color);
+}
+.task-button[data-role="13"] {
+  background-color: var(--role-13-color);
+}
 
 .name-role {
   margin-top: -2px;
@@ -119,32 +147,27 @@ input:disabled {
   background-color: var(--accent-hover);
 }
 
-#save-task:disabled {
-  background-color: gray;
-  cursor: not-allowed;
-}
-
 /* General styling for the post-it note */
 .post-it-note {
-  background-color: #FAEBD7;
+  background-color: #faebd7;
   border: 1px solid #f2c400;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
-  font-family: 'Arial', sans-serif;
+  font-family: "Arial", sans-serif;
   font-size: 1rem;
   color: var(--text-color);
   margin: 15px;
 
-  max-height: 400px;      /* Set your preferred max height */
-  overflow-y: auto;       /* Enable vertical scroll */
-  width: 15%;             /* Better than using max-width for layout */
-  position: relative;     /* Needed for ::before absolute positioning */
+  max-height: 400px; /* Set your preferred max height */
+  overflow-y: auto; /* Enable vertical scroll */
+  width: 15%; /* Better than using max-width for layout */
+  position: relative;
 }
 
 /* Styling for the heading */
 .post-it-note h3.noto {
-  font-family: 'NotoEmoji', sans-serif;
+  font-family: "NotoEmoji", sans-serif;
   font-weight: bold;
   font-size: 1.125rem;
   margin-bottom: 10px;
@@ -158,34 +181,17 @@ input:disabled {
 }
 
 /* Optional: Add a sticky note icon or styling to make it more "post-it" like */
-.post-it-note::before {
-  content: '📌';
-  font-family: 'NotoEmoji', sans-serif;
-  font-size: 1.125rem;
-  margin-right: 10px;
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  transform: rotate(-15deg);
-}
 
 .unaccessable {
-  cursor:not-allowed !important;
+  cursor: not-allowed !important;
   user-select: none;
-  -webkit-user-select: none; 
-  -moz-user-select: none; 
-  -ms-user-select: none; 
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
-@media (max-width: 768px) {
-  .flex-row {
-    flex-direction: column;
-  }
-  .post-it-note {
-    width: 100%;
-    max-height: none;
-    overflow-y: visible;
-  }
+.flex-row-2 {
+  flex-direction: column;
 }
 
 .role-cell {
@@ -203,10 +209,10 @@ input:disabled {
   margin-top: 4px;
 }
 
-.role-cell-bottom{
+.role-cell-bottom {
   border-bottom: 2px solid;
   border-bottom-left-radius: 4px;
-  border-bottom-right-radius:4px;
+  border-bottom-right-radius: 4px;
   margin-bottom: 8px;
 }
 
@@ -218,19 +224,19 @@ input:disabled {
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
 }
-.team-blue   { 
+.team-blue {
   border-color: blue;
   color: darkblue;
- }
-.team-green  { 
+}
+.team-green {
   border-color: green;
-  color:  darkgreen;
+  color: darkgreen;
 }
-.team-red    { 
+.team-red {
   border-color: darkred;
-  color: red; 
+  color: red;
 }
-.team-black  { 
+.team-black {
   border-color: black;
   color: black;
 }
@@ -240,4 +246,60 @@ input:disabled {
   font-weight: 600;
   margin-top: 0.5em;
   font-size: 0.9rem;
+}
+
+.name-role:disabled {
+  background-color: rgba(0, 0, 0, 0); /* e.g., #fff or light gray */
+  color: var(--text-color); /* keep text visible */
+  opacity: 1; /* override browser default */
+  cursor: default; /* optional: show pointer isn’t active */
+}
+
+/* editable text styled like a label */
+.teamname-editable {
+  display: inline-block;
+  cursor: text; /* only hint it’s editable */
+  border-bottom: 1px dashed transparent;
+  padding: 2px 4px;
+  transition: border-color 0.2s ease;
+  min-width: 80px;
+}
+
+.teamname-editable:focus {
+  outline: none;
+  border-bottom-color: #666; /* subtle focus cue */
+}
+
+/* role-form.css */
+.post-it-note .hint {
+  font-size: 0.8rem; /* smaller, fits better with table height */
+  line-height: 1.2; /* optional: tightens vertical spacing */
+  margin: 0; /* optional: remove extra spacing if needed */
+}
+
+.role-flex-row {
+  display: flex;
+  flex-direction: row; /* default, but explicit */
+  align-items: stretch; /* makes children same height */
+  gap: 1rem; /* optional spacing between table and aside */
+}
+
+.task-container {
+  flex: 1; /* table takes available space */
+}
+
+.role-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.post-it-note.hint {
+  flex: 0 0 250px; /* fixed width for aside, adjust as needed */
+  padding: 1rem;
+  background-color: #fff8c4; /* example post-it color */
+  border: 1px solid #f0e68c;
+  border-radius: 4px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+  margin-top: 6px;
+  margin-bottom: 3px;
 }

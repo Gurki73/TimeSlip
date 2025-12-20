@@ -1,167 +1,211 @@
 <div id="rule-form-container">
-    <div id="newRule">
-        <button id="reset-rule-button" class="icon-button noto" title="Regel löschen">🚮</button>
-        <button id="save-rule-button" class="icon-button noto" title="Regel speichern">💾</button>
-        <span id="typing-text">
-            &gt;
-        </span>
-        <span class="blinking-cursor noto">🏗️</span>
+  <!-- ================= Rules & Warnings Scrollbox ================= -->
+  <section id="rules-scrollbox" aria-labelledby="rules-scrollbox-title">
+    <h2 id="rules-scrollbox-title" class="visually-hidden">
+      Regeln und Warnungen
+    </h2>
+
+    <h3>Alle Regeln</h3>
+    <ol id="rules-list">
+      <!-- dynamically filled using rule-item-template -->
+    </ol>
+
+    <h3>Alle Warnungen</h3>
+    <ul id="warnings-list" role="status" aria-live="polite">
+      <!-- dynamically filled using warning-item-template -->
+    </ul>
+  </section>
+
+  <div id="rule-tables-container" class="sticky-bottom">
+    <!-- ================= current rule preview ================= -->
+    <div id="newRule" role="region" aria-labelledby="newRule-title">
+      <h2 id="newRule-title" class="visually-hidden">
+        Aktuelle Regel-Vorschau
+      </h2>
+
+      <span id="typing-text" aria-live="polite">
+        &gt; Regel wird erstellt …
+      </span>
+
+      <span class="blinking-cursor noto" aria-hidden="true">🏗️</span>
     </div>
+    <div id="debug-output" class="hidden"></div>
+    <button id="test-rule">🔎</button>
+    <button id="save-rule">💾</button>
 
-    <!-- Main Table -->
-    <table class="rule-table">
+    <!-- #region Main Table -->
+    <fieldset id="rule-first-condition">
+      <table class="rule-table">
         <thead>
-            <tr>
-                <th id="repeat-header" class="noto" data-highlight="false">
-                    <b class="repeat-icon">⟳</b> Wiederholungen: 
-                    <select id="request-type-select-repeats" class="noto">
-                        <option class="noto" value="W0">...</option>
-                        <option class="noto" value="W1">jeden 🕒</option>
-                        <option class="noto" value="W2">niemals 🕒</option>
-                        <option class="noto" value="W3">pro 🕒</option>
-                    </select>
-                </th>
-                <th id="time-header" class="noto" data-highlight="false">
-                    🕒 Zeitraum:
-                    <select id="request-type-select-time">
-                        <option value="T0">...</option>
-                        <option value="T1">Schicht</option>
-                        <option value="T2">Tag</option>
-                        <option value="T3">Woche</option>
-                        <option value="T5">Abwesentheit</option>
-                    </select>
-                </th>
-                <th id="amount-header" class="noto" data-highlight="false">
-                    📊 Anzahl 
-                    <select id="request-type-select-amount" class="noto">
-                        <option class="noto" value="A1">ungefär 🧩</option>
-                        <option class="noto" value="A0">alle 🧩</option>
-                        <option class="noto" value="A2">keiner 🧩</option>
-                        <option class="noto" value="A3">zwischen 🧩</option>
-                        <option class="noto" value="A4">maximal 🧩</option>
-                        <option class="noto" value="A5">minimal 🧩</option>
-                        <option class="noto" value="A8">genau 🧩</option>
-                        <option class="noto" value="A6">prozentual 🧩</option>
-                    </select>
-                </th>
-                <th id="task-header" class="noto" data-highlight="true">
-                    🧩 Aufgaben:
-                    <select id="request-type-select-group">
-                        <option value="G0">Aufgabe</option>
-                        <option value="G1">Gruppe</option>
-                        <option value="G2">Alternative</option>
-                    </select>
-                </th>
-                <th id="dependency-header" class="noto" data-highlight="false">
-                    🔗 Abhängigkeiten:
-                    <select id="request-type-select-dependency" class="noto">
-                        <option value="D0">anwesend</option>
-                        <option value="D1">abwesend</option>
-                        <option value="D2">braucht</option>
-                        <option value="D3">hilft</option>
-                        <option class="noto" value="D4">im Verhältnis 🧩</option>
-                    </select>
-                </th>
-                <th id="exception-header" class="noto" data-highlight="false">
-                    ↪️ Ausnahmen:
-                    <select id="request-type-select-exception">
-                        <option value="E0">...</option>
-                        <!-- <option value="E1">und</option> -->
-                        <option value="E2">oder</option>
-                        <option value="E3">aber</option>
-                        <option value="E4">außer</option>
-                        <option value="E5">aber nicht mehr als</option>
-                        <option value="E6">aber nicht weniger als</option>
-                    </select>
-                </th>
-            </tr>
+          <tr>
+            <th id="repeat-header" class="noto" data-highlight="false">
+              <b class="repeat-icon">⟳</b> Wiederholungen:
+              <select id="request-type-select-repeats" class="noto">
+                <option class="noto" value="W0">...</option>
+                <option class="noto" value="W1">jeden 🕒</option>
+                <option class="noto" value="W2">entweder 🕒</option>
+                <option class="noto" value="W3">nur 🕒</option>
+                <option class="noto" value="W4">🔢 mal 🕒</option>
+              </select>
+            </th>
+            <th id="time-header" class="noto" data-highlight="false">
+              🕒 Zeitraum:
+              <select id="request-type-select-time">
+                <option value="T0">Immer</option>
+                <option value="T1">Schicht</option>
+                <option value="T2">Tag</option>
+                <option value="T3">Woche</option>
+                <option value="T5">Abwesentheit</option>
+              </select>
+            </th>
+            <th id="amount-header" class="noto" data-highlight="false">
+              📊 Anzahl
+              <select id="request-type-select-amount" class="noto">
+                <option class="noto" value="A1">ungefär 👥</option>
+                <option class="noto" value="A3">zwischen 👥</option>
+                <option class="noto" value="A4">maximal 👥</option>
+                <option class="noto" value="A5">minimal 👥</option>
+                <option class="noto" value="A8">genau 👥</option>
+              </select>
+            </th>
+            <th id="task-header" class="noto" data-highlight="true">
+              🧩👥 Aufgaben:
+              <select id="request-type-select-group">
+                <option value="G0">Aufgabe</option>
+                <option value="G1">Gruppe</option>
+                <option value="G2">Alternative</option>
+              </select>
+            </th>
+            <th id="dependency-header" class="noto" data-highlight="false">
+              🔗 Abhängigkeiten:
+              <select id="request-type-select-dependency" class="noto">
+                <option value="D0">anwesend</option>
+                <option value="D2">braucht</option>
+                <option value="D3">hilft</option>
+                <!---
+                <option class="noto" value="D4">im Verhältnis 👥</option>
+                -->
+              </select>
+            </th>
+            <th id="exception-header" class="noto" data-highlight="false">
+              ↪️ Ausnahmen:
+              <select id="request-type-select-exception">
+                <option value="E0">...</option>
+                <option value="E2">oder</option>
+                <option value="E3">aber</option>
+                <option value="E4">außer</option>
+                <option value="E5">aber nicht mehr als</option>
+                <option value="E6">aber nicht weniger als</option>
+              </select>
+            </th>
+          </tr>
         </thead>
         <tbody>
-            <tr id="firstTableSecondSteps">
-                <td id="repeat-cell" data-highlight="false"></td>
-                <td id="time-cell" data-highlight="false"></td>
-                <td id="amount-cell" data-highlight="false"></td>
-                <td id="task-cell" data-highlight="true"></td>
-                <td id="dependency-cell" data-highlight="false"> </td>
-                <td id="exception-cell" data-highlight="false" > </td>
-            </tr>
+          <tr id="firstTableSecondSteps">
+            <td id="repeat-cell" data-highlight="false"></td>
+            <td id="time-cell" data-highlight="false"></td>
+            <td id="amount-cell" data-highlight="false"></td>
+            <td id="task-cell" data-highlight="true"></td>
+            <td id="dependency-cell" data-highlight="false"></td>
+            <td id="exception-cell" data-highlight="false"></td>
+          </tr>
         </tbody>
-    </table>
+      </table>
+    </fieldset>
+    <br />
+    <br />
+    <!-- #endregion -->
 
-    <!-- Second Table for Exceptions -->
-    <table class="rule-table">
+    <!-- #region Second Table for Exceptions -->
+    <fieldset class="hidden" id="rule-second-condition">
+      <legend class="visually-hidden">Ausnahme-Bedinung</legend>
+      <table class="rule-table">
         <thead>
-            <tr>
-                <th id="ex-repeat-header" class="noto" data-highlight="false">
-                    <b class="repeat-icon">⟳</b> Wiederholungen:
-                    <select id="ex-request-type-select-repeats" class="noto">
-                        <option class="noto" value="w0" > ... </option>
-                        <option class="noto" value="w1">jeden 🕒</option>
-                        <option class="noto" value="w2">niemals 🕒</option>
-                        <option class="noto" value="w3">pro 🕒</option>
-                    </select>
-                </th>
-                <th id="ex-time-header" class="noto" data-highlight="false">
-                    🕒 Zeitraum:
-                    <select id="ex-request-type-select-time">
-                        <option value="t0"> ...</option>
-                        <option value="t1">Schicht</option>
-                        <option value="t2">Tag</option>
-                        <option value="t3">Woche</option>
-                        <option value="t4">Monat</option>
-                        <option value="t5">Abwesentheit</option>
-                    </select>
-                </th>
-                <th id="ex-amount-header" class="noto" data-highlight="false" >
-                    📊 Anzahl:
-                    <select id="ex-request-type-select-amount" class="noto">
-                        <option class="noto" value="a"> ...</option>
-                        <option class="noto" value="a1">ungefär 🧩</option>
-                        <option class="noto" value="a0">alle 🧩</option>
-                        <option class="noto" value="a2">keiner 🧩</option>
-                        <option class="noto" value="a3">zwischen 🧩</option>
-                        <option class="noto" value="a4">maximal 🧩</option>
-                        <option class="noto" value="a5">minimal 🧩</option>
-                        <option class="noto" value="a6">prozentual 🧩</option>
-                        <option class="noto" value="a8">genau 🧩</option>
-                    </select>
-                </th>
-                <th id="ex-task-header" class="noto" data-highlight="false">
-                    🧩 Aufgaben:
-                    <select id="ex-request-type-select-group">
-                        <option value="g"> ...</option>
-                        <option value="g0">Aufgabe</option>
-                        <option value="g1">Gruppe</option>
-                        <option value="g2">Alternative</option>
-                    </select>
-                </th>
-                <th id="ex-dependency-header" class="noto" data-highlight="false">
-                    🔗 Abhängigkeiten:
-                    <select id="ex-request-type-select-dependency" class="noto">
-                        <option value="d"> ...</option>
-                        <option value="d0">anwesend</option>                        
-                        <option value="d1">abwesend</option>
-                        <option value="d2">braucht</option>
-                        <option value="d3">hilft</option>
-                        <option class="noto" value="d4">im Verhältnis 🧩</option>
-                    </select>
-                </th>
-                <th class="noto">
-                    ✅ Regel test
-                </th>
-            </tr>
+          <tr>
+            <th id="ex-repeat-header" class="noto" data-highlight="false">
+              <b class="repeat-icon">⟳</b> Wiederholungen:
+              <select id="ex-request-type-select-repeats" class="noto">
+                <option class="noto" value="w0">...</option>
+                <!-- no modifier -->
+                <option class="noto" value="w1">jeden 🕒</option>
+                <!-- mandatory AND repeat -->
+                <option class="noto" value="w2">entweder 🕒</option>
+                <option class="noto" value="w3">nur 🕒</option>
+                <!-- restriction / negation -->
+                <option class="noto" value="w4">🔢 mal 🕒</option>
+                <!-- X per timeframe -->
+              </select>
+            </th>
+
+            <th id="ex-time-header" class="noto" data-highlight="false">
+              🕒 Zeitraum:
+              <select id="ex-request-type-select-time">
+                <option value="t0">...</option>
+                <option value="t1">Schicht</option>
+                <option value="t2">Tag</option>
+                <option value="t3">Woche</option>
+                <option value="t5">Abwesentheit</option>
+              </select>
+            </th>
+            <th id="ex-amount-header" class="noto" data-highlight="false">
+              📊 Anzahl:
+              <select id="ex-request-type-select-amount" class="noto">
+                <option class="noto" value="a1">ungefär 🧩</option>
+                <option class="noto" value="a3">zwischen 🧩</option>
+                <option class="noto" value="a4">maximal 🧩</option>
+                <option class="noto" value="a5">minimal 🧩</option>
+                <option class="noto" value="a8">genau 🧩</option>
+              </select>
+            </th>
+            <th id="ex-task-header" class="noto" data-highlight="false">
+              🧩 Aufgaben:
+              <select id="ex-request-type-select-group">
+                <option value="g">...</option>
+                <option value="g0">Aufgabe</option>
+                <option value="g1">Gruppe</option>
+                <option value="g2">Alternative</option>
+              </select>
+            </th>
+            <th id="ex-dependency-header" class="noto" data-highlight="false">
+              🔗 Abhängigkeiten:
+              <select id="ex-request-type-select-dependency" class="noto">
+                <option value="d">...</option>
+                <option value="d0">anwesend</option>
+                <option value="d1">abwesend</option>
+                <option value="d2">braucht</option>
+                <option value="d3">hilft</option>
+                <option class="noto" value="d4">im Verhältnis 🧩</option>
+              </select>
+            </th>
+          </tr>
         </thead>
         <tbody>
-            <tr id='secondTableSecondSteps'>
-                <td id="ex-repeat-cell" data-highlight="false"></td>
-                <td id="ex-time-cell" data-highlight="false"></td>
-                <td id="ex-amount-cell" data-highlight="false"></td>
-                <td id="ex-task-cell" data-highlight="false"></td>
-                <td id="ex-dependency-cell" data-highlight="false"></td>
-                <td id="ex-exception-cell" data-highlight="false"></td>
-                <td id="rule-check"></td>
-            </tr>
+          <tr id="secondTableSecondSteps">
+            <td id="ex-repeat-cell" data-highlight="false"></td>
+            <td id="ex-time-cell" data-highlight="false"></td>
+            <td id="ex-amount-cell" data-highlight="false"></td>
+            <td id="ex-task-cell" data-highlight="false"></td>
+            <td id="ex-dependency-cell" data-highlight="false"></td>
+            <td id="ex-exception-cell" data-highlight="false"></td>
+          </tr>
         </tbody>
-    </table>
+      </table>
+    </fieldset>
+    <!-- #endregion -->
+  </div>
 </div>
 
+<template id="rule-item-template">
+  <li>
+    <button class="noto delete-rule" aria-label="Regel löschen">🚮</button>
+    <button class="noto edit-rule" aria-label="Regel bearbeiten">✍️</button>
+    <span class="rule-text"></span>
+  </li>
+</template>
+
+<template id="warning-item-template">
+  <li>
+    <span class="noto" aria-hidden="true">🚨</span>
+    <span class="warning-text"></span>
+  </li>
+</template>

@@ -1,190 +1,187 @@
-import { getDictionaryEntry, applyGrammaticalContext } from "./dicctionary.js";
+// Components/forms/rule-form/ruleFlowWizard.js
+// Phase 1 - Refactored Flow Wizard
+// Author: ChatGPT
+// Supports dynamic forbidden pair handling, highlighting, soft-disable, tooltips
 
-const ruleCellsIDs = {
-    W: ["repead-header", "repeat-cell"],
-    T: ["time-header", "time-cell"],
-    A: ["amount-header", "amount-cell"],
-    G: ["task-header", "task-cell"],
-    D: ["dependency-header", "dependency-cell"],
-    E: ["exception-header", "exception-cell"],
-    w: ["ex-repeat-header", "ex-repeat-cell"],
-    t: ["ex-time-header", "ex-time-cell"],
-    a: ["ex-amount-header", "ex-amount-cell"],
-    g: ["ex-task-header", "ex-task-cell"],
-    d: ["ex-dependency-header", "ex-dependency-cell"],
+// ==========================
+// 1. Block & Selector Mapping
+// ==========================
+const blocks = {
+    W: { selector: 'request-type-select-repeats', mandatory: false },
+    T: { selector: 'request-type-select-time', mandatory: false },
+    A: { selector: 'request-type-select-amount', mandatory: false },
+    G: { selector: 'request-type-select-group', mandatory: true },
+    D: { selector: 'request-type-select-dependency', mandatory: true },
+    E: { selector: 'request-type-select-exception', mandatory: false },
+    // Secondary blocks
+    w: { selector: 'ex-request-type-select-repeats', mandatory: false },
+    t: { selector: 'ex-request-type-select-time', mandatory: false },
+    a: { selector: 'ex-request-type-select-amount', mandatory: false },
+    g: { selector: 'ex-request-type-select-group', mandatory: false },
+    d: { selector: 'ex-request-type-select-dependency', mandatory: false },
 };
 
-const mandatoryInputs = new Set(["G", "A", "D"]);
-
-const workflowPaths = {
-    main: {
-        sequence: ['G', 'D', 'T', 'W', 'A'],
-        requirements: {
-            G: { next: 'D', article: 'nominative' },
-            D: { next: 'T', case: 'dative' },
-            T: { next: 'W', article: 'dative' },
-            W: { next: 'A', quantifier: true }
-        }
-    },
-    exceptions: {
-        sequence: ['E', 'g', 't', 'a'],
-        requirements: {
-            E: { next: 'g', conjunction: true },
-            g: { next: 't', case: 'accusative' }
-        }
-    }
+// ==========================
+// 2. Forbidden Pair / Blacklist
+// ==========================
+const forbiddenPairs = {
+    // T0 = empty; T1 = shift;  T2 = Day;  T3 = week; T5 = absence
+    // W0 = empty; W1 = always, W2 = Xor;  W3 = only; W4 = per 
+    T_W: [['T1', 'W2'], ['T3', 'W2'], ['T5', 'W2'], ['T3', 'W3'], ['T5', 'W3'],
+    ['T1', 'W4'], ['T2', 'W4'], ['T5', 'W4']],
+    W_T: [['W2', 'T1'], ['W2', 'T3'], ['W2', 'T5'], ['W3', 'T3'], ['W3', 'T5'],
+    ['W4', 'T1'], ['W4', 'T2'], ['W4', 'T5']],
 };
 
-let currentState = {
-    path: 'main',
-    step: 0,
-    context: {}
-};
-
-function clearAllHighlights() {
-    Object.keys(ruleCellsIDs).forEach(id => clearHighlight(id, false));
+// ==========================
+// 3. Dynamic Wizard Update
+// ==========================
+export function updateWizard(lastChangedBlockID) {
+    // Loop through all forbidden pairs relevant to the changed block
+    Object.keys(forbiddenPairs).forEach(pairKey => {
+        const pairs = forbiddenPairs[pairKey];
+        pairs.forEach(([blockAValue, blockBValue]) => {
+            const [blockAType, blockBType] = pairKey.split('_');
+            const lastValue = getSelectedValue(lastChangedBlockID);
+            // console.log(blockAType, blockBType, lastChangedBlockID);
+            if (lastChangedBlockID.startsWith(blockAType) && lastValue === blockAValue) {
+                setBlockForbidden(blocks[blockBType].selector, blockBValue);
+            } else if (lastChangedBlockID.startsWith(blockBType) && lastValue === blockBValue) {
+                setBlockForbidden(blocks[blockAType].selector, blockAValue);
+            }
+        });
+    });
+    updateSaveButtonState();
 }
 
-function clearHighlight(id, isHighlight) {
-    const cellNames = ruleCellsIDs[id];
-    if (!cellNames) return;
+// ==========================
+// 4. Highlight / Warning System
+// ==========================
+export function highlightBlock(selectorID, message = '') {
+    const element = document.getElementById(selectorID);
+    if (!element) return;
 
-    cellNames.forEach(cellName => {
-        const highlightCell = document.getElementById(cellName);
-        if (highlightCell) {
-            highlightCell.dataset.highlight = isHighlight;
+    element.classList.add('forbidden'); // CSS class: red outline
+    if (message) attachTooltip(element, `📎 ${message}`);
+}
+
+export function clearHighlights() {
+    Object.values(blocks).forEach(block => {
+        const element = document.getElementById(block.selector);
+        if (!element) return;
+        element.classList.remove('forbidden');
+        clearTooltip(element);
+        // Also re-enable all options
+        Array.from(element.options).forEach(opt => opt.disabled = false);
+    });
+}
+
+// ==========================
+// 5. Selector Option Management
+// ==========================
+export function setBlockForbidden(selectorID, optionValue) {
+    const element = document.getElementById(selectorID);
+    if (!element) return;
+
+    // Keep current selection intact
+    Array.from(element.options).forEach(opt => {
+        if (opt.value === optionValue) {
+            opt.disabled = true;
+        }
+    });
+
+    highlightBlock(selectorID, `Option "${optionValue}" conflicts with another selection`);
+}
+
+// ==========================
+// 6. Default Values / Prefill
+// ==========================
+// Optional at this stage, can be extended later
+export function prefillDefaults() {
+    Object.values(blocks).forEach(block => {
+        const el = document.getElementById(block.selector);
+        if (!el) return;
+        if (!el.value || el.value === '') {
+            // Pick first non-forbidden option as default
+            const opt = Array.from(el.options).find(o => !o.disabled);
+            if (opt) el.value = opt.value;
         }
     });
 }
 
-function normalizeValue() { }
-
-export function updateWizzard(id, rawValue = null) {
-    if (!Array.isArray(id) || !id[0]) {
-        console.warn(`Invalid id passed: ${id}`);
-        return; // exit early if id is invalid
-    }
-
-    const currentConfig = workflowPaths[currentState.path];
-    const currentStep = currentConfig.sequence[currentState.step];
-
-    if (id[0] !== currentStep) {
-        console.warn(`Unexpected input ${id} for step ${currentStep}`);
-    }
-
-    const category = id[0];
-
-    normalizeValue(id);
-    const entry = getDictionaryEntry(id[0].toLowerCase(), id);
-    if (entry) {
-        // currentState.context[category] = { value, metadata: entry.metadata };
-        applyGrammaticalContext(currentConfig, currentStep);
-    }
-    moveToNextStep(currentConfig);
-    updateUI();
+// ==========================
+// 7. Save-Time Placeholder
+// ==========================
+export function validateBeforeSave() {
+    // Placeholder for future save-time sanity checks
+    // e.g., compare main vs secondary, mandatory checks, etc.
+    console.warn('Save-time validation not yet implemented.');
 }
 
+// ==========================
+// 9. Utility Functions
+// ==========================
 
-function moveToNextStep(config) {
-    currentState.step++;
-    if (currentState.step >= config.sequence.length) {
-        currentState.path = 'exceptions';
-        currentState.step = 0;
-    }
+export function getSelectedValue(blockID) {
+    if (!blockID) return null;
+
+    const key = blockID[0];   // First character, e.g. "T" from "T1"
+    const index = blockID.slice(1); // Remaining characters, e.g. "1"
+
+    const block = blocks[key];
+    if (!block) return null; // Unknown block type
+
+    const domID = `${block.selector}`; // e.g. "request-type-select-time1"
+
+    const el = document.getElementById(domID);
+    if (!el) return null;
+
+    return el.value;
 }
 
-function checkDependencyInput(id) {
-    if (id === 'D1') {
-        currentState.path = 'pathExStart';
-        currentState.step = 0;
-        clearAllHighlights();
-        clearHighlight('E', true);
-        return;
-    }
-    if (id === 'D0') {
-        currentState.path = 'pathTime';
-        currentState.step = 0;
-        clearAllHighlights();
-        clearHighlight('W', true);
-        return;
-    }
-    currentState.path = 'pathRole';
-    currentState.step = 0;
-    clearAllHighlights();
-    clearHighlight('A', true);
+export function attachTooltip(element, text) {
+    element.dataset.tooltip = text; // Simple tooltip, could integrate Tippy.js or similar
 }
 
-function updateUI() {
-    clearAllHighlights();
-    const currentStep = workflowPaths[currentState.path].sequence[currentState.step];
-    clearHighlight(ruleCellsIDs[currentStep], true);
+export function clearTooltip(element) {
+    delete element.dataset.tooltip;
 }
 
-function toggleHTMLOption(id, isVisible) {
+// ==========================
+// 10. Optional UX Enhancements
+// ==========================
+// CSS classes expected:
+// .forbidden { border: 1px solid red; }
+// Tooltips shown via CSS or JS on hover using data-tooltip
 
-    const selectorMap = {
-        w: 'request-type-select-repeats',    // repeat
-        t: 'request-type-select-time',       // timeframe
-        a: 'request-type-select-amount',     // amount
-        g: 'request-type-select-group',      // role/group
-        d: 'request-type-select-dependency', // dependency
-        e: 'request-type-select-exception',  // exception
-    };
+export function hasRedAlarms() {
+    return Object.values(blocks).some(block => {
+        const el = document.getElementById(block.selector);
+        return el && el.classList.contains('forbidden');
+    });
+}
 
-    const selectorKey = id[0].toLowerCase();
-    let selectorName = selectorMap[selectorKey];
+export function updateSaveButtonState() {
+    const saveBtn = document.getElementById('save-rule-btn'); // your save button ID
+    if (!saveBtn) return;
 
-    if (!selectorName) {
-        console.error(`Cannot find a selector for the given ID: "${id}".`);
-        return;
-    }
-
-    if (id[0] === id[0].toLowerCase()) {
-        selectorName = `ex-${selectorName}`;
-    }
-
-    const selectElement = document.getElementById(selectorName);
-    if (!selectElement) {
-        console.error(`Dropdown with selector name "${selectorName}" not found.`);
-        return;
-    }
-
-    const option = selectElement.querySelector(`option[value="${id}"]`);
-    if (option) {
-        option.disabled = !isVisible;
-        console.log(`Option with id "${id}" in "${selectorName}" is now ${isVisible ? "enabled" : "disabled"}.`);
+    if (hasRedAlarms()) {
+        saveBtn.disabled = true;       // disable save
+        saveBtn.classList.add('disabled'); // optional styling
     } else {
-        console.warn(`Option with id "${id}" not found in "${selectorName}".`);
+        saveBtn.disabled = false;
+        saveBtn.classList.remove('disabled');
     }
 }
 
 export function toggleExceptionTable(isActive) {
-    const exceptionTable = document.querySelector('.rule-table:nth-of-type(2)');
+    const exceptionTable = document.getElementById('rule-second-condition');
     if (exceptionTable) {
+        exceptionTable.classList.toggle('hidden', !isActive); // match your current hidden toggle 
         exceptionTable.classList.toggle('inactive', !isActive);
+        console.warn("Exception table visibility set to:", isActive);
     } else {
         console.warn("Exception table not found.");
     }
 }
 
-function checkException(id, mainCondition, exceptionCondition) {
-    switch (id) {
-        case "E0": // No exception
-            return mainCondition;
-        case "E1": // AND condition
-            return mainCondition && exceptionCondition;
-        case "E2": // OR condition
-            return mainCondition || exceptionCondition;
-        case "E3": // BUT: override if conditions differ
-            return mainCondition === exceptionCondition ? mainCondition : exceptionCondition;
-        case "E4": // EXCEPT: prioritize exception if true
-            return exceptionCondition ? exceptionCondition : mainCondition;
-        case "E5": // NOT MORE THAN (inverse logic)
-            return exceptionCondition ? mainCondition : exceptionCondition;
-        case "E6": // NOT LESS THAN (similar inverse logic)
-            return exceptionCondition ? mainCondition : exceptionCondition;
-    }
-    return true; // Default: main condition stands if no match
-}
-
-export { workflowPaths, clearAllHighlights, clearHighlight };

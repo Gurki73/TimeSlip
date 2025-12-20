@@ -1,37 +1,125 @@
-async function loadRequests(api, year, month) {
-    let homeKey = localStorage.getItem('clientDefinedDataFolder') || 'home';
-    const relativePath = `requests/${year}_${month}_requests.csv`;
-    console.log("Try to load role data from client folder ");
-    try {
-        const fileData = await api.loadCSV(homeKey, relativePath);
+// src/data/requests.js
+import { loadFile, saveFile } from './loader.js';
+import { refundReservedDays } from '../../Components/forms/request-form/request-form.js';
 
-        if (fileData) {
-            console.log('✅ Loaded role data from', homeKey, relativePath);
-            return parseRequestsCSV(fileData);
+/* ---------- Sanitize text input ---------- */
+function sanitizeTextField(str) {
+    if (!str) return '';
+    return str
+        .replace(/,/g, '‚')       // comma → single low-9 quote
+        .replace(/"/g, '“')       // double quote → left quote
+        .replace(/'/g, '’')       // single quote → apostrophe
+        .replace(/\\/g, '⧵')      // backslash → unicode
+        .replace(/\r?\n/g, ' ')   // remove newlines
+        .trim();
+}
+
+/* ---------- CSV Parsing ---------- */
+function parseRequestsCSV(data) {
+    const rows = data.split('\n').filter(r => r.trim() !== '');
+    if (rows.length <= 1) return [];
+
+    const headers = rows[0].split(',');
+    const hasEffectiveDays = headers.includes('effectiveDays');
+
+    return rows.slice(1).map(row => {
+        const cells = row.split(',');
+
+        const [
+            id, employeeID, vacationType, start, end, shift,
+            requesterMSG, approverMSG, status, decisionDate, requestedAt,
+            effectiveDays // optional (may be undefined)
+        ] = cells;
+
+        return {
+            id: id.trim(),
+            employeeID: parseInt(employeeID.trim(), 10),
+            vacationType: vacationType.trim(),
+            start: start.trim(),
+            end: end.trim(),
+            shift: shift.trim(),
+            requesterMSG: sanitizeTextField(requesterMSG),
+            approverMSG: sanitizeTextField(approverMSG),
+            status: status.trim(),
+            decisionDate: decisionDate.trim(),
+            requestedAt: requestedAt.trim(),
+            effectiveDays: hasEffectiveDays && effectiveDays !== undefined ? parseInt(effectiveDays.trim(), 10) : null
+        };
+    });
+}
+
+/* ---------- CSV Serialization ---------- */
+function serializeRequestsCSV(requests) {
+    const header = 'id,employeeID,vacationType,start,end,shift,requesterMSG,approverMSG,status,decisionDate,requestedAt,effectiveDays';
+
+    const lines = requests.map(r =>
+        [
+            r.id,
+            r.employeeID,
+            r.vacationType,
+            r.start,
+            r.end,
+            r.shift,
+            sanitizeTextField(r.requesterMSG),
+            sanitizeTextField(r.approverMSG),
+            r.status,
+            r.decisionDate,
+            r.requestedAt,
+            r.effectiveDays ?? '' // empty if not yet calculated
+        ].join(',')
+    );
+
+    return [header, ...lines].join('\n');
+}
+
+
+export async function loadRequests(api, year) {
+
+    let availableFiles = [];
+    try {
+        availableFiles = await getAvailableRequestFiles(api);
+    } catch (err) {
+        console.warn(`⚠️ Could not fetch available request files:`, err);
+    }
+
+    const clientDataFolder = localStorage.getItem('clientDefinedDataFolder');
+    const clientFolderExists = availableFiles.length > 0 || (clientDataFolder);
+
+    if (!clientFolderExists) {
+        const homeKey = localStorage.getItem('dataMode') || 'auto';
+        if (homeKey === 'sample') {
+            const sampleData = await loadSampleRequests();
+            return sampleData;
         } else {
-            console.warn('⚠️ No request data found, using sample fallback.');
-            const result = await loadSampleRequests(api, year, month);
-            return result;
+            return [];
         }
-    } catch (error) {
-        console.warn('❌ Failed to load request data:', error);
-        const result = await loadSampleRequests(api, year, month);
-        return result;
+    }
+
+    const requestedFile = availableFiles.find(f => f.year === year);
+
+    if (requestedFile) {
+        // ✅ File exists → load and parse
+        try {
+            const fileData = await loadFile(api, 'client', `requests/${requestedFile.year}_requests.csv`, () => loadSampleRequests());
+            const parsedData = parseRequestsCSV(fileData);
+            return parsedData;
+        } catch (err) {
+            console.warn(`❌ Failed to load request data for year ${year}:`, err);
+            return [];
+        }
+    } else {
+        return [
+            {
+                info: `Noch keine Anträge für ${year} gestellt`,
+            },
+        ];
     }
 }
 
-async function loadSampleRequests(api, year, month) {
-    const relativePath = `requests/${year}_${month}_requests.csv`;
-    const samplePath = "./samples/requests/sampleRequests.csv";
+/* ---------- Load fallback sample ---------- */
+async function loadSampleRequests() {
 
-    /*
-    const exists = await api.checkPath('sample', relativePath);
-
-    if (!exists) {
-        console.warn(`⚠️ Sample request file not found: ${samplePath}`);
-        return [];
-    }
-    */
+    const samplePath = './samples/requests/sampleRequests.csv';
     try {
         const response = await fetch(samplePath);
         if (!response.ok) {
@@ -39,163 +127,148 @@ async function loadSampleRequests(api, year, month) {
             return [];
         }
         const data = await response.text();
-        console.log(`✅ Loaded sample request data from ${samplePath}`);
-        return parseRequestsCSV(data);
+        return data;
     } catch (error) {
         console.warn(`❌ Error loading sample request data:`, error);
         return [];
     }
 }
 
-
-function parseRequestsCSV(data) {
-    // console.log('[parseRequestsCSV] raw data:', data);
-
-    const rows = data.split('\n').filter(row => row.trim() !== '');
-    const result = rows.slice(1).map(row => {
-        const [id, employeeID, vacationType, start, end, shift, requesterMSG, approverMSG, status, decisionDate, requestedAt] = row.split(',');
-
-        return {
-            id: id.trim(),
-            employeeID: employeeID.trim(),
-            vacationType: vacationType.trim(),
-            start: start.trim(),
-            end: end.trim(),
-            shift: shift.trim() === 'true',
-            requesterMSG: requesterMSG.trim(),
-            approverMSG: approverMSG.trim(),
-            status: status.trim(),
-            decisionDate: decisionDate.trim(),
-            requestedAt: requestedAt.trim()
-        };
-    });
-
-    // console.log('[parseRequestsCSV] parsed result:', result);
-    return result;
-}
+export async function appendRequest(api, year, request) {
+    const folderPath = 'requests/';
+    const fileName = `${year}_requests.csv`;
 
 
-async function appendRequestToCSV(api, request) {
-    const year = request.start.split('-')[0];
-    const month = request.start.split('-')[1];
-    const fileName = `${year}_${month}_requests.csv`;
-    const filePath = `requests/${fileName}`;
-
-    const csvHeader = 'id,employeeID,vacationType,start,end,shift,requesterMSG,approverMSG,status,decisionDate,requestedAt';
-    const csvRow = `${request.id},${request.employeeID},${request.vacationType},${request.start},${request.end},${request.shift},${request.requesterMSG},${request.approverMSG},${request.status},${request.decisionDate},${request.requestedAt}`;
-
-    let fileContent = '';
+    console.log(" new request", request, year);
 
     try {
-        const response = await fetch(filePath);
-        fileContent = await response.text();
-    } catch (error) {
-        console.warn(`File ${fileName} not found, creating a new one.`);
-    }
+        const existing = await loadFile(api, 'client', `requests/${year}_requests.csv`);
+        let requests = existing ? parseRequestsCSV(existing) : [];
 
-    let csvContent = fileContent.trim() ? `${fileContent.trim()}\n${csvRow}` : `${csvHeader}\n${csvRow}`;
+        requests.push(request);
 
-    try {
-        const folderPath = 'requests';
-        await api.saveCSV(folderPath, fileName, csvContent);
-        console.log(`Request appended successfully to ${fileName}`);
+        const csv = serializeRequestsCSV(requests);
+
+        console.log(" request as cvs: ", csv);
+
+        await saveFile(api, folderPath, fileName, csv);
     } catch (err) {
-        console.warn(`Error saving ${fileName}:`, err);
+        console.error(`❌ Error appending request to ${fileName}:`, err);
         throw err;
     }
 }
 
-async function updateRequest(api, id, changes) {
-    const { year, month } = changes.start
-        ? { year: changes.start.split('-')[0], month: changes.start.split('-')[1] }
-        : {};
+export async function updateRequest(api, id, changes, year) {
 
-    if (!year || !month) {
-        console.error("Cannot update request: Missing year/month");
+    if (!year) {
+        console.error(`❌ Cannot update request: Missing or invalid year`);
         return;
     }
-
-    const fileName = `${year}_${month}_requests.csv`; // Fixed filename
+    const folderPath = 'requests/';
+    const fileName = `${year}_requests.csv`;
 
     try {
-        const response = await fetch(`requests/${fileName}`);
-        if (!response.ok) throw new Error(`File not found: ${fileName}`);
+        const fileData = await loadFile(api, 'client', `requests/${year}_requests.csv`);;
+        if (!fileData) {
+            console.warn(`❌ Request file not found: ${fileName}`);
+            return;
+        }
 
-        let data = await response.text();
-        let rows = data.split('\n');
+        let requests = parseRequestsCSV(fileData);
+        const index = requests.findIndex(r => String(r.id) === String(id));
 
-        const index = rows.findIndex(row => row.startsWith(id));
-        if (index === -1) throw new Error('Request not found in file');
+        if (index === -1) {
+            console.warn(`❌ Request with ID ${id} not found in ${fileName}`);
+            return;
+        }
 
-        let existing = parseRequestsCSV(rows.join('\n')).find(r => r.id === id);
-        let updated = { ...existing, ...changes };
+        requests[index] = { ...requests[index], ...changes };
+        const csv = serializeRequestsCSV(requests);
 
-        rows[index] = `${updated.id},${updated.employeeID},${updated.vacationType},${updated.start},${updated.end},${updated.shift},${updated.requesterMSG},${updated.approverMSG},${updated.status},${updated.decisionDate},${updated.requestedAt}`;
-
-        await api.saveCSV(`requests/`, fileName, rows.join('\n'));
-        console.log(`✅ Request ${id} updated successfully`);
+        await saveFile(api, folderPath, fileName, csv);
     } catch (err) {
-        console.warn(`🚨 Error updating request ${id}:`, err);
-        throw err;
+        console.error(`❌ Error updating request ${id}:`, err);
     }
 }
 
-async function getAvailableRequestFiles(api) {
-    console.log("📂 Fetching available request files...");
-    const today = new Date();
-    const lastMonth = new Date();
-    lastMonth.setMonth(today.getMonth() - 1);
+export async function saveRequests(api, year, requests) {
+    const folderPath = 'requests';
+    const fileName = `/${year}_requests.csv`;
+    const csv = serializeRequestsCSV(requests);
 
     try {
-        const filePaths = await api.getRequestFiles();
-        const validFiles = [];
-
-        for (const filePath of filePaths) {
-            const fileName = filePath.split("/").pop(); // Extract filename
-            const match = fileName.match(/(\d{4})_(\d{2})_requests\.csv/);
-
-            if (match) {
-                const [_, year, month] = match;
-                const fileDate = new Date(parseInt(year), parseInt(month) - 1);
-
-                if (fileDate >= lastMonth) {
-                    validFiles.push({ year: parseInt(year), month: parseInt(month), filePath });
-                }
-            }
+        const savedDir = await saveFile(api, folderPath, fileName, csv);
+        if (savedDir) {
+            localStorage.setItem('clientDefinedDataFolder', savedDir);
+        } else {
+            console.warn(`⚠️ Failed to save requests file: ${fileName}`);
         }
+    } catch (err) {
+        console.error(`❌ Error saving requests file ${fileName}:`, err);
+        throw err;
+    }
+}
+function getRequestFileName(year) {
+    const validYear = year && !isNaN(year) ? year : new Date().getFullYear();
+    return `${validYear}_requests.csv`;
+}
 
-        return validFiles.sort((a, b) => new Date(a.year, a.month - 1) - new Date(b.year, b.month - 1));
+/* ---------- Optional: fetch available yearly files ---------- */
+export async function getAvailableRequestFiles(api) {
+    try {
+        const filePaths = await api.getRequestFiles();
+        return filePaths
+            .map(fp => {
+                const fileName = fp.split('/').pop();
+                const match = fileName.match(/(\d{4})_requests\.csv/);
+                if (!match) return null;
+                const [_, year] = match;
+                return { year: parseInt(year, 10), filePath: fp };
+            })
+            .filter(Boolean)
+            .sort((a, b) => a.year - b.year);
     } catch (error) {
-        console.warn("🚨 Error fetching request files:", error);
+        console.warn('🚨 Error fetching request files:', error);
         return [];
     }
 }
 
-async function saveRequests(api, year, month, requests) {
-    const folderKey = localStorage.getItem('clientDefinedDataFolder') || 'home';
-    const filename = `requests/${year}_${month}_requests.csv`;
-    const csvHeader = 'id,employeeID,vacationType,start,end,shift,requesterMSG,approverMSG,status,decisionDate,requestedAt';
-
-    const csvContent = [
-        csvHeader,
-        ...requests.map(r =>
-            `${r.id},${r.employeeID},${r.vacationType},${r.start},${r.end},${r.shift},${r.requesterMSG},${r.approverMSG},${r.status},${r.decisionDate},${r.requestedAt}`
-        )
-    ].join('\n');
+export async function storeApproval(api, requestId, approverMSG = null, decision = null, year) {
 
     try {
-        const savedDir = await api.saveCSV(folderKey, filename, csvContent);
-        if (savedDir) {
-            console.log(`Requests saved successfully to ${filename}`);
-            localStorage.setItem('clientDefinedDataFolder', savedDir);
-        } else {
-            console.warn(`Failed to save requests file: ${filename}`);
+        // Load the request first to locate the correct file (month/year)
+        const allFiles = await getAvailableRequestFiles(api);
+        let foundRequest = null;
+
+        for (const f of allFiles) {
+            const requests = await loadRequests(api, year);
+            const r = requests.find(r => r.id === requestId);
+            if (r) {
+                foundRequest = { request: r, year: f.year, month: f.month };
+                break;
+            }
         }
-    } catch (error) {
-        console.error(`Error saving requests file ${filename}:`, error);
-        throw error;
+
+        if (!foundRequest) {
+            console.error(`❌ Request with ID ${requestId} not found in any file`);
+            return;
+        }
+
+        const changes = {};
+
+        if (approverMSG !== null && approverMSG !== undefined) {
+            changes.approverMSG = sanitizeTextField(approverMSG);
+        }
+
+        if (decision === "approved" || decision === "rejected") {
+            changes.status = decision;
+            changes.decisionDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+        }
+        await updateRequest(api, requestId, changes, year);
+        if (decision === "rejected") {
+            await refundReservedDays(api, foundRequest.request);
+        }
+    } catch (err) {
+        console.error(`❌ Error updating request ${requestId}:`, err);
     }
 }
-
-
-export { loadRequests, appendRequestToCSV, updateRequest, getAvailableRequestFiles };

@@ -8,7 +8,7 @@
   font-size: var(--btn-font-size);
   border-radius: var(--btn-border-radius);
   border: 1px solid var(--btn-border-color);
-  background-color: var(--button-inactive-color);
+  background-color: var(--button-active-color);
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
@@ -22,6 +22,14 @@
 .store-button {
   background-color: var(--bg-success);
   color: var(--text-white);
+  font-size: 1.5rem;
+  float: right;
+  /*background: var(--accent);*/
+  border-radius: 6px;
+  border: none;
+  padding: 0.3rem 0.5rem;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
 /* Delete button styles */
@@ -31,7 +39,7 @@
 }
 
 .mybutton:hover {
-  background-color: var(--button-hover-color);;
+  background-color: var(--button-hover-color);
 }
 
 .mybutton svg {
@@ -46,9 +54,8 @@
   max-height: fit-content;
   padding: 2px;
   margin: 1px;
-  background-color:transparent;
+  background-color: transparent;
   border-color: var(--bg-soft-white);
-  
 }
 .mybutton-small {
   max-height: fit-content;
@@ -63,14 +70,14 @@
 
 /* Specific Button Styles */
 .next {
-  background-image: url('assets/svg/next-svgrepo-com.svg');
+  background-image: url("assets/svg/next-svgrepo-com.svg");
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center;
 }
 
 .previous {
-  background-image: url('assets/svg/previous-svgrepo-com.svg');
+  background-image: url("assets/svg/previous-svgrepo-com.svg");
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center left;
@@ -120,7 +127,7 @@
 
 .inputName {
   max-height: fit-content;
-  cursor:text;
+  cursor: text;
 }
 
 .danger-button {
@@ -176,7 +183,7 @@
 #form-buttons select:hover,
 #form-buttons button:focus,
 #form-buttons select:focus {
-  background-color: var(--primary-bg-hover, #357ABD);
+  background-color: var(--primary-bg-hover, #357abd);
   outline: none;
 }
 
@@ -201,3 +208,112 @@
   height: 1rem;
 }
 
+/* === UNIVERSAL CHEVRON / TOGGLE BUTTON === */
+.chev-btn,
+.chevron-btn,
+.resize-button,
+#toggle-attendance,
+#collapse-shift-toggle {
+  --chev-bg: var(--accent-active);
+  --chev-bg-hover: var(--accent-hover);
+  --chev-border: 1px solid gray;
+  --chev-size: 1.75rem;
+  --chev-radius: 50%;
+  --chev-font-size: 1.2rem;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  width: var(--chev-size);
+  height: var(--chev-size);
+
+  background-color: var(--chev-bg);
+  border: var(--chev-border);
+  border-radius: var(--chev-radius);
+
+  cursor: pointer;
+  transition: background-color 0.25s ease, transform 0.3s ease;
+  font-size: var(--chev-font-size);
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.chev-btn:hover,
+.chevron-btn:hover,
+.resize-button:hover,
+#toggle-attendance:hover,
+#collapse-shift-toggle:hover {
+  background-color: var(--chev-bg-hover);
+}
+
+/* === UNIVERSAL SAVE / STORE BUTTON === */
+.save-btn,
+#save-task,
+#employee-store-button,
+#requestStoreButton {
+  --save-bg: var(--accent-active);
+  --save-bg-hover: var(--accent-hover);
+  --save-bg-disabled: var(--accent-muted);
+  --save-border: 2px solid var(--text-color);
+  --save-radius: 6px;
+  --save-fg: var(--text-color);
+  --save-padding-y: 0.4rem;
+  --save-padding-x: 0.8rem;
+  --save-font-size: 1rem;
+
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+
+  background-color: var(--save-bg);
+  color: var(--save-fg);
+
+  border: var(--save-border);
+  border-radius: var(--save-radius);
+  font-size: var(--save-font-size);
+  padding: var(--save-padding-y) var(--save-padding-x);
+
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+/* Hover */
+.save-btn:hover,
+#save-task:hover,
+#employee-store-button,
+#employee-store-button:hover,
+#requestStoreButton:hover {
+  background-color: var(--save-bg-hover);
+}
+
+/* Active (click feedback) */
+.save-btn:active,
+#save-task:active,
+#employee-store-button,
+#employee-store-button:active,
+#requestStoreButton:active {
+  transform: scale(0.97);
+}
+
+/* Disabled */
+.save-btn:disabled,
+#save-task:disabled,
+#employee-store-button,
+#employee-store-button:disabled,
+#requestStoreButton:disabled {
+  background-color: var(--save-bg-disabled);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+#save-task {
+  --save-bg: var(--button-active-color);
+  --save-bg-hover: var(--button-hover-color);
+  --save-border: 2px solid var(--text-color);
+}
+
+.btn-gabs {
+  margin-left: 4px;
+  margin-right: 4px;
+}

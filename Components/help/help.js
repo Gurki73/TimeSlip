@@ -276,7 +276,7 @@ function renderEmployeeTag(raw) {
     return `
     <span class="employee-tag" title="${person.name}">
       <span class="employee-role help-role-text-${role.roleIndex}">${roleLabel}</span>
-      <i class="noto help-icon help-role-color-${role.roleIndex}">${emoji}</i>
+      <span class="noto help-icon help-role-color-${role.roleIndex}">${emoji}</span>
       ${nickname}
     </span>
   `;
@@ -286,6 +286,30 @@ function initHelpToggles() {
     const storyCheckbox = document.getElementById('help-storymode');
     const lengthSelect = document.getElementById('help-textlength');
     const helpRoot = document.getElementById('help-scroll-container');
+    const sizeSelect = document.getElementById('help-screenshot-size');
+
+    if (sizeSelect) {
+        const savedSize = localStorage.getItem('helpScreenshotSize') || 'large';
+        sizeSelect.value = savedSize;
+
+        const updateScreenshotSize = () => {
+            // Include help-screenshot in toggle
+            const helpImages = document.querySelectorAll(
+                '#help-scroll-container img.help-img, ' +
+                '#help-scroll-container figure.help-img, ' +
+                '#help-scroll-container img.help-screenshot'
+            );
+            helpImages.forEach(el => {
+                el.classList.toggle('large', sizeSelect.value === 'large');
+            });
+            localStorage.setItem('helpScreenshotSize', sizeSelect.value);
+        };
+
+        sizeSelect.addEventListener('change', updateScreenshotSize);
+
+        // Initial apply on load
+        updateScreenshotSize();
+    }
 
     // --- Storymode toggle ---
     if (storyCheckbox) {

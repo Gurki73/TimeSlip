@@ -1,53 +1,16 @@
-<div id="tool-container" role="region" aria-label="Admin Tool Panel" tabindex="0" class="admin-panel">
-  <h1 class="panel-title noto">⚙️ Admin Tools</h1>
+<div
+  id="tool-container"
+  role="region"
+  aria-label="Admin Tool Panel"
+  tabindex="0"
+  class="admin-panel"
+>
+  <h2 class="panel-title noto">⚙️🛠️ Verwaltungs-Werkzeuge</h2>
 
-  <!-- Admin actions -->
-  <section class="admin-actions" aria-label="Admin actions">
-    <h2 class="section-title">Data</h2>
-    <div class="button-group">
-      <button id="excel-import" class="btn noto" title="Excel Import (Ctrl+Shift+I)" aria-keyshortcuts="Control+Shift+I">
-        📥 Excel Import <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd>
-      </button>
-      <button id="excel-export" class="btn noto" title="Excel Export (Ctrl+Shift+E)" aria-keyshortcuts="Control+Shift+E">
-        📤 Excel Export <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd>
-      </button>
-    </div>
-
-    <h2 class="section-title">Customization</h2>
-    <div class="button-group">
-      <button id="color-customization" class="btn noto">
-        🎨 Color Customization
-      </button>
-      <button id="emoji-customization" class="btn noto">
-        😄 Emoji Customization
-      </button>
-       <!-- 🔄 Auto-Save Toggle -->
-      <button id="auto-save-toggle" class="btn toggle-btn noto" aria-pressed="false">
-        💾 Auto Save: <span class="state-label">OFF</span>
-      </button>
-    </div>
-
-    <h2 class="section-title">Maintenance</h2>
-    <div class="button-group">
-      <button id="clear-cache" class="btn danger noto" title="Clear data path cache">
-        🧼 Clear Data Path Cache
-      </button>
-      <small class="warning-note noto" role="alert" aria-live="assertive">
-        ⚠️ Use only if data path cache is corrupted or testing recovery logic.
-      </small>
-    </div>
-  </section>
-
-  <!-- Support section -->
-  <section aria-label="Support and donations" class="support-section">
-    <h2 class="section-title">Support</h2>
-    <button id="buy-coffee" class="btn coffee noto" aria-label="Buy me a coffee">
-      ☕ Buy Me A Coffee
-    </button>
-    <div class="donation-link">
-      <a href="https://buymeacoffee.com/gurky73" target="_blank" rel="noopener noreferrer">
-        buymeacoffee.com/gurky73
-      </a>
-    </div>
-  </section>
+  <!-- Tools Grid -->
+  <section
+    id="tool-grid"
+    class="tool-grid"
+    aria-label="Admin tool actions"
+  ></section>
 </div>

@@ -5,7 +5,7 @@
   height: 100%;
 }
 .help-page-header {
-    background-color: var(--color-help);
+  background-color: var(--color-help);
 }
 .help-row {
   display: flex;
@@ -15,7 +15,7 @@
 
 .help-page-main {
   line-height: 2rem;
-  max-height: 60%;
+  max-height: 60vh;
   overflow-y: scroll;
   overflow-x: auto;
   padding: 1rem;
@@ -29,10 +29,10 @@
   background-color: var(--color-help-toc);
   width: 12rem; /* fixed width, tweakable */
   min-height: 100%;
-  overflow-x:  hidden;
+  overflow-x: hidden;
   flex-shrink: 0;
   padding: 1rem;
-}  
+}
 .help-icon {
   font-weight: 1.2rem;
   border-radius: 5px;
@@ -42,43 +42,99 @@
 /* Common styling for employee tag */
 .employee-tag {
   display: inline-block;
-  padding: 0.02rem 0.1rem;       /* slightly smaller padding on sides */
+  padding: 0.02rem 0.1rem; /* slightly smaller padding on sides */
   border-radius: 0.4rem;
-  margin: 0;                    /* no margin */
+  margin: 0; /* no margin */
   color: var(--text-color);
   background-blend-mode: multiply;
 }
 
 /* Dynamic background color classes */
-.help-role-color-0 { background-color: var(--role-0-color); }
-.help-role-color-1 { background-color: var(--role-1-color); }
-.help-role-color-2 { background-color: var(--role-2-color); }
-.help-role-color-3 { background-color: var(--role-3-color); }
-.help-role-color-4 { background-color: var(--role-4-color); }
-.help-role-color-5 { background-color: var(--role-5-color); }
-.help-role-color-6 { background-color: var(--role-6-color); }
-.help-role-color-7 { background-color: var(--role-7-color); }
-.help-role-color-8 { background-color: var(--role-8-color); }
-.help-role-color-9 { background-color: var(--role-9-color); }
-.help-role-color-10 { background-color: var(--role-10-color); }
-.help-role-color-11 { background-color: var(--role-11-color); }
-.help-role-color-12 { background-color: var(--role-12-color); }
-.help-role-color-13 { background-color: var(--role-13-color); }
+.help-role-color-0 {
+  background-color: var(--role-0-color);
+}
+.help-role-color-1 {
+  background-color: var(--role-1-color);
+}
+.help-role-color-2 {
+  background-color: var(--role-2-color);
+}
+.help-role-color-3 {
+  background-color: var(--role-3-color);
+}
+.help-role-color-4 {
+  background-color: var(--role-4-color);
+}
+.help-role-color-5 {
+  background-color: var(--role-5-color);
+}
+.help-role-color-6 {
+  background-color: var(--role-6-color);
+}
+.help-role-color-7 {
+  background-color: var(--role-7-color);
+}
+.help-role-color-8 {
+  background-color: var(--role-8-color);
+}
+.help-role-color-9 {
+  background-color: var(--role-9-color);
+}
+.help-role-color-10 {
+  background-color: var(--role-10-color);
+}
+.help-role-color-11 {
+  background-color: var(--role-11-color);
+}
+.help-role-color-12 {
+  background-color: var(--role-12-color);
+}
+.help-role-color-13 {
+  background-color: var(--role-13-color);
+}
 /* ... etc. */
-.help-role-text-0 { color: var(--text-color); }
-.help-role-text-1 { color: var(--role-1-color); }
-.help-role-text-2 { color: var(--role-2-color); }
-.help-role-text-3 { color: var(--role-3-color); }
-.help-role-text-4 { color: var(--role-4-color); }
-.help-role-text-5 { color: var(--role-5-color); }
-.help-role-text-6 { color: var(--role-6-color); }
-.help-role-text-7 { color: var(--role-7-color); }
-.help-role-text-8 { color: var(--role-8-color); }
-.help-role-text-9 { color: var(--role-9-color); }
-.help-role-text-10 { color: var(--role-10-color); }
-.help-role-text-11 { color: var(--role-11-color); }
-.help-role-text-12 { color: var(--role-12-color); }
-.help-role-text-13 { color: var(--role-13-color); }
+.help-role-text-0 {
+  color: var(--text-color);
+}
+.help-role-text-1 {
+  color: var(--role-1-color);
+}
+.help-role-text-2 {
+  color: var(--role-2-color);
+}
+.help-role-text-3 {
+  color: var(--role-3-color);
+}
+.help-role-text-4 {
+  color: var(--role-4-color);
+}
+.help-role-text-5 {
+  color: var(--role-5-color);
+}
+.help-role-text-6 {
+  color: var(--role-6-color);
+}
+.help-role-text-7 {
+  color: var(--role-7-color);
+}
+.help-role-text-8 {
+  color: var(--role-8-color);
+}
+.help-role-text-9 {
+  color: var(--role-9-color);
+}
+.help-role-text-10 {
+  color: var(--role-10-color);
+}
+.help-role-text-11 {
+  color: var(--role-11-color);
+}
+.help-role-text-12 {
+  color: var(--role-12-color);
+}
+.help-role-text-13 {
+  color: var(--role-13-color);
+}
 
 #help-toc ul {
   list-style: none;
@@ -104,22 +160,10 @@
 }
 
 /* STORY-MODUS STYLES */
-.story {
-  display: inline-block;
-  background-color: var(--bg-soft-white); /* weich, nicht grell */
-  border-left: 4px solid var(--role-13-color); /* dezentes Orange für Story */
-  padding: 0.75em 1em;
-  margin-block: 0.5em;
-  border-radius: 8px;
-  font-style: italic;
-  color: var(--text-color);
-  line-height: 1.6;
-}
-
 /* Grundlayout für Story-Absätze */
 .story {
   display: block; /* oder inline-block, aber block ist cleaner */
-  background-color: var(--bg-soft-white);
+  background-color: var(--color-layout-container-light);
   border-left: 4px solid var(--role-13-color);
   padding: 0.75em 1em;
   margin-block: 0.5em;
@@ -146,7 +190,6 @@
   color: var(--accent-active);
 }
 
-
 /* When storymode is OFF → hide .story */
 .no-storymode .story {
   display: none !important;
@@ -169,7 +212,7 @@
 }
 
 .help-toggle {
-  background-image: url('../../assets/svg/next-svgrepo-com.svg');
+  background-image: url("../../assets/svg/next-svgrepo-com.svg");
   background-repeat: no-repeat;
   background-size: contain;
   width: 24px;
@@ -195,8 +238,7 @@
   display: block;
 }
 
-.help
-button[aria-expanded="true"] + #help-chapter-1-content {
+.help button[aria-expanded="true"] + #help-chapter-1-content {
   display: block;
 }
 .helpChapterHidden {
@@ -210,4 +252,123 @@ button[aria-expanded="true"] + #help-chapter-1-content {
   border-style: groove;
   border-color: blue;
   margin-bottom: 2.5rem;
+}
+
+#help-controlbar {
+  position: sticky;
+  top: 0;
+  z-index: 999; /* stay above scrollable content */
+  background-color: var(--background-role-muted);
+}
+/* Character image and caption */
+.help-img.character {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.3em;
+}
+
+.help-img.character img {
+  height: 180px;
+  width: auto;
+  object-fit: contain;
+}
+
+.help-img.character.mirror img {
+  transform: scaleX(-1);
+}
+
+/* Caption under each character */
+.help-img.character figcaption {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--text-secondary, #444);
+}
+
+/* Screenshot base */
+.help-screenshot {
+  display: block;
+  margin: 0 auto;
+  width: clamp(300px, 60%, 800px);
+  height: auto;
+  object-fit: contain;
+}
+
+/* Large screenshot toggle */
+.help-screenshot.large {
+  width: clamp(500px, 85%, 1200px);
+}
+
+/* Ensure help-img and screenshots don't conflict */
+#help-scroll-container img.help-img,
+#help-scroll-container figure.help-img {
+  max-height: 180px; /* character/location default small */
+  width: auto;
+  object-fit: contain;
+}
+
+/* Large: fixed height (px) */
+#help-scroll-container img.help-img:not(.large),
+#help-scroll-container figure.help-img:not(.large) img {
+  max-height: 65px;
+  width: auto;
+  object-fit: contain;
+}
+
+#help-scroll-container p,
+#help-scroll-container div {
+  color: var(--text-color);
+}
+
+/* Dialogue layout */
+.dialog-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1em;
+  margin: 1em 0;
+}
+
+/* Speech bubble */
+.bubble {
+  background: #fff;
+  border-radius: 1em;
+  border-color: rgba(0.8, 0.8, 0.8, 0.2);
+  border-style: solid;
+  border-width: 1px;
+  padding: 0.8em 1em;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  max-width: 90;
+  font-size: 0.95em;
+  line-height: 1.4;
+}
+
+.bubble.left {
+  margin-left: -1.5rem; /* move left bubble slightly toward the speaker */
+}
+
+.bubble.right {
+  margin-right: -1.5rem; /* move right bubble slightly toward the speaker */
+}
+
+.bubble.left::after,
+.bubble.right::after {
+  content: "";
+  position: absolute;
+  top: 1em;
+  width: 0;
+  height: 0;
+  border: 0.6em solid transparent;
+}
+
+.bubble.left::after {
+  left: -1em;
+  border-right-color: #fff;
+}
+
+.bubble.right::after {
+  right: -1em;
+  border-left-color: #fff;
 }

@@ -1,24 +1,41 @@
-
 <div id="calendar-navigation2">
-  <div id ="help" class="hidden"> HELP</div>  
+  <div id="help" class="hidden">HELP</div>
   <div class="calendar-nav">
-    <div class="state-image stateIcon" id="state-image"></div>
+    <div
+      class="state-image federal-state-icon"
+      id="state-image"
+      title="Bundesland in den Kalender-Einstellungen ändern"
+      aria-hidden="true"
+    ></div>
     <div class="month-controls">
       <button class="mybutton" id="prev-month"></button>
       <span class="month-label" id="calendar-month"></span>
       <button class="mybutton" id="next-month"></button>
     </div>
-    <button class="toggle-attendance" id="toggle-attendance"></button>
+
     <div class="year-controls">
       <button class="mybutton" id="prev-year"></button>
       <span class="year-label" id="calendar-year"></span>
+      <span class="noto" id="zodiac"> 🦄</span>
       <button class="mybutton" id="next-year"></button>
     </div>
-    <div class="calendar-spacing"> </div>
+
+    <!-- <button class="toggle-attendance" id="toggle-attendance"></button> -->
+    <div id="presence-container" aria-label="Presence selector"></div>
+
+    <div class="calendar-spacing"></div>
+
+    <button
+      id="refresh-calendar-btn"
+      class="mybutton refresh-btn noto big"
+      title="Kalender neu laden (F5)"
+    >
+      ⟳
+    </button>
   </div>
 </div>
 
-<div id="calendar-month-sheet" class="calendar-container">  
+<div id="calendar-month-sheet" class="calendar-container">
   calendar month table
   <div id="calendar-feedback" class="fade-feedback"></div>
 </div>

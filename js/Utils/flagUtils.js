@@ -1,4 +1,7 @@
+import { saveStateData } from '../loader/calendar-loader.js';
+
 export const stateFlags = {
+    XX: { src: './assets/png/wappen-nimmerland.png', alt: 'Nimmerland' },
     BY: { src: './assets/png/wappen-Bayern.png', alt: 'Bayern' },
     BB: { src: './assets/png/wappen-brandenburg.png', alt: 'Brandenburg' },
     BW: { src: './assets/png/wappen-badenWuertenberg.png', alt: 'Baden-Württemberg' },
@@ -24,8 +27,17 @@ export function updateStateFlag(state, stateElement) {
         stateElement.style.backgroundSize = 'contain';
         stateElement.style.backgroundRepeat = 'no-repeat';
         stateElement.style.backgroundPosition = 'center';
-        stateElement.setAttribute('aria-label', flag.alt);  // Accessibility
+        stateElement.setAttribute('aria-label', flag.alt);
     } else {
-        console.warn(`No flag found for state: ${state}`);
+        console.warn(`⚠️ No flag found for state: ${state}, using Nimmerland.`);
+        const fallback = stateFlags['XX'];
+        if (fallback) {
+            stateElement.style.backgroundImage = `url('./assets/png/wappen-nimmerland.png')`;
+            stateElement.style.backgroundSize = 'contain';
+            stateElement.style.backgroundRepeat = 'no-repeat';
+            stateElement.style.backgroundPosition = 'center';
+            stateElement.setAttribute('aria-label', fallback.alt);
+        }
     }
 }
+

@@ -1,10 +1,17 @@
-import { saveStateData, loadStateData, loadCompanyHolidayData, setBranch, updateOfficeDays, loadOfficeDaysData } from '../../../js/loader/calendar-loader.js';
-import { getAllHolidaysForYear } from '../../../js/Utils/holidayUtils.js';
+import { saveStateData, saveOfficeDays, loadStateData, loadCompanyHolidayData, setBranch, updateOfficeDays, loadOfficeDaysData } from '../../../js/loader/calendar-loader.js';
+import { loadPublicHolidaysSimple, savePublicHolidaysSimple, saveBridgeDaysSimple, loadBridgeDays, saveCompanyHolidaysCSV } from '../../../js/loader/calendar-loader.js';
+import { getAllHolidaysForYear, filterPublicHolidaysByYearAndState } from '../../../js/Utils/holidayUtils.js';
 import { updateStateFlag } from '../../../js/Utils/flagUtils.js';
-import { GetSchoolHoliday, apiHealthCheck, DownloadSchoolHoliday } from '../../../js/Utils/schoolHollydayUpdater.js';
+import { GetSchoolHoliday, apiHealthCheck, DownloadSchoolHoliday, parseToCSV, parseSchoolHolidayCsv } from '../../../js/Utils/schoolHollydayUpdater.js';
 import { updateCalendarDisplay, setDateRemote } from '../../calendar/calendar.js';
 import { checkOnboardingState } from '../../../js/Utils/onboarding.js';
 import * as Util from './calendar-form-utils.js';
+import { createDateRangePicker } from '../../customDatePicker/customDatePicker.js';
+import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
+import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
+import { createBranchSelect, branchPresetsRoles } from '../../../js/Utils/branch-select.js';
+import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js';
+import { keyToBools } from './calendar-form-utils.js';
 
 /**
  * 🎉 Special Days & Schützenfest (Future Enhancements)
@@ -25,9 +32,107 @@ import * as Util from './calendar-form-utils.js';
  *    • NRW: "On target all summer – Schützenfest time!"
  *    • Lower Saxony: "Aim, celebrate, and connect – our Schützenfest."
  */
+window.debugChecklist = false;
 
+const states = [
+  { code: 'XX', name: 'Nimmerland', flag: 'wappen-nimmerland.png', hidden: true },
+  { code: 'SH', name: 'Schleswig-Holstein', flag: 'wappen-schleswigHolstein.png' },
+  { code: 'NI', name: 'Niedersachsen', flag: 'wappen-niedersachsen.png' },
+  { code: 'MV', name: 'Mecklenburg-Vorpommern', flag: 'wappen-MeVoPO.png' },
+  { code: 'HB', name: 'Bremen', flag: 'wappen-bremen.png' },
+  { code: 'HH', name: 'Hamburg', flag: 'wappen-hamburg.png' },
+  { code: 'NW', name: 'Nordrhein-Westfalen', flag: 'wappen-nrw.png' },
+  { code: 'BB', name: 'Brandenburg', flag: 'wappen-brandenburg.png' },
+  { code: 'BE', name: 'Berlin', flag: 'wappen-berlin.png' },
+  { code: 'ST', name: 'Sachsen-Anhalt', flag: 'wappen-sachsenAnhalt.png' },
+  { code: 'HE', name: 'Hessen', flag: 'wappen-hessen.png' },
+  { code: 'TH', name: 'Thüringen', flag: 'wappen-thüringen.png' },
+  { code: 'RP', name: 'Rheinland-Pfalz', flag: 'wappen-rheinlandPfalz.png' },
+  { code: 'BW', name: 'Baden-Württemberg', flag: 'wappen-badenWuertenberg.png' },
+  { code: 'SN', name: 'Sachsen', flag: 'wappen-sachsen.png' },
+  { code: 'SL', name: 'Saarland', flag: 'wappen-Saarland.png' },
+  { code: 'BY', name: 'Bayern', flag: 'wappen-Bayern.png' },
+];
+
+const calendarState = {
+  mon: { early: false, day: false, late: false },
+  tue: { early: false, day: false, late: false },
+  wed: { early: false, day: false, late: false },
+  thu: { early: false, day: false, late: false },
+  fri: { early: false, day: false, late: false },
+  sat: { early: false, day: false, late: false },
+  sun: { early: false, day: false, late: false },
+};
 
 const dayIds = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+const shiftIds = ['early', 'day', 'late'];
+const weekdaysData = [
+  { id: 'mon', type: 'weekday', short: 'Mo', name: 'Montag', isOpen: true },
+  { id: 'tue', type: 'weekday', short: 'Di', name: 'Dienstag', isOpen: true },
+  { id: 'wed', type: 'weekday', short: 'Mi', name: 'Mittwoch', isOpen: true },
+  { id: 'thu', type: 'weekday', short: 'Do', name: 'Donnerstag', isOpen: true },
+  { id: 'fri', type: 'weekday', short: 'Fr', name: 'Freitag', isOpen: true },
+  { id: 'sat', type: 'weekday', short: 'Sa', name: 'Samstag', isOpen: false },
+  { id: 'sun', type: 'weekday', short: 'So', name: 'Sonntag', isOpen: false }
+];
+
+let shiftsData = {
+  mon: [
+    { id: 'early', label: 'Frühschicht', active: true },
+    { id: 'day', label: 'Tagschicht', active: true },
+    { id: 'late', label: 'Spätschicht', active: false }
+  ],
+  tue: [
+    { id: 'early', label: 'Frühschicht', active: true },
+    { id: 'day', label: 'Tagschicht', active: true },
+    { id: 'late', label: 'Spätschicht', active: false }
+  ],
+  wed: [
+    { id: 'early', label: 'Frühschicht', active: true },
+    { id: 'day', label: 'Tagschicht', active: true },
+    { id: 'late', label: 'Spätschicht', active: false }
+  ],
+  thu: [
+    { id: 'early', label: 'Frühschicht', active: true },
+    { id: 'day', label: 'Tagschicht', active: true },
+    { id: 'late', label: 'Spätschicht', active: false }
+  ],
+  fri: [
+    { id: 'early', label: 'Frühschicht', active: true },
+    { id: 'day', label: 'Tagschicht', active: true },
+    { id: 'late', label: 'Spätschicht', active: false }
+  ],
+  sat: [
+    { id: 'early', label: 'Frühschicht', active: false },
+    { id: 'day', label: 'Tagschicht', active: false },
+    { id: 'late', label: 'Spätschicht', active: false }
+  ],
+  sun: [
+    { id: 'early', label: 'Frühschicht', active: false },
+    { id: 'day', label: 'Tagschicht', active: false },
+    { id: 'late', label: 'Spätschicht', active: false }
+  ]
+};
+
+const calendarLists = [
+  { id: "weekdays", title: "Wochentage", type: "static", target: "left-collapsibles", data: weekdaysData },
+  { id: "shifts", title: "Schichten", type: "matrix", target: "left-collapsibles", data: shiftsData },
+  { id: "holidays", title: "Feiertage", type: "dynamic", target: "right-collapsibles", data: [] },
+  { id: "bridgedays", title: "Brückentage", type: "computed", target: "right-collapsibles", data: [] },
+  { id: "companyHolidays", title: "Betriebsferien", type: "manual", target: "right-collapsibles", data: [] },
+  { id: "schoolHolidays", title: "Schulferien", type: "dynamic", target: "right-collapsibles", data: [] },
+];
+
+let collapsibleState = {
+  weekdays: true,
+  shifts: true,
+  holidays: true,
+  bridgedays: true,
+  companyHolidays: true,
+  schoolHolidays: true
+};
+
+let activeCompanyHolidayPicker;
 
 const DEFAULT_WORD = 'Öffnungszeiten';
 
@@ -47,96 +152,1686 @@ let companyHolidayDraft = {
 };
 
 let currentYear = new Date().getFullYear();
-let ruleFormState;
-let api;
+let ruleFederalState;
+let cachedApi;
 let companyHolidays = [];
 let officeDays = [];
+let publicHolidayState = {};
+let bridgeDayState = {};
 
 export async function initializeCalendarForm(passedApi) {
-  api = passedApi;
-  if (!api) console.error("Api was not passed ==> " + api);
-
-  const { isOnboarding, dataFolder } = await checkOnboardingState(api);
+  if (!passedApi) {
+    console.error("❌ API not provided to initializeCalendarForm");
+    return;
+  }
+  cachedApi = passedApi;
+  // 1️⃣ Preload / Data Phase
+  const { isOnboarding, dataFolder } = await checkOnboardingState(cachedApi);
+  let ruleFormState, officeDays, companyHolidays, savedBridgeDays;
 
   try {
-    // Correct: all data is fetched in parallel
     const [
       _holidays,
+      _holidayState,
       _flag,
       _school,
       officeDaysData,
-      companyHolidaysData
+      companyHolidaysData,
+      bridgeDaysData
     ] = await Promise.all([
       getAllHolidaysForYear(),
-      updateStateFlag(),
-      GetSchoolHoliday(),
-      loadOfficeDaysData(api, isOnboarding),
-      loadCompanyHolidayData(api, currentYear)
+      loadPublicHolidaysSimple(cachedApi),
+      loadStateData(cachedApi),
+      GetSchoolHoliday(cachedApi, 'SL', currentYear),
+      loadOfficeDaysData(cachedApi, isOnboarding),
+      loadCompanyHolidayData(cachedApi, currentYear),
+      loadBridgeDays(cachedApi)  // ✅ NEW
     ]);
 
+    savedBridgeDays = bridgeDaysData;
+    publicHolidayState = _holidayState;
+    ruleFormState = _flag;
     officeDays = officeDaysData;
     companyHolidays = companyHolidaysData;
-    console.log("calendar FORM office onboarding ==> ", isOnboarding);
-    console.log("calendar FORM office days ==> ", officeDays);
+    console.log("✅ Data loaded:", { ruleFormState, officeDays, companyHolidays, isOnboarding });
   } catch (error) {
     console.error('❌ Error loading data in calendar-form:', error);
-  }
-
-  // Continue with UI logic...
-  ruleFormState = loadStateData();
-  const formContainer = document.getElementById('form-container');
-  if (!formContainer) {
-    console.error('Form container not found');
     return;
   }
+  await clearAndLoadDOM();
 
-  formContainer.innerHTML = '';
+  shiftsData = updateShiftState(shiftsData, officeDays);
 
-  try {
-    const response = await fetch('Components/forms/calendar-form/calendar-form.html');
-    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+  loadCollapsibleState();
+  updateDivider("bg-calendar");
+  await buildCollapsableContainer();
+  populateWeekdaysList();
 
-    const formContent = await response.text();
-    formContainer.innerHTML = formContent;
+  const publicHolidays = filterPublicHolidaysByYearAndState(currentYear, ruleFormState);
+  populatePublicHolidayList(publicHolidays);
+  const calculatedBridgeDays = findBridgeDays(publicHolidays, weekdaysData);
+  const mergedBridgeDays = mergeBridgeDays(calculatedBridgeDays, savedBridgeDays);
+  populateBridgeDaysList(mergedBridgeDays);
+  populateCompanyHolidaysList(companyHolidays);
+  populateSchoolHolidaysListUnified(cachedApi, ruleFormState, currentYear);
 
-  } catch (err) {
-    console.error(`Loading role form failed: ${err}`);
-    return;
+  requestAnimationFrame(() => {
+    initializeYearAndState();
+    initCalendarStateFromCSV(officeDays);
+    updateCalendarUIFromState();
+    initCollapseExpandToggles();
+  });
+
+  const saveBtn = document.getElementById('btn-weekday-store');
+  if (saveBtn) {
+    saveBtn.classList.remove('hidden');
+    saveBtn.classList.add('noto');
+    saveBtn.addEventListener('click', () => saveOfficeDays(cachedApi, calendarState));
   }
-
-  applyStateChange(ruleFormState);
-  restoreOfficeDaysUI(officeDays);
-  const stateSelect = document.getElementById('state-select');
-  const stateFlagElement = document.getElementById('calendar-form-state-flag');
-  const yearSpan = document.getElementById('calendar-form-year');
-
-  if (yearSpan) {
-    yearSpan.value = currentYear;
-  } else {
-    // updateFeedback('Year span element not found!');
-  }
-
-  if (stateSelect) {
-    stateSelect.addEventListener('change', handleStateChange);
-  } else {
-    // updateFeedback('State select element not found!');
-    console.log('State select element not found!');
-  }
-
-  createEventListener();
-  updateHolidaysForYear(currentYear, ruleFormState);
-  updateBridgeDaysForYear(currentYear, ruleFormState);
-  renderCompanyHolidays(api, currentYear);
-  checkAndRenderSchoolHolidays(api);
 }
 
-//#region event listener
+function updateShiftState(shiftsData, officeDays) {
+  console.log("office days", officeDays);
+  console.log("shift state", shiftsData);
+
+  const weekDays = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+
+  weekDays.forEach((day, index) => {
+    const officeKey = officeDays[index] || "never";
+    const officeOpen = keyToBools(officeKey);
+
+    const dayShifts = shiftsData[day];
+    if (!dayShifts) return;
+
+    dayShifts.forEach(shift => {
+      switch (shift.id) {
+        case "early":
+          shift.active = officeOpen.early;
+          break;
+        case "day":
+          shift.active = officeOpen.day;
+          break;
+        case "late":
+          shift.active = officeOpen.late;
+          break;
+        default:
+          console.warn("Unknown shift id:", shift.id);
+      }
+    });
+  });
+
+  return shiftsData;
+}
+
+
+function initPublicHolidayStateFromCSV(holidayRows) {
+  holidayRows.forEach(h => {
+    publicHolidayState[h.id] = h.isOpen;
+  });
+}
+
+export function mergeBridgeDays(calculated, savedArray) {
+  const savedMap = Object.fromEntries(savedArray.map(({ id, isOpen }) => [id, isOpen]));
+
+  return calculated.map(day => {
+    if (savedMap.hasOwnProperty(day.id)) {
+      return { ...day, isOpen: savedMap[day.id] };
+    }
+    return day;
+  });
+}
+
+async function buildCollapsableContainer() {
+  const leftContainer = document.getElementById('left-collapsibles');
+  const rightContainer = document.getElementById('right-collapsibles');
+
+  if (!leftContainer || !rightContainer) return;
+
+  calendarLists.forEach(cfg => {
+    const node = createCollapsible(cfg);
+    if (cfg.target === 'left-collapsibles') leftContainer.appendChild(node);
+    else if (cfg.target === 'right-collapsibles') rightContainer.appendChild(node);
+  });
+
+  await new Promise(requestAnimationFrame);
+  console.log('✅ All collapsibles created');
+}
+
+function initCalendarStateFromCSV(csvRow) {
+  const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+  days.forEach((day, i) => {
+    const key = csvRow[i]; // e.g. "full", "morning"
+    calendarState[day] = keyToBools(key);
+  });
+
+  console.log("[calendar-form] init state", calendarState);
+}
+
+function updateCalendarUIFromState() {
+  Object.entries(calendarState).forEach(([day, shifts]) => {
+    // weekday checkbox
+    const weekdayCheckbox = document.getElementById(`chk-${day}`);
+    if (weekdayCheckbox) {
+      const anyActive = shifts.early || shifts.day || shifts.late;
+      weekdayCheckbox.checked = anyActive;
+      updateWeekdayIcon(day, anyActive);
+    }
+
+    // shift checkboxes
+    Object.entries(shifts).forEach(([shiftId, isActive]) => {
+      const shiftCheckbox = document.getElementById(`chk-${day}-${shiftId}`);
+      if (shiftCheckbox) {
+        shiftCheckbox.checked = isActive;
+        // optionally update lock icon / color
+        const icon = shiftCheckbox.parentNode.querySelector('.lock-icon');
+        if (icon) {
+          icon.classList.toggle('unlocked', isActive);
+          icon.classList.toggle('locked', !isActive);
+        }
+      }
+    });
+  });
+}
+
+async function handleYearUpdate(year) {
+
+  const publicHolidays = filterPublicHolidaysByYearAndState(year, publicHolidayState);
+  const schoolHolidays = await GetSchoolHoliday(cachedApi, 'SL', year);
+  const companyHolidays = await loadCompanyHolidayData(cachedApi, year);
+  const bridgeDaysData = await loadBridgeDays(cachedApi);
+
+  populatePublicHolidayList(publicHolidays);
+  const calculatedBridgeDays = findBridgeDays(publicHolidays, weekdaysData);
+  const mergedBridgeDays = mergeBridgeDays(calculatedBridgeDays, bridgeDaysData);
+  populateBridgeDaysList(mergedBridgeDays);
+  populateCompanyHolidaysList(companyHolidays);
+  populateSchoolHolidaysListUnified(cachedApi, publicHolidayState, year);
+
+}
+
+
+async function initializeYearAndState() {
+  const container = document.getElementById("state-year-container");
+  if (!container) return;
+
+  publicHolidayState = await loadStateData(cachedApi);
+
+  const yearInput = document.createElement("input");
+  yearInput.id = "calendar-form-year";
+  yearInput.type = "number";
+  yearInput.addEventListener("change", async (e) => {
+    const selectedYear = parseInt(e.target.value, 10);
+    localStorage.setItem("calendarSettingYear", selectedYear);
+    currentYear = selectedYear;
+    await handleYearUpdate(selectedYear);
+  });
+
+  const cachedYear = parseInt(localStorage.getItem("calendarSettingYear"), 10);
+  currentYear = cachedYear || new Date().getFullYear();
+  yearInput.value = currentYear;
+
+
+  const flagDiv = document.createElement("div");
+  flagDiv.id = "state-flag";
+  flagDiv.classList.add("state-flag-icon");
+  container.appendChild(flagDiv);
+
+  const stateSelect = document.createElement("select");
+  stateSelect.id = "state-select";
+
+  const filtredStates = publicHolidayState !== "XX" ? states.filter(s => !s.hidden) : states;
+  filtredStates.forEach(s => {
+    const opt = document.createElement("option");
+    opt.value = s.code;
+    opt.textContent = s.name;
+    opt.selected = s.code === publicHolidayState;
+    stateSelect.appendChild(opt);
+  });
+
+  const saveBtn = document.createElement("button");
+  saveBtn.id = "save-state-btn";
+  saveBtn.textContent = "🛡️💾";
+  saveBtn.title = "Bundesland speichern";
+  saveBtn.setAttribute("aria-label", "Bundesland speichern");
+  saveBtn.classList.add("noto");
+  saveBtn.classList.add("hidden");
+  saveBtn.addEventListener('click', async () => {
+    await saveStateData(cachedApi, stateSelect.value);
+    saveBtn.classList.add("hidden");
+  });
+
+
+  container.appendChild(stateSelect);
+  container.appendChild(saveBtn);
+  container.appendChild(yearInput);
+
+  // Initialize flag
+  updateStateFlag(stateSelect.value, flagDiv);
+
+  // Update flag on change
+  stateSelect.addEventListener("change", async (e) => {
+
+    const selectedStateCode = e.target.value;
+    ruleFederalState = selectedStateCode;
+    publicHolidayState = selectedStateCode;
+
+    console.log(" state changed val: ", e.target.value);
+
+    const saveBtnLocal = document.getElementById('save-state-btn');
+    if (saveBtnLocal) saveBtnLocal.classList.remove("hidden");
+
+    updateStateFlag(selectedStateCode, flagDiv);
+
+    const topFlag = document.getElementById('state-image');
+    const bottomFlag = document.getElementById('state-flag');
+    const stateSelector = document.getElementById('state-select');
+
+    if (topFlag) {
+      updateStateFlag(selectedStateCode, topFlag);
+    }
+    if (bottomFlag) {
+      updateStateFlag(selectedStateCode, bottomFlag);
+    }
+    if (stateSelector) {
+      stateSelector.value = selectedStateCode;
+    }
+    console.log("[calendar-form] selected state code: ", selectedStateCode);
+    console.log("[calendar-form] current year: ", currentYear);
+    const publicHolidaysLocal = filterPublicHolidaysByYearAndState(currentYear, selectedStateCode);
+    console.log("[calendar-form] filtered public holidays : ", publicHolidaysLocal);
+    populatePublicHolidayList(publicHolidaysLocal);
+    const bridgedays = findBridgeDays(publicHolidaysLocal, weekdaysData);
+    populateBridgeDaysList(bridgedays);
+    populateSchoolHolidaysListUnified(cachedApi, selectedStateCode, currentYear);
+  });
+}
+
+
+async function clearAndLoadDOM() {
+  const container = document.getElementById('form-container');
+  if (!container) {
+    console.error('❌ form-container not found');
+    return;
+  }
+
+  try {
+    const res = await fetch('Components/forms/calendar-form/calendar-form.html');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const html = await res.text();
+    container.innerHTML = html;
+    console.log('✅ Base calendar form HTML loaded');
+  } catch (err) {
+    console.error('❌ Failed to load form HTML:', err);
+  }
+}
+
+async function buildCollapsables() {
+  for (const cfg of calendarLists) {
+    const parent = document.getElementById(cfg.target);
+    if (!parent) continue;
+
+    const node = createCollapsible(cfg);
+    parent.appendChild(node);
+  }
+  await new Promise(requestAnimationFrame);
+  console.log("✅ All collapsibles created");
+}
+
+function createCollapsible(cfg) {
+  const tpl = document.getElementById("tpl-rule-collapsible");
+  const clone = tpl.content.cloneNode(true);
+
+  const wrapper = clone.querySelector(".rule-collapsible");
+  if (wrapper) wrapper.id = `rule-collapsible-${cfg.id}`;
+
+  const toggleBtn = clone.querySelector(".rule-collapsible-toggle");
+  if (toggleBtn) {
+    // Give the toggle button a unique ID
+    toggleBtn.id = `collapse-${cfg.id}-toggle`;
+  }
+
+  const chev = clone.querySelector(".chev");
+  if (chev) {
+    // Optionally give the chev its own ID
+    chev.id = `chev-${cfg.id}`;
+  }
+
+  const titleEl = clone.querySelector(".title");
+  if (titleEl) titleEl.textContent = cfg.title;
+
+  const content = clone.querySelector(".rule-collapsible-content");
+
+  let innerNode;
+  switch (cfg.type) {
+    case "matrix":
+      innerNode = createMatrixList(cfg);
+      break;
+    default:
+      innerNode = createStandardList(cfg);
+      break;
+  }
+
+  if (content && innerNode) content.appendChild(innerNode);
+
+  console.log(`🧱 Collapsible created: fieldset=${wrapper?.id}, toggle=${toggleBtn?.id}, chev=${chev?.id}`);
+  return clone;
+}
+
+
+function createStandardList(cfg) {
+
+  const tpl = document.getElementById('tpl-list');
+  const tplItem = document.getElementById('tpl-list-item');
+
+  if (!tpl || !tplItem) {
+    console.error('Templates for standard list not found');
+    return document.createElement('div');
+  }
+
+  // Clone the list container template
+  const listNode = tpl.content.cloneNode(true);
+  const body = listNode.querySelector('.list-body');
+
+  // Fill with data
+  (cfg.data || []).forEach(item => {
+    const li = createListItem(item);
+    body.appendChild(li);
+  });
+
+  // Optional: mini view for collapsed state
+  const miniView = document.createElement('div');
+  miniView.className = 'list-mini';
+  (cfg.data || []).forEach(item => {
+    const miniItem = document.createElement('span');
+    miniItem.className = 'mini-item';
+
+    // Show only icon (locked/unlocked) for mini
+    const icon = document.createElement('span');
+    miniItem.appendChild(icon);
+
+    miniView.appendChild(miniItem);
+  });
+
+  listNode.querySelector('.list-calendar-settings').appendChild(miniView);
+
+  return listNode;
+}
+
+function onShiftToggle(day, shiftId, isActive) {
+  console.log("[calendar-form] day/id/active:", day, shiftId, isActive);
+  calendarState[day][shiftId] = isActive;
+  const dayState = calendarState[day];
+  console.log("[calendar-form] day state:", dayState);
+  const anyActive = dayState.early || dayState.day || dayState.late;
+  console.log("[calendar-form] any active:", anyActive);
+  console.log("[calendar setting] weekday identifier", `input[data-day="${day}"][data-type="weekday"]`);
+  const weekdayCheckbox = document.getElementById(`chk-${day}`);
+
+  if (weekdayCheckbox) {
+    weekdayCheckbox.checked = anyActive;
+    updateWeekdayIcon(day, anyActive);
+  }
+
+  if (typeof handleCalendarSettingChange === 'function') {
+    handleCalendarSettingChange(`${day}-${shiftId}`, isActive);
+  }
+
+  // Optional debug
+  console.table(calendarState);
+}
+
+function onWeekdayToggle(day, isActive) {
+  calendarState[day] = { early: isActive, day: isActive, late: isActive };
+
+  ['early', 'day', 'late'].forEach(shiftId => {
+    const shiftCheckbox = document.querySelector(`input[data-day="${day}"][data-shift="${shiftId}"]`);
+    if (shiftCheckbox) {
+      shiftCheckbox.checked = isActive;
+      const icon = shiftCheckbox.nextElementSibling;
+      if (icon) {
+        icon.classList.toggle('unlocked', isActive);
+        icon.classList.toggle('locked', !isActive);
+      }
+    }
+    handleCalendarSettingChange(`${day}-${shiftId}`, isActive);
+  });
+
+  updateWeekdayIcon(day, isActive);
+}
+
+// optional helper
+function updateWeekdayIcon(day, active) {
+  const weekdayRow = document.querySelector(`[data-weekday="${day}"]`);
+  if (!weekdayRow) return;
+  weekdayRow.classList.toggle('is-active', active);
+}
+
+
+// === 🧩 Create the list inside each collapsible ===
+function createList(cfg) {
+  const tpl = document.getElementById('tpl-list');
+  const tplItem = document.getElementById('tpl-list-item');
+
+  const listNode = tpl.content.cloneNode(true);
+  const body = listNode.querySelector('.list-body');
+
+  if (Array.isArray(cfg.data)) {
+    cfg.data.forEach(item => body.appendChild(createListItem(item)));
+  } else if (typeof cfg.data === 'object') {
+    Object.entries(cfg.data).forEach(([day, shifts]) => {
+      shifts.forEach(shift => {
+        body.appendChild(createListItem({ day, ...shift }));
+      });
+    });
+  }
+
+  return listNode;
+}
+
+function createListItem(item, colorClass = "is-closed") {
+  const tpl = document.getElementById('tpl-list-item');
+  if (!tpl) return null;
+
+  const node = tpl.content.cloneNode(true);
+  const row = node.querySelector('.data-row');
+
+  row.dataset.key = item.id || '';
+
+  row.classList.add(colorClass);
+
+  const labelText = row.querySelector('.label-text');
+  labelText.innerHTML = '';
+
+  if (item.date) {
+    const dateSpan = document.createElement('span');
+    dateSpan.classList.add('date-name');
+    dateSpan.textContent = `${item.date} `;
+    labelText.appendChild(dateSpan);
+  }
+
+  if (item.emoji) {
+    const emojiSpan = document.createElement('span');
+    emojiSpan.classList.add('emoji', 'noto');
+    emojiSpan.textContent = item.emoji + ' ';
+    labelText.appendChild(emojiSpan);
+  }
+
+  const nameSpan = document.createElement('span');
+  nameSpan.classList.add('full-name');
+  nameSpan.innerHTML = item.name || '—';
+  labelText.appendChild(nameSpan);
+
+  const shortSpan = document.createElement('span');
+  shortSpan.classList.add('short-name', 'hidden'); // hidden by default
+  shortSpan.textContent = item.short || item.name?.slice(0, 2) || '?';
+  labelText.appendChild(shortSpan);
+
+
+  const checkbox = row.querySelector('.row-checkbox');
+  checkbox.type = "checkbox";
+  checkbox.dataset.type = item.type || "";
+
+  const icon = row.querySelector('.status-icon');
+
+  if (checkbox) {
+    checkbox.checked = !!item.isOpen;
+    const uniqueId = `chk-${item.id || crypto.randomUUID()}`;
+    checkbox.id = uniqueId;
+    row.querySelector('.label-text').setAttribute('for', uniqueId);
+
+    if (icon) {
+      icon.classList.toggle('unlocked', checkbox.checked);
+      icon.classList.toggle('locked', !checkbox.checked);
+    }
+
+    checkbox.addEventListener('change', (e) => {
+      const isOpen = e.target.checked;
+      if (icon) {
+        icon.classList.toggle('unlocked', isOpen);
+        icon.classList.toggle('locked', !isOpen);
+      }
+
+      row.classList.toggle('is-regular', isOpen);
+      row.classList.toggle('is-closed', !isOpen);
+
+      if (typeof handleCalendarSettingChange === 'function') {
+        handleCalendarSettingChange(row.dataset.key, isOpen);
+        onWeekdayToggle(row.dataset.key, isOpen);
+      }
+    });
+  }
+
+  if (item.disabled) {
+    row.classList.add('disabled');
+    if (checkbox) checkbox.disabled = true;
+  }
+
+  return node;
+}
+
+function handleCalendarSettingChange(key, isOpen) {
+  console.log(key, isOpen);
+}
+
+function loadCollapsibleState() {
+  const saved = localStorage.getItem('calendarCollapsibleState');
+  if (saved) {
+    try {
+      collapsibleState = JSON.parse(saved);
+    } catch (err) {
+      console.warn('Failed to parse saved collapsible state', err);
+    }
+  }
+}
+
+function populateWeekdaysList() {
+  const collapsible = document.getElementById('rule-collapsible-weekdays');
+  if (!collapsible) return;
+
+  const body = collapsible.querySelector('.list-body');
+  body.innerHTML = '<br> <br>'; // clear existing rows
+
+  let i = 0;
+  weekdaysData.forEach(day => {
+    let colorClass = 'is-regular';
+    if (i === 5) colorClass = "is-weekend";
+    if (i === 6) colorClass = "is-sunday";
+    i++;
+
+    const li = createListItem(day, colorClass); // pass color hint
+    body.appendChild(li);
+  });
+}
+
+function populatePublicHolidayList(publicHolidays) {
+  const collapsible = document.getElementById('rule-collapsible-holidays');
+  if (!collapsible) {
+    console.warn("⚠️ Didn't find public holiday container");
+    return;
+  }
+  const body = collapsible.querySelector('.list-body');
+  body.innerHTML = ''; // clear any existing rows
+
+  const publicHolidaySaveBtn = collapsible.querySelector('.btn-store');
+
+  if (publicHolidaySaveBtn) {
+    publicHolidaySaveBtn.classList.remove('hidden');
+    publicHolidaySaveBtn.classList.add('noto');
+    publicHolidaySaveBtn.addEventListener('click', async () => {
+      gatherHolidaysAndSave();
+      console.log('✅ Public holidays saved!');
+    });
+  }
+
+  publicHolidays.forEach(holiday => {
+    // Format date like "Di. 25.12"
+    const dateObj = new Date(holiday.date);
+    const weekday = dateObj.toLocaleDateString('de-DE', { weekday: 'short' }).replace('.', '');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const formattedDate = `${weekday}. ${day}.${month}`;
+    const checkIsOpen = publicHolidayState[holiday.id] ?? false;
+    const colorClass = checkIsOpen ? getDateColorClass(holiday.date) : 'is-closed';
+    const listItem = createListItem({
+      id: holiday.id,
+      name: `<br>${holiday.name}`,
+      date: formattedDate,
+      emoji: holiday.emoji,
+      disabled: holiday.disabled,
+      isOpen: checkIsOpen,
+    }, colorClass);
+
+    if (listItem) {
+      body.appendChild(listItem);
+    }
+  });
+
+  console.log(`✅ Populated ${publicHolidays.length} public holidays`);
+}
+
+async function saveCompanyHoliday(startInputId, endInputId) {
+  const startEl = document.getElementById(startInputId);
+  const endEl = document.getElementById(endInputId);
+
+  if (!startEl) {
+    alert("❌ Date picker missing (start)");
+    return;
+  }
+
+  const startValue = startEl.value;
+  const endValue = endEl?.value || startValue;
+
+  if (!startValue) {
+    alert("Bitte Startdatum wählen.");
+    return;
+  }
+
+  const startDate = new Date(startValue);
+  const endDate = new Date(endValue);
+
+  if (isNaN(startDate) || isNaN(endDate)) {
+    alert("Ungültiges Datum");
+    return;
+  }
+
+  // Normalize order (end >= start)
+  const fixedEndDate = endDate < startDate ? startDate : endDate;
+
+  companyHolidays.push({
+    startDate: startDate.toISOString().slice(0, 10),
+    endDate: fixedEndDate.toISOString().slice(0, 10)
+  });
+
+  // Sort chronologically
+  companyHolidays.sort(
+    (a, b) => new Date(a.startDate) - new Date(b.startDate)
+  );
+
+  const year = startDate.getFullYear();
+  await saveCompanyHolidaysCSV(cachedApi, year, companyHolidays);
+
+  populateCompanyHolidaysList(companyHolidays);
+}
+
+function removeCompanyHoliday(period) {
+  companyHolidays = companyHolidays.filter(h =>
+    !(h.startDate === period.startDate && h.endDate === period.endDate)
+  );
+
+  const year = new Date(period.startDate).getFullYear();
+
+  saveCompanyHolidaysCSV(cachedApi, year, companyHolidays)
+    .then(() => populateCompanyHolidaysList(companyHolidays));
+}
+
+
+function editCompanyHoliday(period) {
+  if (!activeCompanyHolidayPicker) {
+    alert("❌ Date picker not ready yet.");
+    return;
+  }
+
+  activeCompanyHolidayPicker.setStart(period.startDate);
+  activeCompanyHolidayPicker.setEnd(period.endDate);
+}
+
+
+
+async function gatherBridgeDaysAndSave() {
+  const allBridgeDays = [];
+
+  const checkboxes = document.querySelectorAll('#rule-collapsible-bridgedays .row-checkbox');
+
+  checkboxes.forEach(cb => {
+    const id = (cb.dataset.id || cb.id).replace(/^chk-/, '');
+    if (!id) return;
+
+    allBridgeDays.push({
+      id: id,
+      isOpen: cb.checked
+    });
+  });
+
+  // Update global state
+  bridgeDayState = allBridgeDays.reduce((acc, { id, isOpen }) => {
+    acc[id] = isOpen;
+    return acc;
+  }, {});
+
+  try {
+    await saveBridgeDaysSimple(cachedApi, allBridgeDays);
+    console.log('✅ Bridge days saved');
+  } catch (err) {
+    console.error('❌ Bridge days save failed', err);
+  }
+}
+
+async function gatherHolidaysAndSave() {
+  const allHolidays = [];
+
+  // Find all holiday checkboxes in the list
+  const checkboxes = document.querySelectorAll('#rule-collapsible-holidays .row-checkbox');
+
+  checkboxes.forEach(cb => {
+    const id = cb.dataset.id || cb.id; // use dataset.id if set, fallback to id
+    if (!id) return;
+
+    allHolidays.push({
+      id: id.replace(/^chk-/, ''),
+      isOpen: cb.checked
+    });
+  });
+
+  // Update global state if you want
+  publicHolidayState = allHolidays.reduce((acc, { id, isOpen }) => {
+    acc[id] = isOpen;
+    return acc;
+  }, {});
+
+  try {
+    await savePublicHolidaysSimple(cachedApi, allHolidays);
+    console.log('✅ Save completed');
+  } catch (err) {
+    console.error('❌ Save failed', err);
+  }
+}
+
+
+function populateBridgeDaysList(bridgeDays) {
+  const collapsible = document.getElementById('rule-collapsible-bridgedays');
+  if (!collapsible) {
+    console.warn("⚠️ Didn't find bridge days container");
+    return;
+  }
+
+  const body = collapsible.querySelector('.list-body');
+  body.innerHTML = ''; // clear any existing rows
+
+  const saveBtn = collapsible.querySelector('.btn-store');
+  if (saveBtn) {
+    saveBtn.classList.remove('hidden');
+    saveBtn.classList.add('noto');
+    saveBtn.addEventListener('click', gatherBridgeDaysAndSave);
+  }
+
+
+  if (!bridgeDays || bridgeDays.length < 1) {
+    const noBridge = document.createElement('span');
+    noBridge.textContent = "Keine Brückentage erkannt";
+    body.appendChild(noBridge);
+    return;
+  }
+
+  bridgeDays.forEach(day => {
+    // --- Format date like "Fr. 27.12" ---
+    const dateObj = new Date(day.date);
+    const weekday = dateObj.toLocaleDateString('de-DE', { weekday: 'short' }).replace('.', '');
+    const dayNum = String(dateObj.getDate()).padStart(2, '0');
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const formattedDate = `${weekday}. ${dayNum}.${month}`;
+
+    // --- Determine color class ---
+    const colorClass = day.isOpen ? getDateColorClass(day.date) : 'isClosed';
+
+    // --- Determine emoji and label ---
+    const bridgeLabel = day.after
+      ? `<br> <span class ="noto"> ${day.emoji}⇨🚧 </span>`
+      : `<br> <span class ="noto"> 🚧⇨${day.emoji} </span>`;
+
+    // --- Create list item ---
+    const listItem = createListItem({
+      id: `bridge-${day.date}`,
+      name: bridgeLabel,
+      date: formattedDate,
+      // emoji: day.emoji || '🚧',
+      disabled: day.disabled,
+      isOpen: day.isOpen,
+    }, colorClass);
+
+    if (listItem) {
+      body.appendChild(listItem);
+    }
+  });
+
+  console.log(`✅ Populated ${bridgeDays.length} bridge days`);
+}
+
+function populateCompanyHolidaysList(companyHolidays = []) {
+  const collapsible = document.getElementById('rule-collapsible-companyHolidays');
+  if (!collapsible) {
+    console.warn("⚠️ Company Holidays container not found");
+    return;
+  }
+
+  // Clone main list template
+  const tplList = document.getElementById('tpl-list');
+  const listNode = tplList.content.cloneNode(true);
+  const listBody = listNode.querySelector('.list-body');
+  const listControls = listNode.querySelector('.list-controls');
+
+  // --- Input controls for new company holiday ---
+  const inputContainer = document.createElement('div');
+  inputContainer.classList.add('company-holiday-input', 'noto', 'flex-col');
+
+  // Generate unique IDs
+  const timestamp = Date.now();
+  const startBtnId = `pick-start-${timestamp}`;
+  const endBtnId = `pick-end-${timestamp}`;
+  const startInputId = `start-date-picker-${timestamp}`;
+  const endInputId = `end-date-picker-${timestamp}`;
+  const previewStartId = `preview-start-${timestamp}`;
+  const previewEndId = `preview-end-${timestamp}`;
+  const saveBtnId = `save-company-holiday-btn-${timestamp}`;
+
+  inputContainer.innerHTML = `
+  <div class="flex-row">
+    <div class="flex-column">
+
+      <div class="custom-date-wrapper">
+        <button id="${startBtnId}" class="date-trigger noto">
+          🔜 Anfang:
+        </button>
+        <span id="${previewStartId}" class="date-preview">–</span>
+        <input type="date" id="${startInputId}" class="visually-hidden-date-picker" />
+      </div>
+
+      <div class="custom-date-wrapper">
+        <button id="${endBtnId}" class="date-trigger noto">
+          🔚 Ende:
+        </button>
+        <span id="${previewEndId}" class="date-preview">–</span>
+        <input type="date" id="${endInputId}" class="visually-hidden-date-picker" />
+      </div>
+
+      <div class="flex-row duration-row">
+        <span>Dauer:</span>
+        <span id="company-holiday-duration">??</span>
+        <span>Tage</span>
+      </div>
+
+    </div>
+
+    <div class="flex-column">
+      <button id="${saveBtnId}" class="noto save-btn">💾</button>
+    </div>
+  </div>
+  <br>
+`;
+
+  listControls.appendChild(inputContainer);
+
+  // --- Append fragment to DOM first ---
+  const content = collapsible.querySelector('.rule-collapsible-content');
+  content.innerHTML = '';
+  content.appendChild(listNode);
+
+  // --- Now all elements exist; wire up save button ---
+  const saveBtn = document.getElementById(saveBtnId);
+  saveBtn.addEventListener("click", () => saveCompanyHoliday(startInputId, endInputId));
+
+
+  // --- Initialize the date picker AFTER DOM is ready ---
+  activeCompanyHolidayPicker = createDateRangePicker({
+    startButton: `#${startBtnId}`,
+    endButton: `#${endBtnId}`,
+    startInput: `#${startInputId}`,
+    endInput: `#${endInputId}`,
+    previewStart: `#${previewStartId}`,
+    previewEnd: `#${previewEndId}`,
+    previewDuration: '#company-holiday-duration',
+    onChange: () => { }
+  });
+
+
+  // --- Render existing holidays ---
+  if (!companyHolidays.length) {
+    const empty = document.createElement('span');
+    empty.textContent = "Keine Betriebsferien hinterlegt";
+    listBody.appendChild(empty);
+  } else {
+    companyHolidays.forEach(period => {
+      const tplItem = document.getElementById('tpl-list-item');
+      const fragment = tplItem.content.cloneNode(true);
+      const itemNode = fragment.querySelector('.data-row');
+      if (!itemNode) return;
+
+      itemNode.classList.add('is-closed');
+
+      const labelText = itemNode.querySelector('.label-text');
+      const rowRight = itemNode.querySelector('.row-right');
+
+      itemNode.querySelector('.row-checkbox')?.remove();
+
+      const start = new Date(period.startDate);
+      const end = new Date(period.endDate);
+      const startStr = start.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+      const endStr = end.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+
+      const label = document.createElement('div');
+      label.classList.add('company-holiday-label');
+
+      const startLabel = document.createElement('span');
+      startLabel.innerHTML = `<span class="noto">🔜</span> ${startStr}`;
+      label.appendChild(startLabel);
+
+      const delBtn = document.createElement('button');
+      delBtn.classList.add('noto', 'delete-btn');
+      delBtn.title = "Löschen";
+      delBtn.setAttribute('aria-label', 'Betriebsferien löschen');
+      delBtn.textContent = '🗑️';
+      delBtn.addEventListener('click', () => removeCompanyHoliday(period));
+      label.appendChild(delBtn);
+
+      if (startStr !== endStr) {
+        label.appendChild(document.createElement('br'));
+
+        const endLabel = document.createElement('span');
+        endLabel.innerHTML = `<span class="noto">🔚</span> ${endStr}`;
+        label.appendChild(endLabel);
+
+        const editBtn = document.createElement('button');
+        editBtn.classList.add('noto', 'edit-btn');
+        editBtn.title = "Bearbeiten";
+        editBtn.setAttribute('aria-label', 'Betriebsferien bearbeiten');
+        editBtn.textContent = '✏️';
+        editBtn.addEventListener('click', () => editCompanyHoliday(period));
+        label.appendChild(editBtn);
+      }
+
+      labelText.innerHTML = "";
+      labelText.appendChild(label);
+
+      const lockIcon = document.createElement('span');
+      lockIcon.classList.add('noto');
+      lockIcon.setAttribute('aria-label', 'geschlossen');
+      lockIcon.textContent = '🔒';
+      lockIcon.style.fontSize = '1.75rem';
+      lockIcon.style.lineHeight = '1';
+
+      rowRight.innerHTML = "";
+      rowRight.appendChild(lockIcon);
+
+      listBody.appendChild(itemNode);
+    });
+  }
+}
+
+
+async function downloadAndCacheSchoolHolidays(api, state, year, progressText) {
+  initChecklist();
+
+  try {
+    if (!navigator.onLine) throw new Error("offline");
+
+    updateChecklist('online', 'success');
+    const health = await apiHealthCheck(api, 'https://openholidaysapi.org');
+    updateChecklist('apiReachable', health.success ? 'success' : 'failure');
+    if (!health.success) throw new Error('api');
+
+    const holidays = await DownloadSchoolHoliday(api, state, year);
+    if (!holidays?.length) throw new Error('noData');
+
+    updateChecklist('apiResponse', 'success');
+    updateChecklist('dataReceived', 'success');
+
+    const csv = parseToCSV(holidays);
+    updateChecklist('dataParsed', 'success');
+
+    await api.saveCSV('home', `schoolHolidays/${state}_${year}_holidays.csv`, csv);
+    updateChecklist('csvWritten', 'success');
+
+    progressText.textContent = "✅ Erfolgreich geladen!";
+    return true;
+  } catch (err) {
+    const msg =
+      err.message === "offline" ? "📴 Kein Internet" :
+        err.message === "api" ? "❌ API nicht erreichbar" :
+          err.message === "noData" ? "📄 Keine Daten" :
+            "⚠️ Fehler beim Laden";
+
+    progressText.textContent = msg;
+    console.error("Download error:", err);
+    return false;
+  }
+}
+
+async function populateSchoolHolidaysListUnified(cachedApi, state, year) {
+  const collapsible = document.getElementById('rule-collapsible-schoolHolidays');
+  if (!collapsible) {
+    console.warn("⚠️ School Holidays container not found");
+    return;
+  }
+
+  const contentWrapper = collapsible.querySelector('.rule-collapsible-content');
+  contentWrapper.innerHTML = ''; // always start fresh
+
+  // --- Clone the generic list template ---
+  const tplList = document.getElementById('tpl-list');
+  if (!tplList) return;
+  const listNode = tplList.content.cloneNode(true);
+  const body = listNode.querySelector('.list-body');
+  const controls = listNode.querySelector('.list-controls');
+
+  // --- Header ---
+  const title = document.createElement('div');
+  title.innerHTML = ``;
+  controls.appendChild(title);
+
+  let schoolHolidays = await GetSchoolHoliday(cachedApi, state, year);
+  if (typeof schoolHolidays === 'string') {
+    schoolHolidays = parseSchoolHolidayCsv(schoolHolidays, year);
+  }
+
+  if (!schoolHolidays || schoolHolidays.length < 1) {
+    // --- CSV not found: show download button ---
+    const downloadBtn = document.createElement('button');
+    downloadBtn.classList.add('noto', 'download-school-data-btn');
+    downloadBtn.innerHTML = `<span class="noto">🌐 Schulferien aktualisieren</span>`;
+
+    downloadBtn.addEventListener('click', async () => {
+      downloadBtn.disabled = true;
+      const success = await downloadAndCacheSchoolHolidays(cachedApi, state, year, progressText);
+      downloadBtn.disabled = false;
+      if (success) populateSchoolHolidaysListUnified(cachedApi, state, year);
+    });
+
+    const progressText = document.createElement('span');
+    progressText.classList.add('progress-text');
+    controls.appendChild(downloadBtn);
+    controls.appendChild(progressText);
+
+    downloadBtn.addEventListener('click', async () => {
+      downloadBtn.disabled = true;
+      progressText.textContent = "Wird geladen...";
+      initChecklist();
+
+      try {
+        if (!navigator.onLine) throw new Error("offline");
+
+        updateChecklist('online', 'success');
+        const health = await apiHealthCheck(cachedApi, 'https://openholidaysapi.org');
+        updateChecklist('apiReachable', health.success ? 'success' : 'failure');
+        if (!health.success) throw new Error('api');
+
+        const holidays = await DownloadSchoolHoliday(cachedApi, state, year);
+        updateChecklist('apiResponse', 'success');
+        if (!holidays?.length) throw new Error('noData');
+        updateChecklist('dataReceived', 'success');
+
+        await waitForCsvCreation();
+        progressText.innerHTML = "<span class='noto'>✅</span> Erfolgreich geladen!";
+        populateSchoolHolidaysListUnified(cachedApi, state, year);
+      } catch (err) {
+        console.error('Download error', err);
+        const msg =
+          err.message === "offline" ? "📴 Kein Internet" :
+            err.message === "api" ? "❌ API nicht erreichbar" :
+              err.message === "noData" ? "📄 Keine Daten" :
+                "⚠️ Fehler beim Laden";
+        progressText.textContent = msg;
+        downloadBtn.disabled = false;
+      }
+    });
+  } else {
+    // --- Render holidays list ---
+    schoolHolidays.forEach(holiday => {
+      const tpl = document.getElementById('tpl-list-item');
+      if (!tpl) return;
+      const li = tpl.content.cloneNode(true);
+
+      const labelText = li.querySelector('.label-text');
+      const checkbox = li.querySelector('input[type="checkbox"]');
+      const lockIcon = li.querySelector('.lock-icon');
+
+      // --- Format date ---
+      const start = new Date(holiday.startDate);
+      const end = new Date(holiday.endDate);
+      const startStr = start.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+      const endStr = end.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+
+      labelText.innerHTML = `${startStr} ⇨ ${endStr} <br>`;
+      const emoji = document.createElement('span');
+      emoji.classList.add('noto');
+      emoji.textContent = holiday.emoji || '🏫';
+      labelText.prepend(emoji);
+
+      const nameSpan = document.createElement('span');
+      nameSpan.classList.add('holiday-name');
+      nameSpan.textContent = ` ${holiday.name}`;
+      labelText.appendChild(nameSpan);
+
+      if (checkbox) checkbox.remove(); // probably not needed
+      if (lockIcon) lockIcon.remove();
+
+      body.appendChild(li);
+    });
+
+    console.log(`✅ Populated ${schoolHolidays.length} school holidays`);
+  }
+
+  // --- Append to DOM ---
+  contentWrapper.appendChild(listNode);
+}
+
+function initChecklist() {
+  // Remove existing checklist if one is already present
+  const oldChecklist = document.getElementById('holiday-checklist');
+  if (oldChecklist) oldChecklist.remove();
+
+  // Create a new checklist container
+  const checklist = document.createElement('ul');
+  checklist.id = 'holiday-checklist';
+  checklist.classList.add('holiday-checklist');
+
+  // Define the steps you want to display
+  const steps = [
+    { key: 'online', label: 'Online' },
+    { key: 'apiReachable', label: 'API erreichbar' },
+    { key: 'apiResponse', label: 'API Antwort' },
+    { key: 'dataReceived', label: 'Daten empfangen' },
+    { key: 'dataParsed', label: 'Daten verarbeitet' },
+    { key: 'csvWritten', label: 'CSV gespeichert' }
+  ];
+
+  // Build the list items
+  steps.forEach(step => {
+    const li = document.createElement('li');
+    li.dataset.step = step.key;
+    li.classList.add('pending'); // initial state
+    li.innerHTML = `
+      <span class="status-indicator noto">⏳</span>
+      <span class="status-label">${step.label}</span>
+    `;
+    checklist.appendChild(li);
+  });
+
+  // Find a place to insert the checklist
+  const container =
+    document.querySelector('#rule-collapsible-schoolHolidays .list-controls') ||
+    document.querySelector('#rule-collapsible-schoolHolidays .rule-collapsible-content');
+
+  if (container) {
+    container.appendChild(checklist);
+  } else {
+    console.warn('⚠️ Could not find checklist container');
+  }
+}
+
+function findBridgeDays(holidays, weekdays, persistedBridgeDays = []) {
+  if (holidays.some(h => h.state === 'XX')) {
+    console.log('Skipping bridge day generation for Nimmerland.');
+    return [];
+  }
+
+  const result = [];
+  const weekdayIndexMap = { sun: 6, mon: 0, tue: 1, wed: 2, thu: 3, fri: 4, sat: 5 };
+  const weekendDays = weekdays.filter(day => !day.isOpen).map(day => weekdayIndexMap[day.id]);
+  const sorted = [...holidays].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  sorted.forEach(holiday => {
+    const holidayDate = new Date(holiday.date);
+    let currentWeekdayIndex = holidayDate.getDay() - 1; // Monday = 0
+    if (currentWeekdayIndex < 0) currentWeekdayIndex = 6;
+
+    if (weekendDays.includes(currentWeekdayIndex)) return;
+
+    const emoji = holiday.emoji || '🎉';
+
+    const nextDayIndex = (currentWeekdayIndex + 1) % 7;
+    const dayAfterNext = (nextDayIndex + 1) % 7;
+    if (!weekendDays.includes(nextDayIndex) && weekendDays.includes(dayAfterNext)) {
+      const bridgeDate = new Date(holidayDate);
+      bridgeDate.setDate(bridgeDate.getDate() + 1);
+      const bridgeDateStr = bridgeDate.toISOString().slice(0, 10);
+      if (!holidays.some(h => h.date === bridgeDateStr) && !result.some(b => b.date === bridgeDateStr)) {
+        result.push({
+          date: bridgeDateStr,
+          weekdayIndex: nextDayIndex,
+          emoji: `${emoji}`,
+          isOpen: true,
+          id: `bridge-${bridgeDateStr}`
+        });
+      }
+    }
+
+    const prevDayIndex = (currentWeekdayIndex + 6) % 7;
+    const dayBeforePrev = (prevDayIndex + 6) % 7;
+    if (!weekendDays.includes(prevDayIndex) && weekendDays.includes(dayBeforePrev)) {
+      const bridgeDate = new Date(holidayDate);
+      bridgeDate.setDate(bridgeDate.getDate() - 1);
+      const bridgeDateStr = bridgeDate.toISOString().slice(0, 10);
+      if (!holidays.some(h => h.date === bridgeDateStr) && !result.some(b => b.date === bridgeDateStr)) {
+        result.push({
+          date: bridgeDateStr,
+          weekdayIndex: prevDayIndex,
+          emoji: `⇦${emoji}`,
+          isOpen: true,
+          id: `bridge-${bridgeDateStr}`
+        });
+      }
+    }
+  });
+
+  return result;
+}
+function createMatrixList(cfg) {
+  const container = document.createElement('div');
+  container.className = 'shift-matrix-container';
+
+  // Create both versions
+  const expandedGrid = createExpandedMatrix(cfg);
+  const miniGrid = createMiniMatrix(cfg);
+
+  container.appendChild(expandedGrid);
+  container.appendChild(miniGrid);
+
+  return container;
+}
+
+function createExpandedMatrix(cfg) {
+  const expandedGrid = document.createElement('div');
+  expandedGrid.className = 'shift-matrix shift-matrix-expanded';
+
+  // --- Header row ---
+  const headerRow = document.createElement('div');
+  headerRow.className = 'shift-row shift-header-row';
+
+  const topLeft = document.createElement('div');
+  topLeft.className = 'shift-label';
+  topLeft.textContent = ''; // empty top-left corner
+  headerRow.appendChild(topLeft);
+
+  const shiftIds = ['early', 'day', 'late'];
+  const shiftLabels = { early: 'Früh', day: 'Voll/Tag', late: 'Spät' };
+  const shiftHeaderClasses = { early: 'is-early', day: 'is-day', late: 'is-late' };
+
+  shiftIds.forEach(id => {
+    const col = document.createElement('div');
+    col.className = 'shift-cell';
+    col.textContent = shiftLabels[id];
+    col.classList.add(shiftHeaderClasses[id]);
+    headerRow.appendChild(col);
+  });
+
+  expandedGrid.appendChild(headerRow);
+
+  // --- Data rows for weekdays ---
+  const weekdayLabels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+  const rowHeaderClasses = ['is-regular', 'is-regular', 'is-regular', 'is-regular', 'is-regular', 'is-weekend', 'is-sunday'];
+
+  Object.entries(cfg.data).forEach(([day, shifts], index) => {
+    const row = document.createElement('div');
+    row.className = 'shift-row';
+
+    // Row header
+    const label = document.createElement('div');
+    label.className = 'shift-label';
+    label.textContent = weekdayLabels[index];
+    label.classList.add(rowHeaderClasses[index]);
+    row.appendChild(label);
+
+    // Cells with checkboxes
+    shifts.forEach(shift => {
+      const cell = createMatrixCell(day, shift, true); // true for expanded version
+      row.appendChild(cell);
+    });
+
+    expandedGrid.appendChild(row);
+  });
+
+  return expandedGrid;
+}
+
+function createMiniMatrix(cfg) {
+  const miniGrid = document.createElement('div');
+  miniGrid.className = 'shift-matrix shift-matrix-mini';
+
+  // --- Mini header row (same color classes as big matrix) ---
+  const miniHeaderRow = document.createElement('div');
+  miniHeaderRow.className = 'shift-row-mini shift-header-row-mini';
+
+  const shiftIds = ['early', 'day', 'late'];
+  const shiftHeaderClasses = {
+    early: 'is-early',
+    day: 'is-day',
+    late: 'is-late'
+  };
+  const shiftHeaderLabels = {
+    early: 'F',   // small abbrev or icon
+    day: 'T',
+    late: 'S'
+  };
+
+  shiftIds.forEach(id => {
+    const col = document.createElement('div');
+    col.classList.add('shift-cell-mini', shiftHeaderClasses[id]);
+    col.textContent = shiftHeaderLabels[id];
+    miniHeaderRow.appendChild(col);
+  });
+
+  miniGrid.appendChild(miniHeaderRow);
+
+  Object.entries(cfg.data).forEach(([day, shifts]) => {
+    const miniRow = document.createElement('div');
+    miniRow.className = 'shift-row-mini';
+
+    shifts.forEach(shift => {
+      const cell = createMatrixCell(day, shift, false); // false = mini
+      miniRow.appendChild(cell);
+    });
+
+    miniGrid.appendChild(miniRow);
+  });
+
+  return miniGrid;
+}
+
+
+function createMatrixCell(day, shift, isExpanded) {
+  const cell = document.createElement('div');
+
+  if (isExpanded) {
+    cell.classList.add('shift-cell');
+
+    const shiftColorClass = {
+      early: 'is-early',
+      day: 'is-day',
+      late: 'is-late'
+    }[shift.id] || '';
+
+    if (shiftColorClass) cell.classList.add(shiftColorClass);
+
+    // Add closed state if inactive
+    if (!shift.active) {
+      cell.classList.add('is-closed');
+      cell.classList.remove('is-early', 'is-day', 'is-late');
+    }
+
+    const todayShift = shiftsData[day];
+    const todayShiftEntry = todayShift.find(s => s.id === shift.id);
+    const isShiftOpen = todayShiftEntry ? todayShiftEntry.active : false;
+
+    // === Checkbox for expanded version ===
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = isShiftOpen;
+    checkbox.dataset.day = day;
+    checkbox.dataset.shift = shift.id;
+    checkbox.dataset.key = `${day}-${shift.id}`;
+
+    // === Lock Icon ===
+    const icon = document.createElement('span');
+    icon.className = 'lock-icon ' + (shift.active ? 'unlocked' : 'locked');
+
+    // === Assemble cell ===
+    cell.appendChild(checkbox);
+    cell.appendChild(icon);
+
+    checkbox.addEventListener('change', e => {
+      const isActive = e.target.checked;
+
+      // Update lock icon
+      icon.classList.toggle('unlocked', isActive);
+      icon.classList.toggle('locked', !isActive);
+
+      cell.classList.remove('is-early', 'is-day', 'is-late', 'is-closed');
+
+      if (isActive) {
+        cell.classList.add(shiftColorClass);
+      } else {
+        cell.classList.add('is-closed');
+      }
+
+      onShiftToggle(day, shift.id, isActive);
+    });
+
+  } else {
+    // --- MINI VERSION (visual only, but same colors + lock icons as expanded) ---
+    cell.classList.add('shift-cell-mini');
+
+    const shiftColorClass = {
+      early: 'is-early',
+      day: 'is-day',
+      late: 'is-late'
+    }[shift.id] || '';
+
+    if (shiftColorClass) cell.classList.add(shiftColorClass);
+
+    // Closed state removes color and shows gray look
+    if (!shift.active) {
+      cell.classList.add('is-closed');
+      cell.classList.remove('is-early', 'is-day', 'is-late');
+    }
+
+    // --- Mini lock icon (same locked/unlocked semantics) ---
+    const icon = document.createElement('span');
+    icon.className = 'lock-icon-mini ' + (shift.active ? 'unlocked' : 'locked');
+    icon.classList.add('noto');
+    cell.appendChild(icon);
+  }
+
+  return cell;
+}
+
+function getDateColorClass(dateStr, isClosed = false) {
+
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(dateStr)) {
+    console.error(`Invalid date format: "${dateStr}". Expected "YYYY-MM-DD".`);
+    return null;
+  }
+
+  const date = new Date(dateStr);
+  if (isNaN(date)) {
+    console.error(`Invalid date: "${dateStr}" could not be parsed.`);
+    return null;
+  }
+
+  const day = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  if (day === 0) return 'is-sunday';
+  if (day === 6) return 'is-weekend';
+  return 'is-regular';
+}
+
+
+// Helper for weekday abbreviation
+function dayAbbr(dayId) {
+  const map = { mon: 'Mo', tue: 'Di', wed: 'Mi', thu: 'Do', fri: 'Fr', sat: 'Sa', sun: 'So' };
+  return map[dayId] || dayId;
+}
+
+
+//
+//            OLD                  old             oldold
+//         old   old               old             old    old
+//         old   old               old             old    old
+//         old   old               old             old    old
+//         old   old               oldoldold       old    old
+//            old                  oldoldold       oldold
+//
+
+function updateDivider(className = "bg-calendar") {
+  const divider = document.getElementById('horizontal-divider');
+  if (!divider) {
+    console.error("❌ horizontal-divider not found");
+    return;
+  }
+
+  divider.className = className;
+  divider.innerHTML = '';
+
+  // Left gap
+  const leftGap = document.createElement('div');
+  leftGap.className = 'left-gap';
+
+  // Header
+  const h2 = document.createElement('h2');
+  h2.id = 'role-form-title';
+  h2.className = 'sr-only';
+  h2.innerHTML = `<span class="noto">📋</span> Öffnungszeiten planen <span class="noto">✍🏻</span>`;
+
+  // Container for form controls
+  const buttonContainer = document.createElement('div');
+  buttonContainer.id = 'form-buttons';
+  buttonContainer.className = 'flex items-center gap-3';
+
+  // --- Global buttons (will work as before) ---
+  const helpBtn = createHelpButton('chapter-employees');
+  const branchSelect = createBranchSelect({
+    onChange: (val) => applyBranchPreset(val)
+  });
+
+  // --- New global window buttons ---
+  const windowBtns = createWindowButtons(); // your new min/max buttons
+
+  // Compose: add branchSelect, helpBtn, saveBtn, then windowBtns
+  buttonContainer.append(branchSelect, helpBtn, windowBtns);
+
+  divider.append(leftGap, h2, buttonContainer);
+}
+
+
+function saveAllChanges() {
+
+}
+
+function createYearSelect({ defaultYear = new Date().getFullYear(), minYear = 2025, onChange } = {}) {
+  const container = document.createElement('div');
+  container.className = 'calendar-form-field year-select-group flex items-center gap-2';
+
+  const label = document.createElement('label');
+  label.setAttribute('for', 'calendar-form-year');
+  label.textContent = 'Jahr';
+
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.id = 'calendar-form-year';
+  input.min = minYear;
+  input.value = defaultYear;
+  input.setAttribute('aria-label', 'Jahr auswählen');
+
+  function handleYearChange(e) {
+    const year = parseInt(e.target.value, 10);
+    debug('[YEAR INPUT] event fired', { raw: e.target.value, parsed: year });
+
+    if (!isNaN(year) && year >= minYear) {
+      if (typeof onChange === 'function') {
+        debug('[YEAR INPUT] calling onChange handler');
+        onChange(year);
+      } else {
+        debug('[YEAR INPUT] onChange missing or not a function');
+      }
+    } else {
+      debug('[YEAR INPUT] invalid year, resetting');
+      e.target.value = defaultYear;
+    }
+  }
+
+  try {
+    input.addEventListener('change', handleYearChange);
+    input.addEventListener('blur', handleYearChange);
+    input.addEventListener('input', debounce(handleYearChange, 500));
+    debug('[YEAR INPUT] listeners attached ✅');
+  } catch (err) {
+    console.error('[YEAR INPUT] Failed to attach listener ❌', err);
+  }
+
+  queueMicrotask(() => {
+    const el = document.getElementById('calendar-form-year');
+    debug('[YEAR INPUT] Post-init check:', {
+      exists: !!el,
+      disabled: el?.disabled,
+      readOnly: el?.readOnly,
+      parentVisible: el?.offsetParent !== null,
+    });
+  });
+
+  container.append(label, input);
+  return container;
+}
+
+
+const DEBUG_UI = true; // set false for production
+
+function debug(...args) {
+  if (DEBUG_UI) console.log('[DEBUG]', ...args);
+}
+
+function createStateSelect({ defaultValue = 'BB', onChange } = {}) {
+  const container = document.createElement('div');
+  container.className = 'calendar-form-field state-select-group flex items-center gap-2';
+
+  const flagImg = document.createElement('img');
+  flagImg.className = 'state-flag-icon';
+  flagImg.alt = 'Bundesland Flagge';
+  flagImg.setAttribute('aria-hidden', 'true');
+
+  const label = document.createElement('label');
+  label.setAttribute('for', 'state-select');
+  label.textContent = 'Bundesland';
+
+  const select = document.createElement('select');
+  select.id = 'state-select';
+  select.setAttribute('aria-label', 'Bundesland auswählen');
+
+  states.forEach(({ code, name }) => {
+    const opt = document.createElement('option');
+    opt.value = code;
+    opt.textContent = name;
+    select.appendChild(opt);
+  });
+
+  select.value = defaultValue;
+
+  const updateFlag = (stateCode) => {
+    flagImg.src = `assets/png/wappen-${mapStateCode(stateCode)}.png`;
+  };
+  updateFlag(select.value);
+
+  // 🧠 Add event listener diagnostics
+  try {
+    select.addEventListener('change', (e) => {
+      const val = e.target.value;
+      debug('[STATE SELECT] event fired', { val, disabled: select.disabled });
+
+      updateFlag(val);
+      if (typeof onChange === 'function') {
+        debug('[STATE SELECT] calling onChange handler');
+        onChange(val);
+      } else {
+        debug('[STATE SELECT] onChange missing or not a function');
+      }
+    });
+
+    debug('[STATE SELECT] Event listener attached ✅');
+  } catch (err) {
+    console.error('[STATE SELECT] Failed to attach listener ❌', err);
+  }
+
+  // 🧠 DOM inspection
+  queueMicrotask(() => {
+    const el = document.getElementById('state-select');
+    debug('[STATE SELECT] Post-init check:', {
+      exists: !!el,
+      disabled: el?.disabled,
+      parentVisible: el?.offsetParent !== null,
+    });
+  });
+
+  container.append(flagImg, label, select);
+
+  setTimeout(() => {
+    const stateSelect = document.getElementById('state-select');
+    debug('[STATE SELECT] Live element check after rebind:', {
+      sameNode: stateSelect === select,
+      eventListenersStillPresent: getEventListeners ? getEventListeners(stateSelect) : 'n/a',
+    });
+  }, 2000);
+
+  return container;
+}
+
+
+// Debounce helper function for better performance
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
 function createEventListener() {
   initCheckboxLockToggles();
   initCollapseExpandToggles();
-  initBranchSelectLogic();
+  // initBranchSelectLogic();
   createCompanyHolidayEventListeners();
-  createCalendarFormYearSelect();
+  // createCalendarFormYearSelect(); // This will now work properly
 }
 
 function createCalendarFormYearSelect() {
@@ -183,7 +1878,6 @@ function initCheckboxLockToggles() {
         return;
       }
 
-      console.log(" check box and id: ", sectionId);
       switch (sectionId) {
         case 'weekday-expanded':
           interpretWeekdays(checkbox);
@@ -224,7 +1918,7 @@ function gatherShiftStates() {
   const early = document.getElementById("input-shift-early").checked;
   const day = document.getElementById("input-shift-day").checked;
   const late = document.getElementById("input-shift-late").checked;
-  return boolsToKey({ early, day, late });
+  return Util.boolsToKey({ early, day, late });
 }
 
 
@@ -257,9 +1951,6 @@ function interpretWeekdays(weekdayCheckbox) {
   updateOfficeDays(dayIndex, shiftKey);
 }
 
-
-
-
 function interpretShifts() {
   console.log('interpretShifts() called ✅');
   const key = gatherShiftStates();
@@ -284,60 +1975,63 @@ function initCollapseExpandToggles() {
     'collapse-school-toggle': false,
   };
 
-  document.querySelectorAll('.collapsible-toggle').forEach(toggleBtn => {
+  document.querySelectorAll('.rule-collapsible-toggle').forEach(toggleBtn => {
     const id = toggleBtn.id;
     const savedState = localStorage.getItem(`collapseState-${id}`);
 
     if (savedState !== null) {
       const parsed = savedState === 'true';
-      console.log(`[Collapsible] Restoring saved state for "${id}":`, parsed);
       applyCollapseState(toggleBtn, parsed);
     } else {
       const defaultState = defaultExpandedStates[id] ?? true;
-      console.log(`[Collapsible] No saved state for "${id}", using default:`, defaultState);
       applyCollapseState(toggleBtn, defaultState);
     }
-
-
     toggleBtn.addEventListener('click', () => {
       const id = toggleBtn.id; // <= anonymus function doesnt know id
       const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
       const newState = !isExpanded;
-
-      console.log(`[Collapsible] Toggling "${id}": ${newState ? 'Expanding' : 'Collapsing'}`);
       applyCollapseState(toggleBtn, newState);
       localStorage.setItem(`collapseState-${id}`, newState);
-      console.log(`[Collapsible] Saved state for "${id}" = ${newState}`);
     });
   });
 }
 
 function applyCollapseState(toggleBtn, expanded) {
   const fieldset = toggleBtn.closest('fieldset');
-  if (!fieldset) {
-    console.warn('[Collapsible] No fieldset found for toggle button:', toggleBtn);
-    return;
-  }
+  if (!fieldset) return;
 
-  toggleBtn.setAttribute('aria-expanded', expanded);
+  toggleBtn.setAttribute('aria-expanded', expanded.toString());
   toggleBtn.classList.toggle('expanded', expanded);
+  fieldset.classList.toggle('active', expanded);
 
-  const expandedElement = fieldset.querySelector(
-    '.shift-expanded, .weekday-expanded, .holiday-expanded, .bridge-expanded, .closed-expanded'
-  );
-  const collapsedElement = fieldset.querySelector(
-    '.shift-list-collapsed, .weekday-list-collapsed, .holiday-list-collapsed, .bridgeday-list-collapsed, .closed-list-collapsed, .school-list-collapsed'
-  );
+  const chev = toggleBtn.querySelector('.chev');
+  if (chev) chev.classList.toggle('active', expanded);
 
-  if (expandedElement && collapsedElement) {
-    expandedElement.classList.toggle('hidden', !expanded);
-    collapsedElement.classList.toggle('hidden', expanded);
-    console.log(`[Collapsible] Applied state to elements in "${toggleBtn.id}": ${expanded ? 'Expanded' : 'Collapsed'}`);
-  } else {
-    console.warn(`[Collapsible] Missing collapse/expand elements in "${toggleBtn.id}"`);
+  if (toggleBtn.id === 'collapse-shifts-toggle') {
+    const expandedMatrix = document.querySelector('.shift-matrix-expanded');
+    const miniMatrix = document.querySelector('.shift-matrix-mini');
+
+    if (expandedMatrix && miniMatrix) {
+      if (expanded) {
+        expandedMatrix.classList.remove('hidden');
+        miniMatrix.classList.add('hidden');
+      } else {
+        expandedMatrix.classList.add('hidden');
+        miniMatrix.classList.remove('hidden');
+      }
+    }
   }
-}
 
+  fieldset.querySelectorAll('.data-row').forEach(row => {
+    const checkbox = row.querySelector('.row-checkbox');
+    const fullName = row.querySelector('.full-name');
+    const shortName = row.querySelector('.short-name');
+
+    if (checkbox) checkbox.classList.toggle('hidden', !expanded);
+    if (fullName) fullName.classList.toggle('hidden', !expanded);
+    if (shortName) shortName.classList.toggle('hidden', expanded);
+  });
+}
 
 function initBranchSelectLogic() {
   const branchSelect = document.getElementById('branch-select');
@@ -356,10 +2050,7 @@ function initBranchSelectLogic() {
     } else {
       previousValue = newValue;
     }
-
-
     updateHeader(newValue);
-    console.log(newValue);
     const officeDaysUpdate = setBranch(newValue)
     updateWeekdayAndShiftCheckboxes(officeDaysUpdate);
   });
@@ -385,15 +2076,6 @@ function createCompanyHolidayEventListeners() {
 
   function onYearBlockedCancelled() {
     console.log("User cancelled dialog.");
-  }
-
-  // Helper to update preview display
-  function updatePreview(type, date) {
-    const previewId = type === "start" ? "preview-start" : "preview-end";
-    const previewElement = document.getElementById(previewId);
-    if (previewElement) {
-      previewElement.textContent = date;
-    }
   }
 
   // Validation function placeholder
@@ -433,14 +2115,12 @@ function createCompanyHolidayEventListeners() {
   // Date pickers change handlers
   function onStartDateChange() {
     const pickedDate = startDatePicker.value;
-    console.log("Picked start date:", pickedDate);
     updatePreview("start", pickedDate);
     validateDates(pickedDate, endDatePicker.value);
   }
 
   function onEndDateChange() {
     const pickedDate = endDatePicker.value;
-    console.log("Picked end date:", pickedDate);
     updatePreview("end", pickedDate);
     validateDates(startDatePicker.value, pickedDate);
   }
@@ -628,45 +2308,6 @@ function showShiftWarning(onConfirm, onCancel) {
 
 //#endregion
 
-
-
-
-
-function handleStateChange(event) {
-  const selectedState = event.target.value;
-  applyStateChange(selectedState);
-}
-
-function applyStateChange(selectedState) {
-  ruleFormState = selectedState;
-
-  const stateSelect = document.getElementById('state-select');
-  if (stateSelect) {
-    stateSelect.value = selectedState;
-  } else {
-    console.warn('State select element not found!');
-  }
-
-  const stateFlagElement = document.getElementById('calendar-form-state-flag');
-  if (stateFlagElement) {
-    updateStateFlag(selectedState, stateFlagElement);
-  } else {
-    console.error('State flag element not found!');
-  }
-
-  const altFlagElement = document.getElementById('state-image'); // ✅ fixed ID
-  if (altFlagElement) {
-    updateStateFlag(selectedState, altFlagElement);
-  }
-
-  saveStateData(selectedState);
-  updateCalendarDisplay();
-  updateHolidaysForYear(currentYear, selectedState);
-  checkAndRenderSchoolHolidays(api);
-
-  console.log("new current state: " + ruleFormState);
-}
-
 function updateHolidayCheckedStates() {
   document.querySelectorAll('.holiday-checkbox').forEach(cb => {
     const box = cb.closest('.data-box');
@@ -688,7 +2329,7 @@ function updateCollapsedHolidayCheckedStates() {
 
 function updateHolidaysForYear(year) {
   try {
-    const holidays = getAllHolidaysForYear(year, ruleFormState);
+    const holidays = getAllHolidaysForYear(year, ruleFederalState);
     const expandedContainer = document.getElementById('holiday-expanded');
     const collapsedContainer = document.getElementById('holiday-collapsed');
 
@@ -799,108 +2440,16 @@ function updateHolidaysForYear(year) {
   }
 }
 
-async function checkAndRenderSchoolHolidays(api) {
+async function checkAndRenderSchoolHolidays(cachedApi) {
 
-  let csvFilePath = `./samples/schoolHolidays/DE-${ruleFormState}_${currentYear}_holidays.csv`;
+  let csvFilePath = `./samples/schoolHolidays/DE-${ruleFederalState}_${currentYear}_holidays.csv`;
 
-  const response = await GetSchoolHoliday(api, ruleFormState, currentYear);
+  const response = await GetSchoolHoliday(cachedApi, ruleFederalState, currentYear);
   if (response) {
-    console.log('CSV found! Displaying holidays...');
-    renderSchoolHolidays(ruleFormState, currentYear);
+    renderSchoolHolidays(ruleFederalState, currentYear);
   } else {
-    console.log('CSV not found. Showing download button...');
     showDownloadButton();
   }
-}
-
-function renderCompanyHolidays(api, year) {
-  const holidaysForYear = companyHolidays.filter(period =>
-    new Date(period.startDate).getFullYear() === year
-  );
-
-  renderCompanyExpanded(api, year, holidaysForYear);
-  renderCompanyCollapsed(holidaysForYear);
-}
-
-function renderCompanyExpanded(api, year, holidaysForYear) {
-  const companyHolidayExtended = document.getElementById("companyHolidayExpanded");
-  if (!companyHolidayExtended) return;
-
-  companyHolidayExtended.innerHTML = '';
-
-  if (holidaysForYear.length === 0) {
-    companyHolidayExtended.innerHTML = "Keine Betriebsferien hinterlegt";
-    return;
-  }
-
-  holidaysForYear.forEach(period => {
-    const container = document.createElement('div');
-    container.className = 'company-holiday-period';
-
-    const today = new Date();
-    if (new Date(period.endDate) < today) {
-      container.classList.add('past');
-    }
-
-    const start = formatShortDate(period.startDate);
-    const end = formatShortDate(period.endDate);
-
-    // Text container
-    const textWrapper = document.createElement('span');
-    if (start === end) {
-      textWrapper.innerHTML = `<i class="noto">🔜</i> ${start}`;
-    } else {
-      textWrapper.innerHTML = `<i class="noto">🔜</i> ${start} <i class="noto">🔚</i> ${end}`;
-    }
-
-    // Delete button
-    const deleteBtn = document.createElement('button');
-    deleteBtn.classList.add('noto');
-    deleteBtn.title = "Löschen";
-    deleteBtn.textContent = "🗑️";
-    deleteBtn.addEventListener('click', () => {
-      removeCompanyHoliday(api, year, period);
-    });
-
-    container.appendChild(textWrapper);
-    container.appendChild(deleteBtn);
-
-    companyHolidayExtended.appendChild(container);
-  });
-}
-
-
-function renderCompanyCollapsed(holidaysForYear) {
-  const companyHolidayCollapsed = document.getElementById("companyHolidayCollapsed");
-  if (!companyHolidayCollapsed) return;
-
-  // Clear existing content
-  companyHolidayCollapsed.innerHTML = '';
-
-  holidaysForYear.forEach(period => {
-    const box = document.createElement('div');
-    box.className = 'collapsed-company-holiday-box noto';
-
-    const start = formatShortDate(period.startDate);
-    const end = formatShortDate(period.endDate);
-
-    const startLine = document.createElement('div');
-    startLine.innerHTML = `<i class="noto">🔜</i> ${start}`;
-    box.appendChild(startLine);
-
-    if (start !== end) {
-      const endLine = document.createElement('div');
-      endLine.innerHTML = `<i class="noto">🔚</i> ${end}`;
-      box.appendChild(endLine);
-    }
-
-    companyHolidayCollapsed.appendChild(box);
-  });
-}
-
-
-function removeCompanyHoliday(api, year, period) {
-
 }
 
 function formatShortDate(date) {
@@ -910,8 +2459,8 @@ function formatShortDate(date) {
 
 async function renderSchoolHolidays(ruleFormState, currentYear) {
 
-  const schoolContainer = document.getElementById('school-holiday-container');
-  schoolContainer.innerHTML = '';
+  const collapsible = document.getElementById('school-holiday-container');
+  collapsible.innerHTML = '';
   const schoolHolidaysList = document.createElement('ul');
 
   let csvFilePath = `schoolHolidays/DE-${ruleFormState}_${currentYear}_holidays.csv`;
@@ -928,135 +2477,17 @@ async function renderSchoolHolidays(ruleFormState, currentYear) {
         return `<li><strong>${name}:</strong> ${start} - ${end}</li>`;
       })
       .join('');
-    schoolContainer.appendChild(schoolHolidaysList);
+    collapsible.appendChild(schoolHolidaysList);
   } catch (error) {
     console.error('Error loading CSV:', error);
   }
 }
 
-function showDownloadButton() {
-  const schoolContainer = document.getElementById('school-holiday-container');
-  schoolContainer.innerHTML = '';
-
-  const downloadButton = document.createElement('button');
-  downloadButton.id = 'downloadButton';
-  downloadButton.classList.add('noto', 'download-school-data-btn');
-  downloadButton.setAttribute('aria-label', 'Schulferien aus dem Netz laden');
-
-  downloadButton.innerHTML = `
-    <div class="download-btn-content">
-      <div class="download-emoji" aria-hidden="true">🌐</div>
-      <div class="download-text">
-        <span>Schulferien</span>
-        <span>aktualisieren</span>
-      </div>
-    </div>
-  `;
-
-  downloadButton.addEventListener('click', handleDownload);
-  window.addEventListener('checklist-update', (e) => {
-    const { step, status } = e.detail;
-    updateChecklist(step, status); // Your UI logic
-  });
-
-  schoolContainer.appendChild(downloadButton);
-}
-
-async function handleDownload() {
-  clearSchoolHolidayError();
-  initChecklist();
-
-  updateChecklistStep('online', navigator.onLine ? 'success' : 'failure');
-
-  if (!navigator.onLine) {
-    showSchoolHolidayError('Keine Internetverbindung. Bitte prüfen Sie Ihre Verbindung.');
-    document.getElementById('downloadButton').style.display = 'inline-block';
-    return;
-  }
-
-  const downloadButton = document.getElementById('downloadButton');
-  if (downloadButton) {
-    downloadButton.style.display = 'none';
-  }
-
-  const apiUrl = 'https://openholidaysapi.org';
-  const healthResult = await apiHealthCheck(api, apiUrl);
-  updateChecklistStep('apiReachable', healthResult.success ? 'success' : 'failure');
-  if (!healthResult.success) {
-    throw new Error('API Webseite nicht erreichbar: ' + (healthResult.message || healthResult.status));
-  }
-
-  const holidays = await DownloadSchoolHoliday(api, ruleFormState, currentYear);
-  updateChecklistStep('apiResponse', 'success');
-
-  if (!holidays || holidays.length === 0) {
-    updateChecklistStep('dataReceived', 'failure');
-    throw new Error('Keine Daten erhalten');
-  } else {
-    updateChecklistStep('dataReceived', 'success');
-  }
-
-  // Assuming holidays parsing is trivial here
-  try {
-    holidays.forEach(h => {
-      if (!h.name || !h.startDate || !h.endDate) {
-        throw new Error('Ungültige Datenstruktur');
-      }
-    });
-    updateChecklistStep('dataParsed', 'success');
-  } catch {
-    updateChecklistStep('dataParsed', 'failure');
-    throw new Error('Daten konnten nicht korrekt übersetzt werden');
-  }
-
-  await waitForCsvCreation();
-}
-
-/*
-async function handleDownload() {
-  clearSchoolHolidayError();
- 
-  const downloadButton = document.getElementById('downloadButton');
-  if (downloadButton) {
-    downloadButton.style.display = 'none';
-  }
- 
-  console.log(`Trying to load holidays for ${ruleFormState} ${currentYear}`);
- 
-  try {
-    const holidays = await GetSchoolHoliday(api, ruleFormState, currentYear);
-    console.log('Holidays data fetched:', holidays);
- 
-    if (!holidays || holidays.length === 0) {
-      throw new Error('No holiday data received from API');
-    }
- 
-    await waitForCsvCreation();
- 
-  } catch (error) {
-    console.error('Error fetching holidays:', error);
- 
-    showSchoolHolidayError(
-      error.message.includes('offline')
-        ? 'Keine Internetverbindung. Bitte überprüfen Sie Ihre Verbindung.'
-        : error.message.includes('No holiday data')
-          ? `Keine Schulferien-Daten gefunden für ${currentYear}.`
-          : 'Fehler beim Laden der Schulferien. Bitte versuchen Sie es erneut.'
-    );
- 
-    // Show the download button again so user can retry
-    if (downloadButton) {
-      downloadButton.style.display = 'inline-block';
-    }
-  }
-}
-*/
-
 async function waitForCsvCreation() {
   let attempts = 0;
   const maxAttempts = 10;
   const retryDelayMs = 500;
-  let csvFilePath = `schoolHolidays/DE-${ruleFormState}_${currentYear}_holidays.csv`;
+  let csvFilePath = `schoolHolidays/DE-${ruleFederalState}_${currentYear}_holidays.csv`;
 
   return new Promise((resolve, reject) => {
     const checkExistence = async () => {
@@ -1064,9 +2495,7 @@ async function waitForCsvCreation() {
         const response = await fetch(csvFilePath, { method: 'HEAD' });
 
         if (response.ok) {
-          console.log('CSV created! Displaying holidays...');
-          clearSchoolHolidayError();
-          renderSchoolHolidays(ruleFormState, currentYear);
+          renderSchoolHolidays(ruleFederalState, currentYear);
           resolve();
         } else if (attempts < maxAttempts) {
           attempts++;
@@ -1101,105 +2530,68 @@ async function waitForCsvCreation() {
 function showSchoolHolidayError(message) {
   let errorDiv = document.getElementById('schoolHolidayError');
   if (!errorDiv) {
-    const schoolContainer = document.getElementById('school-holiday-container');
+    const collapsible = document.getElementById('school-holiday-container');
     errorDiv = document.createElement('div');
     errorDiv.id = 'schoolHolidayError';
     errorDiv.className = 'error-message';
     errorDiv.setAttribute('role', 'alert');
     errorDiv.setAttribute('aria-live', 'assertive');
-    schoolContainer.appendChild(errorDiv);
+    collapsible.appendChild(errorDiv);
   }
   errorDiv.textContent = message;
 }
 
-function clearSchoolHolidayError() {
-  const errorDiv = document.getElementById('schoolHolidayError');
-  if (errorDiv) {
-    errorDiv.textContent = '';
-  }
-}
-
-function initChecklist() {
-  const schoolContainer = document.getElementById('school-holiday-container');
-  let checklist = document.getElementById('holiday-checklist');
-
-  if (!checklist) {
-    checklist = document.createElement('div');
-    checklist.id = 'holiday-checklist';
-    checklist.className = 'holiday-checklist';
-    checklist.setAttribute('aria-live', 'polite');
-    checklist.setAttribute('role', 'status');
-
-    checklist.innerHTML = `
-      <ul>
-        <li data-step="online">
-          <span class="status-indicator">⏳</span> Internet verfügbar
-        </li>
-        <li data-step="apiReachable">
-          <span class="status-indicator">⏳</span> Openholidaysapi.org
-        </li>
-        <li data-step="apiResponse">
-          <span class="status-indicator">⏳</span> Api antwortet
-        </li>
-        <li data-step="dataReceived">
-          <span class="status-indicator">⏳</span> Daten erhalten
-        </li>
-        <li data-step="dataParsed" >
-          <span class="status-indicator">⏳</span> Daten übersetzt
-        </li>
-        <li data-step="dataStored" >
-          <span class="status-indicator">⏳</span> Daten gespeichert
-        </li>
-      </ul>
-    `;
-
-    schoolContainer.appendChild(checklist);
-  }
-}
-
-function updateChecklistStep(stepName, status) {
-  // status: 'success', 'failure', or 'pending'
-  const checklist = document.getElementById('holiday-checklist');
-  if (!checklist) return;
-
-  const stepItem = checklist.querySelector(`li[data-step="${stepName}"]`);
-  if (!stepItem) return;
-
-  stepItem.classList.remove('pending', 'success', 'failure');
-  stepItem.classList.add(status);
-}
-
 function updateChecklist(step, status) {
   const row = document.querySelector(`[data-step="${step}"]`);
-  console.log(" download status update: ", step, status);
-  if (!row) {
-    console.warn(`⚠️ No checklist row found for step: ${step}`);
-    return;
-  }
+  if (!row) return;
 
-  // Optional: reset styles
+  const indicator = row.querySelector('.status-indicator');
+  if (!indicator) return;
+
   row.classList.remove('status-success', 'status-failure', 'status-pending');
+  indicator.classList.add('noto');
 
-  switch (status) {
-    case 'success':
-      row.classList.add('status-success');
-      row.querySelector('.status-indicator').textContent = '✅';
-      break;
-    case 'failure':
-      row.classList.add('status-failure');
-      row.querySelector('.status-indicator').textContent = '❌';
-      break;
-    case 'pending':
-    default:
-      row.classList.add('status-pending');
-      row.querySelector('.status-indicator').textContent = '⏳';
+  const icons = {
+    success: '✅',
+    failure: '❌',
+    pending: '⏳'
+  };
+
+  if (window.debugChecklist) {
+    console.log(`🪶 [Checklist] ${step} → ${status}`);
   }
+
+  const baseDelay = 250; // minimum 0.25s
+  const randomExtra = Math.random() * 1000; // + up to 1.0s
+  const totalDelay = baseDelay + randomExtra;
+
+  setTimeout(() => {
+    switch (status) {
+      case 'success':
+        row.classList.add('status-success');
+        indicator.innerHTML = `<span class="noto">${icons.success}</span>`;
+        break;
+      case 'failure':
+        row.classList.add('status-failure');
+        indicator.innerHTML = `<span class="noto">${icons.failure}</span>`;
+        break;
+      case 'pending':
+      default:
+        row.classList.add('status-pending');
+        indicator.innerHTML = `<span class="noto">${icons.pending}</span>`;
+        break;
+    }
+  }, totalDelay);
 }
+
 
 function onSave() {
   const allShiftsUnchecked = [...document.querySelectorAll('.shift-controls input[type="checkbox"]')].every(cb => !cb.checked);
   const allWeekdaysUnchecked = [...document.querySelectorAll('.weekday-controls input[type="checkbox"]')].every(cb => !cb.checked);
 
+
+  console.log("onSave", allShiftsUnchecked, allWeekdaysUnchecked);
+  /*
   if (allShiftsUnchecked || allWeekdaysUnchecked) {
     showWarningDialog(
       () => {
@@ -1215,6 +2607,8 @@ function onSave() {
   } else {
     proceedWithSave();
   }
+  */
+  proceedWithSave();
 }
 
 function proceedWithSave() {
@@ -1278,62 +2672,27 @@ function addDays(date, numDays) {
   return newDate;
 }
 
-function formatDate(date) {
-  return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}`;
+function formatDate(dateString) {
+  if (!dateString) return "–";
+  const [y, m, d] = dateString.split("-");
+  return `${d}.${m}.${y}`;
 }
 
-function findBridgeDays(holidays) {
-  const bridgeDays = [];
-
-  const holidayDates = new Set(holidays.map(h => h.date)); // For quick lookup
-  const holidayMap = new Map(holidays.map(h => [h.date, h]));
-
-  holidays.forEach(holiday => {
-    const holidayDate = new Date(holiday.date);
-
-    // === Check next day ===
-    const nextDay = addDays(holidayDate, 1);
-    const nextDayStr = nextDay.toISOString().split("T")[0];
-
-    if (!holidayDates.has(nextDayStr)) {
-      const dayAfterNext = addDays(nextDay, 1);
-      const dayAfterIndex = getWeekdayIndex(dayAfterNext);
-      if (isOfficeClosed(dayAfterIndex) || holidayDates.has(dayAfterNext.toISOString().split("T")[0])) {
-        const nextDayIndex = getWeekdayIndex(nextDay);
-        if (!isOfficeClosed(nextDayIndex)) {
-          bridgeDays.push({
-            date: nextDayStr,
-            context: `Brückentag nach ${holiday.name}`
-          });
-        }
-      }
-    }
-
-    // === Check previous day ===
-    const prevDay = addDays(holidayDate, -1);
-    const prevDayStr = prevDay.toISOString().split("T")[0];
-
-    if (!holidayDates.has(prevDayStr)) {
-      const dayBeforePrev = addDays(prevDay, -1);
-      const dayBeforeIndex = getWeekdayIndex(dayBeforePrev);
-      if (isOfficeClosed(dayBeforeIndex) || holidayDates.has(dayBeforePrev.toISOString().split("T")[0])) {
-        const prevDayIndex = getWeekdayIndex(prevDay);
-        if (!isOfficeClosed(prevDayIndex)) {
-          bridgeDays.push({
-            date: prevDayStr,
-            context: `Brückentag vor ${holiday.name}`
-          });
-        }
-      }
-    }
-  });
-
-  return bridgeDays;
+function updatePreview(type, dateString) {
+  const id = type === "start" ? "preview-start" : "preview-end";
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = formatDate(dateString);
 }
+
 
 function updateBridgeDaysForYear(year, state) {
   const holidays = getAllHolidaysForYear(year, state);
   const bridgeDays = findBridgeDays(holidays);
+
+  console.log(holidays);
+  console.log("[update Bridgedays");
+  console.log(bridgeDays);
 
   const bridgeList = document.getElementById('bridge-days');
   if (!bridgeList) {
@@ -1352,7 +2711,7 @@ function updateBridgeDaysForYear(year, state) {
     const tooltip = `Brückentag ${item.context} (${holidayName})`;
 
     li.innerHTML = `
-    <mark class="noto">🌉<mark> <span title="${tooltip}">
+    <mark class="noto">🚧<mark> <span title="${tooltip}">
       ${formatDate(date)} ${directionEmoji}
     </span>
     <label>
@@ -1391,7 +2750,10 @@ function restoreOfficeDaysUI(officeDays) {
       lockIcon?.classList.remove("unlocked");
     }
 
-    const weekdayCheckbox = document.querySelector(`#input-weekday-${day}`);
+    const weekdayCheckbox = document.querySelector(
+      `input[data-day="${key}"][data-type="weekday"]`
+    );
+
     if (weekdayCheckbox) {
       // Only check if at least one shift is active
       const anyShift = bools.early || bools.day || bools.late;

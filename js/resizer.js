@@ -39,3 +39,31 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.style.cursor = 'default';
   });
 })
+
+export function toggleResize(panelTop, panelBottom, action) {
+  if (!panelTop || !panelBottom) return;
+
+  const container = panelTop.parentElement; // Assuming both panels share the same parent
+  const containerHeight = container.getBoundingClientRect().height;
+  const dividerHeight = container.querySelector('#horizontal-divider').offsetHeight;
+
+  let newTopHeight;
+
+  if (action === 'maximize') {
+    newTopHeight = containerHeight * 0.7; // 70% of container
+  } else if (action === 'minimize') {
+    newTopHeight = containerHeight * 0.15; // 15% of container
+  } else {
+    return;
+  }
+
+  console.log(" new to height ==> ", newTopHeight);
+
+
+  panelTop.style.height = `${newTopHeight}px`;
+  panelBottom.style.height = `${containerHeight - newTopHeight - dividerHeight}px`;
+
+  // Force a repaint if needed
+  panelTop.offsetHeight;
+  panelBottom.offsetHeight;
+}

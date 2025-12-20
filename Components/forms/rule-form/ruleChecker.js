@@ -1,552 +1,347 @@
-import { roles } from "../../../js/loader/role-loader.js";
-import { toggleExceptionTable } from "./ruleFlowWizzard.js";
-import { getTotalEmployeesByRole } from "../../../js/loader/employee-loader.js";
-import { updateMachineRule } from "./machineReadableRules.js";
 
-// TO:DO - finalize full RuleState enum with validation logic & field awareness
-const RuleState = Object.freeze({
-    EMPTY: { label: "empty", icon: "◻️", action: "pass" },
-    DISABLED: { label: "disabled", icon: "🚫", action: "pass" },
-    SATISFIED: { label: "satisfied", icon: "✅", action: "pass" },
+/* --------------------------------------------------------------------------
+   RuleChecker – Save-Time Sanity Checks
+   --------------------------------------------------------------------------
+   Responsibilities:
+   - Normalize raw rule blocks (main + secondary)
+   - Detect contradictions
+   - Detect redundancies / unnecessary complexity
+   - Detect impossible or empty conditions
+   - Validate exception logic (E)
+   - Return result summary for UI + disable Save button if errors exist
 
-    PLACEHOLDER: { label: "placeholder", icon: "🧩", action: "warn" }, // needs attention
-    RELATION: { label: "relation", icon: "🔗", action: "warn" }, // likely partial
-    NUMERIC: { label: "numeric", icon: "📊", action: "warn" }, // maybe partial
+   This file purposely does NOT modify UI directly except one exported helper.
+   UI calls runSanityChecks() after each change or before save confirmation.
+-------------------------------------------------------------------------- */
 
-    INCOMPLETE: { label: "incomplete", icon: "⚠️", action: "error" },
+/* ==========================================================================
+   1) ENUMS
+   ========================================================================== */
+
+export const RuleState = Object.freeze({
+    OK: { label: "ok", icon: "✅", action: "pass" },
+    WARNING: { label: "warning", icon: "⚠️", action: "warn" },
+    ERROR: { label: "error", icon: "❌", action: "error" },
+    PLACEHOLDER: { label: "placeholder", icon: "🧩", action: "warn" },
     REDUNDANT: { label: "redundant", icon: "♻️", action: "warn" },
-    INCOHERENT: { label: "incoherent", icon: "❌", action: "error" },
-
-    // TO:DO - refactor placeholder variants into a system (maybe placeholder types: role, time, etc.)
-    WARNING_AMBIGUOUS: { label: "warning:ambiguous-placeholder", icon: "⚠️", action: "warn" },
-    ERROR_CONFLICT: { label: "error:conflict", icon: "❌", action: "error" }
+    INCOMPLETE: { label: "incomplete", icon: "⚠️", action: "error" },
+    CONTRADICTION: { label: "contradiction", icon: "❌", action: "error" }
 });
 
-const newRule = {
-    "lastCategoryChanged": "x",
-    "W": { "id": "W0", "state": RuleState.EMPTY, "bottomLimit": 0, "upperLimit": Infinity },
-    "T": { "id": "T0", "state": RuleState.EMPTY, "indices": [] },
-    "A": { "id": "A0", "bottomLimit": 0, "upperLimit": Infinity },
-    "G": { "id": "G0", "indices": [] },
-    "D": { "id": "D0", "upperLimit": 0, "indices": 0 },
-    "E": { "id": "E0", "state": RuleState.EMPTY, },
-    "w": { "id": "w0", "state": RuleState.PLACEHOLDER, "bottomLimit": 0, "upperLimit": Infinity },
-    "t": { "id": "t0", "state": RuleState.PLACEHOLDER, "calendarEntries": [] },
-    "a": { "id": "a0", "state": RuleState.PLACEHOLDER, "bottomLimit": 0, "upperLimit": Infinity },
-    "g": { "id": "g0", "state": RuleState.PLACEHOLDER, "roleIndices": [] },
-    "d": { "id": "d0", "state": RuleState.PLACEHOLDER, "upperLimit": 1, "indices": [] }
-};
-
-const CompareResult = Object.freeze({
-    IDENTICAL: "identical",    // exact match
-    OVERLAP: "overlap",        // partial overlap
-    SUBSET: "subset",          // fully contained
-    DISJOINT: "disjoint",      // no overlap
-    GAP: "gap",                // adjacent but not overlapping (security relevant)
-    OPPOSITE: "opposite",       // direct contradiction (e.g. present vs absent)
-    ONE_EMPTY: "one-empty",    // one side missing → warning
-    IGNORE: "ignore"           // both sides empty → safe to skip
+export const CompareResult = Object.freeze({
+    IDENTICAL: "identical",
+    SUBSET: "subset",
+    SUPERSET: "superset",
+    PARTIAL: "partial",
+    DISJOINT: "disjoint",
+    OPPOSITE: "opposite",
+    ONE_EMPTY: "one-empty",
+    IGNORE: "ignore"
 });
 
+/* ==========================================================================
+   2) NORMALIZER
+   Converts flow-wizard raw block choices into normalized canonical rules:
+   Example normalized rule:
+   {
+      timeframe: ["fri"],
+      repeats: "every",
+      role: ["chef"],
+      min: 1, max: null,
+      dependency: "present",
+      exception: "none"
+   }
+   ========================================================================== */
 
-const ruleRelations = [
-    { id: 'd0', forbidden: ['t4'], mandatory: ['exception'], warning: 'contradiction' },
-    { id: 'd1', forbidden: ['t4'], mandatory: [], warning: 'unnecessary' },
-    { id: 't4', forbidden: ['d0', 'd1'], mandatory: ['repeats'], warning: 'contradiction' },
-];
+function normalizeRule(ruleObj) {
+    if (!ruleObj) return null;
 
-const warnings = [];
+    return {
+        T: ruleObj.T?.id ?? "T0",
+        W: ruleObj.W?.id ?? "W0",
+        A: ruleObj.A?.id ?? "A1",
+        G: ruleObj.G?.id ?? "G0",
+        D: ruleObj.D?.id ?? "D0",
+        E: ruleObj.E?.id ?? "E0",
 
-let currentRule = {};
+        // numeric details
+        number1: ruleObj.number1 ?? null,
+        number2: ruleObj.number2 ?? null,
 
-export function initVisibilityChecker() {
-    // Assuming you have a function to handle visibility control
-    const checker = document.getElementById('visibility-checker');
-    if (checker) {
-        checker.addEventListener('change', toggleSaveButtonVisibility);
+        // optional indices/arrays
+        timeframeEntries: ruleObj.T?.indices ?? [],
+        roleEntries: ruleObj.G?.indices ?? [],
+        dependencyEntries: ruleObj.D?.indices ?? []
+    };
+}
+
+/* ==========================================================================
+   3) COMPARISON HELPERS
+   ========================================================================== */
+
+function compareSets(a, b) {
+    if ((!a || a.length === 0) && (!b || b.length === 0)) {
+        return CompareResult.IGNORE;
     }
+    if (!a || a.length === 0 || !b || b.length === 0) {
+        return CompareResult.ONE_EMPTY;
+    }
+
+    const A = new Set(a);
+    const B = new Set(b);
+
+    const intersection = [...A].filter(x => B.has(x));
+
+    if (intersection.length === 0) return CompareResult.DISJOINT;
+    if (intersection.length === A.size && intersection.length === B.size) {
+        return CompareResult.IDENTICAL;
+    }
+    if (intersection.length === A.size) return CompareResult.SUBSET;
+    if (intersection.length === B.size) return CompareResult.SUPERSET;
+
+    return CompareResult.PARTIAL;
 }
 
-export function compareRanges(bot1, up1, bot2, up2) {
-    // handle empty
-    if ((bot1 == null || up1 == null) && (bot2 == null || up2 == null)) return CompareResult.EMPTY;
-    if ((bot1 == null || up1 == null) || (bot2 == null || up2 == null)) return CompareResult.ONE_EMPTY;
+function compareAmounts(ruleA, ruleB) {
+    const aMin = ruleA.number1 ?? 0;
+    const aMax = ruleA.number2 ?? Infinity;
 
-    // identical
-    if (bot1 === bot2 && up1 === up2) return CompareResult.IDENTICAL;
+    const bMin = ruleB.number1 ?? 0;
+    const bMax = ruleB.number2 ?? Infinity;
 
-    // check for gap 
-    const gapSize = Math.max(bot2 - up1, bot1 - up2);
-    if (gapSize > 0) return CompareResult.GAP;
-    if (up1 < bot2 || up2 < bot1) return CompareResult.DISJOINT;
-
-    // check for subset
-    if ((bot1 >= bot2 && up1 <= up2) || (bot2 >= bot1 && up2 <= up1)) return CompareResult.SUBSET;
-
-    // partial overlap
-    return CompareResult.OVERLAP;
-}
-
-
-export function compareNumbers(num1, num2, gapTolerance = 1) {
-    if (num1 == null && num2 == null) return CompareResult.IDENTICAL;
-    if (num1 == null || num2 == null) return CompareResult.ONE_EMPTY;
-    if (num1 === num2) return CompareResult.IDENTICAL;
-    if (Math.abs(num1 - num2) > gapTolerance) return CompareResult.GAP;
-    return CompareResult.DISJOINT;
-}
-
-function compareDependenciesSimple(depA, depB) {
-    // Both missing → ignore
-    if (!depA && !depB) return CompareResult.IGNORE;
-
-    // One missing → one-empty
-    if (!depA || !depB) return CompareResult.ONE_EMPTY;
-
-    // Opposite: present vs absent
-    if ((depA.type === "D0" && depB.type === "D1") ||
-        (depA.type === "D1" && depB.type === "D0")) {
+    // direct contradiction
+    if (aMax < bMin || bMax < aMin) {
         return CompareResult.OPPOSITE;
     }
 
-    // Everything else → same
-    if (depA.type === depB.type) return CompareResult.IDENTICAL;
+    // identical
+    if (aMin === bMin && aMax === bMax) return CompareResult.IDENTICAL;
 
-    // Fallback: treat as same for now (could refine later)
-    return CompareResult.IDENTICAL;
+    // one is tighter constraint
+    if (aMin >= bMin && aMax <= bMax) return CompareResult.SUBSET;
+    if (bMin >= aMin && bMax <= aMax) return CompareResult.SUPERSET;
+
+    return CompareResult.PARTIAL;
 }
 
-function compareArrays(arr1 = [], arr2 = []) {
-    if (arr1.length === 0 && arr2.length === 0) {
-        return CompareResult.IGNORE; // both empty → ignore
-    }
-    if (arr1.length === 0 || arr2.length === 0) {
-        return CompareResult.ONE_EMPTY; // one empty → warning
-    }
+/* ==========================================================================
+   4) CONTRADICTION DETECTOR
+   ========================================================================== */
 
-    const set1 = new Set(arr1);
-    const set2 = new Set(arr2);
+function detectContradictions(main, second) {
+    const issues = [];
 
-    const intersection = [...set1].filter(x => set2.has(x));
-
-    if (intersection.length === 0) {
-        // No GAP needed here because we compare arrays of discrete itemsi still 
-        return CompareResult.DISJOINT;
+    // --- timeframe conflicts ---
+    const tfCompare = compareSets(main.timeframeEntries, second.timeframeEntries);
+    if (tfCompare === CompareResult.DISJOINT && main.T !== "T0" && second.T !== "T0") {
+        // ok — different timeframes is NOT a contradiction
     }
 
-    if (intersection.length === set1.size && intersection.length === set2.size) {
-        return CompareResult.IDENTICAL;
+    // --- amount clash (max < min) ---
+    const amountCompare = compareAmounts(main, second);
+    if (amountCompare === CompareResult.OPPOSITE) {
+        issues.push({
+            type: RuleState.CONTRADICTION,
+            message: "Widerspruch: Mengenangaben schließen sich aus (min/max zu weit auseinander)."
+        });
     }
 
-    if (intersection.length === set1.size || intersection.length === set2.size) {
-        return CompareResult.SUBSET;
+    // dependency example:
+    if ((main.D === "D0" && second.D === "D1") ||
+        (main.D === "D1" && second.D === "D0")) {
+        issues.push({
+            type: RuleState.CONTRADICTION,
+            message: "Widerspruch: Anwesenheit vs. Abwesenheit."
+        });
     }
 
-    return CompareResult.OVERLAP;
+    return issues;
 }
 
+/* ==========================================================================
+   5) REDUNDANCY CHECK
+   ========================================================================== */
 
-function toggleSaveButtonVisibility(event) {
-    const saveButton = document.getElementById('save-rule-button');
-    if (saveButton) {
-        // Assuming checker controls visibility logic
-        saveButton.style.display = event.target.checked ? 'block' : 'none';
+function detectRedundancy(main, second) {
+    const redundancies = [];
+
+    // identical conditions = unnecessary secondary block
+    if (
+        main.T === second.T &&
+        main.W === second.W &&
+        main.A === second.A &&
+        main.G === second.G &&
+        main.D === second.D
+    ) {
+        redundancies.push({
+            type: RuleState.REDUNDANT,
+            message: "Nebenbedingung ist identisch — redundant."
+        });
     }
+
+    return redundancies;
+}
+
+/* ==========================================================================
+   6) EXCEPTION LOGIC CHECK
+   ========================================================================== */
+
+function validateException(main, second) {
+    if (!second || !main) return [];
+
+    const issues = [];
+
+    switch (main.E) {
+        case "E0": // no exception
+            return [];
+        case "E2": // OR
+            // no contradiction, OR can combine disjoint
+            return [];
+        case "E3": // ABER (if secondary true → main invalid)
+        case "E4": // AUSSER (similar semantics)
+            // detect if secondary *always* overlaps main → impossible rule
+            const tf = compareSets(main.timeframeEntries, second.timeframeEntries);
+            if (tf === CompareResult.IDENTICAL) {
+                issues.push({
+                    type: RuleState.WARNING,
+                    message: "Warnung: Ausnahme wirkt identisch — könnte Regel immer ungültig machen."
+                });
+            }
+            return issues;
+        case "E5": // limitation: “not more than”
+        case "E6": // limitation: “not less than”
+            // numeric logic handled by amount comparator
+            return [];
+        default:
+            return [];
+    }
+}
+
+/* ==========================================================================
+   7) INCOMPLETE / MISSING CHECKS
+   ========================================================================== */
+
+function detectMissing(main) {
+    const issues = [];
+
+    if (main.G === "G0") {
+        issues.push({ type: RuleState.INCOMPLETE, message: "Aufgabe/Gruppe fehlt." });
+    }
+    if (main.D === "D0" && main.G === "G0") {
+        issues.push({ type: RuleState.INCOMPLETE, message: "Abhängigkeit ohne Aufgabe." });
+    }
+    if (main.T === "T0") {
+        issues.push({ type: RuleState.INCOMPLETE, message: "Zeitraum fehlt." });
+    }
+
+    return issues;
+}
+
+export function initVisibilityChecker() {
+    console.log("initVisibilityChecker");
 }
 
 export function resetRule() {
-    console.log(" inout object was reset");
-    currentRule = JSON.parse(JSON.stringify(newRule));
-    warnings.length = 0;
-    updateMachineRule(currentRule);
+    console.log("resetRule");
 }
 
-export function loadRule(ruleData) {
-    if (!ruleData || typeof ruleData !== "object") {
-        console.error("Invalid rule data provided.");
-        return;
+/* ==========================================================================
+   8) MAIN ENTRY POINT
+   ========================================================================== */
+
+export function runSanityChecks(ruleForEditing) {
+    const main = normalizeRule(ruleForEditing);
+    const secondary = ruleForEditing.e && ruleForEditing.e !== "E0"
+        ? normalizeRule({
+            T: ruleForEditing.t,
+            W: ruleForEditing.w,
+            A: ruleForEditing.a,
+            G: ruleForEditing.g,
+            D: ruleForEditing.d,
+            number1: ruleForEditing.number1,
+            number2: ruleForEditing.number2
+        })
+        : null;
+
+    const errors = [];
+    const warnings = [];
+
+    // missing / incomplete
+    detectMissing(main).forEach(e => {
+        if (e.type.action === "error") errors.push(e); else warnings.push(e);
+    });
+
+    // contradictions main <-> secondary
+    if (secondary) {
+        detectContradictions(main, secondary).forEach(e => {
+            if (e.type.action === "error") errors.push(e); else warnings.push(e);
+        });
+
+        detectRedundancy(main, secondary).forEach(e => warnings.push(e));
+
+        validateException(main, secondary).forEach(e => {
+            if (e.type.action === "error") errors.push(e); else warnings.push(e);
+        });
     }
-    currentRule = JSON.parse(JSON.stringify(ruleData));
 
-    warnings.length = 0; // Clear warnings from previous rule
-    console.log("Rule loaded:", currentRule);
-}
-
-
-function checkTimeframe(currentDay, startDay, endDay) {
-
-    return currentDay < startDay && currentDay > endDay
-}
-
-function checkShift(currentShift, shift) {
-    const incompatibleShifts = {
-        morning: ['afternoon'],
-        afternoon: ['morning'],
+    return {
+        ok: errors.length === 0,
+        errors,
+        warnings,
+        normalized: { main, secondary }
     };
-    return !incompatibleShifts[currentShift]?.includes(shift);
 }
 
-function checkDependencies(id, role1, role2, ratio1, ratio2) {
+/* ==========================================================================
+   9) SAVE BUTTON INTEGRATION
+   ========================================================================== */
 
-    switch (id.toLowerCase()) {
-        case "d0": // anwesend
-            return role1 > 0;
-        case "d1": // abwesend
-            return role1 < 1;
-        case "d2": // braucht
-            // return role2 > ratio * role1;
-            break;
-        case "d3": // hilft
-            // return role1 < ratio * role1;
-            break;
-        case "d4": // im Verhältnis 🧩
-            return role1 * ratio1 < role2 * ratio2;
-    }
+export function updateSaveButton(checkResult) {
+    const saveBtn = document.getElementById("save-rule-button");
+    if (!saveBtn) return;
+
+    saveBtn.disabled = !checkResult.ok;
 }
 
-export function checkInput(inputObject) {
-    const category = inputObject.id[0];
+export function resolveConditionLimits(
+    condition,
+    roleCountsByRoleId
+) {
+    let _lowerLimit = 0;
+    let _upperLimit = Infinity;
 
-    currentRule.lastCategoryChanged = inputObject.id;
-    updateCurrentRule(category, inputObject);
-    checkRuleConsistency();
-    showWarnings();
+    const originalLowerLimit = condition.lowerLimit;
+    const originalUpperLimit = condition.upperLimit;
 
-    console.log("Current Rule:", currentRule);
+    switch (condition.ratioType) {
 
-    return { ...currentRule };
-}
+        case 'WorkloadSumCheck': // AND + NEEDS
+            // sum reference roles
+            let total = 0;
+            condition.referenceRoles.forEach(role => {
+                total += roleCountsByRoleId(role);
+            });
 
-
-function updateCurrentRule(category, inputObject) {
-    if (!currentRule[category]) {
-        console.warn(`Unknown category: ${category}`);
-        return;
-    }
-
-    currentRule[category].id = inputObject.id;
-
-    if (inputObject.id === "E0") {
-        console.log(" disabled second condition");
-        currentRule["E"].state = RuleState.EMPTY;
-        currentRule["w"].state = RuleState.DISABLED;
-        currentRule["t"].state = RuleState.DISABLED;
-        currentRule["a"].state = RuleState.DISABLED;
-        currentRule["g"].state = RuleState.DISABLED;
-        currentRule["d"].state = RuleState.DISABLED;
-
-    }
-
-    switch (inputObject.inputID) {
-        case "number1":
-            currentRule[category].bottomLimit = inputObject.value;
-            console.log("checker nubmber 1");
-            break;
-        case "number2":
-            currentRule[category].upperLimit = inputObject.value;
-            console.log("checker nubmber 2");
-            break;
-        case "checkboxes":
-            currentRule[category].bottomLimit = inputObject.value;
-            console.log("checker checkboxes");
-            break;
-        case "topCell":
-            const newCat = newRule[category] || {};
-
-            if ('bottomLimit' in newCat) {
-                currentRule[category].bottomLimit = newCat.bottomLimit;
-            }
-
-            if ('upperLimit' in newCat) {
-                currentRule[category].upperLimit = newCat.upperLimit;
-            }
-
-            if ('indices' in newCat) {
-                currentRule[category].indices = newCat.indices;
-            }
-            console.log("checker top cell");
+            // apply amount modifiers (placeholder logic)
+            _lowerLimit = Math.floor(originalLowerLimit / total);
+            _upperLimit = Math.ceil(originalUpperLimit / total);
             break;
 
-        case "select":
-            currentRule[category].bottomLimit = inputObject.value;
-            console.log("checker select");
+        case 'PresenceRequirementCheck': // OR + NEEDS
+            // presence-based: reference count > 0 triggers minimum
+            break;
+
+        case 'CapacityCheck': // AND + HELPS
+            // combined support defines max subject capacity
+            break;
+
+        case 'SupervisionCheck': // OR + HELPS
+            // sum of support roles defines supervision pool
             break;
     }
-    // 🔹 Handle rules that only update words
-    // if (["t2", "T2"].includes(inputObject.id)) {
-    //     currentRule[category].words = inputObject.words;
-    //     return;
-    // }
 
-    // 🔹 Handle rules that update both numbers and words
-    // if (["w3", "W3"].includes(inputObject.id)) {
-    //     currentRule[category].words = inputObject.words;
-    //     currentRule[category].number1 = inputObject.number1;
-    //     checkNumberInput(inputObject.id, inputObject.number1);
-    //     return;
-    // }
-
-    // 🔹 Handle "A" or "a" followed by specific numbers
-    //if (["a", "A"].includes(inputObject.id[0]) && "14568".includes(inputObject.id[1])) {
-    //    currentRule[category].words = inputObject.words;
-    //    if (["a", "A"].includes(inputObject.id[0]) && "14568".includes(inputObject.id[1])) {
-    //        currentRule[category].words = inputObject.words;
-    //
-    //        if (inputObject.id.length > 2 && inputObject.id[2] === "-") {
-    //            if (inputObject.id[3] === "1") currentRule[category].number1 = inputObject.number1;
-    //            if (inputObject.id[3] === "2") currentRule[category].number2 = inputObject.number2;
-    //
-    //            inputObject.id = inputObject.id.substring(0, inputObject.id.length - 2);
-    //        } else {
-    //            currentRule[category].number1 = inputObject.number1;
-    //        }
-    //
-    //        checkNumberInput(inputObject.id, inputObject.number1);
-    //        return;
-    //    }
-    //    checkNumberInput(inputObject.id, inputObject.number1);
-    //    return;
-    //}
-
-    //if (["d2", "D2", "d3", "D3"].includes(inputObject.id)) {
-    //    currentRule[category].number1 = inputObject.number1;
-    //    checkNumberInput(inputObject.id, inputObject.number1);
-    //    return;
-    //}
-    //
-    //if (["d4", "D4", "a3", "A3"].includes(inputObject.id)) {
-    //    Object.assign(currentRule[category], {
-    //        words: inputObject.words,
-    //        number1: inputObject.number1,
-    //        number2: inputObject.number2
-    //    });
-    //    checkNumberInput(inputObject.id, inputObject.number1);
-    //    checkNumberInput(inputObject.id, inputObject.number2);
-    //    return;
-    //}
-
-    // 🔹 Handle Group-based Rules (G)
-    //if (["g0", "G0"].includes(inputObject.id)) {
-    //    currentRule[category].words = inputObject.words.length > 0 ? inputObject.words[0] : roles[0];
-    //    return;
-    //}
-    //
-    //if (["g1", "G1", "G2", "G3"].includes(inputObject.id)) {
-    //    currentRule[category].words = inputObject.words.length > 1
-    //        ? inputObject.words
-    //        : [inputObject.words.length > 0 ? inputObject.words[0] : roles[0]];
-    //    return;
-    //}
+    return {
+        lowerLimit: _lowerLimit,
+        upperLimit: _upperLimit
+    };
 }
-
-function checkNumberInput(id, number) {
-    if (isTotalNumber(id)) {
-        let roleID;
-        if (id[0] === "A") roleID = currentRule.G.words[0];
-        if (id[0] === "a") roleID = currentRule.g.words[0];
-
-        const minimum = getTotalEmployeesByRole(roleID);
-        if (number < minimum) warnings.push(`🟡 Number for ${id} is too low (Minimum: ${minimum})`);
-        return;
-    }
-
-    if (number < 0) {
-        warnings.push(`🟡 Invalid number for ${id}: Cannot be negative.`);
-    }
-}
-
-export function isTotalNumber(id) {
-    const totalIds = ["w3", "a1", "a3", "a4", "a5", "a8"];  // Absolute numbers
-    const relativeIds = ["d2", "d3", "d4", "a6"];  // Ratio-based, includes percentage
-
-    if (totalIds.includes(id.toLowerCase())) return true;
-    if (relativeIds.includes(id.toLowerCase())) return false;
-
-    console.warn(`Unknown number type for ID: ${id}`);
-    return null;
-}
-
-function sortWarnings() {
-    warnings.sort(warning => {
-        if (warning.includes("🔴")) return -3; // Critical
-        if (warning.includes("❌")) return -2; // Contradiction
-        if (warning.includes("🟡")) return -1; // Restrictive
-        return 0; // Redundant
-    });
-}
-
-
-function showWarnings() {
-    sortWarnings(); // Sort before displaying
-
-    const ruleCheckCell = document.getElementById("rule-check");
-    if (!ruleCheckCell) return;
-
-    ruleCheckCell.innerHTML = ""; // Clear old warnings
-
-    if (warnings.length === 0) {
-        ruleCheckCell.innerHTML = "<span style='color:green;'>✅ No issues detected.</span>";
-        return;
-    }
-
-    const list = document.createElement("ul");
-    list.style.padding = "0";
-    list.style.margin = "0";
-
-    warnings.forEach(warning => {
-        const listItem = document.createElement("li");
-        listItem.textContent = warning;
-        listItem.style.listStyle = "none";
-        listItem.style.fontSize = "0.9em";
-
-        if (warning.includes("🔴")) listItem.style.color = "red";
-        if (warning.includes("❌")) listItem.style.color = "orange";
-        if (warning.includes("🟡")) listItem.style.color = "goldenrod";
-        if (warning.includes("⚪️")) listItem.style.color = "gray";
-
-        list.appendChild(listItem);
-    });
-
-    ruleCheckCell.appendChild(list);
-}
-
-
-function validateInput(id) {
-    if (!id || typeof id !== 'string') {
-        console.error(`Invalid input ID provided: "${id}"`);
-        return;
-    }
-
-    const inputToCheck = ruleRelations.find(rule => rule.id === id);
-
-    if (!inputToCheck) {
-        console.warn(`No rules found for ID: "${id}"`);
-        return;
-    }
-    inputToCheck.forbidden.forEach(option => {
-
-        const optionElement = getOptionByID(option);
-        if (optionElement) {
-            warnings.push(option.warn);
-        } else {
-            console.warn(`Option with ID "${option}" not found in the DOM.`);
-        }
-    });
-    console.log(warnings);
-}
-
-function getOptionByID(id) {
-    if (!id || typeof id !== 'string') {
-        console.error(`Invalid ID provided: "${id}"`);
-        return null;
-    }
-    const element = document.getElementById(id);
-    return element || null;
-}
-
-function validateBasicConstraints(id, rule) {
-    // TODO: Ensure required fields exist and are valid
-    return true;
-}
-
-function validateRelations(id) {
-    // TODO: Check rule contradictions or missing dependencies
-    return true;
-}
-
-function applyExceptions(id) {
-    // TODO: Handle exceptions using checkException()
-}
-
-export function checkRuleConsistency() {
-    warnings.length = 0; // Clear previous warnings
-
-    ruleRelations.forEach(relation => {
-        const { id, forbidden, mandatory, warning } = relation;
-        const category = id[0];
-
-        if (!currentRule[category] || currentRule[category].id !== id) return;
-
-        // 🔹 Contradictions
-        forbidden.forEach(forbiddenId => {
-            const forbiddenCategory = forbiddenId[0];
-            if (currentRule[forbiddenCategory]?.id === forbiddenId) {
-                warnings.push(`❌ Rule ${id} conflicts with ${forbiddenId} (${warning})`);
-            }
-        });
-
-        // 🔹 Missing Mandatory Rules
-        mandatory.forEach(mandatoryId => {
-            const mandatoryCategory = mandatoryId[0];
-            if (!currentRule[mandatoryCategory] || currentRule[mandatoryCategory].id !== mandatoryId) {
-                warnings.push(`🔴 Rule ${id} is missing required rule ${mandatoryId}`);
-            }
-        });
-
-        // 🔹 Unnecessary & Restrictive Checks
-        if (isRuleRedundant(id)) warnings.push(`⚪️ Rule ${id} is redundant.`);
-        if (isRuleOverlyRestrictive(id)) warnings.push(`🟡 Rule ${id} is too restrictive.`);
-    });
-}
-
-
-function isRuleRedundant(id) {
-    // Example: If "manager is on a business trip", we already know "manager is not in office".
-    if (id === "d1" && currentRule.d && currentRule.d.id === "d0") {
-        return true; // "Absent" is redundant if "Present" rule already exists
-    }
-    return false;
-}
-
-function isRuleOverlyRestrictive(id) {
-    // Example: If the rule forces an employee to work **every Saturday** without exceptions.
-    if (id === "mandatory_saturday" && getTotalEmployeesByRole("cook") === 1) {
-        return true; // The only cook would **never** get a Saturday off
-    }
-    return false;
-}
-
-
-function testNewRuleInCalendar() { };
-
-/*
-    Or rule is only valid if ==>
-| Case                         | Roles     | Timeframe | Count      | Action                                |
-| ---------------------------- | --------- | --------- | ---------- | ------------------------------------- |
-| a) Gap in count              | Same      | Same      | Gap exists | like secrurity diver sample           |
-| b) Different roles           | Different | Same      | Any        | role can cover for other role         |
-| c) Different timeframe/count | Same      | Different | Different  | one day or the other but dif. counts  |
-
-*/
-
-export function sanityCheckOrRule(conditionA, conditionB) {
-    const rolesA = conditionA.roles || [];
-    const rolesB = conditionB.roles || [];
-
-    const sameRoles = compareArrays(rolesA, rolesB);
-    const sameTimeframe = JSON.stringify(conditionA.timeframe) === JSON.stringify(conditionB.timeframe);
-
-    const bottomA = conditionA.bottomLimit ?? 0;
-    const upperA = conditionA.upperLimit ?? Infinity;
-    const bottomB = conditionB.bottomLimit ?? 0;
-    const upperB = conditionB.upperLimit ?? Infinity;
-
-    // Check identical conditions
-    if (sameRoles && sameTimeframe && bottomA === bottomB && upperA === upperB) {
-        return "Invalid: Both conditions are identical → OR is redundant";
-    }
-
-    // Count conflict check
-    if (sameRoles && sameTimeframe && bottomA > upperB && bottomB > upperA) {
-        return "Invalid: Count limits conflict for same role and timeframe";
-    }
-
-    // Different roles & different timeframe
-    if (!sameRoles && !sameTimeframe) {
-        return "Invalid: OR with different roles and different timeframes → meaningless";
-    }
-
-    // Valid otherwise
-    return "Valid";
-}
-

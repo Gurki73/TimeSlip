@@ -1,10 +1,12 @@
-import { app, BrowserWindow, ipcMain, Menu, dialog, screen } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, dialog, screen, shell } from 'electron';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { inMemoryCache } from './shared.js';
 import { loadFormAndSendToRenderer } from './events.js';
-
+import { getClientDataFolder } from './dataIO.js';
+import { exec } from 'child_process';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -36,43 +38,135 @@ function sendThemeToRenderer(themeName) {
 }
 
 async function createWindow() {
+    const SAFE_MODE = false; // ← flip this to false once testing is done
+
     mainWindow = new BrowserWindow({
         width: 1600,
         height: 900,
         fullscreen: false,
+        fullscreenable: false,
         frame: true,
+        autoHideMenuBar: false,
         webPreferences: {
-            preload: path.join(__dirname, '../../js/preload.cjs'),
+            preload: SAFE_MODE ? undefined : path.join(__dirname, '../../js/preload.cjs'),
             nodeIntegration: false,
             contextIsolation: true,
             enableRemoteModule: false,
-            sandbox: false, // Disabled because preload uses Node.js 'crypto' module to generate CSP nonce for inline scripts
+            sandbox: false,
             devTools: true
         }
     });
+    mainWindow.maximize();
+    mainWindow.setTitle(SAFE_MODE ? 'Mitarbeiter Kalender (Safe Mode)' : 'Mitarbeiter Kalender');
 
-    mainWindow.setTitle('Mitarbeiter Kalender');
-    // mainWindow.webContents.openDevTools();
+    if (SAFE_MODE) {
+        console.log('🧩 Safe mode active → skipping normal renderer');
+        await mainWindow.loadURL('data:text/html,<h1>🧩 Safe Mode Active</h1><p>No preload, no renderer</p>');
+        return mainWindow;
+    }
+
     try {
         await mainWindow.loadFile('./index.html');
     } catch (error) {
         console.error('Error loading index.html:', error);
     }
 
+
     const template = [
         {
-            label: 'File',
+            label: 'Datei',
             submenu: [
-                { label: 'Open', click: () => console.log('Open File') },
                 {
-                    // TODO
-                    label: 'Save All',
-                    accelerator: 'CmdOrCtrl+S',
-                    click: () => {
-                        mainWindow.webContents.send('trigger-save-all');
+                    label: 'Daten Ordner öffnen',
+                    click: async () => {
+                        let folderPath = getClientDataFolder('client');
+
+                        if (!folderPath || !fs.existsSync(folderPath)) {
+                            folderPath = path.join(app.getPath('home'), 'mitarbeiterKalender', 'clientData');
+                            fs.mkdirSync(folderPath, { recursive: true });
+
+                            const markerPath = path.join(folderPath, '.mitarbeiterkalender');
+                            if (!fs.existsSync(markerPath)) fs.writeFileSync(markerPath, 'home-folder-initialized');
+                        }
+                        let files;
+                        try {
+                            files = fs.readdirSync(folderPath);
+                            if (files.length === 0) {
+                                console.log('Folder is empty.');
+                            } else {
+                                console.log('Files in folder:', files);
+                            }
+                        } catch (err) {
+                            console.error('Failed to read folder:', err);
+                            files = [];
+                        }
+
+                        // Open folder in OS
+                        if (process.platform === 'win32') {
+                            const result = await shell.openPath(folderPath);
+                            if (result) {
+                                console.error('Error opening folder in Explorer:', result);
+                                await dialog.showOpenDialog({ defaultPath: folderPath, properties: ['openDirectory'] });
+                            }
+                        } else {
+                            exec(`xdg-open "${folderPath}"`, async (err) => {
+                                if (err) {
+                                    console.warn('xdg-open failed, opening fallback dialog.');
+                                    await dialog.showOpenDialog({
+                                        defaultPath: folderPath,
+                                        properties: ['openDirectory', 'showHiddenFiles', 'multiSelections'],
+                                        filters: [{ name: 'CSV Files', extensions: ['csv'] }]
+                                    });
+                                }
+                            });
+                        }
                     }
-                }, // ✅ <-- this comma was missing
+                },
+                {
+                    label: 'Excel-Datei exportieren…',
+                    click: async () => {
+                        try {
+                            const mod = await import('../excel/excelExport.js');
+                            await mod.exportExcelFile(mainWindow);
+                        } catch (err) {
+                            console.error('Export menu error', err);
+                            dialog.showErrorBox('Export Fehler', String(err));
+                        }
+                    }
+                },
+                {
+                    label: 'Excel-Datei importieren…',
+                    click: async () => {
+                        try {
+                            const mod = await import('../excel/excelImport.js');
+                            await mod.importExcelFile(mainWindow);
+                        } catch (err) {
+                            console.error('Import menu error', err);
+                            dialog.showErrorBox('Import Fehler', String(err));
+                        }
+                    }
+                },
                 { type: 'separator' },
+                {
+                    label: 'Excel-Vorlage erstellen…',
+                    click: async () => {
+                        try {
+                            const mod = await import('../excel/excelTemplate.js');
+                            // NEW function name:
+                            const filePath = mod.buildTemplateToDownloads();
+                            console.log('Template created at:', filePath);
+                        } catch (err) {
+                            console.error('Template menu error', err);
+                            dialog.showErrorBox('Vorlage Fehler', String(err));
+                        }
+                    }
+                },
+                {
+                    label: 'App weitergeben…',
+                    click: () => {
+                        showShareAppDialog(mainWindow);
+                    }
+                },
                 { label: 'Exit', role: 'quit' }
             ]
         },
@@ -142,6 +236,23 @@ async function createWindow() {
                         { label: 'Hell', click: () => sendThemeToRenderer('default') },
                         { label: 'Pastell', click: () => sendThemeToRenderer('pastel') },
                         { label: 'Dunkel', click: () => sendThemeToRenderer('dark') },
+                        { label: 'Graustufen', click: () => sendThemeToRenderer('greyscale') },
+                    ]
+                },
+                {
+                    label: 'Schalter-Stiel',
+                    submenu: [
+                        { label: 'Umschalter', type: 'radio', checked: true, click: () => sendPresenceUIMode('toggle') },
+                        { label: 'Radio-Tasten', type: 'radio', click: () => sendPresenceUIMode('radio') },
+                    ]
+                },
+                { type: 'separator' },
+                {
+                    label: 'Sternzeichen',
+                    submenu: [
+                        { label: 'versteckt', type: 'radio', checked: true, click: () => setZodiacStyle('none') },
+                        { label: 'astronomisch', type: 'radio', click: () => setZodiacStyle('symbol') },
+                        { label: 'bildlich', type: 'radio', click: () => setZodiacStyle('icon') }
                     ]
                 }
             ]
@@ -190,7 +301,14 @@ async function createWindow() {
                     click: () => {
                         loadFormAndSendToRenderer('admin-form', mainWindow.webContents);
                     }
-                }
+                },
+                {
+                    label: 'Startseite',
+                    accelerator: 'CmdOrCtrl+H',
+                    click: () => {
+                        loadFormAndSendToRenderer('welcome', mainWindow.webContents);
+                    }
+                },
             ]
         },
         {
@@ -204,7 +322,7 @@ async function createWindow() {
                 {
                     label: 'Glossar',
                     accelerator: 'Ctrl+I',
-                    click: () => mainWindow.webContents.send('open-help', 'glossar')
+                    click: () => mainWindow.webContents.send('open-help', 'chapter-glossar')
                 },
                 { type: 'separator' },
                 {
@@ -273,8 +391,11 @@ async function createWindow() {
                         }
 
                     ]
+                },
+                {
+                    label: `Version ${app.getVersion()}`,
+                    enabled: false     // so it's just an info line
                 }
-
             ]
         }
     ];
@@ -286,6 +407,49 @@ async function createWindow() {
 
 export function getMainWindow() {
     return mainWindow;
+}
+
+async function setZodiacStyle(style) {
+    await window.cacheAPI.setCacheValue('zodiacStyle', style);
+    window.api.send('refresh-calendar');
+}
+
+
+function sendPresenceUIMode(mode) {
+    mainWindow.webContents.send('set-presence-ui-mode', mode);
+}
+
+function showShareAppDialog(browserWindow) {
+    dialog.showMessageBox(browserWindow, {
+        type: 'info',
+        title: 'App weitergeben / Share App',
+        message:
+            'Sie können diese App gerne an Kollegen, Freunde oder Ihr Team weitergeben.\n' +
+            'Wichtig: Nur den Installations-Installer weitergeben – nicht den Daten-Ordner.',
+        detail:
+            'Der Installer befindet sich im Ordner "Installer".\n' +
+            'Wir öffnen ihn Ihnen jetzt. Kopieren Sie einfach die Datei:\n\n' +
+            '→ MitarbeiterKalenderApp Setup XXXX.exe\n\n' +
+            'Das Weitergeben ist erlaubt und erwünscht. Die App ist MIT-lizenziert.',
+        buttons: ['OK', 'Installer-Ordner öffnen']
+    }).then(result => {
+        if (result.response === 1) {
+            openInstallerFolder();
+        }
+    });
+}
+
+function openInstallerFolder() {
+    const installerFolder = path.join(process.resourcesPath, '..', 'MitarbeiterKalender-Installer');
+
+    if (fs.existsSync(installerFolder)) {
+        shell.openPath(installerFolder);
+    } else {
+        dialog.showErrorBox(
+            'Ordner nicht gefunden',
+            'Der Installer-Ordner konnte nicht gefunden werden. Bitte prüfen Sie die Installation.'
+        );
+    }
 }
 
 function showStatusPanel(browserWindow) {
@@ -322,7 +486,7 @@ function showLicenseDialog(browserWindow) {
     dialog.showMessageBox(browserWindow, {
         type: 'info',
         title: 'Lizenz / License',
-        message: 'Diese App ist frei nutzbar, bearbeitbar und verkäuflich unter der MIT-Lizenz.\n\n' +
+        message: 'Diese App ist frei nutzbar, bearbeitbar und verkäuflich (unter der MIT-Lizenz.)\n\n' +
             'This app is free to use, modify, and sell under the MIT License.',
         detail: 'Sie können diese Software frei verwenden, verändern und vertreiben, auch kommerziell. Siehe LICENSE-Datei für Details.\n\n' +
             'You are free to use, modify, and distribute this software, even commercially. See LICENSE file for details.',

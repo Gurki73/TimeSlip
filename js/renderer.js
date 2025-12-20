@@ -1,4 +1,71 @@
+// renderer.js
 import { initializeHelp } from '../Components/help/help.js';
+import { loadRoleData } from './loader/role-loader.js';
+import { loadEmployeeData, checkEmployeesEndingToday } from './loader/employee-loader.js';
+import { loadCalendarData, loadStateData, loadCompanyHolidayData, loadOfficeDaysData } from './loader/calendar-loader.js';
+import { loadRequests } from './loader/request-loader.js';
+import { checkOnboardingState } from './Utils/onboarding.js';
+import { initializeLegend } from '../Components/legend/legend.js';
+import { createPresenceSelector, setOfficeStatus } from '../Components/calendar/calendar.js';
+
+let isRefreshing = false;
+
+if (!localStorage.getItem('dataMode')) {
+  localStorage.setItem('dataMode', 'auto');
+}
+// --- PRESENCE UI SWITCHER ---
+function switchPresenceUIMode(newMode) {
+  const container = document.getElementById('presence-container');
+  if (!container) return;
+
+  // Remove old selector
+  container.innerHTML = '';
+
+  // Get saved isInOffice state (boolean)
+  let isInOffice = localStorage.getItem('presenceState');
+  isInOffice = isInOffice === null ? true : isInOffice === 'true';
+
+  // Create new selector
+  const selector = createPresenceSelector({
+    mode: newMode,
+    defaultValue: isInOffice,
+    onChange: (value) => {
+      localStorage.setItem('presenceState', String(value));
+      setOfficeStatus(value);  // existing calendar update
+    }
+  });
+
+  container.appendChild(selector);
+
+  // Save user preference
+  localStorage.setItem('presenceUIMode', newMode);
+}
+
+
+
+window.addEventListener('api-ready', async () => {
+
+  await new Promise(resolve => setTimeout(resolve, 50));
+  await loadRoleData(window.api);
+  await loadEmployeeData(window.api);
+  await loadCalendarData(window.api);
+  await loadStateData(window.api);
+  await loadCompanyHolidayData(window.api);
+  await loadOfficeDaysData(window.api);
+  await loadRequests(window.api);
+
+  const { isOnboarding, dataFolder } = await checkOnboardingState(window.api);
+  try {
+    const legendContainer = document.getElementById('legend');
+    if (legendContainer) {
+      await initializeLegend(window.api);
+    } else {
+      console.warn('⚠️ Legend container not found at startup');
+    }
+  } catch (err) {
+    console.error('❌ Failed to initialize legend at startup:', err);
+  }
+});
 
 let formInitializers = {};
 let isDragging = false;
@@ -25,6 +92,7 @@ async function loadFormModules() {
     ]);
 
     formInitializers = {
+      welcome: () => loadWelcomePage(),   // new ←
       'role-form': initializeRoleForm,
       'rule-form': initializeRuleForm,
       'employee-form': initializeEmployeeForm,
@@ -77,7 +145,6 @@ function stopDrag() {
   isDragging = false;
   document.body.style.cursor = 'default';
 
-  // Save layout sizes
   if (currentResizer.classList.contains('vertical-resizer')) {
     const leftPanel = document.getElementById('left-panel');
     const leftWidth = leftPanel.style.getPropertyValue('--left-panel-width');
@@ -94,9 +161,22 @@ function stopDrag() {
     : document.body.classList.remove('resize-ns');
 
   currentResizer = null;
+
+  requestAnimationFrame(() => {
+    const container = document.getElementById('form-container') || document.getElementById('calendar');
+    if (container) {
+      void container.offsetHeight;
+
+      container.style.transform = 'translateZ(0)';
+      setTimeout(() => (container.style.transform = ''), 100);
+    }
+
+    if (window.api?.send) {
+      window.api.send('invalidate-renderer');
+    }
+  });
 }
 
-// ----------- UI Initialization -----------
 
 export async function loadCalendarIntoContainer(container) {
   try {
@@ -178,7 +258,6 @@ function setupFormLoader() {
     if (initializer) {
       try {
         initializer(window.api);
-        console.log(`☑ ${formName} initialized successfully.`);
       } catch (err) {
         console.error(`✗ Error initializing ${formName}:`, err);
       }
@@ -191,31 +270,55 @@ function setupFormLoader() {
 // ----------- Theme Handling -----------
 
 function setTheme(themeName) {
-  document.body.classList.remove("theme-dark", "theme-default", "theme-pastel");
+  console.log("theme name :", themeName);
+  document.body.classList.remove("theme-dark", "theme-default", "theme-pastel", "theme-greyscale");
   document.body.classList.add(`theme-${themeName}`);
   window.api.send('update-cache', { colorTheme: themeName });
 }
+
 
 function initTheme() {
   const savedTheme = localStorage.getItem("theme") || "default";
   setTheme(savedTheme);
 }
 
+function showFnKeyHintIfLaptop() {
+  const hint = document.getElementById('fn-key-hint');
+  if (!hint) return;
+
+  // "Chromebook/laptop" heuristic — show if width < 1600 or height < 1000
+  if (window.screen.width < 1500 || window.screen.height < 960) {
+    hint.classList.remove('visually-hidden');
+  }
+}
 // ----------- IPC Event Handlers -----------
 
 function setupIPCListeners() {
+
   window.api.receive('checklist-update', (step, status) => {
     const event = new CustomEvent('checklist-update', { detail: { step, status } });
     window.dispatchEvent(event);
   });
 
   window.api.receive('resize-response', data => {
-    // console.log('Received resize-response:', data);
   });
 
   window.api.receive('set-theme', themeName => {
     setTheme(themeName);
   });
+
+  window.api.receive('set-presence-ui-mode', async (mode) => {
+    console.log("[renderer] toggle or radio? ", mode);
+    await window.cacheAPI.setCacheValue('presenceUIMode', mode);
+
+    // Dispatch event for other modules
+    document.dispatchEvent(new CustomEvent('presence-ui-mode-changed', { detail: mode }));
+
+    // Update the UI immediately
+    switchPresenceUIMode(mode);
+  });
+
+
 
   window.api.receive('get-cache-dump', async (requestId) => {
     const clientDataFolder = await window.cacheAPI.getCacheValue('clientDataFolder');
@@ -233,10 +336,8 @@ function setupIPCListeners() {
   });
 
   window.api.receive('update-cache', ({ key, value }) => {
-    console.log(`📥 update-cache received → ${key}: ${value}`);
     try {
       localStorage.setItem(key, value);
-      console.log(`💾 localStorage updated → ${key}`);
     } catch (err) {
       console.error('❌ Failed to update localStorage:', err);
     }
@@ -256,7 +357,7 @@ function setupIPCListeners() {
     loadCalendarIntoContainer(calendarContainer);
   });
   window.api.receive('open-help', (topicId) => {
-    console.log(`‽ Help requested for topic: ${topic}`);
+    console.log(`‽ Help requested for topic: ${topicId}`);
 
     const helpContainer = document.getElementById('calendar');
     const container = document.getElementById('calendar');
@@ -268,9 +369,7 @@ function setupIPCListeners() {
   });
 }
 
-
 // ----------- Initialization -----------
-
 window.addEventListener('DOMContentLoaded', async () => {
   await loadFormModules();
 
@@ -280,10 +379,19 @@ window.addEventListener('DOMContentLoaded', async () => {
   restoreLayoutFromLocalStorage();
   setupIPCListeners();
 
-  // Clear cached form selection because clients want the welcome page
   localStorage.removeItem('selectedForm');
 
-  // Setup calendar if container exists
+  const dialogEl = document.getElementById('goodbyeDialog');
+
+  const employees = await loadEmployeeData(window.api);
+  if (Array.isArray(employees) && employees.length > 0) {
+    const lastDayEmployees = checkEmployeesEndingToday(employees);
+    if (lastDayEmployees.length > 0) {
+      // dialogEl.textContent = `Goodbye to: ${lastDayEmployees.map(e => e.name).join(', ')}`;
+      // dialogEl.showModal();
+    }
+  }
+
   const calendarContainer = document.getElementById('calendar');
   if (calendarContainer) {
     loadCalendarIntoContainer(calendarContainer);
@@ -291,39 +399,63 @@ window.addEventListener('DOMContentLoaded', async () => {
     console.error('❌ Calendar container not found.');
   }
 
-  // Setup drag listeners
   document.addEventListener('mousemove', handleDrag);
   document.addEventListener('mouseup', stopDrag);
 
-  // Init theme last (could be before or after loadFormModules, but separate is cleaner)
-  initTheme();
+  // ----------- F-Key Handling -----------
 
+  document.addEventListener('keydown', (event) => {
+    // If user presses Fn-locked keys, this may not trigger at all (hardware side)
+    switch (event.key) {
+      case 'F1':
+        event.preventDefault();
+        const container = document.getElementById('calendar');
+        if (container) {
+          initializeHelp(container, 'chapter-overview');
+        } else {
+          alert(`Help requested:  chapter-overview`);
+        }
+        break;
 
-  // Notify main process of initial window size
-  window.api.send('resize-event', {
-    width: window.innerWidth,
-    height: window.innerHeight,
+      case 'F5':
+        event.preventDefault();
+        window.api.send('refresh-calendar'); // triggers same logic as menu
+        break;
+
+      case 'F12':
+        event.preventDefault();
+        window.api.send('toggle-devtools'); // handled in main below
+        break;
+
+      default:
+        break;
+    }
   });
-});
 
-async function loadHelpIntoContainer(container) {
-  try {
-    // Show the existing spinner
-    container.innerHTML = `<div class="spinner" aria-hidden="true"></div>`;
+  window.addEventListener('dataModeChanged', async (event) => {
+    const { mode } = event.detail || {};
+    await globalRefresh(mode);
+  });
 
-    const response = await fetch('./Components/help/help.html');
-    if (!response.ok) throw new Error(`Fehler beim Laden der Hilfe: ${response.status}`);
 
-    const html = await response.text();
-    container.innerHTML = html;
+  async function loadHelpIntoContainer(container) {
+    try {
+      // Show the existing spinner
+      container.innerHTML = `<div class="spinner" aria-hidden="true"></div>`;
 
-    const { initializeHelp } = await import('../Components/help/help.js');
-    initializeHelp(window.api);
+      const response = await fetch('./Components/help/help.html');
+      if (!response.ok) throw new Error(`Fehler beim Laden der Hilfe: ${response.status}`);
 
-  } catch (err) {
-    console.error('❌ Fehler beim Laden der Hilfe:', err);
+      const html = await response.text();
+      container.innerHTML = html;
 
-    container.innerHTML = `
+      const { initializeHelp } = await import('../Components/help/help.js');
+      initializeHelp(window.api);
+
+    } catch (err) {
+      console.error('❌ Fehler beim Laden der Hilfe:', err);
+
+      container.innerHTML = `
       <div class="help-error">
         <h2>Fehler beim Laden der Hilfe</h2>
         <p>Die Hilfeseite konnte nicht geladen werden. Bitte versuchen Sie es später erneut.</p>
@@ -331,37 +463,321 @@ async function loadHelpIntoContainer(container) {
       </div>
     `;
 
-    document.getElementById('back-to-calendar')?.addEventListener('click', () => {
-      const calendarContainer = document.getElementById('calendar');
-      if (calendarContainer) loadCalendarIntoContainer(calendarContainer);
-    });
+      document.getElementById('back-to-calendar')?.addEventListener('click', () => {
+        const calendarContainer = document.getElementById('calendar');
+        if (calendarContainer) loadCalendarIntoContainer(calendarContainer);
+      });
+    }
   }
-}
+
+  async function switchMainView(viewName) {
+    const container = document.getElementById('calendar'); // or 'main-content'
+
+    if (!container) {
+      console.error("❌ View container not found");
+      return;
+    }
+
+    if (viewName === 'calendar') {
+      await loadCalendarIntoContainer(container);
+    } else if (viewName === 'help') {
+      await loadHelpIntoContainer(container);
+    } else {
+      console.warn(`⚠ Unknown view: ${viewName}`);
+    }
+
+    localStorage.setItem('selectedView', viewName);
+  }
+
+  window.api.receive('excel-export-done', (filePath) => {
+    alert("Export gespeichert: " + filePath);
+  });
+  window.api.receive('excel-import-done', () => {
+    globalRefresh('client');
+  });
 
 
-async function switchMainView(viewName) {
-  const container = document.getElementById('calendar'); // or 'main-content'
+  window.api.receive('open-help', (topic) => {
+    console.log(`🕮 Opening help topic: ${topic}`);
+    switchMainView('help'); // <- loads the help page in the shared container
 
-  if (!container) {
-    console.error("❌ View container not found");
+    window.dispatchEvent(new CustomEvent('help-topic', { detail: topic }));
+  });
+
+  // --- Restore Presence UI Mode ---
+  (async () => {
+    let savedMode = await window.cacheAPI.getCacheValue('presenceUIMode');
+    if (!savedMode) savedMode = 'toggle'; // default
+    switchPresenceUIMode(savedMode);
+  })();
+
+  initTheme();
+  showFnKeyHintIfLaptop();
+
+  (async () => {
+    const savedTheme = await window.cacheAPI.getCacheValue('colorTheme') || 'default';
+    setTheme(savedTheme);
+  })();
+
+  // --- Restore zoom factor ---
+  (async () => {
+    const savedZoom = await window.cacheAPI.getCacheValue('zoomFactor') || 1;
+    document.body.style.zoom = savedZoom;
+  })();
+});
+
+export async function globalRefresh(mode = localStorage.getItem('dataMode') || 'default') {
+  if (isRefreshing) {
+    console.warn('⏳ Refresh already running...');
     return;
   }
+  isRefreshing = true;
+  try {
+    localStorage.setItem('dataMode', mode);
+    document.body.setAttribute('data-mode', mode);
 
-  if (viewName === 'calendar') {
-    await loadCalendarIntoContainer(container);
-  } else if (viewName === 'help') {
-    await loadHelpIntoContainer(container);
-  } else {
-    console.warn(`⚠ Unknown view: ${viewName}`);
+    //const roles = await loadRoleData(window.api);
+    //const employees = await loadEmployeeData(window.api);
+    //const calendarData = await loadCalendarData(window.api);
+
+    //await loadStateData(window.api);
+    //await loadCompanyHolidayData(window.api);
+    //await loadOfficeDaysData(window.api);
+    //await loadRequests(window.api);
+
+    const calendarContainer = document.getElementById('calendar');
+    if (calendarContainer) {
+      await loadCalendarIntoContainer(calendarContainer);
+    }
+
+    const legendContainer = document.getElementById('legend');
+    if (legendContainer) {
+      const { initializeLegend } = await import('../Components/legend/legend.js');
+      await initializeLegend(window.api);
+    } else {
+      console.warn('⚠️ Legend container not found during refresh');
+    }
+
+    const currentForm = localStorage.getItem('selectedForm');
+    if (currentForm && formInitializers[currentForm]) {
+      try {
+        formInitializers[currentForm](window.api);
+      } catch (err) {
+        console.error(`❌ Failed to refresh form ${currentForm}:`, err);
+      }
+    }
+
+    await new Promise(requestAnimationFrame);
+  } catch (err) {
+    console.warn('⚠ No cached form to restore on global refresh');
+  } finally {
+    isRefreshing = false; // 🔓 Always unlock
   }
-
-  localStorage.setItem('selectedView', viewName);
 }
 
-window.api.receive('open-help', (topic) => {
-  console.log(`🕮 Opening help topic: ${topic}`);
-  switchMainView('help'); // <- loads the help page in the shared container
+function loadWelcomePage() {
+  const formContainer = document.getElementById('form-container');
+  if (!formContainer) return;
 
-  // optionally pass topic to help.js if you want context-specific topics
-  window.dispatchEvent(new CustomEvent('help-topic', { detail: topic }));
-});
+  // Clear dynamic content inside container
+  formContainer.innerHTML = '';
+
+  // Rebuild the welcome page
+  const welcome = document.createElement('section');
+  welcome.classList.add('welcome-page');
+  welcome.setAttribute('aria-label', 'Willkommensseite');
+
+  welcome.innerHTML = `
+    <!-- MAIN CONTENT AREA -->
+        <section
+          id="form-container"
+          class="bottom-row"
+          aria-labelledby="greetingID"
+        >
+          <section
+            class="welcome-page text-arial"
+            role="region"
+            aria-label="Willkommensseite"
+          >
+            <p class="text-header-4">
+              Ihr Werkzeug zur einfachen Belegschaftsplanung. Rufe die Anleitung
+              <span class="noto">🛟</span> mit [F1] oder unter Menü
+              <span class="noto">⇨ </span> Hilfe auf.
+            </p>
+
+            <!-- Fn key hint (hidden by default) -->
+            <div
+              id="fn-key-hint"
+              class="fn-hint visually-hidden"
+              role="note"
+              aria-label="Fn-Tastentipp"
+            >
+              <img
+                src="./assets/png/Fn-key.png"
+                alt="Fn-Taste auf einer Laptop-Tastatur"
+                class="fn-hint-img"
+              />
+              <p>
+                💡 Tipp: Auf vielen Laptops müssen Sie <kbd>Fn</kbd> +
+                <kbd>F1</kbd> oder <kbd>F12</kbd> drücken, um
+                Tastenkombinationen zu nutzen.
+              </p>
+            </div>
+
+            <div class="layout-full-size flex-row">
+              <!-- CARD TEMPLATE -->
+              <article
+                class="layout-card layout-card.request"
+                aria-labelledby="heading-request"
+              >
+                <h4 class="card-title text-request" id="heading-request">
+                  <img
+                    src="./assets/svg/file-document-svgrepo-com.svg"
+                    alt=""
+                    class="nav-icon"
+                    aria-hidden="true"
+                  />
+                  <span class="card-title-text">Urlaubsanträge</span>
+                  <img
+                    src="./assets/svg/file-document-svgrepo-com.svg"
+                    alt=""
+                    class="nav-icon"
+                    aria-hidden="true"
+                  />
+                </h4>
+                <ul class="welcome-list-item">
+                  <li class="noto">📄 Anträge stellen</li>
+                  <li class="noto">⟳ Status ändern</li>
+                </ul>
+              </article>
+
+              <article
+                class="layout-card layout-card.employee"
+                aria-labelledby="heading-employee"
+              >
+                <h4 class="card-title text-employee" id="heading-employee">
+                  <img
+                    src="./assets/svg/person-team-svgrepo-com.svg"
+                    alt=""
+                    class="nav-icon"
+                    aria-hidden="true"
+                  />
+                  <span class="card-title-text">Mitarbeiter</span>
+                  <img
+                    src="./assets/svg/person-team-svgrepo-com.svg"
+                    alt=""
+                    class="nav-icon"
+                    aria-hidden="true"
+                  />
+                </h4>
+                <ul class="welcome-list-item">
+                  <li class="noto">➕ Mitarbeiter erstellen</li>
+                  <li class="noto">🔧 Aufgaben zuweisen</li>
+                  <li class="noto">✏️ Mitarbeiter bearbeiten</li>
+                  <li class="noto">⏰ Regelarbeitszeiten definieren</li>
+                  <li class="noto">🗑️ Mitarbeiter entfernen</li>
+                </ul>
+              </article>
+
+              <article
+                class="layout-card layout-card.tasks"
+                aria-labelledby="heading-tasks"
+              >
+                <h4 class="card-title text-tasks" id="heading-tasks">
+                  <img
+                    src="./assets/svg/puzzle-piece-svgrepo-com.svg"
+                    alt=""
+                    class="nav-icon"
+                    aria-hidden="true"
+                  />
+                  <span class="card-title-text">Aufgaben</span>
+                  <img
+                    src="./assets/svg/puzzle-piece-svgrepo-com.svg"
+                    alt=""
+                    class="nav-icon"
+                    aria-hidden="true"
+                  />
+                </h4>
+                <ul class="welcome-list-item">
+                  <li class="noto">🎨 Aufgabenfarben zuweisen</li>
+                  <li class="noto">📝 Aufgaben benennen</li>
+                  <li class="noto">🗑️ Aufgaben löschen</li>
+                </ul>
+              </article>
+
+              <article
+                class="layout-card layout-card.rules"
+                aria-labelledby="heading-rules"
+              >
+                <h4 class="card-title text-rules" id="heading-rules">
+                  <img
+                    src="./assets/svg/knowledge-graph-svgrepo-com.svg"
+                    alt=""
+                    class="nav-icon"
+                    aria-hidden="true"
+                  />
+                  <span class="card-title-text">Regeln</span>
+                  <img
+                    src="./assets/svg/knowledge-graph-svgrepo-com.svg"
+                    alt=""
+                    class="nav-icon"
+                    aria-hidden="true"
+                  />
+                </h4>
+                <p class="text-small">
+                  Eine Regel ist eine Bedingung, die für den reibungslosen
+                  Ablauf und die Sicherheit der Mitarbeiter gewährleistet werden
+                  sollte.
+                </p>
+                <ul class="welcome-list-item">
+                  <li class="noto">📝 Regeln erstellen</li>
+                  <li class="noto">🔧 Regeln verwalten</li>
+                </ul>
+              </article>
+
+              <article
+                class="layout-card layout-card.calendar"
+                aria-labelledby="heading-calendar"
+              >
+                <h4 class="card-title text-calendar" id="heading-calendar">
+                  <img
+                    src="./assets/svg/calendar-svgrepo-com.svg"
+                    alt=""
+                    class="nav-icon"
+                    aria-hidden="true"
+                  />
+                  <span class="card-title-text">Kalender</span>
+                  <img
+                    src="./assets/svg/calendar-svgrepo-com.svg"
+                    alt=""
+                    class="nav-icon"
+                    aria-hidden="true"
+                  />
+                </h4>
+                <p class="text-small">
+                  Der Kalender kann individuell angepasst werden, um Ihre
+                  spezifischen Anforderungen zu erfüllen.
+                </p>
+                <ul class="welcome-list-item">
+                  <li class="noto">📅 Bundesland wählen</li>
+                  <li class="noto">⏱️ Öffnungszeiten festlegen</li>
+                  <li class="noto">🏖️ Betriebsferien eingeben</li>
+                  <li class="noto">👨‍💻 Schichten festlegen</li>
+                  <li class="noto">📆 Brücken- und besondere Tage verwalten</li>
+                </ul>
+              </article>
+            </div>
+          </section>
+        </section>
+  `;
+
+  formContainer.appendChild(welcome);
+
+  // Re-run FN laptop logic
+  if (typeof showFnKeyHintIfLaptop === "function") {
+    showFnKeyHintIfLaptop();
+  }
+}
+
+
+

@@ -34,17 +34,12 @@ export function registerEventHandlers(mainWindow) {
         }
         return result.filePath;  // Return the chosen file path
     });
-    ipcMain.handle('save-csv', async (event, homeKey, relativePath, csvContent) => {
-        console.log(`📝 Attempting to save CSV to: homekey: ${homeKey}  relative path: ${relativePath}`);
 
+    ipcMain.handle('save-csv', async (event, { homeKey, folderPath, fileName, csvContent }) => {
+        if (homeKey === 'sample') return 'Beispiel kann nicht überschrieben werden';
         try {
-            const savedPath = await dataLoader.saveCSV(homeKey, relativePath, csvContent); // 🔧 no 'userData'
-            if (!savedPath) {
-                console.warn('⚠️ Failed to save CSV — saveCSV returned null');
-                throw new Error('Save failed');
-            }
-            console.log('✅ CSV saved successfully to:', savedPath);
-            return path.dirname(savedPath);
+            const savedPath = await dataLoader.saveCSV('client', folderPath, fileName, csvContent);
+            return path.dirname(savedPath); // return folder path for caching
         } catch (err) {
             console.error('❌ Error saving CSV:', err);
             return null;
@@ -59,7 +54,7 @@ export function registerEventHandlers(mainWindow) {
         }
 
         inMemoryCache.currentMode = targetMode;
-        console.log(`🔄 Mode switched → ${targetMode}`);
+        console.log(`⟳ Mode switched → ${targetMode}`);
 
         const mainWindow = getMainWindow();
         if (mainWindow) {
@@ -154,19 +149,50 @@ export function registerEventHandlers(mainWindow) {
         }
     });
 
+    ipcMain.handle('rules:list', (event) => {
+        return dataLoader.listRuleFiles(inMemoryCache.dataMode || 'auto');
+    });
+
+    ipcMain.handle('rules:load', (event, relativePath) => {
+        return dataLoader.loadRuleFile(inMemoryCache.dataMode || 'auto', relativePath);
+    });
+
+    ipcMain.handle('rules:save', (event, relativePath, content) => {
+        return dataLoader.saveRuleFile(inMemoryCache.dataMode || 'client', relativePath, content);
+    });
+
+    ipcMain.handle('rules:delete', (event, relativePath) => {
+        return dataLoader.deleteRuleFile(inMemoryCache.dataMode || 'client', relativePath);
+    });
+
     ipcMain.handle("get-request-files", async () => {
         try {
-            const directoryPath = path.join(__dirname, "../requests");
-            const files = await fs.promises.readdir(directoryPath);
+            const clientFolder = dataLoader.getClientDataFolder('client');
+            if (!clientFolder) {
+                console.warn('⚠️ Client data folder not found, returning empty array.');
+                return [];
+            }
 
-            return files
-                .filter(file => file.match(/\d{4}_\d{2}_requests\.csv/))
-                .map(file => path.join(directoryPath, file));
+            const requestsFolder = path.join(clientFolder, 'requests');
+            if (!fs.existsSync(requestsFolder)) {
+                console.warn(`⚠️ Requests folder does not exist: ${requestsFolder}`);
+                return [];
+            }
+
+            const files = await fs.promises.readdir(requestsFolder);
+            const validFiles = files
+                .filter(file => /^\d{4}_requests\.csv$/.test(file)) // match year_requests.csv
+                .map(file => path.join(requestsFolder, file));
+
+            console.log("[ main data io]  valid request files:", validFiles);
+            return validFiles;
+
         } catch (error) {
-            console.warn("🚨 Error reading directory:", error);
+            console.warn('⚠️ Error reading request files:', error);
             return [];
         }
     });
+
 
     ipcMain.handle("read-file", async (_, filePath) => {
         console.log(" READ FILE");
@@ -239,14 +265,29 @@ export function registerEventHandlers(mainWindow) {
             };
         }
     });
+
     ipcMain.on('load-form', (event, formName) => {
         loadFormAndSendToRenderer(formName, event.sender);
     });
-
-    ipcMain.handle('load-data', async (event, { homeKey, relativePath }) => {
-        console.log(" LOAD DATA ");
-        return dataLoader.loadCSV(homeKey, relativePath);
+    ipcMain.on('refresh-calendar', () => {
+        mainWindow.webContents.send('refresh-calendar');
     });
+
+    ipcMain.on('toggle-devtools', () => {
+        mainWindow.webContents.toggleDevTools();
+    });
+
+
+    ipcMain.handle('load-csv', async (event, { homeKey, relativePath }) => {
+        try {
+            const content = await dataLoader.loadCSV(homeKey, relativePath);
+            return content;
+        } catch (err) {
+            console.error(`❌ Failed load-csv for ${relativePath}:`, err);
+            throw err;
+        }
+    });
+
 
     ipcMain.handle('get-cache-value', async (event, { key }) => {
         const value = inMemoryCache[key] ?? null;

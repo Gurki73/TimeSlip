@@ -6,6 +6,7 @@ export function createSaveAllButton({ text = "Save All", onClick } = {}) {
     let btn = document.createElement('button');
     btn.type = 'button';
     btn.textContent = text;
+    btn.classList.add('opaque');
     btn = resetAndBind(btn, 'click', onClick);
     return btn;
 }

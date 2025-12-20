@@ -65,3 +65,15 @@ Explicit constraints or areas requiring focus
 Optional: include expected outputs/examples for testing
 
 please ask questions to clearify current tasks?
+
+
+cs regions like 
+/*  
+  ██████╗  █████╗ ███████╗███████╗
+  ██╔══██╗██╔══██╗██╔════╝██╔════╝
+  ██████╔╝███████║███████╗███████╗
+  ██╔═══╝ ██╔══██║╚════██║╚════██║
+  ██║     ██║  ██║███████║███████║
+  ╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝
+  GLOBAL STYLES
+*/

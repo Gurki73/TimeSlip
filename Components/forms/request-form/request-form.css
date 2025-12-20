@@ -6,6 +6,7 @@
   display: flex;
   flex-direction: row;
   justify-content: space-evenly;
+  height: 45vh;
 }
 
 #year-filter {
@@ -15,30 +16,100 @@
   font-weight: bold;
 }
 
-
-#request-enter-container.inactive, #decision.inactive {
+#request-enter-container.inactive,
+#decision.inactive {
   background-color: black;
   display: none;
   z-index: 2;
 }
 
-#request-enter-container.active, #decision.active {
-  background-color: goldenrod;
-  border: 2px solid saddlebrown;
+#refresh-request-form {
+  border-radius: 6px;
+  border-color: var(--text-color);
+  border-style: solid;
+  border-width: 2px;
+  background-color: var(--bg-white);
+  height: 1.8rem;
+  width: 2.1rem;
+  font-size: 1.15rem;
+  text-align: center;
+}
+
+#request-year {
+  height: 1.05rem;
+  font-size: 1.1rem;
+  width: 4rem;
+  padding: -4px;
+  margin-bottom: 3px;
+}
+
+.request-msg-cell {
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+  white-space: normal;
+  margin: 2px;
+  min-height: 3rem;
+  font-size: 0.85rem;
+  vertical-align: top;
+  border: none;
+  -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+}
+
+.approverCell {
+  border-top: 1px solid saddlebrown;
+  border-collapse: collapse;
+  padding: 0; /* remove cell padding */
+  vertical-align: top; /* align nicely */
+}
+
+.approverCell textarea {
+  width: 100%;
+  height: 100%;
+  min-height: 3.5rem;
+  max-height: 8rem;
+  box-sizing: border-box; /* include padding in width */
+  border-top: 1px solid saddlebrown;
+  border-collapse: collapse;
+  margin: -3px; /* remove default margin */
+  padding: 0px; /* small inner padding for text comfort */
+  font-size: 0.85rem;
+  resize: vertical;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+#request-enter-container.active,
+#decision.active {
   border-radius: 5px;
   display: flex;
   flex-direction: row;
-  margin: -5px;
   padding: 20px;
   z-index: 2;
   width: 100%;
 }
+#request-enter-container,
+#create-request-mode-btn {
+  background-color: var(--color-request-form);
+  border-color: var(--color-request-list);
+  border-top: 2px solid;
+}
+#decision,
+#approve-request-mode-btn {
+  background-color: var(--color-request-list);
+  border-color: var(--color-request-form);
+  border-top: 2px solid;
+}
 
+.request-button.active {
+  margin-bottom: -8px;
+}
 .request-button {
   padding: 10px 20px;
-  margin: 5px 5px 0 5px;
-  background-color: wheat;
-  border: 2px solid saddlebrown;
+  margin: 5px 5px 0px 5px;
   border-top-left-radius: 15px;
   border-top-right-radius: 15px;
   border-bottom-left-radius: 0;
@@ -50,7 +121,7 @@
 }
 
 .request-button::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 0;
@@ -63,22 +134,12 @@
 }
 
 .request-button.active {
-  background-color: goldenrod;
-  color: white;
-  border-color: saddlebrown;
-  border-bottom-color: saddlebrown;
-  border-bottom: none; 
+  border-bottom: none;
   z-index: 3;
 }
 
-.request-button.inactive {
-  background-color: wheat;
-  color: var(--text-color);
-  border-color: burlywood;
-}
-
 .request-button:hover {
-  transform: translateY(-2px);
+  transform: translateY(2px);
 }
 .request-form-col {
   background-color: wheat;
@@ -87,24 +148,12 @@
   border-style: solid;
   margin: 12px;
   padding: 12px;
-  min-height: 100%;
+  min-height: 90%;
   flex-grow: 1;
 }
 .request-form-dates {
   min-width: 20%;
   flex-grow: 2;
-}
-
-.request-form-warn {
-  background-color: lightyellow;
-  border-color: red;
-  border-radius: 12px;
-  border-style: solid;
-  margin: 12px;
-  padding: 12px;
-  min-Height: 100%;
-  min-width: 25%;
-  margin-right: 25px;
 }
 
 #requester-emoji {
@@ -133,11 +182,11 @@
 }
 
 .request-date-warning::after {
-  content: "⚠️"; 
+  content: "⚠️";
   position: absolute;
   top: 5px;
   left: 5px;
-  font-size: 1rem; 
+  font-size: 1rem;
   background-color: lightyellow;
   border-radius: 50%;
   border-color: red;
@@ -154,6 +203,22 @@
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }
 
+.requester-select-wrapper {
+  display: flex;
+  flex-direction: column; /* label above select */
+  width: 100%; /* fill available space in flex row */
+  max-width: 200px; /* optional max width */
+}
+
+#requester-select {
+  width: 100%; /* fill wrapper */
+  padding: 4px 8px;
+  font-size: 0.95rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
 #decision-table-container {
   max-height: 40vh; /* Set a max-height for the table container */
   overflow-y: auto; /* Enable vertical scrolling */
@@ -168,9 +233,10 @@
 }
 
 #decision-table {
+  table-layout: fixed;
   width: 100%;
   border-collapse: collapse;
-  border: 2px solid brown;
+  border: 1px solid brown;
 }
 
 #decision-table thead {
@@ -201,12 +267,13 @@
 }
 
 #decision-table tbody tr:nth-child(even) {
-  background-color: (--list-item-colt);
+  background-color: var(--list-item-color);
 }
 
-#decision-table th, 
+#decision-table th,
 #decision-table td {
   border: 1px solid brown;
+  border-collapse: collapse;
   padding: 8px;
 }
 
@@ -218,13 +285,9 @@
 }
 
 #decision-table tbody tr:hover {
-  background-color: #f0c674; 
+  background-color: #f0c674;
 }
 
-.msg-cell::before {
-  content: "💬"; 
-  cursor: pointer;
-}
 .request-date {
   max-width: 140px; /* Adjust if necessary */
   min-width: 80px;
@@ -234,4 +297,184 @@
 
 .layout-tabulator {
   background-color: var(--color-tabulator);
+}
+
+.request-inactive {
+  opacity: 0.5;
+  color: gray;
+  pointer-events: none; /* optional for non-inputs */
+}
+
+.request-active {
+  opacity: 1;
+  color: inherit;
+  pointer-events: auto;
+}
+
+.request-form-warn {
+  background-color: lightyellow;
+  border-color: red;
+  border-radius: 12px;
+  border-style: solid;
+  margin: 12px;
+  padding: 12px;
+  min-height: 90%;
+  min-width: 25%;
+  margin-right: 25px;
+  max-height: 6em; /* prevent overflow */
+  overflow-y: auto; /* scroll if too many warnings */
+}
+
+.request-popup-error {
+  position: fixed;
+  top: 50%; /* vertical center */
+  left: 50%; /* horizontal center */
+  transform: translate(-50%, -50%); /* center the element */
+
+  background: #ff4d4f; /* red error */
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  font-size: 1rem;
+  opacity: 0.95;
+
+  transition: all 0.3s ease-in-out;
+}
+
+.request-popup-success {
+  position: fixed;
+  top: 50%; /* vertical center */
+  left: 50%; /* horizontal center */
+  transform: translate(-50%, -50%); /* center the element */
+
+  background: #28a745; /* green success */
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  font-size: 1rem;
+  opacity: 0.95;
+
+  transition: all 0.3s ease-in-out;
+}
+
+.request-popup-failure {
+  position: fixed;
+  top: 50%; /* vertical center */
+  left: 50%; /* horizontal center */
+  transform: translate(-50%, -50%); /* center */
+
+  background: var(--color-text-calendar, tomato); /* red-ish fallback */
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  font-size: 1rem;
+  opacity: 0.95;
+
+  transition: all 0.3s ease-in-out;
+}
+
+.rejectButton:hover,
+.approveButton:hover {
+  background-color: cornflowerblue;
+  cursor: pointer;
+}
+
+/* Container empty state */
+.request-form-warn.warning-empty {
+  opacity: 0.25 !important;
+  box-shadow: none;
+}
+
+/* Pulse effect for serious warnings (rank ≥ 3) */
+@keyframes pulseWarning {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 10px 5px rgba(255, 0, 0, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.5);
+  }
+}
+
+.request-form-warn.warning-pulse {
+  animation: pulseWarning 1s infinite;
+  background-color: #fff3cd; /* soft yellow background */
+  color: #721c24; /* dark red text */
+  border-radius: 5px;
+  padding: 5px;
+}
+
+.approverCell textarea {
+  background-color: antiquewhite; /* light blue */
+  border-top: 1px solid saddlebrown;
+  border-collapse: collapse;
+  color: slategray; /* text color */
+}
+
+/* Shared pill-like base style */
+.request-status-pill,
+.approveButton,
+.rejectButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  font-weight: 600;
+  height: 1.6rem; /* keeps rows compact */
+  min-width: 2.1rem; /* consistent button size */
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* Pending: clickable buttons */
+.approveButton {
+  border: 1px solid #2e8b57;
+  background-color: #e7f8ef;
+  color: #2e8b57;
+}
+.approveButton:hover {
+  background-color: #d5f3e4;
+}
+
+.rejectButton {
+  border: 1px solid #c0392b;
+  background-color: #fdecea;
+  color: #c0392b;
+}
+.rejectButton:hover {
+  background-color: #f8d7d3;
+}
+
+/* Approved / rejected labels (NOT buttons) */
+.request-status-pill {
+  cursor: default;
+  border: 1px solid transparent;
+  opacity: 0.85;
+}
+
+.request-approved {
+  background-color: #e7f8ef;
+  color: #2e8b57;
+  border-color: #2e8b57;
+}
+
+.request-rejected {
+  background-color: #fdecea;
+  color: #c0392b;
+  border-color: #c0392b;
+}
+
+#decision-table td {
+  text-align: center; /* optional: centers text lines */
+  vertical-align: middle; /* fallback for non-flex content */
 }

@@ -1,0 +1,71 @@
+.theme-greyscale {
+  --role-0-color: whitesmoke;
+  --role-1-color: whitesmoke;
+  --role-2-color: whitesmoke;
+  --role-3-color: whitesmoke;
+  --role-4-color: whitesmoke;
+  --role-5-color: whitesmoke;
+  --role-6-color: whitesmoke;
+  --role-7-color: whitesmoke;
+  --role-8-color: whitesmoke;
+  --role-9-color: whitesmoke;
+  --role-10-color: whitesmoke;
+  --role-11-color: whitesmoke;
+  --role-12-color: whitesmoke;
+  --role-13-color: whitesmoke;
+
+  --button-active-color: #a1d2ff;
+  --button-inactive-color: #dbefff;
+  --button-hover-color: #7ebeff;
+
+  --list-item-color: #fdf1e2;
+  --office-closed-color: #f4a8a8;
+
+  --bg-white: gainsboro;
+  --bg-soft-white: ghostwhite;
+  --bg-inactive: whitesmoke;
+
+  --accent-active: whitesmoke;
+  --accent-hover: ghostwhite;
+  --accent-inactive: lightgray;
+  --accent-muted: gray;
+
+  --text-color: darkslategray;
+
+  --calendar-day-closed-bg: antiquewhite;
+  --calendar-day-regular-bg: whitesmoke;
+  --calendar-day-weekend-bg: antiquewhite;
+  --calendar-day-holiday-bg: lightgray;
+
+  --calendar-shift-early-bg: rgba(0, 0, 0, 0);
+  --calendar-shift-day-bg: rgba(0, 0, 0, 0);
+  --calendar-shift-late-bg: rgba(0, 0, 0, 0);
+  --shift-border-color: silver;
+
+  --color-calendar: #f0f8ff;
+  --color-calendar-form: lightsteelblue;
+  --color-rules: #f0f8ff;
+  --color-tasks: #f0f8ff;
+  --color-employee: #f0f8ff;
+  --color-request: #f0f8ff;
+  --color-text-primary: darkslategray;
+  --color-text-secondary: darkgray;
+  --color-text-accent: darkslateblue;
+  --color-text-info: darkgray;
+
+  --color-text-request: darkslategray;
+  --color-text-employee: darkslategray;
+  --color-text-tasks: darkslategray;
+  --color-text-rules: darkslategray;
+  --color-text-calendar: darkslategray;
+  --color-text-welcome: darkslategray;
+  --color-text-admin: darkslategray;
+
+  --color-tabulator: burlywood;
+  --color-layout-container-light: lightgray;
+  --color-layout-container-medium: gray;
+  --color-layout-container-dark: darkgray;
+
+  --color-help: #f0f8ff;
+  --color-help-toc: #f5deb3;
+}

@@ -1,15 +1,13 @@
 // js/Utils/bindEventListner.js
 export function resetAndBind(el, event, handler) {
-    console.log("resetAndBind called with:", el);
+    const skipIds = ['state-select', 'calendar-form-year'];
 
     if (!el) {
         console.warn("⚠️ resetAndBind: element is null/undefined");
         return null;
     }
 
-    // Handle NodeLists
     if (el instanceof NodeList || Array.isArray(el)) {
-        // console.log("resetAndBind got a NodeList/Array with", el.length, "elements");
         return Array.from(el).map(node => resetAndBind(node, event, handler));
     }
 
@@ -18,7 +16,13 @@ export function resetAndBind(el, event, handler) {
         return null;
     }
 
-    console.log("✅ Cloning and rebinding:", el.tagName, el.id || el.className);
+    if (skipIds.includes(el.id)) {
+        console.log(`⚠️ Skipping resetAndBind for ${el.tagName}#${el.id}`);
+        el.addEventListener(event, handler); // attach listener only
+        return el;
+    }
+
+    // console.log("✅ Cloning and rebinding:", el.tagName, el.id || el.className);
 
     const newEl = el.cloneNode(true);
     el.replaceWith(newEl);

@@ -1,30 +1,91 @@
-import { loadRoleData, roles, allRoles, saveRoleData } from '../../../js/loader/role-loader.js';
+import { loadRoleData, getAllRoles, saveRoleData, loadTeamnames, saveTeamnames } from '../../../js/loader/role-loader.js';
 import { createEmojiPicker } from '../../../Components/emojiPicker/emojiPicker.js';
-import { createBranchSelect, branchPresetsRoles } from '../../../js/Utils/branch-select.js';
-import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js';
 import { resetAndBind } from '../../../js/Utils/bindEventListner.js';
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
+import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
+import { createBranchSelect, branchPresetsRoles } from '../../../js/Utils/branch-select.js';
+import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js';
+import { loadEmojiData } from '../../../js/loader/custom-loader.js';
 
 let roleChanges = Array(12).fill(false);
-const emoji = [
+const roleEmojis = [
   "🛠️", "📚", "💻", "🧑‍⚖️", "🚓", "🔍", "🎤",
   "🔬", "🪥", "🩺", "🧹", "🪣", "⚙️", "🧯",
   "📦", "🛒", "✂️", "🔌", "🖨️", "🎨", "📞",
   "⛑️", "🖋️", "💵", "💳", "🍲", "💪", "🔒",
   "🩻", "🦷", "💬", "📊", "🧠", "🌙", "📸",
-  "🛵", "⚕️"
+  "🛵", "⚕️", '🧤', '🧱', '🪓', '🗃️', '🖥️',
+  '🚜', '⚗️', '⚡', '🦷', '🪥'
 ];
 
 let api;
+let roleFormRoles = [];
+let teamnames = {};
 
 export async function initializeRoleForm(passedApi) {
   setApi(passedApi);
   await loadInitialData(api);
+  const emojiData = await loadEmojiData(api);
+  if (emojiData?.roleEmojis?.length) {
+    console.log("[RoleForm] Using custom role emojis:", emojiData.roleEmojis);
+    roleEmojis.length = 0;
+    roleEmojis.push(...emojiData.roleEmojis);
+
+    console.log(emojiData);
+    console.log(roleEmojis);
+  }
+  roleFormRoles = await getAllRoles(api);
   const formContainer = getFormContainer();
   if (!formContainer) return;
   await loadRoleForm(formContainer);
   updateDivider("bg-tasks");
   renderRoleTable();
+  initTeamnames(passedApi);
+}
+
+export async function initTeamnames(passedApi) {
+  // 1️⃣ Load existing teamnames (or defaults/sample if missing)
+  try {
+    teamnames = await loadTeamnames(passedApi);
+  } catch (err) {
+    console.error('⚠️ Failed to load teamnames, using defaults.', err);
+  }
+
+  // 2️⃣ Fill current names into DOM
+  for (const [key, value] of Object.entries(teamnames)) {
+    const el = document.querySelector(`.teamname-editable[data-team="${key}"]`);
+    if (el) el.textContent = value;
+  }
+
+  // 3️⃣ Attach listeners to save on blur or Enter/Tab
+  const editableTeamNames = document.querySelectorAll('.teamname-editable');
+
+  editableTeamNames.forEach(el => {
+
+    const saveTeamName = async () => {
+      const team = el.dataset.team;
+      const newName = el.textContent.trim();
+      if (!newName || team === 'azubi') return; // skip empty or Azubi
+
+      teamnames[team] = newName;
+
+      try {
+        await saveTeamnames(passedApi, teamnames);
+        console.log(`💾 Saved teamnames → ${team}: ${newName}`);
+      } catch (err) {
+        console.error(`✗ Failed to save teamname "${team}"`, err);
+      }
+    };
+
+    el.addEventListener('blur', saveTeamName);
+
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        el.blur(); // triggers blur → save
+      }
+    });
+  });
 }
 
 function updateDivider(className) {
@@ -47,28 +108,17 @@ function updateDivider(className) {
 
   const branchSelect = createBranchSelect({
     onChange: (val) => {
-      console.log('Branch changed to:', val);
       applyBranchPreset(val);
     }
   });
-  branchSelect.setAttribute('aria-label', 'Branche auswählen');
+  // --- New global window buttons ---
+  const windowBtns = createWindowButtons(); // your new min/max buttons
 
-  const saveBtn = createSaveAllButton({
-    onClick: () => {
-      console.log('Save all clicked!');
-    }
-  });
-  saveBtn.setAttribute('aria-label', 'Alle Änderungen speichern');
-
-  buttonContainer.append(helpBtn, branchSelect, saveBtn);
+  // Compose: add branchSelect, helpBtn, saveBtn, then windowBtns
+  buttonContainer.append(branchSelect, helpBtn, windowBtns);
 
   divider.append(leftGap, h2, buttonContainer);
-
-  divider.className = '';
-  divider.classList.add(className);
 }
-
-
 
 function setApi(passedApi) {
   api = passedApi;
@@ -83,11 +133,11 @@ async function loadInitialData(api) {
   }
 }
 
-function applyBranchPreset(branch) {
+function applyBranchPreset(branch, api) {
   const preset = branchPresetsRoles[branch];
   if (!preset || !preset.teams) return;
 
-  const allRoles = roles;
+  const allRoles = loadRoleData(api)
   Object.entries(preset.teams).forEach(([teamKey, teamRoles]) => {
     const teamName = teamRoles[0];        // first entry = team name
     const roleNames = teamRoles.slice(1); // remaining = roles
@@ -131,7 +181,7 @@ async function renderRoleTable() {
 
   cells.forEach(cell => {
     const roleIndex = parseInt(cell.dataset.roleIndex, 10);
-    const role = allRoles[roleIndex];
+    const role = roleFormRoles[roleIndex];
     if (!role) return;
 
     const wrapper = document.createElement('div');
@@ -144,11 +194,12 @@ async function renderRoleTable() {
     roleDiv.querySelector('.role-index').textContent = roleIndex;
 
     const emojiBtn = roleDiv.querySelector('.emoji-button');
-    emojiBtn.textContent = role.emoji || emoji[roleIndex % emoji.length];
+    emojiBtn.textContent = role.emoji || roleEmojis[roleIndex % roleEmojis.length];
     emojiBtn.setAttribute('aria-label', `Rollen-Emoji für ${role.name || 'unnannte Rolle'}`);
     emojiBtn.dataset.index = roleIndex;
 
     const nameInput = roleDiv.querySelector('.name-role');
+    nameInput.disabled = roleIndex === 13;
     nameInput.value = role.name || '';
     nameInput.setAttribute('aria-label', `Rollenname Eingabefeld für Rolle ${roleIndex}`);
     nameInput.dataset.index = roleIndex;
@@ -172,11 +223,10 @@ async function renderRoleTable() {
 
 
 function addEventListeners(roleDiv, roleIndex) {
-  // Emoji button
+
   const emojiBtn = roleDiv.querySelector('.emoji-button');
   resetAndBind(emojiBtn, 'click', () => changeEmoji(roleIndex));
 
-  // Name input
   const nameInput = roleDiv.querySelector('.name-role');
   const freshInput = resetAndBind(nameInput, 'keydown', (event) => handleRoleInputKeydown(event, roleIndex));
   if (freshInput) {
@@ -185,14 +235,12 @@ function addEventListeners(roleDiv, roleIndex) {
     });
   }
 
-  // Delete button
   const deleteButton = roleDiv.querySelector('.delete-button');
   resetAndBind(deleteButton, 'click', (event) => {
     const index = event.target.getAttribute('data-index');
     deleteRoleAndShowStoreButton(index);
   });
 
-  // Store button
   const storeButton = roleDiv.querySelector('.store-button');
   resetAndBind(storeButton, 'click', (event) => {
     const index = event.target.getAttribute('data-index');
@@ -205,7 +253,7 @@ function addEventListeners(roleDiv, roleIndex) {
 function validateRoleName(index) {
   const input = document.querySelector(`.name-role[data-index="${index}"]`);
   const name = input.value.trim();
-  const isUnique = !allRoles.some((r, i) => i !== index && r.name?.trim() === name);
+  const isUnique = !roleFormRoles.some((r, i) => i !== index && r.name?.trim() === name);
 
   if (!isUnique) {
     input.setCustomValidity('Diesen Namen gibt es schon. Wähle einen anderen.');
@@ -234,27 +282,27 @@ function handleRoleInputKeydown(event, index) {
 }
 
 function markRoleAsChanged(index) {
-  console.log("role js - mark change ", index);
   roleChanges[index] = true;
   focusNext(index);
 }
 
 function processRoleInput(index) {
+
   const inputElement = document.querySelector(`.name-role[data-index="${index}"]`);
   const newValue = inputElement.value.trim();
-  allRoles[index].name = newValue || '?';
+  roleFormRoles[index].name = newValue || '?';
 }
 
 
 function changeEmoji(index) {
-  const role = allRoles[index];
+  index = Number(index);
+  const role = roleFormRoles[index];
 
   // ✅ select using data-index
   const emojiButton = document.querySelector(`.emoji-button[data-index="${index}"]`);
 
   const handleEmojiSelectionChange = (selectedEmoji) => {
     if (selectedEmoji) {
-      console.log(`Selected emoji for role ${role.name}:`, selectedEmoji);
       role.emoji = selectedEmoji;
       markRoleAsChanged(index);
       renderRoleTable();
@@ -262,21 +310,23 @@ function changeEmoji(index) {
       console.log(`No emoji selected for role ${role.name}.`);
     }
   };
-
-  createEmojiPicker(emoji, emojiButton, index, handleEmojiSelectionChange);
+  if (index !== 13) {
+    createEmojiPicker(roleEmojis, emojiButton, index, handleEmojiSelectionChange);
+  }
 }
 
-
-function deleteRoleAndShowStoreButton(index) {
-  allRoles[index].emoji = '❓';
-  allRoles[index].name = '?';
+async function deleteRoleAndShowStoreButton(index) {
+  roleFormRoles[index].emoji = '❓';
+  roleFormRoles[index].name = "?";
   roleChanges[index] = true;
   renderRoleTable();
+  await new Promise(requestAnimationFrame);
+  storeRole(index);
 }
 
 
-function storeRole(index) {
-  const role = allRoles[index];
+async function storeRole(index) {
+  const role = roleFormRoles[index];
   roleChanges[index] = false;
 
   const inputElement = document.querySelector(`.name-role[data-index="${index}"]`);
@@ -285,21 +335,21 @@ function storeRole(index) {
 
   role.name = newName || '?';
 
-  console.log(`Role at index ${index} stored:`, role);
-
-  saveRoleData(api);
-  renderRoleTable();
+  await saveRoleData(api);
 }
 
 function updateRoleButtonsVisibility(index) {
-  const role = allRoles[index];
+  index = Number(index); // ensure numeric comparison
+
+  if (index === 13) return { shouldShowDelete: false, shouldShowStore: false };
+  const role = roleFormRoles[index];
   const name = role.name?.trim();
   const emoji = role.emoji;
   const isValidName = name !== undefined && name.trim() !== '' && name.trim() !== '?';
   const isValidEmoji = emoji !== undefined && emoji.trim() !== '' && emoji.trim() !== '❓';
 
   const isChanged = roleChanges[index];
-  const isNameUnique = !allRoles.some((r, i) => i !== index && r.name?.trim() === name);
+  const isNameUnique = !roleFormRoles.some((r, i) => i !== index && r.name?.trim() === name);
 
   const shouldShowDelete = isValidName || isValidEmoji;
   const shouldShowStore = isValidName && isValidEmoji && isChanged && isNameUnique;
@@ -316,13 +366,12 @@ function focusNext(roleIndex) {
 
 
   const { shouldShowDelete, shouldShowStore } = updateRoleButtonsVisibility(roleIndex);
-  const role = allRoles[roleIndex];
+  const role = roleFormRoles[roleIndex];
   const isValidName = role.name?.trim() !== '' && role.name?.trim() !== '?';
   const isValidEmoji = role.emoji?.trim() !== '' && role.emoji?.trim() !== '❓';
 
   if (shouldShowDelete) {
     if (shouldShowStore) {
-      console.log(" save button should receive focus ");
       renderRoleTable();
       requestAnimationFrame(() => {
         saveButton?.focus();
@@ -330,10 +379,8 @@ function focusNext(roleIndex) {
       return;
     }
     if (!isValidName) {
-      console.log(" Name text input should recive focus ");
       nameInput.focus();
     } else if (!isValidEmoji) {
-      console.log(" emojiPicker should recive focus ");
       emojiBtn.focus();
     }
   }

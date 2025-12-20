@@ -1,199 +1,289 @@
 <div class="employee-form-container" id="employee-form-container">
+  <!-- Privacy and Warning Section -->
 
-   <!-- Privacy and Warning Section -->
-<div id="privacy-warning-panel" class="form-column noto">
-    <p>
-      ⚠️ <b>Datenschutzhinweis:</b> <br> 
-      Beachten Sie, dass diese Anwendung sensible Daten enthält. 
-      Bitte stellen Sie sicher, dass die Daten gemäß den 
-      gesetzlichen Bestimmungen geschützt sind.
-    </p>
-    <p>
-      Diese Anwendung ist nur für autorisierte Benutzer bestimmt.
-      Eine unsachgemäße Verwendung kann rechtliche Konsequenzen haben.
-    </p>
-    <p>
-      💾 <b>Wichtig:</b> Diese Anwendung speichert Ihre Daten ausschließlich lokal auf Ihrem Computer.
-      Es findet keine Übertragung oder Speicherung in der Cloud oder im Internet statt.
-    </p>
-</div>
+  <fieldset class="privacy-collapsible" id="privacy-warning-collapsible">
 
-    
-    <!-- Employee Selection -->
-    <div id="employee-list-column">
-        <h3>Mitarbeiter - Auswahl</h3>
-        <div>
-            <div class="employee-item" id="employeeForm-new-btn">
-                <span class="employee-item">
-                    <span class="employee-emoji noto">❓</span>
-                    <span>
-                        ⇨ neuer Mitarbeiter 
-                    </span>
-                </span>
-            </div>
-            <ul id="employee-list" class="employee-list"></ul>
-        </div>    
+  <legend class="legend-with-button">
+    <button id="privacy-warn-chev" class="chevron-btn active">▶</button>
+  </legend>
+
+  <!-- FLEX WRAPPER (new!) -->
+  <div class="privacy-flexbox">
+      <div class="privacy-rotated-header">
+          <p id="privacy-header">⚠️ Datenschutzhinweis</p>
+      </div>
+
+      <div class="privacy-warning-content">
+          <p>Beachten Sie, dass diese Anwendung sensible Daten enthält…</p>
+          <p>Diese Anwendung ist nur für autorisierte Benutzer bestimmt…</p>
+          <p>💾 <b>Wichtig:</b> Diese Anwendung speichert Ihre Daten ausschließlich…</p>
+      </div>
+  </div>
+
+</fieldset>
+
+  <!-- Employee Selection -->
+  <div id="employee-list-column">
+    <h3>Mitarbeiter - Auswahl</h3>
+    <div>
+      <div class="employee-item" id="employeeForm-new-btn">
+        <span class="employee-item">
+          <span class="employee-emoji noto">❓</span>
+          <span> ⇨ neuer Mitarbeiter </span>
+        </span>
+      </div>
+      <ul id="employee-list" class="employee-list"></ul>
     </div>
-    <!-- Employee Details -->
-        <div id="employee-form-details">
-        <!-- Left Section -->
-        <div id="employee-details-left">
-            <div class="employee-flex-row">
-                <button id="employee-emoji-picker-btn" class="emoji-picker-btn noto" title="Emoji ändern">❓</button>
-                <input type="text" id="employee-name" class="layout-column-small" value="${employee.name}" placeholder="Enter employee name">
-            </div>
+  </div>
+  <!-- Employee Details -->
+  <div id="employee-form-details">
+    <!-- Left Section -->
+    <div id="employee-details-left">
+      <div class="employee-flex-row">
+        <button
+          id="employee-emoji-picker-btn"
+          class="emoji-picker-btn noto"
+          title="Emoji ändern"
+        >
+          ❓
+        </button>
+        <input
+          type="text"
+          id="employee-name"
+          class="layout-column-small"
+          value="${employee.name}"
+          placeholder="Enter employee name"
+        />
+      </div>
+      <div class="text-line-spacer layout-container-light"></div>
+      <div class="flex-row employe-id-style">
+        Mitarbeiter id:
+        <div id="employee-id"></div>
+      </div>
+        <div class="text-line-spacer layout-container-light"></div>
 
-            <div class="text-line-spacer layout-container-light"> </div>
-            
-            <div class="employee-flex-row">
-                <span>U-anspr.</span>
-                <input type="number" class="employee-details-number" id="employee-form-vacation-left" step="0.5">
-                <span>von</span>
-                <input type="number" class="employee-details-number" id="employee-form-vacation-total" step="0.5">
-
-            </div>
-            <div class="employee-flex-row">
-                <span>Überstunden</span> 
-                <input type="number" class="employee-details-number" id="employee-form-overtime-input"
-                 value="0" step="0.5">
-                [Tage]
-            </div>
-
-            <div class="text-line-spacer layout-container-light"> </div>
-
-            <div class="employee-flex-row">
-                <span>Anfang</span>
-                <input type="date" class="employee-details-date" id="employee-form-start-work">
-            </div>
-            
-            <div class="employee-flex-row">
-                <span>Ende</span>
-                <input type="date" class="employee-details-date" id="employee-form-end-work">
-            </div>
-            
-            <div class="employee-flex-row">
-    <br>
-    <div class="hint">💡 Nur als Erinnerung im Kalender – keine weitere Auswirkung</div>
-    <br>
-    <span><i>opt.</i> Geburtstag</span>
-    <div class="flex-row">
-        <input type="number" min="1" max="31" step="1" class="employee-details-number" id="employee-form-birthday-day">
-        
-        <input type="number" min="1" max="12" step="1" class="employee-details-number" id="employee-form-birthday-month">
-        <span id="employee-form-birthday-month-label" class="month-label"></span>
-    </div>
-</div>
-
+        <div
+          class="employee-flex-row future-feature"
+          title="Geplantes zukünftiges Feature"
+          aria-label="Urlaubstage, geplantes zukünftiges Feature, momentan deaktiviert"
+        >
+          <span class="disabled-label">U-anspr.</span>
+          <input
+            type="number"
+            class="employee-details-number"
+            id="employee-form-vacation-left"
+            step="0.5"
+            disabled
+            aria-disabled="true"
+          />
+          <span class="disabled-label">von</span>
+          <input
+            type="number"
+            class="employee-details-number"
+            id="employee-form-vacation-total"
+            step="0.5"
+            disabled
+            aria-disabled="true"
+          />
         </div>
-        <div>
+
+        <div
+          class="employee-flex-row future-feature"
+          title="Geplantes zukünftiges Feature"
+          aria-label="Überstunden, geplantes zukünftiges Feature, momentan deaktiviert"
+        >
+          <span class="disabled-label">Überstunden</span>
+          <input
+            type="number"
+            class="employee-details-number"
+            id="employee-form-overtime-input"
+            value="0"
+            step="0.5"
+            disabled
+            aria-disabled="true"
+          />
+          <span class="disabled-label">[Tage]</span>
+        </div>
+
+        <div class="employee-flex-row">
+          <button id="pick-employee-start" class="noto" title="Startdatum wählen">
+            🔜 von
+          </button>
+          <input
+            type="date"
+            id="employee-form-start-work"
+            class="employee-details-date visually-hidden-date-picker"
+          />
+          <span id="employee-preview-start">--.--</span>
+        </div>
+
+        <div class="employee-flex-row">
+          <button id="pick-employee-end" class="noto" title="Enddatum wählen">
+            bis 🔚
+          </button>
+          <input
+            type="date"
+            id="employee-form-end-work"
+            class="employee-details-date visually-hidden-date-picker"
+          />
+          <span id="employee-preview-end">--.--</span>
+        </div>/span 
+
+        <div class="employee-preview flex-row" id="employee-date-preview">
+          <span id="employee-duration" class="hidden">?</span>
+          <span class="hidden">Tage</span>
+        </div>
+
+        <div class="employee-flex-row">
+          <br />
+          <div class="hint">
+            💡 Nur als Erinnerung im Kalender – keine weitere Auswirkung
+          </div>
+          <br />
+          <span><i>opt.</i> Geburtstag</span>
+          <div class="flex-row">
+            <input
+              type="number"
+              min="1"
+              max="31"
+              step="1"
+              class="employee-details-number"
+              id="employee-form-birthday-day"
+            />
+
+            <input
+              type="number"
+              min="1"
+              max="12"
+              step="1"
+              class="employee-details-number"
+              id="employee-form-birthday-month"
+            />
+            <span
+              id="employee-form-birthday-month-label"
+              class="month-label"
+            ></span>
+          </div>
+        </div>
+      </div>
+      <div>
         <!-- Middle Section -->
-            <div id="employee-detail-middle"> 
+        <div id="employee-detail-middle">
+          <div id="employee-detail-top-row">
+            <button
+              id="employee-reset-button"
+              class="noto"
+              type="button"
+              title="Rückgängig"
+            >
+              ⤺
+            </button>
 
-                <div id="employee-detail-top-row">
-                    <button id="employee-reset-button" class="noto" type="button" title="Rückgängig">⤺</button>
-                    <button id="employee-delete-button" class="noto" type="button" title="Mitarbeiter löschen">🚮</button>
-                    <button id="employee-store-button" class="noto" type="button" title="Änderungen speichern">💾</button>
+            <button
+              id="employee-delete-button"
+              class="noto"
+              type="button"
+              title="Mitarbeiter löschen"
+            >
+              🚮
+            </button>
+            <button
+              id="employee-store-button"
+              class="noto"
+              type="button"
+              title="Änderungen speichern"
+            >
+              💾
+            </button>
+            <label id="employe-form-warnings"> Warnungen: 0</label>
+          </div>
+          <fieldset id="employee-ratio">
+            <legend class="noto"><h3>🧩 Aufgaben</h3></legend>
+
+            <fieldset class="layout-container-light">
+              Haupt-Aufgabe
+              <div class="flex-row double-row">
+                <span id="employee-details-icon-main" class="employee-details-icon noto big">❓</span>
+                <select id="employee-details-role-main" class="noto"></select>
+                <div class="slider-container hidden">
+                  <span class="slider-value" id="role1-value">Präferenz 100%</span>
+                  <input type="range" id="employee-form-role1" min="0" max="10" value="7" step="1"/>
                 </div>
-              
-                <fieldset id="employee-ratio">
-                    <legend class="noto"><h3>🧩 Aufgaben</h3></legend>
-                                
-                    <div class="flex-row layout-container-light double-row">
-                        <span id="employee-details-icon-main" class="employee-details-icon noto">❓</span>
-                        <select id="employee-details-role-main" class="noto"></select>
+              </div>
+            </fieldset>
 
-                        <div class="slider-container">
-                            <span class="slider-value" id="role1-value">70% <span class="noto">⌚</span></span>
-                            <input type="range" id="employee-form-role1" min="0" max="10" value="7" step="1">
-                    
-                        </div>
-                    </div>
-                    <div class="flex-row layout-container-dark double-row">
-                        <span id="employee-details-icon-secondary" class="employee-details-icon noto">❓</span>
-                        <select id="employee-details-role-secondary" class="noto"></select>
-                    
-                        <div class="slider-container">
-                            <span class="slider-value" id="role2-value">70% <span class="noto">⌚</span></span>
-                            <input type="range" id="employee-form-role2" min="0" max="10" value="2" step="1">
-                        </div>
-                    </div>
-                
-                    <div class="flex-row layout-container-medium double-row">
-                        <span id="employee-details-icon-trinary" class="employee-details-icon noto">❓</span>
-                        <select id="employee-details-role-trinary" class="noto"></select>
-                    
-                        <div class="slider-container">
-                            <span class="slider-value" id="role3-value">70% <span class="noto">⌚</span></span>
-                            <input type="range" id="employee-form-role3" min="0" max="10" value="1" step="1">
-                        </div>
-                    </div>
-                    <p class="hint">
-                        <span class="noto">💡</span>
-                        Die Aufteilung zeigt nur Ihre <strong>Rollen-Präferenzen</strong> an. 
-                        Die tatsächliche Einteilung richtet sich später nach den Einsatzregeln 
-                        (z. B. 1 Koch & 1 Kellner pro Schicht) und der Verfügbarkeit.
-                    </p>
-                </fieldset>
+            <fieldset class="layout-container-medium">
+              Neben-Aufgabe
+              <div class="flex-row double-row">
+                <span id="employee-details-icon-secondary" class="employee-details-icon noto big">❓</span>
+                <select id="employee-details-role-secondary" class="noto"></select>
+                <div class="slider-container hidden">
+                  <span class="slider-value" id="role2-value">Präferenz 0%</span>
+                  <input type="range" id="employee-form-role2" min="0" max="10" value="2" step="1"/>
+                </div>
+              </div>
+            </fieldset>
 
-            </div>
+            <fieldset class="layout-container-dark">
+              Notfall-Aufgabe
+              <div class="flex-row double-row">
+                <span id="employee-details-icon-trinary" class="employee-details-icon noto big">❓</span>
+                <select id="employee-details-role-trinary" class="noto"></select>
+                <div class="slider-container hidden ">
+                  <span class="slider-value" id="role3-value">Präferenz 0%</span>
+                  <input type="range" id="employee-form-role3" min="0" max="10" value="1" step="1"/>
+                </div>
+              </div>
+            </fieldset>
+            
+            <p class="hint">
+              <span class="noto">💡</span> Die Aufteilung zeigt nur Ihre
+              <strong>Rollen-Präferenzen</strong> an. Die tatsächliche
+              Einteilung richtet sich später nach den Einsatzregeln (z. B. 1
+              Koch & 1 Kellner pro Schicht) und der Verfügbarkeit.
+            </p>
+          </fieldset>
         </div>
-        <!-- Right Section -->
-        <div id="employee-details-right">
-            <h4 id="employee-form-shifts-title">Regel- <br> Arbeitszeit</h4>
-            <table id="employee-form-shifts-table">
-                <tbody>
-                    <tr>
-                        <td><b>Mo:</b></td>
-                        <td>
-                            <select id="employee-form-shift-mon">
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><b>Di:</b></td>
-                        <td>
-                            <select id="employee-form-shift-tue">
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><b>Mi:</b></td>
-                        <td>
-                            <select id="employee-form-shift-wed">
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><b>Do:</b></td>
-                        <td>
-                            <select id="employee-form-shift-thu">
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><b>Fr:</b></td>
-                        <td>
-                            <select id="employee-form-shift-fri">
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><b>Sa:</b></td>
-                        <td>
-                            <select id="employee-form-shift-sat">
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="text-red"><b>So:</b></td>
-                        <td>
-                            <select id="employee-form-shift-sun">
-                            </select>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-    </div>    
+      </div>
+      <!-- Right Section -->
+      <div id="employee-details-right">
+        <h4 id="employee-form-shifts-title">
+          Regel- <br />
+          Arbeitszeit
+        </h4>
+        <table id="employee-form-shifts-table">
+          <tbody>
+            <tr class="employee-form-regular-row">
+              <td><b>Mo:</b></td>
+              <td><select id="employee-form-shift-mon"></select></td>
+            </tr>
+            <tr class="employee-form-regular-row">
+              <td><b>Di:</b></td>
+              <td><select id="employee-form-shift-tue"></select></td>
+            </tr>
+            <tr class="employee-form-regular-row">
+              <td><b>Mi:</b></td>
+              <td><select id="employee-form-shift-wed"></select></td>
+            </tr>
+            <tr class="employee-form-regular-row">
+              <td><b>Do:</b></td>
+              <td><select id="employee-form-shift-thu"></select></td>
+            </tr>
+            <tr class="employee-form-regular-row">
+              <td><b>Fr:</b></td>
+              <td><select id="employee-form-shift-fri"></select></td>
+            </tr>
+            <tr class="employee-form-weekend-row">
+              <td><b>Sa:</b></td>
+              <td><select id="employee-form-shift-sat"></select></td>
+            </tr>
+            <tr class="employee-form-closed-row">
+              <td><b>So:</b></td>
+              <td><select id="employee-form-shift-sun"></select></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>

@@ -1,52 +1,100 @@
-class DateInput {
-    constructor(container) {
-      this.container = container;
-      this.day10 = container.querySelector('#day10');
-      this.day1 = container.querySelector('#day1');
-      this.month = container.querySelector('#month');
-      this.errorMessage = container.querySelector('#error-message');
+// Components/customDatePicker/customDatePicker.js
 
-      // Bind events
-      this.day10.addEventListener('input', this.validateDate.bind(this));
-      this.day1.addEventListener('input', this.validateDate.bind(this));
-      this.month.addEventListener('change', this.validateDate.bind(this));
-    }
+export function createDateRangePicker(config) {
+  const {
+    startButton,
+    endButton,
+    startInput,
+    endInput,
+    previewStart,
+    previewEnd,
+    previewDuration,
+    onChange
+  } = config;
 
-    validateDate() {
-      const day10Value = parseInt(this.day10.value || 0, 10);
-      const day1Value = parseInt(this.day1.value || 0, 10);
-      const monthValue = parseInt(this.month.value || 0, 10);
-      const day = day10Value * 10 + day1Value;
+  const startBtn = document.querySelector(startButton);
+  const endBtn = document.querySelector(endButton);
+  const startEl = document.querySelector(startInput);
+  const endEl = document.querySelector(endInput);
+  const previewS = document.querySelector(previewStart);
+  const previewE = document.querySelector(previewEnd);
+  const previewD = document.querySelector(previewDuration);
 
-      // Validate day and month
-      const daysInMonth = this.getDaysInMonth(monthValue);
-      if (monthValue === 0 || day < 1 || day > daysInMonth) {
-        this.errorMessage.textContent = 'Invalid date';
-        return false;
-      }
+  // ---- HARDENED ISO DATE VALIDATION ----
+  function isISO(dateStr) {
+    return typeof dateStr === "string" &&
+      /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
+  }
 
-      // Clear error message if valid
-      this.errorMessage.textContent = '';
-      return true;
-    }
+  // ---- SAFER FORMATTER ----
+  function format(date, type = "default") {
+    if (!isISO(date)) return "--.--.--";
 
-    getDaysInMonth(month) {
-      switch (month) {
-        case 2: return 29; // Assuming leap years are not handled.
-        case 4: case 6: case 9: case 11: return 30;
-        default: return 31;
-      }
-    }
+    const [y, m, d] = date.split("-");
 
-    getValue() {
-      const day10Value = parseInt(this.day10.value || 0, 10);
-      const day1Value = parseInt(this.day1.value || 0, 10);
-      const day = day10Value * 10 + day1Value;
-      const month = parseInt(this.month.value || 0, 10);
+    switch (type) {
+      case "year": // full DD.MM.YYYY
+        return `${d.padStart(2, "0")}.${m.padStart(2, "0")}.${y}`;
 
-      return { day, month };
+      case "employee": // old employee format
+        return `${d.padStart(2, "0")}.${m.padStart(2, "0")}-${y}`;
+
+      default: // short D.M.YY
+        return `${parseInt(d)}.${parseInt(m)}.${y.slice(2)}`;
     }
   }
 
-  // Usage example
-  const dateInput = new DateInput(document.querySelector('.date-input'));
+  // ---- SAFE DURATION CALC ----
+  function calcDuration(a, b) {
+    if (!isISO(a) || !isISO(b)) return "?";
+
+    const ms = new Date(b) - new Date(a);
+    if (isNaN(ms) || ms < 0) return "?";
+
+    return ms / 86400000 + 1; // inclusive days
+  }
+
+  // ---- UNIFIED PREVIEW UPDATE ----
+  function updatePreview() {
+    // detect if employee picker
+    const isEmployeePicker = previewS.id?.includes("employee");
+    const fmtType = isEmployeePicker ? "employee" : "year";
+
+    previewS.textContent = format(startEl.value, fmtType);
+    previewE.textContent = format(endEl.value, fmtType);
+
+    if (previewD) {
+      previewD.textContent = calcDuration(startEl.value, endEl.value);
+    }
+
+    onChange?.(startEl.value, endEl.value);
+  }
+
+  // ---- BUTTON → SHOW PICKER ----
+  startBtn.addEventListener("click", () => {
+    if (!isISO(startEl.value)) {
+      startEl.value = new Date().toISOString().split("T")[0];
+    }
+    if (startEl) startEl.showPicker?.() || startEl.focus();
+  });
+
+  endBtn.addEventListener("click", () => {
+    if (!isISO(endEl.value)) {
+      endEl.value = new Date().toISOString().split("T")[0];
+    }
+    if (endEl) endEl.showPicker?.() || endEl.focus();
+  });
+
+  // ---- INPUT CHANGES ----
+  startEl.addEventListener("change", updatePreview);
+  endEl.addEventListener("change", updatePreview);
+
+  // ---- PUBLIC API ----
+  return {
+    update: updatePreview,
+    getStart: () => startEl.value,
+    getEnd: () => endEl.value,
+    setStart: (v) => { startEl.value = v; updatePreview(); },
+    setEnd: (v) => { endEl.value = v; updatePreview(); }
+  };
+}

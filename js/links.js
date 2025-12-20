@@ -4,8 +4,9 @@
 import './renderer.js';
 import './resizer.js';
 //import './shortcuts.js';
-import './Utils/schoolHollydayUpdater.js'
-import './Utils/flagUtils.js'
+import './Utils/schoolHollydayUpdater.js';
+import './Utils/flagUtils.js';
+import './Utils/statusbar.js';
 // import './Utils/bindEventListner.js'
 
 // forms
@@ -15,10 +16,7 @@ import '../Components/forms/rule-form/rule-form.js';
 import '../Components/forms/calendar-form/calendar-form.js';
 import '../Components/forms/employee-form/employee-form.js';
 
-import '../Components/forms/rule-form/humanReadableRules.js';
-import '../Components/forms/rule-form/dicctionary.js';
 import '../Components/forms/rule-form/ruleFlowWizzard.js';
-import '../Components/forms/rule-form/machineReadableRules.js';
 
 // components
 import '../Components/legend/legend.js';
@@ -28,8 +26,10 @@ import '../Components/calendar/calendar.js';
 // import '../Components/emojiPicker/emojiPicker.js';
 // import '../Components/Slider/slider.js';
 // import './Utils/HelpPageButton.js'
+import './Utils/minMaxFormComponent.js';
 // import './Utils/branch-select.js'
 // import './Utils/saveAllButton.js'
+import '../Components/customDatePicker/customDatePicker.js';
 
 // loader
 import './loader/role-loader.js';

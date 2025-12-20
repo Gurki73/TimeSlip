@@ -1,0 +1,24 @@
+<!-- Components/forms/admin-form/tools/deleted-employees.html -->
+<div class="tool-page deleted-employees-tool">
+  <header class="deleted-header">
+    <h2>🧹 Deleted Employees</h2>
+    <div class="controls">
+      <button id="refresh-deleted" title="Refresh list">↻ Refresh</button>
+      <button id="select-all-toggle" title="Select all">Select all</button>
+      <button id="restore-selected" class="primary" title="Restore selected">
+        🔄 Restore selected
+      </button>
+    </div>
+  </header>
+
+  <div id="deleted-list-wrap" class="deleted-list-wrap" aria-live="polite">
+    <ul id="deleted-list" class="deleted-list" role="list"></ul>
+  </div>
+
+  <footer class="deleted-footer">
+    <small
+      >Click emoji or "Restore" to reassign an emoji and update end date (10
+      years in future).</small
+    >
+  </footer>
+</div>

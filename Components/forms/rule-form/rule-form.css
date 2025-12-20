@@ -1,171 +1,165 @@
 #rule-form-container {
-    background-color: var(--bg-white);
+  background-color: var(--bg-white);
 }
 
 #newRule {
-    background-color: var(--bg-soft-white);
-    color: black;
-    margin-left:50px;
-    padding-left: 100px;
-    display: inline-block;
-    align-content: start;
+  background-color: var(--bg-soft-white);
+  border-color: black;
+  border-radius: 4px;
+  border-style: double;
+  width: 80%;
+  color: black;
+  margin: 0.5rem;
+  padding-left: 100px;
+  display: inline-block;
+  align-content: start;
 }
 
 .rule-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 1em;
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1em;
 }
 
 .inputRow {
-    display: flex;
-    display: row;
+  display: flex;
+  display: row;
 }
 .rule-table tr {
-    min-height: 150px;
+  min-height: 150px;
 }
 
 .rule-number-input {
-    min-width: 30px;
-    max-width: 30px;
+  min-width: 30px;
+  max-width: 30px;
 }
 
 .rule-table th,
 .rule-table td {
-    border: 1px solid #ddd;
-    text-align: center;
-    padding: 8px;
+  border: 1px solid #ddd;
+  text-align: center;
+  padding: 8px;
 }
 
 .rule-table th {
-    background-color: var(--accent-active);
-    font-weight: bold;
+  background-color: var(--accent-active);
+  font-weight: bold;
 }
 
 .rule-table.inactive select,
 .rule-table.inactive button {
-    background-color: lightgray;
-    color: #808080; 
-    cursor: not-allowed; 
-    opacity: 0.7;
+  background-color: lightgray;
+  color: #808080;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .blinking-cursor {
-    animation: blink 1s step-end infinite;
+  animation: blink 1s step-end infinite;
 }
 
 .rule-table.inactive select:hover,
 .rule-table.inactive select:focus,
 .rule-table.inactive button:hover {
-    background-color: lightgray;
-    color: silver;
+  background-color: lightgray;
+  color: silver;
 }
 
 @keyframes blink {
-    from, to {
-        color: transparent;
-    }
-    50% {
-        color: black;
-    }
+  from,
+  to {
+    color: transparent;
+  }
+  50% {
+    color: black;
+  }
 }
 
-input.valid, select.valid {
-    background-color: lightgreen;
-    border-color: green;
+input.valid,
+select.valid {
+  background-color: lightgreen;
+  border-color: green;
 }
 
-input.warning, select.warning {
-    background-color: yellow;
-    border-color: orange;
+input.warning,
+select.warning {
+  background-color: yellow;
+  border-color: orange;
 }
 
-input.error, select.error {
-    background-color: red;
-    border-color: darkred;
+input.error,
+select.error {
+  background-color: red;
+  border-color: darkred;
 }
 
 .rule-table.inactive {
-    background-color: lightgray;
+  background-color: lightgray;
 }
 
 #typing-text {
-    font-family: 'Courier New', monospace;
-    white-space: pre; /* Preserve spaces for formatting */
-    overflow: hidden; /* Hide overflowing text during typing animation */
+  font-family: "Courier New", monospace;
+  white-space: pre; /* Preserve spaces for formatting */
+  overflow: hidden; /* Hide overflowing text during typing animation */
 }
 
 .rule-table.inactive th {
-    background-color: silver; 
-    color: #808080;
-    opacity: 0.8; 
+  background-color: silver;
+  color: #808080;
+  opacity: 0.8;
 }
 
 .rule-table th[data-highlight="true"] {
-    background-color:seagreen;
-    border: 2px solid lime;
-    animation: pulse 1.5s infinite;
+  background-color: seagreen;
+  border: 2px solid lime;
+  animation: pulse 1.5s infinite;
 }
 
 .rule-table td[data-highlight="true"] {
-    background-color: rgba(144, 238, 144, 0.4);
-    border: 2px solid lime;
-    animation: pulse 1.5s infinite;
-}
-
-.rule-table th[data-highlight="true"]::before {
-    content: "📎";
-    font-size: 1.5rem;
-    margin-right: 5px;
+  background-color: rgba(144, 238, 144, 0.4);
+  border: 2px solid lime;
+  animation: pulse 1.5s infinite;
 }
 
 @keyframes pulse {
-    0% {
-        box-shadow: 0 0 2px lime;
-    }
-    50% {
-        box-shadow: 0 0 10px lime;
-    }
-    100% {
-        box-shadow: 0 0 2px lime;
-    }
+  0% {
+    box-shadow: 0 0 2px lime;
+  }
+  50% {
+    box-shadow: 0 0 10px lime;
+  }
+  100% {
+    box-shadow: 0 0 2px lime;
+  }
 }
 
-
-.rule-table:last-of-type th:nth-child(6), 
+.rule-table:last-of-type th:nth-child(6),
 .rule-table:last-of-type td:nth-child(6) {
-    background-color: rgba(255, 165, 0, 0.4); /* Orange with transparency */
-    border: 2px solid orangered;
-    animation: warningPulse 1.0s infinite;
+  background-color: rgba(255, 165, 0, 0.4); /* Orange with transparency */
+  border: 2px solid orangered;
+  animation: warningPulse 1s infinite;
 }
 
-.rule-table:last-of-type th:nth-child(6) { /* Slightly darker header */
-    background-color: rebeccapurple;
+.rule-table:last-of-type th:nth-child(6) {
+  /* Slightly darker header */
+  background-color: rebeccapurple;
 }
 
 @keyframes warningPulse {
-    0% {
-        box-shadow: 0 0 5px red;
-    }
-    50% {
-        box-shadow: 0 0 15px orange;
-    }
-    100% {
-        box-shadow: 0 0 5px orangered;
-    }
-}
-
-.clippy-highlight::before {
-    font-family: 'Segoe UI Symbol', 'Segoe UI', sans-serif;
-    font-size: 1.5rem;
-    content: "\1F4CE"; /* Unicode for 📎 */
-    cursor: pointer;
-    margin-right: 5px;
+  0% {
+    box-shadow: 0 0 5px red;
+  }
+  50% {
+    box-shadow: 0 0 15px orange;
+  }
+  100% {
+    box-shadow: 0 0 5px orangered;
+  }
 }
 
 .repeat-icon {
-    color: yellow;
-    font-size: 1.5rem;
+  color: yellow;
+  font-size: 1.5rem;
 }
 
 .rule-role-element {
@@ -179,4 +173,96 @@ input.error, select.error {
   text-align: center;
   font-size: 1.2em;
   margin-bottom: 10px;
+}
+
+#rule-form-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#rules-scrollbox {
+  background-color: var(--bg-soft-white);
+  flex: 1; /* take available space */
+  overflow-y: auto; /* scroll if content overflows */
+  min-height: calc(
+    4 * 1.5rem
+  ); /* 4 lines of text, assuming 1.5rem line-height */
+  line-height: 1.5rem; /* optional, ensures consistent line height */
+}
+
+.sticky-bottom {
+  flex-shrink: 0; /* always show tables, don’t shrink */
+}
+
+/* Namespace for rule-set checkboxes */
+.rule-checkbox {
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 6px;
+  margin: 2px 0;
+  width: 25%;
+  gap: 5px;
+  border: 1px solid #ccc;
+}
+
+.rule-checkbox.weekday {
+  background-color: var(--calendar-day-regular-bg);
+}
+.rule-checkbox.weekend {
+  background-color: var(--calendar-day-weekend-bg);
+}
+.rule-checkbox.sunday {
+  background-color: var(--calendar-day-holiday-bg);
+}
+.rule-checkbox.closed {
+  background-color: var(--calendar-day-closed-bg);
+}
+
+.rule-form-shift-early {
+  background-color: var(--calendar-shift-early-bg);
+}
+.rule-form-shift-day {
+  background-color: var(--calendar-shift-day-bg);
+}
+.rule-form-shift-late {
+  background-color: var(--calendar-shift-late-bg);
+}
+
+#debug-output {
+  white-space: pre;
+  font-family: monospace;
+  background: #222;
+  color: #0f0;
+  padding: 8px;
+  border-radius: 6px;
+  height: 5rem; /* fixed height */
+  overflow: auto; /* scroll when needed */
+  margin-top: 1rem; /* space above calendar */
+  border: 1px solid #444; /* subtle frame */
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+.checkbox-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+}
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  width: 25%;
+  padding: 2px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.forbidden {
+  background-color: yellow;
+  border-style: solid;
+  border-color: red;
+  border-width: 4 px;
+  color: darkred;
 }
