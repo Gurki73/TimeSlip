@@ -1,0 +1,10 @@
+# Build outputs
+dist/
+Installer/
+MitarbeiterKalender-Installer/
+
+# Binary installers
+*.exe
+*.AppImage
+*.deb
+*.msi
