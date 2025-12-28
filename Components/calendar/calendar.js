@@ -10,7 +10,8 @@ import { checkOnboardingState } from '../../js/Utils/onboarding.js';
 import { globalRefresh } from '../../js/renderer.js';
 import { renderEmployees } from '../legend/legend.js';
 import { loadRuleData } from '../../js/loader/rule-loader.js';
-import { RuleState } from '../forms/rule-form/ruleChecker.js';
+import { runCalendarRuleCheck } from '../forms/rule-form/ruleChecker.js';
+import { updateRuleset } from '../forms/rule-form/translatorMachine.js';
 
 let currentMonthIndex;
 let currentYear;
@@ -27,23 +28,8 @@ let allPublicHolidays = [];
 let companyHolidays = [];
 let cachedApi = null;
 let rulesetMonth = [], rulesetWeek = [], rulesetDay = [], rulesetShift = [];
-let ruleSet = [];
+let machineRuleSet = [];
 let cachedZodiacStyle = "none";
-
-const MOKRule = {
-  W: { id: "W0", bottomLimit: 0, upperLimit: Infinity },
-  T: { id: "T2", indices: [1, 2, 3, 4, 5, 6] }, // Mon–Sat
-  A: { id: "A0", bottomLimit: 2, upperLimit: 3 }, // Required chef count
-  G: { id: "G0", indices: [4] }, // "1" = chef role index
-  D: { id: "D0", uperLimit: 0, indices: 0 },
-  E: { id: "obviate" },
-  w: { id: "obviate", bottomLimit: 0, upperLimit: Infinity },
-  t: { id: "obviate", calendarEntries: [] },
-  a: { id: "obviate", bottomLimit: 0, upperLimit: Infinity },
-  g: { id: "obviate", roleIndices: [] },
-  d: { id: "obviate", upperLimit: 1, indices: [] }
-};
-const MOKRuleset = [MOKRule];
 
 export async function initializeCalendar(api) {
   if (!api) {
@@ -75,9 +61,9 @@ export async function initializeCalendar(api) {
     publicHolidays = _publicHolidays;
     allPublicHolidays = getAllHolidaysForYear(currentYear, currentState);
     bridgeDays = normalizeBridgedays(_bridgeDays);
-    ruleSet = _ruleset;
+    machineRuleSet = updateRuleset(_ruleset) || [];
 
-    console.log(ruleSet);
+    console.log(machineRuleSet);
 
     setupCalendarEnvironment();
 
@@ -553,8 +539,6 @@ async function renderCalendarMonth(weeks) {
     return;
   }
 
-  updateRuleset();
-
   calendarMonth.innerHTML = '';
   const { headerRow, columnWidths } = renderCalendarHeader();
   calendarMonth.appendChild(headerRow);
@@ -661,7 +645,7 @@ function createMorningShift(day, index, monthRequests, isOpen) {
     shift.innerHTML = "🔒";
     shift.title = "vormittags geschlossen";
     shift.style.background = "var(--calendar-day-closed-bg)";
-    const attendance = createEmptyAttendanceMatrix();
+    const attendance = Array(14).fill(null).map(() => [0, 0, 0]);;
     return { shiftElement: shift, attendance };
   }
 
@@ -681,7 +665,7 @@ function createAfternoonShift(day, index, monthRequests, isOpen) {
     afternoonShift.innerHTML = "🔒";
     afternoonShift.title = "nachmittags geschlossen";
     afternoonShift.style.background = "var(--calendar-day-closed-bg)";
-    const attendance = createEmptyAttendanceMatrix();
+    const attendance = Array(14).fill(null).map(() => [0, 0, 0]);;
     return { shiftElement: afternoonShift, attendance };
   }
   afternoonShift.classList.add('afternoon-shift');
@@ -700,7 +684,7 @@ function createDayShift(day, index, monthRequests, isOpen) {
     dayShift.style.background = "var(--calendar-day-closed-bg)";
     dayShift.innerHTML = "🔒";
     dayShift.title = "halbtags geschlossen"
-    const attendance = createEmptyAttendanceMatrix();
+    const attendance = Array(14).fill(null).map(() => [0, 0, 0]);;
     return { shiftElement: dayShift, attendance };
   }
   dayShift.classList.add('day-shift');
@@ -741,7 +725,7 @@ function checkEmployeeRequested(employee, monthRequests, day) {
 
 function populateShift(type, shift, day, index, monthRequests) {
 
-  const attendance = createEmptyAttendanceMatrix();
+  const attendance = Array(14).fill(null).map(() => [0, 0, 0]);;
 
   calendarEmployees.forEach(employee => {
     if (employee.workDays[index] === 'never') return;
@@ -789,11 +773,13 @@ function populateShift(type, shift, day, index, monthRequests) {
       emoji.style.backgroundColor = roleColor;
       shift.appendChild(emoji);
 
-      const rankIndex = employee.rankIndex ?? 0;
-      if (attendance[employee.mainRoleIndex]?.[rankIndex] !== undefined) {
-        attendance[employee.mainRoleIndex][rankIndex] += 1;
+      if (attendance[employee.mainRoleIndex] !== undefined) {
+        if (attendance[employee.mainRoleIndex]) attendance[employee.mainRoleIndex][0] += 1; // main
+        if (attendance[employee.secondaryRoleIndex] != null) attendance[employee.secondaryRoleIndex][1] += 1; // secondary
+        if (attendance[employee.tertiaryRoleIndex] != null) attendance[employee.tertiaryRoleIndex][2] += 1; // tertiary
+
       } else {
-        console.warn(`Invalid attendance index: role=${employee.mainRoleIndex}, rank=${rankIndex}`);
+        console.warn(`Invalid attendance index: role=${employee.mainRoleIndex}`);
       }
     }
   });
@@ -831,7 +817,7 @@ function createDayCellHeader(day, dayCell, dayInfo, zodiacSpan) {
   // --- right side (warnings 🚨) ---
   const right = document.createElement('span');
   right.classList.add('dayCellHeader-side', 'right-warning', 'noto');
-  right.id = `day-${day}-warning`;
+  right.id = `day - ${day} - warning`;
 
   // --- build structure ---
   if (!isClosed) {
@@ -858,37 +844,41 @@ function createDayCellHeader(day, dayCell, dayInfo, zodiacSpan) {
   dayCell.appendChild(header);
   return header;
 }
+// -------------------- RULE CHECKS --------------------
 
+function checkRulesForShift(shiftName, shiftAttendance) {
+  // console.log(`✅ Checking shift: ${shiftName}`);
+  // console.table(shiftAttendance);
+  // later: return violations array
+}
+
+// Check all weekly rules against weeklyAttendance
 export function checkRulesForWeek(weeklyAttendance) {
   const violations = [];
 
-  rulesetWeek.forEach(rule => {
-    // No weekday filtering, as it's for the whole week
+  machineRuleSet.weekly.forEach(rule => {
+    const roles = rule.dominantCondition.subjectRoles || [];
+    const min = rule.dominantCondition.lowerLimit ?? 0;
+    const max = rule.dominantCondition.upperLimit ?? Infinity;
 
-    const relevantRoles = rule.G?.indices || [];
-
-    const min = rule.A?.bottomLimit ?? 0;
-    const max = rule.A?.upperLimit ?? Infinity;
-
-    // Sum attendance for all relevant roles across the week
+    // Sum attendance across all days for relevant roles
     let total = 0;
-    relevantRoles.forEach(roleIndex => {
-      const roleAttendance = weeklyAttendance[roleIndex] || [0, 0, 0];
-      total += roleAttendance[0] + roleAttendance[1] + roleAttendance[2];
+    roles.forEach(roleName => {
+      const roleData = weeklyAttendance[roleName] || [0, 0, 0];
+      total += roleData.reduce((sum, val) => sum + val, 0);
     });
-
-    const roleNames = relevantRoles.map(index => roles[index]?.name || `Rolle ${index}`);
 
     if (total < min) {
       violations.push({
         icon: "🚨",
-        title: `Zu wenige ${roleNames.join(", ")} in der Woche: ${total} von min. ${min}`
+        title: `Zu wenige ${roles.join(", ")} in der Woche: ${total} von min.${min}`
       });
     }
+
     if (total > max) {
       violations.push({
         icon: "⚠️",
-        title: `Zu viele ${roleNames.join(", ")} in der Woche: ${total} von max. ${max}`
+        title: `Zu viele ${roles.join(", ")} in der Woche: ${total} von max.${max}`
       });
     }
   });
@@ -896,15 +886,22 @@ export function checkRulesForWeek(weeklyAttendance) {
   return violations;
 }
 
-
-export function checkRulesForDay(weekdayIndex, attendance) {
+// Check all daily rules for a specific weekday
+export function checkRulesForDay(weekdayIndex, dailyAttendance) {
   const violations = [];
 
-  // 🧨 Office Closed Check
+  console.log("weekday Index: ", weekdayIndex);
+  console.log("daily attendance: ", dailyAttendance);
+
+  // dailyAttendance:
+  // {
+  //   [roleIndex: number]: [number[day], number[shift] , number[role count]
+  // }
+
+  // Office Closed check
   if (officeDays[weekdayIndex] === 'never') {
-    const totalAttendance = Object.values(attendance).reduce((sum, roleAttendance) => {
-      const [a, b, c] = roleAttendance || [0, 0, 0];
-      return sum + a + b + c;
+    const totalAttendance = Object.values(dailyAttendance).reduce((sum, roleData) => {
+      return sum + (roleData?.reduce((s, v) => s + v, 0) ?? 0);
     }, 0);
 
     if (totalAttendance > 0) {
@@ -915,38 +912,37 @@ export function checkRulesForDay(weekdayIndex, attendance) {
       });
     }
   }
-  if (officeDays[weekdayIndex] === 'never') {
-    return violations;
-  }
 
-  // ... existing rule checks
-  rulesetDay.forEach(rule => {
-    const validDays = rule.T?.indices || [];
+  // Skip if office is closed
+  if (officeDays[weekdayIndex] === 'never') return violations;
+
+  // Apply daily rules
+  machineRuleSet.daily.forEach(rule => {
+    const validDays = rule.dominantCondition.timeframeSlots || [];
     if (!validDays.includes(weekdayIndex)) return;
 
-    const relevantRoles = rule.G?.indices || [];
+    const roles = rule.dominantCondition.subjectRoles || [];
+    const min = rule.dominantCondition.lowerLimit ?? 0;
+    const max = rule.dominantCondition.upperLimit ?? Infinity;
 
-    const min = rule.A?.bottomLimit ?? 0;
-    const max = rule.A?.upperLimit ?? Infinity;
-
+    // Sum attendance for relevant roles
     let total = 0;
-    relevantRoles.forEach(roleIndex => {
-      const roleAttendance = attendance[roleIndex] || [0, 0, 0];
-      total += roleAttendance[0] + roleAttendance[1] + roleAttendance[2];
+    roles.forEach(roleName => {
+      const roleData = dailyAttendance[roleName] || [0, 0, 0];
+      total += roleData.reduce((sum, val) => sum + val, 0);
     });
-
-    const roleNames = relevantRoles.map(index => calendarRoles[index]?.name || `Rolle ${index}`);
 
     if (total < min) {
       violations.push({
         icon: "🚨",
-        title: `Zu wenige ${roleNames.join(", ")}: ${total} von min. ${min}`
+        title: `Zu wenige ${roles.join(", ")}: ${total} von min.${min}`
       });
     }
+
     if (total > max) {
       violations.push({
         icon: "⚠️",
-        title: `Zu viele ${roleNames.join(", ")}: ${total} von max. ${max}`
+        title: `Zu viele ${roles.join(", ")}: ${total} von max.${max}`
       });
     }
   });
@@ -961,7 +957,7 @@ function createKWCell(week) {
   // TOP: warnings
   const kwWarningContainer = document.createElement('div');
   kwWarningContainer.className = 'kw-warning-container';
-  kwWarningContainer.id = `week-${week.weekNumber}-warning`;
+  kwWarningContainer.id = `week - ${week.weekNumber} - warning`;
 
   // CENTER: KW number
   const kwNumberContainer = document.createElement('div');
@@ -993,7 +989,7 @@ function renderWeekRow(week, monthRequests) {
     keyToBools(officeDays[index])
   );
 
-  const weeklyAttendance = createEmptyAttendanceMatrix();
+  const weeklyAttendance = Array(14).fill(null).map(() => [0, 0, 0]);;
 
   week.days.forEach((day, index) => {
     const shiftStatusForDay = shiftStatusForDayForWeek[index];
@@ -1002,7 +998,7 @@ function renderWeekRow(week, monthRequests) {
     weekRow.appendChild(dayCellObj.cell);
 
     if (dayCellObj.attendance) {
-      mergeAttendance(weeklyAttendance, dayCellObj.attendance);
+      // mergeAttendance(weeklyAttendance, dayCellObj.attendance);
     }
   });
 
@@ -1065,64 +1061,6 @@ function showCalendarUpdateFeedback() {
   }, 1000);
 }
 
-function updateRuleset() {
-  rulesetMonth = [];
-  rulesetWeek = [];
-  rulesetDay = [];
-  rulesetShift = [];
-
-  const ruleset = MOKRuleset;
-
-  ruleset.forEach(rule => {
-    const timeframes = [];
-
-    // T and t may be defined with IDs like "T2" or "t2"
-    if (rule.T?.id && rule.T.id !== "obviate") {
-      const tf = rule.T.id.match(/\d+/)?.[0]; // Extract number part
-      if (tf) timeframes.push(tf);
-    }
-
-    if (rule.t?.id && rule.t.id !== "obviate") {
-      const tf = rule.t.id.match(/\d+/)?.[0]; // Extract number part
-      if (tf) timeframes.push(tf);
-    }
-
-    for (const T of timeframes) {
-      switch (T) {
-        case "1":
-          rulesetShift.push(rule);
-          break;
-        case "2":
-          rulesetDay.push(rule);
-          break;
-        case "3":
-          rulesetWeek.push(rule);
-          break;
-        case "4":
-          rulesetMonth.push(rule);
-          break;
-        case "5":
-          rulesetDay.push(rule); // e.g., holidays or special
-          break;
-        default:
-          break;
-      }
-    }
-  });
-}
-
-function createEmptyAttendanceMatrix() {
-  return Array(14).fill(null).map(() => [0, 0, 0]);
-}
-
-function mergeAttendance(target, source) {
-  for (let role = 0; role < target.length; role++) {
-    for (let rank = 0; rank < target[role].length; rank++) {
-      target[role][rank] += source[role][rank];
-    }
-  }
-}
-
 function isSameDate(a, b) {
   const da = new Date(a);
   const db = new Date(b);
@@ -1158,7 +1096,7 @@ function getPublicHoliday(fullDate, allPublicHolidays, publicHolidayStates) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
-  const dateStr = `${y}-${m}-${day}`;
+  const dateStr = `${y} - ${m} - ${day}`;
   return allPublicHolidays.find(h => h.date === dateStr) || null;
 }
 
@@ -1195,8 +1133,9 @@ function getDayType(fullDate, weekdayIndex, { publicHolidays, publicHolidayState
 
 function renderDayCell(day, index, shiftStatusForDay, usedShifts, monthRequests) {
 
-  const fullDate = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  const attendance = createEmptyAttendanceMatrix();
+  const fullDate = `${currentYear} - ${String(currentMonthIndex + 1).padStart(2, '0')
+    } -${String(day).padStart(2, '0')} `;
+  const attendance = Array(14).fill(null).map(() => [0, 0, 0]);
   const dayCell = document.createElement('div');
 
   const today = new Date();
@@ -1265,7 +1204,7 @@ function renderDayCell(day, index, shiftStatusForDay, usedShifts, monthRequests)
   // 👩‍💼 Shifts + rule validation
   const shiftResult = createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts);
   dayCell.appendChild(shiftResult.shifts);
-  mergeAttendance(attendance, shiftResult.attendance);
+  // mergeAttendance(attendance, shiftResult.attendance);
 
   const warningSpan = dayCell.querySelector(`#day-${day}-warning`);
   if (warningSpan) {
@@ -1283,30 +1222,37 @@ function renderDayCell(day, index, shiftStatusForDay, usedShifts, monthRequests)
 }
 
 function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts) {
+
+  let summedAttendance = Array(14).fill(null).map(() => [0, 0, 0]);
+
   const shifts = document.createElement('div');
   shifts.style.width = "100%";
-
-  const attendance = createEmptyAttendanceMatrix();
 
   // Determine which shifts are scheduled to be open for this weekday
   const officeSchedule = officeDays[index]; // index runs 1–7 (Mon–Sun)
   const officeShiftStatus = keyToBools(officeSchedule);
   const isOfficeClosed = officeSchedule === 'never';
-
+  let demand = {};
   // Helper to color the shift backgrounds
   const setShiftColor = (shiftElement, shiftType, isActive) => {
     if (!isActive) {
-      shiftElement.style.background = `var(--calendar-day-closed-bg)`;
+      shiftElement.style.background = `var(--calendar - day - closed - bg)`;
     } else {
       switch (shiftType) {
         case 'early':
-          shiftElement.style.background = `var(--calendar-shift-early-bg)`;
+          demand = shrinkDemand(rulesetShift, 'early');
+          // console.log("early shift: ", demand);
+          shiftElement.style.background = `var(--calendar - shift - early - bg)`;
           break;
         case 'day':
-          shiftElement.style.background = `var(--calendar-shift-day-bg)`;
+          demand = shrinkDemand(rulesetShift, 'day');
+          // console.log("day shift: ", demand);
+          shiftElement.style.background = `var(--calendar - shift - day - bg)`;
           break;
         case 'late':
-          shiftElement.style.background = `var(--calendar-shift-late-bg)`;
+          demand = shrinkDemand(rulesetShift, 'late');
+          // console.log("late shift: ", demand);
+          shiftElement.style.background = `var(--calendar - shift - late - bg)`;
           break;
       }
     }
@@ -1316,8 +1262,10 @@ function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts) 
   if (usedShifts.isEarly) {
     const { shiftElement: morningShift, attendance: attendanceMorning } =
       createMorningShift(day, index, monthRequests, shiftStatusForDay.early);
-    mergeAttendance(attendance, attendanceMorning);
+    mergeAttendance(summedAttendance, attendanceMorning);
+
     setShiftColor(morningShift, 'early', officeShiftStatus.early && !isOfficeClosed);
+    checkRulesForShift('early', attendanceMorning);
     shifts.appendChild(morningShift);
   }
 
@@ -1325,8 +1273,9 @@ function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts) 
   if (usedShifts.isDay) {
     const { shiftElement: dayShift, attendance: attendanceDay } =
       createDayShift(day, index, monthRequests, shiftStatusForDay.day);
-    mergeAttendance(attendance, attendanceDay);
+    mergeAttendance(summedAttendance, attendanceDay);
     setShiftColor(dayShift, 'day', officeShiftStatus.day && !isOfficeClosed);
+    checkRulesForShift('day', attendanceDay);
     shifts.appendChild(dayShift);
   }
 
@@ -1334,10 +1283,84 @@ function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts) 
   if (usedShifts.isLate) {
     const { shiftElement: lateShift, attendance: attendanceAfternoon } =
       createAfternoonShift(day, index, monthRequests, shiftStatusForDay.late);
-    mergeAttendance(attendance, attendanceAfternoon);
+    mergeAttendance(summedAttendance, attendanceAfternoon);
     setShiftColor(lateShift, 'late', officeShiftStatus.late && !isOfficeClosed);
+    checkRulesForShift('late', attendanceAfternoon);
     shifts.appendChild(lateShift);
   }
 
-  return { shifts, attendance };
+  return { shifts, summedAttendance };
+}
+
+function mergeAttendance(summedAttendance, detailedAttendance) {
+  // Safeguard: check both are arrays
+  if (!Array.isArray(summedAttendance) || !Array.isArray(detailedAttendance)) {
+    console.warn('⚠️ mergeAttendance: One or both arguments are not arrays', { summedAttendance, detailedAttendance });
+    return;
+  }
+
+  // Safeguard: check expected length
+  const expectedLength = 14;
+  if (summedAttendance.length !== expectedLength) {
+    console.warn(`⚠️ mergeAttendance: summedAttendance length mismatch(expected ${expectedLength})`, summedAttendance);
+    return;
+  }
+  if (detailedAttendance.length !== expectedLength) {
+    console.warn(`⚠️ mergeAttendance: detailedAttendance length mismatch(expected ${expectedLength})`, detailedAttendance);
+    return;
+  }
+
+  // Merge values safely
+  for (let i = 0; i < expectedLength; i++) {
+    if (!Array.isArray(detailedAttendance[i]) || !Array.isArray(summedAttendance[i])) {
+      console.warn(`Invalid attendance at index ${i}`, detailedAttendance[i]);
+      continue;
+    }
+    for (let j = 0; j < 3; j++) {
+      summedAttendance[i][j] += detailedAttendance[i][j] ?? 0;
+    }
+  }
+
+}
+
+function createEmptyDemand(roleCount = 14) {
+  return Array(roleCount)
+    .fill(null)
+    .map(() => ({ min: 0, max: Infinity }));
+}
+
+function shrinkDemand(ruleset, timeframeSlot) {
+  const staticDemand = createEmptyDemand();
+  const flexDemand = createEmptyDemand(); // filled later
+
+  ruleset.forEach(rule => {
+    const demands = extractTotalDemand(rule.dominantCondition, timeframeSlot);
+    if (!demands) return;
+
+    demands.forEach(({ roleId, min, max }) => {
+      staticDemand[roleId].min = Math.max(staticDemand[roleId].min, min);
+      staticDemand[roleId].max = Math.min(staticDemand[roleId].max, max);
+
+      if (staticDemand[roleId].min > staticDemand[roleId].max) {
+        throw new Error(`Impossible static demand for role ${roleId}`);
+      }
+    });
+  });
+
+  return { staticDemand, flexDemand };
+}
+
+
+function extractTotalDemand(condition, timeframeSlot) {
+
+  if (!condition) return null;
+  if (condition.roleLogicOperator !== "TOTAL") return null;
+  if (!condition.subjectRoles || condition.subjectRoles.length === 0) return null;
+  if (!condition.timeframeSlots.includes(timeframeSlot)) return null;
+
+  return condition.subjectRoles.map(roleId => ({
+    roleId,
+    min: condition.lowerLimit ?? 0,
+    max: condition.upperLimit ?? Infinity
+  }));
 }

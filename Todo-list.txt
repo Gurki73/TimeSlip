@@ -1,152 +1,58 @@
-Day 1 — Core Bug Fixes & Ruleset Finalization (10–12h)
-Goal: Fix critical bugs that block functionality, stabilize rules, start finalization.
-MUST-HAVE (Critical Bugs + Rule Finalization)
-Slot 1 — Employee & Calendar Fixes
-🚧 Fix vacation day duration counter (💀🔗🔬)
-✅ Fix start date jumping one month when entering vacation end date (💀🔗🔬)
-✅ Fix employee birthdays (marked one month late) (💀🔗🔬)
-Investigate / fix first employee missing in dropdowns and legends (💀🔗🔬)
-Fix missing employee rendering on Mondays and Tuesdays (shift key mismatch?) (💀🔗🔬)
-
-Slot 2 — USB Installer + Rule Checks
-✅ Implement “Create USB-stick installer” feature (💀🔗🔬)
-Finish sanity checks — validate rule consistency before saving (💀🔗🔬)
-Add minimal warnings & hints to request entry (💀🔗🔬)
-
-Slot 3 — Rule Management Integration
-Evaluate rules on loaded data and show warnings in UI (💀🔗🔬)
-Show rule violations inside Request Form (💀🔗🔬)
-Ensure first employee / role legend fixes integrate with evaluation engine (💀🔗🔬)
-Notes: Prioritize functionality over polish. Atomic = one fix per task.
-
-
-
-Day 2 — Feature Completion & Core Enhancements (10–12h)
-
-🚧 Goal: Finish remaining must-have personal & client wishes; complete rule creation flow.
-
-MUST-HAVE
-
-Slot 1 — Personal Features
-
-✅ Highlight current Today() cell in calendar (💀🔗🔬)
-
-Hide prevent/sample mode option in admin tool (💀🔗🔬)
-
-🚧 Add zodiac feature similar to Chinese year (💀🔗🔬) issues send zodiac style from main to renderer // or chaching
-
-Slot 2 — Drag & Drop / Parsing Enhancements
-
-Support drag-and-drop of e-mail text into Request Form (💀🔗🔬)
-
-Support drag-and-drop of .eml files for auto-parsed vacation requests (💀🔗🔬)
-
-Clipboard watcher: auto-suggest request creation when copied text contains dates (💀🔗🔬)
-
-Add “Paste & Parse” box to Request Form (text or email body) (💀🔗🔬)
-
-Add parser for WhatsApp exported messages (.txt) (💀🔗🔬)
-
-Slot 3 — Help / Glossary
-
-Help Pages: finish & publish FAQ/shortcuts/workflows (💀🔗🔬🧼)
-
-Glossary: finish skeleton + integrate with UI (💀🔗🔬🧼)
-
-SHOULD-HAVE
-
-Color customization skeleton (💀🔗🔬)
-
-Day 3 — Rule Execution & Testing (10–12h)
-
-Goal: Finish execution engine, test flows, and internal QA.
-
-MUST-HAVE
-
-Slot 1 — Execution Engine
-
-Interpreter skeleton (💀🔗🔬)
-
-Evaluation engine integration with employee/day/role dataset (💀🔗🔬)
-
-In-Form feedback: ensure request triggers correct warnings & highlights (💀🔗🔬)
-
-Slot 2 — Testing System
-
-Test engine skeleton (💀🔗🔬)
-
-Migrate old calendar & rule tests into system (💀🔗🔬)
-
-Special-day + shift tests (holidays, birthdays, vacation edge cases) (💀🔗🔬)
-
-Run internal QA on Monday/Tuesday rendering bug and first employee missing (🔬)
-
-Slot 3 — Self-Healing & Sanity
-
-Implement basic self-healing for employee list issues (💀🔗🔬)
-
-Check rule simplification pipeline (merge identical conditions, flatten exceptions) (💀🔗🔬)
-
-SHOULD-HAVE
-
-Machine-readable → human text preview (basic skeleton) (💀🔗🔬)
-
-Day 4 — Final Polish & Pre-Release (10–12h)
-
-Goal: Polish UI, finish help, glossary, minor extras, and package builds.
-
-MUST-HAVE
-
-Slot 1 — UI & Polishing
-
-Finish Help Page chapters polish (🧼)
-
-Finish Glossary polish (🧼)
-
-Minor UX: tooltips, icons, clippy hints (🧼)
-
-Finish feedback bar at bottom & state panel (🧼)
-
-Slot 2 — Translator / Extras
-
-Automatic machine translator skeleton (💀🔗🔬🧼)
-
-Flow wizard final integration (💀🔗🔬🧼)
-
-Slot 3 — Packaging / Build Prep
-
-Build final Itch.io version (💀🔗🔬🧼)
-
-Build final GitHub release version (💀🔗🔬🧼)
-
-Verify USB-stick installer (💀🔗🔬🧼)
-
-SHOULD-HAVE
-
-Emoji customization (💀🔗🔬🧼)
-
-Day 5 — Release, Marketing & Promo (Half-Day)
-
-Goal: Final checks, public release, and marketing.
-
-MUST-HAVE
-
-Slot 1 — QA & Release
-
-End-to-end test on packaged builds (Itch.io + GitHub) (🔬🧼)
-
-Verify all critical fixes are working (Monday/Tuesday bug, vacation counters, birthdays, rules) (🔬🧼)
-
-Slot 2 — Marketing / Promo
-
-Write email to all potential clients who showed interest (🧼)
-
-Write GitHub release notes / README for public release (🧼)
-
-Write Itch.io store description / upload screenshots (🧼)
-
-Backup code + final tagged release (💀🔗)
-
-NICE-TO-HAVE
-
-Optional: post small teaser GIF or screenshot for social media / newsletter (🧼)
+✅ = finished; ☐ = open; 🚧 = in Work / unfinished ; ❌ = cancelled
+
+Core Bug Fixes & Ruleset Finalization
+1.1 ✅ Fix vacation day duration counter
+1.2 ✅ Investigate/fix first employee missing in dropdowns and legends
+1.3 ✅ Fix missing employee rendering on Mondays and Tuesdays
+1.4 ✅ Finish sanity checks — validate rule consistency before saving
+1.5 ✅ Add minimal warnings & hints to request entry
+1.6 ☐ Evaluate rules on loaded data and show warnings in UI
+1.7 ☐ Show rule violations inside Request Form
+1.8 ✅ Ensure first employee/role legend fixes integrate with evaluation engine
+
+Feature Completion & Core Enhancements
+2.1 ☐ Hide prevent/sample mode option in admin tool
+2.2 🚧 Add zodiac feature similar to Chinese year
+2.3 ❌ Support drag-and-drop of e-mail text into Request Form
+2.4 ❌ Support drag-and-drop of .eml files for auto-parsed vacation requests
+2.5 ❌ Clipboard watcher: auto-suggest request creation when copied text contains dates
+2.6 ❌ Add “Paste & Parse” box to Request Form (text or email body)
+2.7 ❌ Add parser for WhatsApp exported messages (.txt)
+
+
+Finish & publish Help Pages (FAQ/shortcuts/workflows)
+3.1 🚧 Finish Glossary skeleton + integrate with UI
+3.2 ☐ Color customization skeleton (optional)
+
+Rule Execution & Testing
+4.1 🚧 Interpreter skeleton
+4.2 🚧 Evaluation engine integration with employee/day/role dataset
+4.3 ☐ Ensure request triggers correct warnings & highlights in form
+4.4 🚧 Test engine skeleton
+4.5 ☐ Migrate old calendar & rule tests into system
+4.6 ☐ Special-day + shift tests (holidays, birthdays, vacation edge cases)
+4.7 ✅ Run internal QA on Monday/Tuesday rendering bug and first employee missing
+4.8 ☐ Implement basic self-healing for employee list issues
+4.9 🚧 Check rule simplification pipeline (merge identical conditions, flatten exceptions)
+4.10 ❌ Machine-readable → human text preview (optional)
+
+Final Polish & Pre-Release
+5.1 ☐ Finish Help Page chapters polish
+5.2 ☐ Finish Glossary polish
+
+Minor UX improvements: tooltips, icons, clippy hints
+6.1 ☐ Finish feedback bar & state panel
+6.2 🚧 Automatic machine translator skeleton
+6.3 ☐ Flow wizard final integration
+6.4 ☐ Build final Itch.io version
+6.5 🚧 Build final GitHub release version
+6.6 🚧 Verify USB-stick installer
+6.7 🚧 Emoji customization (optional)
+6.8 ☐ Release, Marketing & Promo
+6.9 ☐ End-to-end test on packaged builds (Itch.io + GitHub)
+6.10 ✅ Verify all critical fixes are working (Monday/Tuesday bug, vacation counters, birthdays, rules)
+6.11 ☐ Write email to all potential clients who showed interest
+6.12 ☐ Write GitHub release notes / README
+6.13 ☐ Write Itch.io store description / upload screenshots
+6.14 ☐ Backup code + final tagged release
+6.15 ☐ Optional: post teaser GIF or screenshot for social media/newsletter

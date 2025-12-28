@@ -1,14 +1,14 @@
 import { loadRoleData } from '../../../js/loader/role-loader.js';
 import { loadOfficeDaysData } from '../../../js/loader/calendar-loader.js';
-import { resetRule, initVisibilityChecker } from './ruleChecker.js';
+// import { resetRule, initVisibilityChecker } from './ruleChecker.js';
 import { toggleExceptionTable, updateWizard, clearHighlights } from './ruleFlowWizzard.js';
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
 import { createBranchSelect, branchPresetsRoles } from '../../../js/Utils/branch-select.js';
 import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js';
 import { blocks, createRuleFromBlueprint } from "./buildingBlocks.js";
-import { translateToHuman, populateExistingRules } from "./translatorHuman.js";
-import { updateRuleset } from "./translatorMachine.js";
+import { translateCurrentRule, translateExistingRules } from "./translatorHuman.js";
+import { updateRulesPreview } from "./translatorMachine.js";
 import { loadRuleData, saveRuleData } from '../../../js/loader/rule-loader.js';
 
 let cachedRoles = [];
@@ -17,6 +17,7 @@ let api;
 let eventDelegationInitialized = false;
 let ruleForEdeting = {};
 let ruleSet = [];
+let testPassed = false;
 
 const map = {
     W: "repeat",
@@ -63,7 +64,8 @@ export async function initializeRuleForm(passedApi) {
         return; // Stop execution if loading fails
     }
 
-    console.log(" chached roles ", cachedRoles);
+    console.log("-cached roles ", cachedRoles);
+    console.log("-cached rules", ruleSet);
 
     const formContainer = document.getElementById('form-container');
     if (!formContainer) {
@@ -91,12 +93,13 @@ export async function initializeRuleForm(passedApi) {
 
     ruleForEdeting = createRuleFromBlueprint(defaultBlueprint);
     console.log("rule for edeting:", ruleForEdeting);
-    translateToHuman(ruleForEdeting, cachedRoles);
+    translateCurrentRule(ruleForEdeting, cachedRoles);
 
-    resetRule();
     updateDivider("bg-rules");
 
-    populateExistingRules(ruleSet, cachedRoles);
+    initSaveButtons();
+
+    translateExistingRules(ruleSet, cachedRoles);
 
     initializeInputFunctions();
     handleTopCellRoles('G0');
@@ -104,8 +107,89 @@ export async function initializeRuleForm(passedApi) {
     handleTopCellDependency('D0');
 
     initEventDelegation();
-    initMachineRule();
-    initVisibilityChecker();
+    //initVisibilityChecker();
+}
+
+function initSaveButtons() {
+    const testBtn = document.getElementById("test-rule");
+    const saveBtn = document.getElementById("save-rule");
+
+    if (!testBtn || !saveBtn) return;
+
+    // Remove existing listeners (safe even if none exist)
+    testBtn.removeEventListener("click", onTestRuleClick);
+    saveBtn.removeEventListener("click", onSaveRuleClick);
+
+    // Attach fresh listeners
+    testBtn.addEventListener("click", onTestRuleClick);
+    saveBtn.addEventListener("click", onSaveRuleClick);
+
+    // Initial UX state
+    testPassed = false;
+    updateSaveButtonState();
+}
+
+function updateSaveButtonState() {
+    const saveBtn = document.getElementById("save-rule");
+
+    if (!saveBtn) return;
+
+    saveBtn.disabled = !testPassed;
+    saveBtn.setAttribute(
+        "aria-disabled",
+        String(!testPassed)
+    );
+}
+
+function runRuleTest() {
+
+    const newMachineRule = updateRulesPreview([ruleForEdeting]);
+    console.log("new machine rule:", newMachineRule);
+
+    return new Promise((resolve, reject) => {
+        // async validation logic here
+        Math.random() > 0.3 ? resolve() : reject();
+    });
+}
+
+function saveRule() {
+    console.log("Saving rule…");
+}
+
+function announceStatus(message) {
+    const live = document.getElementById("typing-text");
+    if (live) live.textContent = `> ${message}`;
+}
+
+function onTestRuleClick(event) {
+    event.preventDefault();
+
+    testPassed = false;
+    updateSaveButtonState();
+
+    runRuleTest()
+        .then(() => {
+            testPassed = true;
+            updateSaveButtonState();
+            announceStatus("Regeltest erfolgreich.");
+        })
+        .catch(() => {
+            testPassed = false;
+            updateSaveButtonState();
+            announceStatus("Regeltest fehlgeschlagen.");
+        });
+}
+
+function onSaveRuleClick(event) {
+    event.preventDefault();
+
+    if (!testPassed) {
+        announceStatus("Regel muss zuerst erfolgreich getestet werden.");
+        return;
+    }
+
+    saveRule();
+    announceStatus("Regel gespeichert.");
 }
 
 
@@ -186,7 +270,7 @@ async function saveRuleButtonHandler() {
             showSuccess('Regel gespeichert');
             // reload rules and repopulate list
             ruleSet = await loadRuleData(api);
-            populateExistingRules(ruleSet, cachedRoles);
+            translateExistingRules(ruleSet, cachedRoles);
         } else {
             showFailure('Speichern fehlgeschlagen');
             console.error('saveRuleData returned', ret);
@@ -274,8 +358,7 @@ export function populateFormFromRule(rule) {
 
     // keep editor state
     ruleForEdeting = { ...rule };
-    translateToHuman(ruleForEdeting, cachedRoles);
-    const newRule = updateRuleset([ruleForEdeting]);
+    translateCurrentRule(ruleForEdeting, cachedRoles);
     console.log(" new rule");
 }
 
@@ -1119,81 +1202,6 @@ function collectRuleFromForm() {
 
     return ruleObj;
 }
-/*
-export function handleInput(inputObj) {
-    console.groupCollapsed("handle input object");
-    console.log(inputObj);
-
-    const id = inputObj.id;
-
-    if (!id || !blocks[id]) {
-        console.warn("Invalid block id:", id, inputObj);
-        return;
-    }
-
-    const prefix = id.charAt(0).toUpperCase();
-    const key = map[prefix];
-
-    if (!key) {
-        console.warn("Unknown prefix:", prefix, id);
-        console.groupEnd();
-        return;
-    }
-
-    const block = blocks[id];
-    if (block) {
-        ruleForEdeting[key] = block;
-    } else {
-        console.warn("Block not found for id:", id);
-    }
-
-    switch (key) {
-        case "repeat":
-            if (!ruleForEdeting.repeat.details) ruleForEdeting.repeat.details = {};
-            if (inputObj.number1 != null) ruleForEdeting.repeat.details.bottom = inputObj.number1;
-            if (inputObj.number2 != null) ruleForEdeting.repeat.details.top = inputObj.number2;
-            break;
-        case "timeframe":
-            if (!ruleForEdeting.timeframe.details) ruleForEdeting.timeframe.details = {};
-            if (inputObj.words) ruleForEdeting.timeframe.details.days = inputObj.words;
-        case "amount":
-            if (!ruleForEdeting.amount.details) ruleForEdeting.amount.details = {};
-            if (inputObj.number1 != null) ruleForEdeting.amount.details.bottom = inputObj.number1;
-            if (inputObj.number2 != null) ruleForEdeting.amount.details.top = inputObj.number2;
-            break;
-        case "group":
-            if (!ruleForEdeting.group.details) ruleForEdeting.group.details = {};
-            if (inputObj.value && inputObj.value.length > 0) ruleForEdeting.group.details.roles = inputObj.value;
-            break;
-        case "dependency":
-            if (!ruleForEdeting.dependency.details) ruleForEdeting.dependency.details = {};
-            if (inputObj.details && inputObj.details.roles > 0) ruleForEdeting.dependency.details.roles = inputObj.details.roles;
-            if (inputObj.words) ruleForEdeting.dependency.details.roles = inputObj.words;
-            if (inputObj.bottom) ruleForEdeting.details.bottom = inputObj.details.bottom;
-            break;
-    }
-    // --- dynamic wizard update ---
-    clearHighlights();       // optional: clear previous warnings
-    updateWizard(id);        // apply forbidden pairs & highlight
-
-
-    console.trace("Trace for Updated ruleForEdeting");
-    console.groupEnd();
-
-    // --- translations remain as-is ---
-    const humanOK = translateToHuman(ruleForEdeting, cachedRoles);
-    const machine = updateRuleset([ruleForEdeting]);
-
-    console.log("machine rule: ", machine);
-
-    const debug = document.getElementById("debug-output");
-    if (debug) {
-        debug.textContent =
-            `Human: ${humanOK ? "✅ OK" : "⚠️ Error"}\n\n` +
-            `Machine:\n${JSON.stringify(machine, null, 2)}`;
-    }
-}
-*/
 
 export function handleInput(inputObj) {
     console.groupCollapsed("handle input object");
@@ -1293,16 +1301,12 @@ export function handleInput(inputObj) {
     console.groupEnd();
 
     // --- translations remain as-is ---
-    const humanOK = translateToHuman(ruleForEdeting, cachedRoles);
-    const machine = updateRuleset([ruleForEdeting]);
-
-    console.log("machine rule: ", machine);
+    const humanOK = translateCurrentRule(ruleForEdeting, cachedRoles);
 
     const debug = document.getElementById("debug-output");
     if (debug) {
         debug.textContent =
-            `Human: ${humanOK ? "✅ OK" : "⚠️ Error"}\n\n` +
-            `Machine:\n${JSON.stringify(machine, null, 2)}`;
+            `Human: ${humanOK ? "✅ OK" : "⚠️ Error"}\n\n`;
     }
 }
 
@@ -1316,7 +1320,7 @@ function debounce(fn, wait = 150) {
 
 const updatePreviewDebounced = debounce(() => {
     const rule = collectRuleFromForm();
-    translateToHuman(rule, cachedRoles);
+    translateCurrentRule(rule, cachedRoles);
     const machine = updateRuleset([rule]);
     const debug = document.getElementById('debug-output');
     if (debug) debug.textContent = JSON.stringify(machine, null, 2);

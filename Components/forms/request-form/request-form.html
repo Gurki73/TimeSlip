@@ -1,26 +1,14 @@
 <div id="request-form-container">
   <div class="flex-row">
     <button id="refresh-request-form" class="noto">⟳</button>
-    <div
-      id="create-request-mode-btn"
-      class="active noto request-button request-button-wrapper flex-row"
-    >
+    <div id="create-request-mode-btn" class="active noto request-button request-button-wrapper flex-row">
       📝 Urlaubsantrag stellen
       <button id="requestStoreButton" class="noto">💾</button>
     </div>
-    <button
-      id="approve-request-mode-btn"
-      class="inactive noto request-button flex-row"
-    >
+    <button id="approve-request-mode-btn" class="inactive noto request-button flex-row">
       ✅❌ Urlaubsantrag genehmigen
       <label for="request-year">Jahr:</label>
-      <input
-        type="number"
-        id="request-year"
-        value="2025"
-        min="2000"
-        max="2099"
-      />
+      <input type="number" id="request-year" value="2025" min="2000" max="2099" />
     </button>
   </div>
 
@@ -34,11 +22,8 @@
         </div>
       </div>
       <div class="layout-tabulator text-line-spacer"></div>
-      <div
-        class="employee-flex-row future-feature"
-        title="Geplantes zukünftiges Feature"
-        aria-label="Urlaubsanspruch und Überstunden, geplantes zukünftiges Feature, momentan deaktiviert"
-      >
+      <div class="employee-flex-row future-feature" title="Geplantes zukünftiges Feature"
+        aria-label="Urlaubsanspruch und Überstunden, geplantes zukünftiges Feature, momentan deaktiviert">
         <span class="disabled-label">Urlaubsanspruch</span>
         <span id="request-vacation-left" class="disabled-label">xx</span> /
         <span id="request-vacation-total" class="disabled-label">xx</span>
@@ -56,6 +41,7 @@
       <span class="step1">Art Abwesentheit:</span>
       <span class="request-date" class="flex-row layout-space-between">
         <select id="request-type-select" class="noto text-large">
+          <option value="none" selected disabled>❓ Typ wählen</option>
           <option value="vac">🏖️ Urlaub</option>
           <option value="sik">💉 Genesung</option>
           <option value="spe">🎁 Sonderurlaub</option>
@@ -75,11 +61,7 @@
         <button id="pick-request-start" class="noto" title="Startdatum wählen">
           🔜 von
         </button>
-        <input
-          type="date"
-          id="request-start-picker"
-          class="visually-hidden-date-picker"
-        />
+        <input type="date" id="request-start-picker" class="visually-hidden-date-picker" />
         <span class="step1" id="request-preview-start">--.--</span>
       </div>
 
@@ -89,11 +71,7 @@
         <button id="pick-request-end" class="noto" title="Enddatum wählen">
           bis 🔚
         </button>
-        <input
-          type="date"
-          id="request-end-picker"
-          class="visually-hidden-date-picker"
-        />
+        <input type="date" id="request-end-picker" class="visually-hidden-date-picker" />
         <span class="step1" id="request-preview-end">--.--</span>
       </div>
 
@@ -104,7 +82,7 @@
         <span class="step1" class="noto"> ⇨ </span>
         <span class="step1">=</span>
         <span class="step1" id="request-durration">?</span>
-        <span Id="request-durattion-unit">Tage</span>
+        <span id="request-duration-unit">Tage</span>
       </div>
 
       <br />
@@ -114,13 +92,8 @@
       <span class="step2">
         zusätzl. Info Antragsteller <br />
         <i> falls relevant </i>
-        <textarea
-          id="multiline-input"
-          name="multiline-input"
-          rows="3"
-          cols="30"
-          placeholder="Enter your text here..."
-        ></textarea>
+        <textarea id="multiline-input" name="multiline-input" rows="3" cols="30"
+          placeholder="Enter your text here..."></textarea>
       </span>
     </div>
 
@@ -260,5 +233,6 @@
         <textarea id="selected-approver-comments" placeholder="Show warnings and comments here if a row is selected"></textarea>
     </div>
   </div>  
-  --></div>
+  -->
+  </div>
 </div>

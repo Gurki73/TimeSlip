@@ -1,37 +1,37 @@
 {
   "id": "rule_sample_001",
-  "created": 1699990000000,
-  "updated": 1699990000000,
+  "created": 1699990000002,
+  "updated": 1699990000002,
 
   "main": {
     "repeat": { 
       "type": "repeat",
-       "id": "W1", 
+       "id": "W0", 
        "details": { "bottom": 0, "top": 0 } 
       },
 
     "timeframe": { 
       "type": "timeframe",
-       "id": "T2", 
+       "id": "T0", 
        "details": { "days": [0, 1, 3, 5] }
        },
 
     "amount": { 
       "type": "amount",
-      "id": "A5",
+      "id": "A1",
       "details": { "bottom": 2, "top": 2 } 
     },
 
     "group": { 
       "type": "group",
-      "id": "G0", 
-      "details": { "roles": [0] }
+      "id": "G2", 
+      "details": { "roles": [4, 5] }
      },
 
     "dependency": {
        "type": "dependency", 
-       "id": "D0",
-       "details": { "roles": [13], "bottom": 0, "top": 0 } 
+       "id": "D2",
+       "details": { "roles": [1], "bottom": 1, "top": 1 } 
       },
 
     "exception": { 

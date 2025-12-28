@@ -1,70 +1,23 @@
 {
   "id": "rule_sample_001",
-  "created": 1699990000000,
-  "updated": 1699990000000,
+  "created": 1699990000003,
+  "updated": 1699990000003
+  ,
 
   "main": {
-    "repeat": { 
-      "type": "repeat",
-       "id": "W1", 
-       "details": { "bottom": 0, "top": 0 } 
-      },
-
-    "timeframe": { 
-      "type": "timeframe",
-       "id": "T2", 
-       "details": { "days": [0, 1, 3, 5] }
-       },
-
-    "amount": { 
-      "type": "amount",
-      "id": "A5",
-      "details": { "bottom": 2, "top": 2 } 
+      "repeat": { "type": "repeat", "id": "W1", "details": { "bottom": 0, "top": 0 } },
+      "timeframe": { "type": "timeframe", "id": "T3", "details": { "days": [0,2,4] } },
+      "amount": { "type": "amount", "id": "A3", "details": { "bottom": 1, "top": 3 } },
+      "group": { "type": "group", "id": "G0", "details": { "roles": [1] } },
+      "dependency": { "type": "dependency", "id": "D0", "details": { "roles": [5], "bottom": 0, "top": 0 } },
+      "exception": { "type": "exception", "id": "E0" }
     },
-
-    "group": { 
-      "type": "group",
-      "id": "G0", 
-      "details": { "roles": [0] }
-     },
-
-    "dependency": {
-       "type": "dependency", 
-       "id": "D0",
-       "details": { "roles": [13], "bottom": 0, "top": 0 } 
-      },
-
-    "exception": { 
-      "type": "exception",
-      "id": "E0" }
-  },
-
-  "condition": {
-    "repeat": {
-      "type": "repeat",
-      "id": "w0",
-      "details": { "bottom": 0, "top": 0 }
-    },
-    "timeframe": {
-      "type": "timeframe",
-      "id": "t0",
-      "details": { "shifts": [] }
-    },
-    "amount": {
-      "type": "amount",
-      "id": "a1",
-      "details": { "bottom": 1, "top": 1 }
-    },
-    "group": {
-      "type": "group",
-      "id": "g0",
-      "details": { "roles": [] }
-    },
-    "dependency": {
-      "type": "depemdeny",
-      "id": "d0",
-      "details": { "roles": [], "bottom": 0, "top": 0 }
-    }
-  }
+    "condition": {
+       "repeat": { "type": "repeat", "id": "W0", "details": { "bottom": 0, "top": 0 } },
+       "timeframe": { "type": "timeframe", "id": "T0", "details": { "days": [] } },
+       "amount": { "type": "amount", "id": "A1", "details": { "bottom": 0, "top": 0 } },
+       "group": { "type": "group", "id": "G0", "details": { "roles": [] } },
+       "dependency": { "type": "dependency", "id": "D0", "details": { "roles": [], "bottom": 0, "top": 0 } } 
+      }
 }
 

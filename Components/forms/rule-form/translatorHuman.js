@@ -201,8 +201,7 @@ function formatDaysList(days = [], usePrefix = false, connector = "und") {
     return usePrefix ? list : list;
 }
 
-// ========== MAIN EXPORTED FUNCTIONS ==========
-export function generateHumanSentence(rulePart = {}, roles = []) {
+function generateHumanSentence(rulePart = {}, roles = []) {
     if (!rulePart) return "ungenügende Auswahl zum Erstellen einer neuen Regel!";
 
     const sentenceStart = formatSentenceStart(rulePart.repeat || {}, rulePart.timeframe || {});
@@ -213,13 +212,13 @@ export function generateHumanSentence(rulePart = {}, roles = []) {
     return cleanUpText(parts.join(" "));
 }
 
-export function generateFullHumanSentence(rule = {}, roles = []) {
+function generateFullHumanSentence(rule = {}, roles = []) {
     if (!rule || typeof rule !== "object") {
         console.warn("Invalid rule object");
         return "";
     }
 
-    const mainPart = rule;
+    const mainPart = rule.main || rule;
     const condPart = rule.condition || null;
     const exceptionType = mainPart.exception?.type || rule.exception?.type || "E0";
 
@@ -259,7 +258,17 @@ export function generateFullHumanSentence(rule = {}, roles = []) {
     }
 }
 
-export function translateToHuman(rule = {}, roles = []) {
+export function translateCurrentRule(rule = {}, roles = []) {
+
+    const sentence = translateToHuman(rule, roles);
+
+    const typingContainer = document.getElementById("typing-text");
+    if (typingContainer) {
+        applyTypingEffectWithCursor(typingContainer, sentence);
+    }
+}
+
+function translateToHuman(rule = {}, roles = []) {
     if (!roles?.length) {
         console.error("No roles provided for rule translation");
         return false;
@@ -268,15 +277,10 @@ export function translateToHuman(rule = {}, roles = []) {
     const sentence = generateFullHumanSentence(rule, roles);
     if (!sentence) return false;
 
-    const typingContainer = document.getElementById("typing-text");
-    if (typingContainer) {
-        applyTypingEffectWithCursor(typingContainer, sentence);
-    }
-
     return true;
 }
 
-export function populateExistingRules(ruleSet = [], roles = []) {
+export function translateExistingRules(ruleSet = [], roles = []) {
     const rulesList = document.getElementById('rules-list');
     const template = document.getElementById('rule-item-template');
 
@@ -312,9 +316,9 @@ export function populateExistingRules(ruleSet = [], roles = []) {
     });
 }
 
-// ========== PRIVATE HELPER ==========
 function applyTypingEffectWithCursor(container, text) {
     if (!container) return;
+    if (typeof text !== "string") return;
 
     container.textContent = "";
     const cursor = document.createElement("span");
@@ -336,10 +340,3 @@ function applyTypingEffectWithCursor(container, text) {
         }
     }, speed);
 }
-
-export default {
-    translateToHuman,
-    generateHumanSentence,
-    generateFullHumanSentence,
-    populateExistingRules
-};

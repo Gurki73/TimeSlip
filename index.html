@@ -40,401 +40,226 @@
 -->
 
 <html lang="de">
-  <head>
-    <meta charset="UTF-16" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Main Content Security Policy -->
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="
+<head>
+  <meta charset="UTF-16" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Main Content Security Policy -->
+  <meta http-equiv="Content-Security-Policy" content="
           default-src 'self';
           script-src 'self' 'nonce-PLACEHOLDER_NONCE';
           style-src 'self' 'nonce-PLACEHOLDER_NONCE';
           connect-src 'self' https://your-api.com;
           object-src 'none';
-      "
-    />
+      " />
 
-    <title>Mitarbeiter Kalender</title>
+  <title>Mitarbeiter Kalender</title>
 
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="styles/global.css" />
-    <link rel="stylesheet" href="assets/css/theme-dark.css" />
-    <link rel="stylesheet" href="assets/css/theme-default.css" />
-    <link rel="stylesheet" href="assets/css/theme-patel.css" />
-    <link rel="stylesheet" href="assets/css/theme-greyscale.css" />
-    <link rel="stylesheet" href="Components/legend/legend.css" />
-    <link rel="stylesheet" href="Components/calendar/calendar.css" />
-    <link rel="stylesheet" href="Components/emojiPicker/emojiPicker.css" />
-    <link rel="stylesheet" href="Components/Slider/slider.css" />
-    <link rel="stylesheet" href="assets/css/colors.css" />
-    <link rel="stylesheet" href="assets/css/buttons.css" />
-    <link rel="stylesheet" href="assets/css/icons.css" />
-    <link rel="stylesheet" href="assets/css/emoji.css" />
-    <link rel="stylesheet" href="Components/forms/role-form/role-form.css" />
-    <link rel="stylesheet" href="Components/forms/rule-form/rule-form.css" />
-    <link
-      rel="stylesheet"
-      href="Components/customDatePicker/customDatePicker.css"
-    />
-    <link
-      rel="stylesheet"
-      href="Components/forms/calendar-form/calendar-form.css"
-    />
-    <link rel="stylesheet" href="Components/forms/admin-form/admin-form.css" />
-    <link
-      rel="stylesheet"
-      href="Components/forms/request-form/request-form.css"
-    />
-    <link
-      rel="stylesheet"
-      href="Components/forms/employee-form/employee-form.css"
-    />
-    <link rel="stylesheet" href="Components/help/help.css" />
-  </head>
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="styles/global.css" />
+  <link rel="stylesheet" href="assets/css/theme-dark.css" />
+  <link rel="stylesheet" href="assets/css/theme-default.css" />
+  <link rel="stylesheet" href="assets/css/theme-patel.css" />
+  <link rel="stylesheet" href="assets/css/theme-greyscale.css" />
+  <link rel="stylesheet" href="Components/legend/legend.css" />
+  <link rel="stylesheet" href="Components/calendar/calendar.css" />
+  <link rel="stylesheet" href="Components/emojiPicker/emojiPicker.css" />
+  <link rel="stylesheet" href="Components/Slider/slider.css" />
+  <link rel="stylesheet" href="assets/css/colors.css" />
+  <link rel="stylesheet" href="assets/css/buttons.css" />
+  <link rel="stylesheet" href="assets/css/icons.css" />
+  <link rel="stylesheet" href="assets/css/emoji.css" />
+  <link rel="stylesheet" href="Components/forms/role-form/role-form.css" />
+  <link rel="stylesheet" href="Components/forms/rule-form/rule-form.css" />
+  <link rel="stylesheet" href="Components/customDatePicker/customDatePicker.css" />
+  <link rel="stylesheet" href="Components/forms/calendar-form/calendar-form.css" />
+  <link rel="stylesheet" href="Components/forms/admin-form/admin-form.css" />
+  <link rel="stylesheet" href="Components/forms/request-form/request-form.css" />
+  <link rel="stylesheet" href="Components/forms/employee-form/employee-form.css" />
+  <link rel="stylesheet" href="Components/help/help.css" />
+</head>
 
-  <body class="theme-dark">
-    <div id="main-container">
-      <aside
-        id="left-panel"
-        class="split-panel left"
-        tabindex="-1"
-        aria-labelledby="sidebar-label"
-      >
-        <h2 id="sidebar-label" class="visually-hidden">
-          Seitenleiste Navigation
-        </h2>
+<body class="theme-dark">
+  <div id="main-container">
+    <aside id="left-panel" class="split-panel left" tabindex="-1" aria-labelledby="sidebar-label">
+      <h2 id="sidebar-label" class="visually-hidden">
+        Seitenleiste Navigation
+      </h2>
 
-        <div
-          id="legend"
-          tabindex="-1"
-          aria-label="Legende für Symbole und Farbcodes"
-        ></div>
+      <div id="legend" tabindex="-1" aria-label="Legende für Symbole und Farbcodes"></div>
 
-        <div class="horizontal-divider-no-resize"></div>
+      <div class="horizontal-divider-no-resize"></div>
 
-        <nav id="sidebar" tabindex="-1">
-          <button
-            class="nav-button"
-            data-form="request-form"
-            title="Urlaubsantrag öffnen"
-            aria-label="Urlaub – Urlaubsantrag öffnen"
-          >
-            <img
-              src="./assets/svg/file-document-svgrepo-com.svg"
-              alt="Urlaub Icon"
-              class="nav-icon"
-            />
-            <span><span class="underline">U</span>rlaub</span>
-          </button>
+      <nav id="sidebar" tabindex="-1">
+        <button class="nav-button" data-form="request-form" title="Urlaubsantrag öffnen"
+          aria-label="Urlaub – Urlaubsantrag öffnen">
+          <img src="./assets/svg/file-document-svgrepo-com.svg" alt="Urlaub Icon" class="nav-icon" />
+          <span><span class="underline">U</span>rlaub</span>
+        </button>
 
-          <button
-            class="nav-button"
-            data-form="employee-form"
-            title="Mitarbeiterverwaltung öffnen"
-            aria-label="Mitarbeiter – Mitarbeiterverwaltung öffnen"
-          >
-            <img
-              src="./assets/svg/person-team-svgrepo-com.svg"
-              alt="Mitarbeiter Icon"
-              class="nav-icon"
-            />
-            <span><span class="underline">M</span>itarbeiter</span>
-          </button>
+        <button class="nav-button" data-form="employee-form" title="Mitarbeiterverwaltung öffnen"
+          aria-label="Mitarbeiter – Mitarbeiterverwaltung öffnen">
+          <img src="./assets/svg/person-team-svgrepo-com.svg" alt="Mitarbeiter Icon" class="nav-icon" />
+          <span><span class="underline">M</span>itarbeiter</span>
+        </button>
 
-          <button
-            class="nav-button"
-            data-form="role-form"
-            title="Aufgaben- und Rollenverwaltung öffnen"
-            aria-label="Aufgaben – Rollenverwaltung öffnen"
-          >
-            <img
-              src="./assets/svg/puzzle-piece-svgrepo-com.svg"
-              alt="Aufgaben Icon"
-              class="nav-icon"
-            />
-            <span><span class="underline">A</span>ufgaben</span>
-          </button>
+        <button class="nav-button" data-form="role-form" title="Aufgaben- und Rollenverwaltung öffnen"
+          aria-label="Aufgaben – Rollenverwaltung öffnen">
+          <img src="./assets/svg/puzzle-piece-svgrepo-com.svg" alt="Aufgaben Icon" class="nav-icon" />
+          <span><span class="underline">A</span>ufgaben</span>
+        </button>
 
-          <button
-            class="nav-button"
-            data-form="rule-form"
-            title="Regelwerk öffnen"
-            aria-label="Regeln – Regelwerk öffnen"
-          >
-            <img
-              src="./assets/svg/knowledge-graph-svgrepo-com.svg"
-              alt="Regeln Icon"
-              class="nav-icon"
-            />
-            <span><span class="underline">R</span>egeln</span>
-          </button>
+        <button class="nav-button" data-form="rule-form" title="Regelwerk öffnen"
+          aria-label="Regeln – Regelwerk öffnen">
+          <img src="./assets/svg/knowledge-graph-svgrepo-com.svg" alt="Regeln Icon" class="nav-icon" />
+          <span><span class="underline">R</span>egeln</span>
+        </button>
 
-          <button
-            class="nav-button"
-            data-form="calendar-form"
-            title="Kalendereinstellungen öffnen"
-            aria-label="Kalender – Kalendereinstellungen öffnen"
-          >
-            <img
-              src="./assets/svg/calendar-svgrepo-com.svg"
-              alt="Kalender Icon"
-              class="nav-icon"
-            />
-            <span><span class="underline">K</span>alender</span>
-          </button>
+        <button class="nav-button" data-form="calendar-form" title="Kalendereinstellungen öffnen"
+          aria-label="Kalender – Kalendereinstellungen öffnen">
+          <img src="./assets/svg/calendar-svgrepo-com.svg" alt="Kalender Icon" class="nav-icon" />
+          <span><span class="underline">K</span>alender</span>
+        </button>
 
-          <button
-            class="nav-button"
-            data-form="admin-form"
-            title="Adminwerkzeuge öffnen"
-            aria-label="Werkzeuge – Adminwerkzeuge öffnen"
-          >
-            <img
-              src="./assets/svg/cog-wheel-settings-svgrepo-com.svg"
-              alt="Werkzeuge Icon"
-              class="nav-icon"
-            />
-            <span><span class="underline">W</span>erkzeuge</span>
-          </button>
-        </nav>
-      </aside>
+        <button class="nav-button" data-form="admin-form" title="Adminwerkzeuge öffnen"
+          aria-label="Werkzeuge – Adminwerkzeuge öffnen">
+          <img src="./assets/svg/cog-wheel-settings-svgrepo-com.svg" alt="Werkzeuge Icon" class="nav-icon" />
+          <span><span class="underline">W</span>erkzeuge</span>
+        </button>
+      </nav>
+    </aside>
 
-      <div id="vertical-divider">
-        <button
-          tabindex="0"
-          id="resize-toggle"
-          class="resize-button"
-          aria-controls="left-panel"
-          aria-expanded="true"
-          aria-label="Seitenleiste ein- oder ausblenden"
-        ></button>
-      </div>
+    <div id="vertical-divider">
+      <button tabindex="0" id="resize-toggle" class="resize-button" aria-controls="left-panel" aria-expanded="true"
+        aria-label="Seitenleiste ein- oder ausblenden"></button>
+    </div>
 
-      <div id="right-panel" class="split-panel right">
-        <!-- MAIN CALENDAR AREA -->
-        <main
-          id="calendar"
-          class="top-row"
-          tabindex="-1"
-          aria-live="polite"
-          aria-busy="true"
-        >
-          <div class="layout-full-size">
-            <div class="spinner" aria-hidden="true"></div>
-            <span class="sr-only" id="loading-message">
-              Kalender wird geladen…
-            </span>
+    <div id="right-panel" class="split-panel right">
+      <!-- MAIN CALENDAR AREA -->
+      <main id="calendar" class="top-row" tabindex="-1" aria-live="polite" aria-busy="true">
+        <div class="layout-full-size">
+          <div class="spinner" aria-hidden="true"></div>
+          <span class="sr-only" id="loading-message">
+            Kalender wird geladen…
+          </span>
+          <p>
+            --- Drücke [F5], falls der Kalender nicht vollständig geladen
+            wurde.
+          </p>
+        </div>
+      </main>
+
+      <!-- GREETING / HERO HEADER -->
+      <header id="horizontal-divider" class="bg-welcome" role="banner">
+        <div class="left-gap"></div>
+        <h1 class="text-header-4" id="greetingID">
+          Willkommen beim Mitarbeiter Kalender
+        </h1>
+        <div class="right-gap"></div>
+      </header>
+
+      <!-- MAIN CONTENT AREA -->
+      <section id="form-container" class="bottom-row" aria-labelledby="greetingID">
+        <section class="welcome-page text-arial" role="region" aria-label="Willkommensseite">
+          <p class="text-header-4">
+            Ihr Werkzeug zur einfachen Belegschaftsplanung. Rufe die Anleitung
+            <span class="noto">🛟</span> mit [F1] oder unter Menü
+            <span class="noto">⇨ </span> Hilfe auf.
+          </p>
+
+          <!-- Fn key hint (hidden by default) -->
+          <div id="fn-key-hint" class="fn-hint visually-hidden" role="note" aria-label="Fn-Tastentipp">
+            <img src="./assets/png/Fn-key.png" alt="Fn-Taste auf einer Laptop-Tastatur" class="fn-hint-img" />
             <p>
-              --- Drücke [F5], falls der Kalender nicht vollständig geladen
-              wurde.
+              💡 Tipp: Auf vielen Laptops müssen Sie <kbd>Fn</kbd> +
+              <kbd>F1</kbd> oder <kbd>F12</kbd> drücken, um
+              Tastenkombinationen zu nutzen.
             </p>
           </div>
-        </main>
 
-        <!-- GREETING / HERO HEADER -->
-        <header id="horizontal-divider" class="bg-welcome" role="banner">
-          <div class="left-gap"></div>
-          <h1 class="text-header-4" id="greetingID">
-            Willkommen beim Mitarbeiter Kalender
-          </h1>
-          <div class="right-gap"></div>
-        </header>
-
-        <!-- MAIN CONTENT AREA -->
-        <section
-          id="form-container"
-          class="bottom-row"
-          aria-labelledby="greetingID"
-        >
-          <section
-            class="welcome-page text-arial"
-            role="region"
-            aria-label="Willkommensseite"
-          >
-            <p class="text-header-4">
-              Ihr Werkzeug zur einfachen Belegschaftsplanung. Rufe die Anleitung
-              <span class="noto">🛟</span> mit [F1] oder unter Menü
-              <span class="noto">⇨ </span> Hilfe auf.
-            </p>
-
-            <!-- Fn key hint (hidden by default) -->
-            <div
-              id="fn-key-hint"
-              class="fn-hint visually-hidden"
-              role="note"
-              aria-label="Fn-Tastentipp"
-            >
-              <img
-                src="./assets/png/Fn-key.png"
-                alt="Fn-Taste auf einer Laptop-Tastatur"
-                class="fn-hint-img"
-              />
-              <p>
-                💡 Tipp: Auf vielen Laptops müssen Sie <kbd>Fn</kbd> +
-                <kbd>F1</kbd> oder <kbd>F12</kbd> drücken, um
-                Tastenkombinationen zu nutzen.
+          <div class="layout-full-size flex-row">
+            <!-- CARD TEMPLATE -->
+            <article class="layout-card layout-card.request" aria-labelledby="heading-request">
+              <h4 class="card-title text-request" id="heading-request">
+                <img src="./assets/svg/file-document-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
+                <span class="card-title-text">Urlaubsanträge</span>
+                <img src="./assets/svg/file-document-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
+              </h4>
+              <p class="text-header-5">
+                <strong>Wieso</strong> ist keiner da?
               </p>
-            </div>
+              <p class="text-small">
+                Urlaube, Abwesenheiten und deren Status übersichtlich verwalten.
+              </p>
+            </article>
 
-            <div class="layout-full-size flex-row">
-              <!-- CARD TEMPLATE -->
-              <article
-                class="layout-card layout-card.request"
-                aria-labelledby="heading-request"
-              >
-                <h4 class="card-title text-request" id="heading-request">
-                  <img
-                    src="./assets/svg/file-document-svgrepo-com.svg"
-                    alt=""
-                    class="nav-icon"
-                    aria-hidden="true"
-                  />
-                  <span class="card-title-text">Urlaubsanträge</span>
-                  <img
-                    src="./assets/svg/file-document-svgrepo-com.svg"
-                    alt=""
-                    class="nav-icon"
-                    aria-hidden="true"
-                  />
-                </h4>
-                <ul class="welcome-list-item">
-                  <li class="noto">📄 Anträge stellen</li>
-                  <li class="noto">⟳ Status ändern</li>
-                </ul>
-              </article>
+            <article class="layout-card layout-card.employee" aria-labelledby="heading-employee">
+              <h4 class="card-title text-employee" id="heading-employee">
+                <img src="./assets/svg/person-team-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
+                <span class="card-title-text">Mitarbeiter</span>
+                <img src="./assets/svg/person-team-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
+              </h4>
+              <p class="text-header-5">
+                <strong>Wer</strong> kann <strong>was</strong> – und <strong>wann</strong>?
+              </p>
+              <p class="text-small">
+                Mitarbeiter definieren und Aufgaben und individuelle Arbeitszeiten zuweisen.
+              </p>
+            </article>
 
-              <article
-                class="layout-card layout-card.employee"
-                aria-labelledby="heading-employee"
-              >
-                <h4 class="card-title text-employee" id="heading-employee">
-                  <img
-                    src="./assets/svg/person-team-svgrepo-com.svg"
-                    alt=""
-                    class="nav-icon"
-                    aria-hidden="true"
-                  />
-                  <span class="card-title-text">Mitarbeiter</span>
-                  <img
-                    src="./assets/svg/person-team-svgrepo-com.svg"
-                    alt=""
-                    class="nav-icon"
-                    aria-hidden="true"
-                  />
-                </h4>
-                <ul class="welcome-list-item">
-                  <li class="noto">➕ Mitarbeiter erstellen</li>
-                  <li class="noto">🔧 Aufgaben zuweisen</li>
-                  <li class="noto">✏️ Mitarbeiter bearbeiten</li>
-                  <li class="noto">⏰ Regelarbeitszeiten definieren</li>
-                  <li class="noto">🗑️ Mitarbeiter entfernen</li>
-                </ul>
-              </article>
+            <article class="layout-card layout-card.tasks" aria-labelledby="heading-tasks">
+              <h4 class="card-title text-tasks" id="heading-tasks">
+                <img src="./assets/svg/puzzle-piece-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
+                <span class="card-title-text">Aufgaben</span>
+                <img src="./assets/svg/puzzle-piece-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
+              </h4>
+              <p class="text-header-5">
+                <strong>Was</strong> wird überhaupt gemacht?
+              </p>
+              <p class="text-small">
+                Aufgaben anlegen, benennen und visuell gruppieren.
+              </p>
+            </article>
 
-              <article
-                class="layout-card layout-card.tasks"
-                aria-labelledby="heading-tasks"
-              >
-                <h4 class="card-title text-tasks" id="heading-tasks">
-                  <img
-                    src="./assets/svg/puzzle-piece-svgrepo-com.svg"
-                    alt=""
-                    class="nav-icon"
-                    aria-hidden="true"
-                  />
-                  <span class="card-title-text">Aufgaben</span>
-                  <img
-                    src="./assets/svg/puzzle-piece-svgrepo-com.svg"
-                    alt=""
-                    class="nav-icon"
-                    aria-hidden="true"
-                  />
-                </h4>
-                <ul class="welcome-list-item">
-                  <li class="noto">🎨 Aufgabenfarben zuweisen</li>
-                  <li class="noto">📝 Aufgaben benennen</li>
-                  <li class="noto">🗑️ Aufgaben löschen</li>
-                </ul>
-              </article>
+            <article class="layout-card layout-card.rules" aria-labelledby="heading-rules">
+              <h4 class="card-title text-rules" id="heading-rules">
+                <img src="./assets/svg/knowledge-graph-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
+                <span class="card-title-text">Regeln</span>
+                <img src="./assets/svg/knowledge-graph-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
+              </h4>
+              <p class="text-header-5">
+                <strong>Wie</strong> sieht ein ideales Team aus?
+              </p>
+              <p class="text-small">
+                Regeln festlegen, die eib optimales Zusamenspiel vorgibt.
+              </p>
+            </article>
 
-              <article
-                class="layout-card layout-card.rules"
-                aria-labelledby="heading-rules"
-              >
-                <h4 class="card-title text-rules" id="heading-rules">
-                  <img
-                    src="./assets/svg/knowledge-graph-svgrepo-com.svg"
-                    alt=""
-                    class="nav-icon"
-                    aria-hidden="true"
-                  />
-                  <span class="card-title-text">Regeln</span>
-                  <img
-                    src="./assets/svg/knowledge-graph-svgrepo-com.svg"
-                    alt=""
-                    class="nav-icon"
-                    aria-hidden="true"
-                  />
-                </h4>
-                <p class="text-small">
-                  Eine Regel ist eine Bedingung, die für den reibungslosen
-                  Ablauf und die Sicherheit der Mitarbeiter gewährleistet werden
-                  sollte.
-                </p>
-                <ul class="welcome-list-item">
-                  <li class="noto">📝 Regeln erstellen</li>
-                  <li class="noto">🔧 Regeln verwalten</li>
-                </ul>
-              </article>
-
-              <article
-                class="layout-card layout-card.calendar"
-                aria-labelledby="heading-calendar"
-              >
-                <h4 class="card-title text-calendar" id="heading-calendar">
-                  <img
-                    src="./assets/svg/calendar-svgrepo-com.svg"
-                    alt=""
-                    class="nav-icon"
-                    aria-hidden="true"
-                  />
-                  <span class="card-title-text">Kalender</span>
-                  <img
-                    src="./assets/svg/calendar-svgrepo-com.svg"
-                    alt=""
-                    class="nav-icon"
-                    aria-hidden="true"
-                  />
-                </h4>
-                <p class="text-small">
-                  Der Kalender kann individuell angepasst werden, um Ihre
-                  spezifischen Anforderungen zu erfüllen.
-                </p>
-                <ul class="welcome-list-item">
-                  <li class="noto">📅 Bundesland wählen</li>
-                  <li class="noto">⏱️ Öffnungszeiten festlegen</li>
-                  <li class="noto">🏖️ Betriebsferien eingeben</li>
-                  <li class="noto">👨‍💻 Schichten festlegen</li>
-                  <li class="noto">📆 Brücken- und besondere Tage verwalten</li>
-                </ul>
-              </article>
-            </div>
-          </section>
+            <article class="layout-card layout-card.calendar" aria-labelledby="heading-calendar">
+              <h4 class="card-title text-calendar" id="heading-calendar">
+                <img src="./assets/svg/calendar-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
+                <span class="card-title-text">Kalender</span>
+                <img src="./assets/svg/calendar-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
+              </h4>
+              <p class="text-header-5">
+                <strong>Wann</strong> wird gearbeitet?
+              </p>
+              <p class="text-small">
+                Öffnungszeiten, Feiertage, Schichten und besondere Tage festlegen.
+              </p>
+            </article>
+          </div>
         </section>
-      </div>
+      </section>
     </div>
-    <footer
-      id="feedback-console"
-      role="status"
-      aria-live="polite"
-      tabindex="-1"
-    >
-      Ready for action...
-    </footer>
-    <script type="module" src="./js/links.js"></script>
-  </body>
+  </div>
+  <footer id="feedback-console" role="status" aria-live="polite" tabindex="-1">
+    Ready for action...
+  </footer>
+  <script type="module" src="./js/links.js"></script>
+</body>
+
 </html>
 
 <dialog id="goodbyeDialog"></dialog>

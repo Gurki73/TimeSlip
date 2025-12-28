@@ -8,7 +8,6 @@ import { updateFeedback } from '../../js/Utils/statusbar.js';
 let legendEmployees = [];
 let lengendRoles = [];
 
-
 export async function initializeLegend(api) {
     const legendContainer = document.getElementById('legend');
     if (!legendContainer) {
@@ -19,33 +18,33 @@ export async function initializeLegend(api) {
     if (!api) console.warn('⚠️ No API reference provided to initializeLegend(), using fallback');
 
     updateWelcomeGreeting();
-
     legendContainer.innerHTML = '';
 
-    try {
-        renderCollapsibleSection(legendContainer, '🎨 ⇨ Aufgaben', renderRoles, 'lade Aufgaben...');
-        renderCollapsibleSection(legendContainer, '😊 ⇨ Mitarbeiter', renderEmployees, 'lade Mitarbeiter...');
+    // Safe UI setup (no try/catch needed)
+    renderCollapsibleSection(legendContainer, '🎨 ⇨ Aufgaben', renderRoles, 'lade Aufgaben...');
+    renderCollapsibleSection(legendContainer, '😊 ⇨ Mitarbeiter', renderEmployees, 'lade Mitarbeiter...');
 
-        const [roles, employees] = await Promise.all([
+    let roles, employees;
+
+    try {
+        [roles, employees] = await Promise.all([
             loadRoleData(api),
             loadEmployeeData(api)
         ]);
-
-        const year = document.getElementById(' ');
-        const month = document.getElementById('');
-
-        lengendRoles = roles;
-        legendEmployees = employees;
-
-        const roleContent = document.getElementById('legend-roles');
-        const employeeContent = document.getElementById('legend-employees');
-
-        renderRoles(roleContent);
-        renderEmployees(employeeContent);
-
     } catch (err) {
-        console.error('❌ Failed to initialize legend:', err);
+        console.error('❌ Failed to load legend data:', err);
+        return; // stop here if data failed
     }
+
+    // Safe DOM + rendering logic
+    lengendRoles = roles;
+    legendEmployees = employees;
+
+    const roleContent = document.getElementById('legend-roles');
+    const employeeContent = document.getElementById('legend-employees');
+
+    renderRoles(roleContent);
+    renderEmployees(employeeContent);
 }
 
 function renderCollapsibleSection(container, title, renderContentFunction, loadingText = '') {

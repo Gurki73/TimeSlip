@@ -12,6 +12,7 @@ const posWarnings = {
     nobo: { rank: 2, warn: "Kein Angestellter ausgewählt" },
     stat: { rank: 2, warn: "Kein Start-Termin ausgewählt" },
     shif: { rank: 2, warn: "Halber Tag frei nur an Einzeltagen" },
+    notype: { rank: 2, warn: "Kein Abwesenheitstyp ausgewählt" }
 };
 
 let warningList = new Set();
@@ -40,6 +41,7 @@ export function recalcWarnings() {
     if (startDate && endDate && endDate < startDate) addWarning("ordr");
     if (startDate && startDate < today) addWarning("past");
     if (state.type === "hom") addWarning("homHint"); // match your <select> value
+    if (!state.type || state.type === "none") addWarning("notype");
 
     updateWarningsUI();
 }

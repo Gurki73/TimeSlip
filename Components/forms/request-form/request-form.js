@@ -248,28 +248,34 @@ function initDatePickers() {
 }
 
 function handleDateChange() {
-
-  console.log(" handle date change ");
+  console.log("handle date change");
 
   const start = document.querySelector("#request-start-picker")?.value;
-  const end = document.querySelector("#request-end-picker")?.value;
+  let end = document.querySelector("#request-end-picker")?.value; // let, so we can override
 
-  if (!start || !end) {
+  if (!start) {
     document.querySelector("#request-durration").textContent = "";
     return;
   }
-
-  const days = calculateDaysOff(start, end);
-
-  // Update output
+  let days;
+  if (!end) {
+    end = start;
+    days = 1;
+  } else {
+    days = calculateDaysOff(start, end);
+  }
   document.querySelector("#request-durration").textContent = days;
+  document.querySelector('#request-duration-unit').textContent = days < 2 ? 'Tag' : 'Tage';
+
+  fireWarnings(); // ⚡ recalcWarnings + update UI
 }
 
 function calculateDaysOff(startDate, endDate, federalState) {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  if (!startDate) return 0;
 
-  // Normalize to midnight to avoid missing first/last day
+  const start = new Date(startDate);
+  const end = new Date(endDate || startDate); // default: single-day request
+
   start.setHours(0, 0, 0, 0);
   end.setHours(0, 0, 0, 0);
 
@@ -277,21 +283,33 @@ function calculateDaysOff(startDate, endDate, federalState) {
 
   const year = start.getFullYear();
 
-  const allHolidays = getAllHolidaysForYear(year, federalState) || [];
+  // --- Safe holiday lookup ---
+  let allHolidays = [];
+  try {
+    allHolidays = getAllHolidaysForYear(year, federalState) || [];
+  } catch (err) {
+    console.warn("Failed to get holidays:", err);
+  }
 
   const holidayDates = allHolidays
     .filter(h => h.isOpen === false)
-    .filter(h => h.bundesländer?.includes(federalState))
-    .map(h => h.date);
+    .filter(h => !federalState || h.bundesländer?.includes(federalState))
+    .map(h => h.date || "");
 
-  if (!currentEmployee) {
-    const idRaw = document.getElementById("requester-select").value;
-    const id = isNaN(idRaw) ? idRaw : Number(idRaw);
-    currentEmployee = requestEmployees.find(emp => emp.id === id);
+  // --- Safe employee lookup ---
+  let employee = currentEmployee;
+  const employeeIdRaw = document.getElementById("requester-select")?.value;
+
+  if (!employee && employeeIdRaw) {
+    const id = isNaN(employeeIdRaw) ? employeeIdRaw : Number(employeeIdRaw);
+    employee = requestEmployees.find(emp => emp.id === id);
   }
 
-  const employeeWorkdays = currentEmployee.workDays;
+  if (!employee) return 0; // no employee selected yet
 
+  const employeeWorkdays = employee.workDays || [1, 1, 1, 1, 1, 0, 0]; // fallback Mon–Fri
+
+  // --- Loop through days ---
   const yearLimit = new Date(year, 11, 31);
   yearLimit.setHours(0, 0, 0, 0);
 
@@ -299,16 +317,14 @@ function calculateDaysOff(startDate, endDate, federalState) {
 
   let countedDays = 0;
   const d = new Date(start);
-
   let iterations = 0;
 
   while (d <= finalDate && iterations < 366) {
-    const dayOfWeek = d.getDay();
-    const scheduled = employeeWorkdays?.[dayOfWeek] !== "never";
+    const dayOfWeek = d.getDay(); // 0=Sun, 6=Sat
+    const scheduled = employeeWorkdays[dayOfWeek] !== "never";
 
-    // Use LOCAL date instead of UTC to avoid off-by-one holiday errors
     const iso = d.toLocaleDateString("en-CA"); // YYYY-MM-DD
-    const isHoliday = holidayDates.includes(iso);
+    const isHoliday = federalState ? holidayDates.includes(iso) : false;
 
     if (scheduled && !isHoliday) countedDays++;
 
@@ -318,8 +334,6 @@ function calculateDaysOff(startDate, endDate, federalState) {
 
   return countedDays;
 }
-
-
 
 function createDurationMessage(startDate, endDate, employee, vacationType, reducePTO = false) {
   const employeeWorkdays = employee.workDays;
@@ -365,8 +379,17 @@ function renderRequesterList() {
   const requesterSelect = document.getElementById('requester-select');
   requesterSelect.classList.add("noto");
 
-  requesterSelect.innerHTML = '';
+  requesterSelect.innerHTML = ''; // clear old options
 
+  // 1️⃣ Placeholder option
+  const placeholderOption = document.createElement('option');
+  placeholderOption.value = '';                  // no value
+  placeholderOption.innerText = 'Mitarbeiter wählen';
+  placeholderOption.selected = true;             // default visible
+  placeholderOption.disabled = true;             // prevents selecting again
+  requesterSelect.appendChild(placeholderOption);
+
+  // 2️⃣ Add valid employees
   const validEmployees = filterEmployeesByEndDate(requestEmployees);
   console.log("🔹 renderRequesterList -> validEmployees:", validEmployees);
 
@@ -382,15 +405,11 @@ function renderRequesterList() {
     opt.innerHTML = `${employee.personalEmoji} ⇨ ${employee.name}`;
     opt.title = employee.name;
     opt.value = employee.id;
-
     opt.dataset.displayName = employee.name;
 
     requesterSelect.appendChild(opt);
   });
-
-  requesterSelect.selectedIndex = 0;
 }
-
 
 function initRequestEventListener() {
 
@@ -399,10 +418,17 @@ function initRequestEventListener() {
   requestStoreButton.title = "Antrag speichern";
 
   const requesterSelection = document.getElementById('requester-select');
-  requesterSelection.addEventListener("change", (ev) => switchRequester(ev));
+  requesterSelection.addEventListener("change", (ev) => {
+    switchRequester(ev);
+    fireWarnings();
+  });
 
   const requestTypeSelect = document.getElementById('request-type-select');
-  requestTypeSelect.addEventListener("change", (ev) => updateRequestType(ev));
+  requestTypeSelect.addEventListener("change", (ev) => {
+    updateRequestType(ev);
+    fireWarnings();
+  });
+
 
   const requestShiftMorning = document.getElementById('request-morning');
   const requestShiftafternoon = document.getElementById('request-morning');
@@ -483,37 +509,43 @@ function handleRequestMSG(event) {
     newRequest.msg = event.target.value;
   }
 }
-function switchShifts(event, ident, shiftMorning, shiftAfternoon) {
 
-  if (ident === 'morning') {
-    if (event.target.checked) {
-      shiftAfternoon.checked = false;
-      newRequest.shift = "morning";
-      return;
-    }
-
-    newRequest.shift = "none";
-
-    if (event.target.checked) {
-      shiftMorning.checked = false;
-      newRequest.shift = "afternoon";
-    }
-  }
+function afterTypePicked() {
+  // Enable hints or anything else if needed
+  recalcWarnings(); // trigger warning update
 }
 
-function updateRequestStartDate(event, element) {
-  element.classList.remove("request-date-warning");
-  newRequest.startDate = event.target.value;
+function afterRequesterSelected() {
+  setEnabled(document.getElementById('request-type-select'), true);
+  setEnabled(document.getElementById('pick-request-start'), true);
+  setEnabled(document.getElementById('pick-request-end'), false);
+  setEnabled(document.getElementById('multiline-input'), false);
+  setEnabled(document.getElementById('requestStoreButton'), false);
+  setStepActive("step1", true);
 
-  const startDate = new Date(newRequest.startDate);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Remove time part for accurate comparison
-
-  recalcWarnings();
+  recalcWarnings(); // ⚡ trigger warnings safely here
 }
+
+function afterStartDatePicked() {
+  setEnabled(document.getElementById('pick-request-end'), true);
+  setEnabled(document.getElementById('multiline-input'), true);
+  setStepActive("step2", true);
+
+  setTimeout(() => {
+    const warningContainer = document.querySelector(".request-form-warn");
+    if (warningContainer) warningContainer.style.opacity = 1;
+    recalcWarnings(); // ⚡ trigger warnings after container visible
+  }, 1500);
+}
+
+function afterEndDatePicked() {
+  setEnabled(document.getElementById('requestStoreButton'), true);
+  recalcWarnings(); // ⚡ final recalculation
+}
+
 
 function resetRequestForm() {
-  document.getElementById('request-type-select').selectedId = 'vac';
+  document.getElementById('request-type-select').selectedId = '0';
   document.getElementById('multiline-input').value = "";
   document.getElementById('request-vacation-left').innerHTML = "XX";
   document.getElementById('request-vacation-total').innerHTML = "XX";
@@ -580,11 +612,8 @@ function formatDate(timestamp) {
 
 function updateRequestType(event) {
   const selectedType = event.target.value;
-
-  /*
   checkAutoApprovalWarning(selectedType);
   recalcWarnings();
-  */
 }
 
 async function loadAndRenderRequests() {
@@ -931,7 +960,7 @@ export function updateDurationPreview(savePTOchange = false) {
   const startInput = document.getElementById("request-start-picker");
   const endInput = document.getElementById("request-end-picker");
   const durEl = document.getElementById("request-durration");
-  const durElUnit = document.getElementById('request-durattion-unit');
+  const durElUnit = document.getElementById('request-duration-unit');
   const startEl = document.getElementById("request-preview-start");
   const endEl = document.getElementById("request-preview-end");
 

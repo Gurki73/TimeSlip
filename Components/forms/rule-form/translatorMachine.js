@@ -1,3 +1,19 @@
+/**
+ * COMMIT PATH
+ * -----------
+ * - Builds and MUTATES the global machineRuleset
+ * - Used by:
+ *   • calendar rendering
+ *   • day-of-request recommendations
+ *   • loading rules from storage
+ *
+ * ❌ MUST NOT be used for:
+ *   • testing
+ *   • preview
+ *   • sanity checks
+ *   • rule creation UX
+ */
+
 const desiredRuleFormat = {
     id: 0,
     conditionLink: '',
@@ -98,7 +114,7 @@ function translateToMachineRules(inputRule, id) {
 function translateToMachine(inputRule, id = 'test') {
     if (!inputRule) return null;
 
-    console.log("input rule", inputRule);
+    // console.log("input rule", inputRule);
 
     if (!inputRule.main) {
         console.error("No main condition inside a rule");
@@ -194,8 +210,8 @@ function createNegativeOnlyRule(inputRule, id) {
 
 function pickUniverse(timeframeId) {
     switch (timeframeId) {
-        case 'T1': return SHIFT_UNIVERSE;
-        case 'T5': return SPECIAL_UNIVERSE;
+        case 't1': return SHIFT_UNIVERSE;
+        case 't5': return SPECIAL_UNIVERSE;
         default: return DAY_UNIVERSE;
     }
 }
@@ -209,22 +225,30 @@ function createCondition(condition) {
     const safeDetails = (obj) => obj?.details ?? {};
 
     // --- Timeframe / Repeat ---
-    const repeatId = safeId(condition.repeats) || "w0";
+    const repeatId = safeId(condition.repeat) || "w0";
     const timeframeId = safeId(condition.timeframe) || "t0";
+
+    // console.log(repeatId, timeframeId);
 
     let timeframeSlots = [0, 1, 2, 3, 4, 5, 6];
     let timeframeThreshold = 0;
 
+
     switch (repeatId) {
         case "w0":
         case "w1":
+            console.log(" repüeat is w0, w1 = ", repeatId)
+            if (["t1", "t2"].includes(timeframeId)) {
+                console.log(" and timeframe is t1 or t2 ", timeframeId);
+                timeframeSlots = [].concat(safeDetails(condition.timeframe).days || []);
+            }
         case "w2":
             timeframeThreshold = 1;
             break;
         case "w3": // ONLY
             timeframeThreshold = 0;
             if (["t1", "t2"].includes(timeframeId)) {
-                timeframeSlots = safeDetails(condition.timeframe);
+                timeframeSlots = [].concat(safeDetails(condition.timeframe).days || []);
             } else {
                 timeframeThreshold = -1;
             }
@@ -316,49 +340,60 @@ function createCondition(condition) {
 }
 
 export function updateRuleset(storedRuleset) {
+    if (!Array.isArray(storedRuleset) || !storedRuleset.length) {
+        console.warn('⚠️ No rules provided, using empty ruleset');
+        machineRuleset = createRuleset();
+        return machineRuleset;
+    }
 
-    console.log("stored ruleset: ", storedRuleset);
+    console.log("stored ruleset:", storedRuleset);
 
     machineRuleset = createRuleset(machineRuleset);
-
-    console.log("machine ruleset: ", machineRuleset);
-
-    storedRuleset.forEach((uiRule, index) => {
-
-        const machineRules = translateToMachineRules(uiRule, index + 1);
-
-        machineRules.forEach(machineRule => {
-
-            const dominant = machineRule.dominantCondition;
-
-            const slots = dominant.timeframeSlots;
-            const op = dominant.timeframeLogicOperator;
-            const threshold = dominant.timeframeThreshold;
-
-            // ---- special / shiftly ----
-            if (slots.some(s => typeof s === 'string')) {
-                machineRuleset.shiftly.push(machineRule);
-            }
-
-            if (slots.some(s => SPECIAL_UNIVERSE.includes(s))) {
-                machineRuleset.special.push(machineRule);
-            }
-
-            // ---- weekly ----
-            if (op === 'OR' || op === 'EXACT') {
-                machineRuleset.weekly.push(machineRule);
-            }
-
-            // ---- daily ----
-            if (op === 'AND') {
-                machineRuleset.daily.push(machineRule);
-            }
-        });
-    });
+    fillRulesetFromUiRules(machineRuleset, storedRuleset);
 
     return machineRuleset;
 }
 
+
+export function updateRulesPreview(ruleForPreview) {
+    const previewRuleset = createRuleset();
+    fillRulesetFromUiRules(previewRuleset, ruleForPreview);
+
+    return previewRuleset;
+}
+
+function fillRulesetFromUiRules(targetRuleset, storedRuleset) {
+    storedRuleset.forEach((uiRule, index) => {
+        const machineRules = translateToMachineRules(uiRule, index + 1);
+
+        machineRules.forEach(machineRule => {
+            const dominant = machineRule.dominantCondition;
+            const slots = dominant.timeframeSlots;
+            const op = dominant.timeframeLogicOperator;
+
+            // ---- special / shiftly ----
+            if (slots.some(s => SPECIAL_UNIVERSE.includes(s))) {
+                targetRuleset.special.push(machineRule);
+            }
+            else if (slots.some(s => typeof s === "string")) {
+                targetRuleset.shiftly.push(machineRule);
+            }
+
+
+            // ---- weekly ----
+            if (op === "OR" || op === "EXACT") {
+                targetRuleset.weekly.push(machineRule);
+            }
+
+            // ---- daily ----
+            if (op === "AND") {
+                targetRuleset.daily.push(machineRule);
+            }
+        });
+    });
+
+    return targetRuleset;
+}
 
 function normalizeCondition(condition) {
     return {

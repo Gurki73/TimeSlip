@@ -177,7 +177,7 @@ body[data-mode="sandbox"] {
   border-color: var(--bg-soft-white);
   border-style: double;
   cursor: row-resize;
-  width: 100%;
+  width: 98%;
   position: relative;
   z-index: 10;
 

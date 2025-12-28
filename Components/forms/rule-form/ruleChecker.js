@@ -1,347 +1,327 @@
+const SHIFTS_PER_DAY = 3;
 
-/* --------------------------------------------------------------------------
-   RuleChecker – Save-Time Sanity Checks
-   --------------------------------------------------------------------------
-   Responsibilities:
-   - Normalize raw rule blocks (main + secondary)
-   - Detect contradictions
-   - Detect redundancies / unnecessary complexity
-   - Detect impossible or empty conditions
-   - Validate exception logic (E)
-   - Return result summary for UI + disable Save button if errors exist
+/*
+const ruleTestContext = {
+    from: Date,
+    to: Date,
 
-   This file purposely does NOT modify UI directly except one exported helper.
-   UI calls runSanityChecks() after each change or before save confirmation.
--------------------------------------------------------------------------- */
+    roleCount: 14,
 
-/* ==========================================================================
-   1) ENUMS
-   ========================================================================== */
+    officeDaysByDate: {
+        '2025-01-15': {
+            isOfficeOpen: true,
+            openShifts: { early: true, day: true, late: false }
+        }
+    },
 
-export const RuleState = Object.freeze({
-    OK: { label: "ok", icon: "✅", action: "pass" },
-    WARNING: { label: "warning", icon: "⚠️", action: "warn" },
-    ERROR: { label: "error", icon: "❌", action: "error" },
-    PLACEHOLDER: { label: "placeholder", icon: "🧩", action: "warn" },
-    REDUNDANT: { label: "redundant", icon: "♻️", action: "warn" },
-    INCOMPLETE: { label: "incomplete", icon: "⚠️", action: "error" },
-    CONTRADICTION: { label: "contradiction", icon: "❌", action: "error" }
-});
+    requestsByDate: {
+        '2025-01-15': [
+            { roleIndex: 3, shift: 'early' },
+            { roleIndex: 7, shift: 'day' }
+        ]
+    },
 
-export const CompareResult = Object.freeze({
-    IDENTICAL: "identical",
-    SUBSET: "subset",
-    SUPERSET: "superset",
-    PARTIAL: "partial",
-    DISJOINT: "disjoint",
-    OPPOSITE: "opposite",
-    ONE_EMPTY: "one-empty",
-    IGNORE: "ignore"
-});
+    meta: {
+        completeness: 0.82 // optional, future
+    }
+};
+*/
 
-/* ==========================================================================
-   2) NORMALIZER
-   Converts flow-wizard raw block choices into normalized canonical rules:
-   Example normalized rule:
-   {
-      timeframe: ["fri"],
-      repeats: "every",
-      role: ["chef"],
-      min: 1, max: null,
-      dependency: "present",
-      exception: "none"
-   }
-   ========================================================================== */
-
-function normalizeRule(ruleObj) {
-    if (!ruleObj) return null;
-
-    return {
-        T: ruleObj.T?.id ?? "T0",
-        W: ruleObj.W?.id ?? "W0",
-        A: ruleObj.A?.id ?? "A1",
-        G: ruleObj.G?.id ?? "G0",
-        D: ruleObj.D?.id ?? "D0",
-        E: ruleObj.E?.id ?? "E0",
-
-        // numeric details
-        number1: ruleObj.number1 ?? null,
-        number2: ruleObj.number2 ?? null,
-
-        // optional indices/arrays
-        timeframeEntries: ruleObj.T?.indices ?? [],
-        roleEntries: ruleObj.G?.indices ?? [],
-        dependencyEntries: ruleObj.D?.indices ?? []
-    };
+function createEmptyWeekCube(roleCount) {
+    return Array.from({ length: 7 }, () =>
+        Array.from({ length: SHIFTS_PER_DAY }, () =>
+            Array(roleCount).fill(0)
+        )
+    );
 }
 
-/* ==========================================================================
-   3) COMPARISON HELPERS
-   ========================================================================== */
+function createWeekCube(attendanceByRole, roleCount) {
+    const cube = createEmptyWeekCube(roleCount);
 
-function compareSets(a, b) {
-    if ((!a || a.length === 0) && (!b || b.length === 0)) {
-        return CompareResult.IGNORE;
-    }
-    if (!a || a.length === 0 || !b || b.length === 0) {
-        return CompareResult.ONE_EMPTY;
-    }
-
-    const A = new Set(a);
-    const B = new Set(b);
-
-    const intersection = [...A].filter(x => B.has(x));
-
-    if (intersection.length === 0) return CompareResult.DISJOINT;
-    if (intersection.length === A.size && intersection.length === B.size) {
-        return CompareResult.IDENTICAL;
-    }
-    if (intersection.length === A.size) return CompareResult.SUBSET;
-    if (intersection.length === B.size) return CompareResult.SUPERSET;
-
-    return CompareResult.PARTIAL;
-}
-
-function compareAmounts(ruleA, ruleB) {
-    const aMin = ruleA.number1 ?? 0;
-    const aMax = ruleA.number2 ?? Infinity;
-
-    const bMin = ruleB.number1 ?? 0;
-    const bMax = ruleB.number2 ?? Infinity;
-
-    // direct contradiction
-    if (aMax < bMin || bMax < aMin) {
-        return CompareResult.OPPOSITE;
-    }
-
-    // identical
-    if (aMin === bMin && aMax === bMax) return CompareResult.IDENTICAL;
-
-    // one is tighter constraint
-    if (aMin >= bMin && aMax <= bMax) return CompareResult.SUBSET;
-    if (bMin >= aMin && bMax <= aMax) return CompareResult.SUPERSET;
-
-    return CompareResult.PARTIAL;
-}
-
-/* ==========================================================================
-   4) CONTRADICTION DETECTOR
-   ========================================================================== */
-
-function detectContradictions(main, second) {
-    const issues = [];
-
-    // --- timeframe conflicts ---
-    const tfCompare = compareSets(main.timeframeEntries, second.timeframeEntries);
-    if (tfCompare === CompareResult.DISJOINT && main.T !== "T0" && second.T !== "T0") {
-        // ok — different timeframes is NOT a contradiction
-    }
-
-    // --- amount clash (max < min) ---
-    const amountCompare = compareAmounts(main, second);
-    if (amountCompare === CompareResult.OPPOSITE) {
-        issues.push({
-            type: RuleState.CONTRADICTION,
-            message: "Widerspruch: Mengenangaben schließen sich aus (min/max zu weit auseinander)."
-        });
-    }
-
-    // dependency example:
-    if ((main.D === "D0" && second.D === "D1") ||
-        (main.D === "D1" && second.D === "D0")) {
-        issues.push({
-            type: RuleState.CONTRADICTION,
-            message: "Widerspruch: Anwesenheit vs. Abwesenheit."
-        });
-    }
-
-    return issues;
-}
-
-/* ==========================================================================
-   5) REDUNDANCY CHECK
-   ========================================================================== */
-
-function detectRedundancy(main, second) {
-    const redundancies = [];
-
-    // identical conditions = unnecessary secondary block
-    if (
-        main.T === second.T &&
-        main.W === second.W &&
-        main.A === second.A &&
-        main.G === second.G &&
-        main.D === second.D
-    ) {
-        redundancies.push({
-            type: RuleState.REDUNDANT,
-            message: "Nebenbedingung ist identisch — redundant."
-        });
-    }
-
-    return redundancies;
-}
-
-/* ==========================================================================
-   6) EXCEPTION LOGIC CHECK
-   ========================================================================== */
-
-function validateException(main, second) {
-    if (!second || !main) return [];
-
-    const issues = [];
-
-    switch (main.E) {
-        case "E0": // no exception
-            return [];
-        case "E2": // OR
-            // no contradiction, OR can combine disjoint
-            return [];
-        case "E3": // ABER (if secondary true → main invalid)
-        case "E4": // AUSSER (similar semantics)
-            // detect if secondary *always* overlaps main → impossible rule
-            const tf = compareSets(main.timeframeEntries, second.timeframeEntries);
-            if (tf === CompareResult.IDENTICAL) {
-                issues.push({
-                    type: RuleState.WARNING,
-                    message: "Warnung: Ausnahme wirkt identisch — könnte Regel immer ungültig machen."
-                });
+    for (let role = 0; role < roleCount; role++) {
+        const roleData = attendanceByRole[role] || [];
+        for (let day = 0; day < 7; day++) {
+            const shifts = roleData[day] || [0, 0, 0];
+            for (let s = 0; s < SHIFTS_PER_DAY; s++) {
+                cube[day][s][role] = shifts[s];
             }
-            return issues;
-        case "E5": // limitation: “not more than”
-        case "E6": // limitation: “not less than”
-            // numeric logic handled by amount comparator
-            return [];
-        default:
-            return [];
-    }
-}
-
-/* ==========================================================================
-   7) INCOMPLETE / MISSING CHECKS
-   ========================================================================== */
-
-function detectMissing(main) {
-    const issues = [];
-
-    if (main.G === "G0") {
-        issues.push({ type: RuleState.INCOMPLETE, message: "Aufgabe/Gruppe fehlt." });
-    }
-    if (main.D === "D0" && main.G === "G0") {
-        issues.push({ type: RuleState.INCOMPLETE, message: "Abhängigkeit ohne Aufgabe." });
-    }
-    if (main.T === "T0") {
-        issues.push({ type: RuleState.INCOMPLETE, message: "Zeitraum fehlt." });
+        }
     }
 
-    return issues;
+    return cube;
 }
 
-export function initVisibilityChecker() {
-    console.log("initVisibilityChecker");
-}
+function sumRuleInCube(condition, cube) {
+    let total = 0;
 
-export function resetRule() {
-    console.log("resetRule");
-}
-
-/* ==========================================================================
-   8) MAIN ENTRY POINT
-   ========================================================================== */
-
-export function runSanityChecks(ruleForEditing) {
-    const main = normalizeRule(ruleForEditing);
-    const secondary = ruleForEditing.e && ruleForEditing.e !== "E0"
-        ? normalizeRule({
-            T: ruleForEditing.t,
-            W: ruleForEditing.w,
-            A: ruleForEditing.a,
-            G: ruleForEditing.g,
-            D: ruleForEditing.d,
-            number1: ruleForEditing.number1,
-            number2: ruleForEditing.number2
-        })
-        : null;
-
-    const errors = [];
-    const warnings = [];
-
-    // missing / incomplete
-    detectMissing(main).forEach(e => {
-        if (e.type.action === "error") errors.push(e); else warnings.push(e);
+    condition.timeframeSlots.forEach(day => {
+        for (let s = 0; s < SHIFTS_PER_DAY; s++) {
+            condition.subjectRoles.forEach(role => {
+                total += cube[day][s][role] || 0;
+            });
+        }
     });
 
-    // contradictions main <-> secondary
-    if (secondary) {
-        detectContradictions(main, secondary).forEach(e => {
-            if (e.type.action === "error") errors.push(e); else warnings.push(e);
-        });
+    return total;
+}
 
-        detectRedundancy(main, secondary).forEach(e => warnings.push(e));
+function evaluateCondition(condition, cube) {
+    const total = sumRuleInCube(condition, cube);
+    const violations = [];
 
-        validateException(main, secondary).forEach(e => {
-            if (e.type.action === "error") errors.push(e); else warnings.push(e);
+    if (condition.lowerLimit != null && total < condition.lowerLimit) {
+        violations.push({
+            type: 'TOO_FEW',
+            total,
+            limit: condition.lowerLimit
         });
     }
 
-    return {
-        ok: errors.length === 0,
-        errors,
-        warnings,
-        normalized: { main, secondary }
-    };
+    if (condition.upperLimit != null && total > condition.upperLimit) {
+        violations.push({
+            type: 'TOO_MANY',
+            total,
+            limit: condition.upperLimit
+        });
+    }
+
+    return violations;
 }
 
-/* ==========================================================================
-   9) SAVE BUTTON INTEGRATION
-   ========================================================================== */
+async function updateOfficeDays(api) {
+    if (!api) console.error("API was not passed ==> " + api);
 
-export function updateSaveButton(checkResult) {
-    const saveBtn = document.getElementById("save-rule-button");
-    if (!saveBtn) return;
+    let openOfficeDays = {};
 
-    saveBtn.disabled = !checkResult.ok;
+    try {
+        openOfficeDays = await loadOfficeDaysData(api);
+        if (!Array.isArray(cachedRoles)) {
+            console.warn("Roles is not an array, initializing empty array");
+            cachedRoles = [];
+        }
+    } catch (error) {
+        console.error('Error during initialization:', error);
+        return;
+    }
+}
+async function updateEmployeeShedule(api) {
+    if (!api) console.error("API was not passed ==> " + api);
+
+    let employeeShedule = {};
 }
 
-export function resolveConditionLimits(
-    condition,
-    roleCountsByRoleId
+async function updateRequests(api) {
+    if (!api) console.error("API was not passed ==> " + api);
+    let requestList = [];
+
+    constcurrentYear = Date.getFullYear();
+
+
+}
+
+function evaluateRule(rule, cube) {
+    const { dominantCondition, submissiveCondition, conditionLink } = rule;
+
+    const dom = evaluateCondition(dominantCondition, cube);
+    const sub = submissiveCondition
+        ? evaluateCondition(submissiveCondition, cube)
+        : [];
+
+    switch (conditionLink) {
+        case 'SINGLE':
+            return dom;
+
+        case 'AND':
+            return [...dom, ...sub];
+
+        case 'OR':
+            return dom.length && sub.length ? [...dom, ...sub] : [];
+
+        case 'UNLESS':
+            return sub.length === 0 ? dom : [];
+
+        default:
+            return dom;
+    }
+}
+
+function evaluateRuleset(rules, cube) {
+    return rules.flatMap(rule => evaluateRule(rule, cube));
+}
+
+function startOfISOWeek(date) {
+    const d = new Date(date);
+    const day = (d.getDay() + 6) % 7;
+    d.setDate(d.getDate() - day);
+    d.setHours(0, 0, 0, 0);
+    return d;
+}
+
+function addDays(date, n) {
+    const d = new Date(date);
+    d.setDate(d.getDate() + n);
+    return d;
+}
+
+function dateKey(date) {
+    return date.toISOString().slice(0, 10);
+}
+
+function getISOWeekNumber(date) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+    const week1 = new Date(d.getFullYear(), 0, 4);
+    return (
+        1 +
+        Math.round(
+            ((d - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7
+        )
+    );
+}
+
+function collectDayAttendance(requests, dayFacts) {
+    const attendance = {};
+
+    if (!dayFacts?.isOfficeOpen) return attendance;
+
+    requests.forEach(({ roleIndex, shift }) => {
+        if (!dayFacts.openShifts[shift]) return;
+
+        attendance[roleIndex] ??= [0, 0, 0];
+
+        const idx = shift === 'early' ? 0 : shift === 'day' ? 1 : 2;
+        attendance[roleIndex][idx]++;
+    });
+
+    return attendance;
+}
+
+function buildWeeklyAttendanceCubes(
+    from,
+    to,
+    requestsByDate,
+    dayFactsByDate,
+    roleCount
 ) {
-    let _lowerLimit = 0;
-    let _upperLimit = Infinity;
+    const weeks = [];
+    let cursor = startOfISOWeek(from);
 
-    const originalLowerLimit = condition.lowerLimit;
-    const originalUpperLimit = condition.upperLimit;
+    while (cursor <= to) {
+        const weekStart = new Date(cursor);
+        const cube = createEmptyWeekCube(roleCount);
 
-    switch (condition.ratioType) {
+        for (let d = 0; d < 7; d++) {
+            const date = addDays(weekStart, d);
+            const key = dateKey(date);
 
-        case 'WorkloadSumCheck': // AND + NEEDS
-            // sum reference roles
-            let total = 0;
-            condition.referenceRoles.forEach(role => {
-                total += roleCountsByRoleId(role);
+            const dayAttendance = collectDayAttendance(
+                requestsByDate[key] || [],
+                dayFactsByDate[key]
+            );
+
+            Object.entries(dayAttendance).forEach(([role, shifts]) => {
+                for (let s = 0; s < SHIFTS_PER_DAY; s++) {
+                    cube[d][s][role] += shifts[s];
+                }
             });
+        }
 
-            // apply amount modifiers (placeholder logic)
-            _lowerLimit = Math.floor(originalLowerLimit / total);
-            _upperLimit = Math.ceil(originalUpperLimit / total);
-            break;
+        weeks.push({
+            weekNumber,
+            from,
+            to,
+            cube,
+            daysMeta: Array.from({ length: 7 }, (_, i) =>
+                dateKey(addDays(weekStart, i))
+            )
 
-        case 'PresenceRequirementCheck': // OR + NEEDS
-            // presence-based: reference count > 0 triggers minimum
-            break;
+        });
 
-        case 'CapacityCheck': // AND + HELPS
-            // combined support defines max subject capacity
-            break;
-
-        case 'SupervisionCheck': // OR + HELPS
-            // sum of support roles defines supervision pool
-            break;
+        cursor = addDays(cursor, 7);
     }
 
+    return weeks;
+}
+
+function _normalizeCondition(condition) {
+
     return {
-        lowerLimit: _lowerLimit,
-        upperLimit: _upperLimit
+        weekdays: [0, 1, 2],
+        shifts: ['early'],
+        specials: [],
+        roleScope: {
+            subjects: [2, 4, 7],
+            references: []
+        },
+        limits: {
+            min: 2,
+            max: 5,
+            unit: 'WEEK' | 'DAY' | 'SHIFT'
+        }
+    }
+}
+
+function _evaluateConditionOnWeek(condition, weekCube) {
+    return {
+        violations: [
+            {
+                unit: 'DAY',
+                key: 'Wednesday',
+                count: 3,
+                limit: 2
+            }
+        ]
+    }
+}
+
+function _summarizeViolations(violations, weeksCount) {
+    return {
+        severity: 'LOW' | 'MEDIUM' | 'HIGH',
+        ratio: 0.31,
+        breakdown: {
+            Wednesday: 16 / 52
+        }
     };
+}
+
+export function runCalendarRuleCheck(weeklyCubes, ruleset) {
+    const results = [];
+
+    weeklyCubes.forEach(week => {
+        ruleset.forEach(rule => {
+            const violations = evaluateRule(rule, week.cube);
+
+            if (violations.length > 0) {
+                results.push({
+                    ruleId: rule.id,
+                    weekNumber: week.weekNumber,
+                    violations
+                });
+            }
+        });
+    });
+
+    return results;
+}
+
+
+export function runRulePreview(rule, weeklyCubes) {
+
+    switch (rule.timeslot) {
+        case 'weekly':
+            return weeklyStatistics;
+        case 'daily':
+            return dailyStatistics;
+        case 'shiftly':
+            return shiftlyStatistics;
+        case 'special':
+            return specialStatistics;
+        default: return err;
+    }
+}
+
+export function runRequestRuleCheck(startDate, endDate, requests) {
+    // intentionally empty – implemented later
+    return [];
 }

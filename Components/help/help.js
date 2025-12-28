@@ -52,7 +52,20 @@ const helpEmployees = [
     { emoji: "🚁", name: "Helga", nickname: "Heli", roles: [7, 2, 5] },     // Helicopter mom
 ];
 
-export async function initializeHelp(container, topicId) {
+const HELP_CHAPTERS = {
+    intro: { title: "Einführung", color: "welcome" },
+    calendar: { title: "Öffnungszeiten", color: "calendar" },
+    roles: { title: "Aufgaben", color: "tasks" },
+    employees: { title: "Mitarbeiter", color: "employee" },
+    rules: { title: "Regelwerk", color: "rules" },
+    requests: { title: "Urlaubsanträge", color: "request" },
+    admin: { title: "Werkzeuge", color: "admin" },
+    glossar: { title: "Glossar", color: "calendar" }
+};
+
+
+
+export async function initializeHelp(container, topicId = 'intro') {
     if (!container) return;
 
     try {
@@ -79,7 +92,6 @@ export async function initializeHelp(container, topicId) {
     }
 }
 
-
 function focusFirstTOCEntry() {
     const firstLink = document.querySelector("#help-toc a");
     if (firstLink) {
@@ -103,17 +115,29 @@ function initHelpCollapse() {
 
         // Set initial state based on persisted or default
         button.setAttribute('aria-expanded', expanded);
+
+        if (!content) {
+            console.warn(`⚠️ No content element for ${contentId}`);
+            return;
+        }
+
         content.style.display = expanded ? 'block' : 'none';
         content.classList.toggle('helpChapterHidden', !expanded);
 
-        button.addEventListener('click', () => {
+        button.addEventListener('click', async () => {
+            const chapterName = button.dataset.chapter;
+
+            if (chapterName) {
+                await ensureChapterLoaded(chapterName);
+            }
+
             const isExpanded = button.getAttribute('aria-expanded') === 'true';
             const newExpanded = !isExpanded;
+
             button.setAttribute('aria-expanded', newExpanded);
             content.style.display = newExpanded ? 'block' : 'none';
             content.classList.toggle('helpChapterHidden', !newExpanded);
 
-            // Persist the new state
             localStorage.setItem(`helpCollapse_${contentId}`, newExpanded);
         });
     });
@@ -222,9 +246,10 @@ function initEventListener() {
     });
 
     initHelpToggles();
-
     initTOCScroll();
+    focusFirstTOCEntry();
     highlightCurrentChapter();
+    setTimeout(initHelpToggles, 0);
 }
 
 
@@ -351,6 +376,42 @@ function initHelpToggles() {
     }
 }
 
+const loadedChapters = new Set();
+
+async function ensureChapterLoaded(chapterName) {
+    if (!HELP_CHAPTERS[chapterName]) {
+        console.warn(`⚠️ Unknown help chapter "${chapterName}"`);
+        return;
+    }
+    if (loadedChapters.has(chapterName)) return;
+
+    const container = document.querySelector(
+        `[data-chapter="${chapterName}"] + [data-chapter-content]`
+    ) || document.getElementById(`chapter-${chapterName}-content`);
+
+    if (!container) {
+        console.warn(`⚠️ No container for chapter "${chapterName}"`);
+        return;
+    }
+
+    const response = await fetch(`Components/help/chapters/${chapterName}.html`);
+    if (!response.ok) {
+        container.innerHTML = `<p>Kapitel konnte nicht geladen werden.</p>`;
+        return;
+    }
+
+    const html = await response.text();
+    container.replaceChildren(
+        document.createRange().createContextualFragment(html)
+    );
+
+    // init only inside this chapter
+    scanAndReplaceHelpContent(container);
+    initHelpCollapse();
+    initHelpToggles();
+
+    loadedChapters.add(chapterName);
+}
 
 
 

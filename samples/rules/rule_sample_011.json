@@ -1,0 +1,18 @@
+{
+    "id": "rule_sample_009",
+    "created": 1700000000009,
+    "updated": 1700000000009,
+    "main": {
+      "repeat": { "type": "repeat", "id": "W4", "details": { "bottom": 3, "top": 0 } },
+      "timeframe": { "type": "timeframe", "id": "T3", "details": { "days": [0,3] } },
+      "amount": { "type": "amount", "id": "A8", "details": { "bottom": 1, "top": 1 } },
+      "group": { "type": "group", "id": "G2", "details": { "roles": [1,9] } },
+      "dependency": { "type": "dependency", "id": "D3", "details": { "roles": [2], "bottom": 1, "top": 2 } },
+      "exception": { "type": "exception", "id": "E4" }
+    },
+    "condition": { "repeat": { "type": "repeat", "id": "W0", "details": { "bottom": 0, "top": 0 } },
+                   "timeframe": { "type": "timeframe", "id": "T0", "details": { "days": [] } },
+                   "amount": { "type": "amount", "id": "A1", "details": { "bottom": 0, "top": 0 } },
+                   "group": { "type": "group", "id": "G0", "details": { "roles": [] } },
+                   "dependency": { "type": "dependency", "id": "D0", "details": { "roles": [], "bottom": 0, "top": 0 } } }
+  }

@@ -18,10 +18,14 @@
 
   <div id="rule-tables-container" class="sticky-bottom">
     <!-- ================= current rule preview ================= -->
+    <button id="test-rule" class="noto" aria-label="Neue Regel testen">🔎</button>
+    <button id="save-rule" class="noto" aria-label="Neue Regel speichern">💾</button>
+    
     <div id="newRule" role="region" aria-labelledby="newRule-title">
       <h2 id="newRule-title" class="visually-hidden">
         Aktuelle Regel-Vorschau
       </h2>
+
 
       <span id="typing-text" aria-live="polite">
         &gt; Regel wird erstellt …
@@ -30,8 +34,6 @@
       <span class="blinking-cursor noto" aria-hidden="true">🏗️</span>
     </div>
     <div id="debug-output" class="hidden"></div>
-    <button id="test-rule">🔎</button>
-    <button id="save-rule">💾</button>
 
     <!-- #region Main Table -->
     <fieldset id="rule-first-condition">

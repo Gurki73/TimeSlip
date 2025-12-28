@@ -1,142 +1,52 @@
-📝 Rule Engine To-Do List (Phased, decreasing granularity)
-Phase 0 — Quick housekeeping / syntax fixes
+Solver To-Do List (v0 – Working Backbone)
+1. Demand Object Builder
+1.1 ✔️ Initialize empty demand for all roles  { roleID: { min: 0, max: Infinity } }
+1.2 ✔️ Loop through total rules - Shrink demand ranges (min/max intersection)
+1.3 ☐ Loop through flexible rules - Compute derived min/max from current attendance - Shrink demand ranges again
+1.4 ☐ Result: one final demand object per timeframe
+
+2. Attendance Helpers
+2.5 ☐ Function to compute total per role, total = main + secondary + trinary
+2.6 ☐ Utility to clone attendance (for simulation) 
+2.7 ☐ Utility to apply / revert a reassignment
+
+3. Feasibility Check (Hard Gate)
+3.8 ☐ For each role: Check if attendance.total can reach demand.min - Include potential reassignable employees
+3.9 ☐ If any role fails → mark timeframe as impossible, stop solver
+
+4. Role Status Classification
+4.10 ☐ For each role: deficit = demand.min - total / surplus = total - demand.max
+4.11 ☐ Sort roles by: deficit first / larger absolute violation / rule priority (totals > ratios)
+
+5. Reassignment Candidate Finder
+5.12 ☐ Given a target role: Find employees in this timeframe / Filter by allowed roles (main → secondary → trinary)
+5.13 ☐ Exclude moves that: Break any role below demand.min / Exceed demand.max
+5.14 ☐ Rank candidates by: preference level / moving from surplus role /minimal disruption
+
+6. Simulation Loop (Day / Shift)
+6.15 ☐ While deficits exist: Pick highest-priority role / Simulate best reassignment
+6.16 ☐ After simulation: Recompute attendance / Rebuild flexible demand / Validate all roles against demand ranges
+6.17 ☐ Commit move only if valid
+6.18 ☐ Stop when no improving move exists
+
+7. Stop Conditions & Safety Nets
+7.19 ☐ Max moves per timeframe
+7.20 ☐ Max moves per employee
+7.21 ☐ Detect no-op loops
+
+8. Timeframe Strategy
+8.22 ☐ Shift-level → solve + reassign
+8.23 ☐ Day-level → solve + reassign (primary path)
+8.24 ☐ Week-level → aggregate + warn only
+8.25 ☐ No upward reassignment
+
+9. Diagnostics & Debugging
+9.26 ☐ Log demand before/after solving
+9.27 ☐ Log every committed reassignment
+9.28 ☐ Clear reason when solver stops (solved / stuck / impossible)
+
+10. Beta Scope Guardrails
+10.29 ☐ Ignore special rules
+10.30 ☐ Fixed role range (0–13)
+10.31 ☐ No cross-day employee moves
 
-Fix all remaining typos in property names:
-
-refrenceRoles → referenceRoles
-
-dayly → daily
-
-comparissonOperator → conditionLink
-
-Remove placeholders / obsolete code (like derivedFromRepeat(Wx) in TimeframeDefs)
-
-Ensure createRulset() initializes empty arrays correctly (weekly, daily, shiftly, special, corrupted)
-
-Phase 1 — Atomic functions: timeframe part of createCondition()
-
-Goal: canonical, fully testable, physical workforce only
-
-Handle repeat patterns (W0–W4)
-
-W0/W1 = default/every → timeframeLogicOperator: AND
-
-W2 = either → timeframeLogicOperator: OR
-
-W3 = only → timeframeLogicOperator: ONLY, mark true/false per slot
-
-W4 = X times → timeframeLogicOperator: EXACT, store timeframeThreshold = X
-
-Handle timeframe types (T0–T5)
-
-T0, T2, T3 = day/week aggregation
-
-T1 = shift (early/late/closer)
-
-T5 = special absences (home office, vacation, sick)
-
-Support shifts
-
-Canonical: timeframeSlots = numbers (days) or strings (shift IDs)
-
-W3 / ONLY → expected true/false per slot (Option B)
-
-W0/W1/W2/W4 → aggregated evaluation, no splitting
-
-Logging / testing
-
-Console log input condition and resulting timeframeSlots, timeframeLogicOperator, timeframeThreshold
-
-Test with fake conditions (e.g., early shift only Monday, every shift Tuesday–Thursday, etc.)
-
-Phase 2 — Role handling (subjectRoles / referenceRoles)
-
-Map groups G0–G2 consistently
-
-G0 = single role
-
-G1 = AND group
-
-G2 = OR group
-
-Map dependencies D0/D2/D3 consistently
-
-D0 = presence / total
-
-D2 = “needs” / ratio
-
-D3 = “helps” / ratio
-
-Clean naming, no overlap with UI/human labels
-
-Log results for testing
-
-Phase 3 — Condition translation / machine rules
-
-translateToMachine(inputRule)
-
-Produce canonical rule with:
-
-dominantCondition
-
-submissiveCondition
-
-conditionLink
-
-Respect exceptions E0–E6
-
-E0 = single condition
-
-E1 = AND
-
-E2 = OR
-
-E3/E4/E5/E6 → special, possibly “unless” or min/max
-
-Maintain same structure for all rules
-
-Log output for test inputs
-
-Phase 4 — Evaluation function skeleton
-
-For physical shifts / days only
-
-Evaluate each condition per unit (day/shift)
-
-Boolean output only
-
-Apply conditionLink logic:
-
-single, AND, OR, XOR, unless, LIMIT_MIN, LIMIT_MAX
-
-Special handling for EXACT (W4) → check threshold
-
-Integrate special absences (T5) → automatically mark unavailable
-
-Phase 5 — Integration / diagnostics
-
-Ensure machineRuleset stores rules by type:
-
-weekly, daily, shiftly, special, corrupted
-
-Log rule evaluation per day/shift
-
-Keep ruleId for human-readable mapping
-
-Prepare for calendar UI consumption
-
-Optional: prepare typing effect / dependency matrix examples
-
-Phase 6 — Cleanup / testing / polish
-
-Remove all comments / old notes / pseudo-code
-
-Ensure consistent naming across the engine
-
-Full test with real UI input rules
-
-Verify logs match expectations
-
-Add sample conditions for manual testing
-
-Document canonical structure for future devs

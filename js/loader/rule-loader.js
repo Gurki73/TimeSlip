@@ -15,6 +15,10 @@ export async function loadRuleData(api, attempt = 1) {
     return [];
   }
 
+  let homeKey = localStorage.getItem('dataMode') || 'auto';
+
+  if (homeKey === 'sample') return loadSampleRuleData();
+
   try {
     // Attempt to load an index file first (optional). If not present, fallback to sample list.
     const listPath = `${RULE_FOLDER}/index.json`;
@@ -54,11 +58,19 @@ export async function loadRuleData(api, attempt = 1) {
 }
 
 export async function loadSampleRuleList() {
-  // sample list of rule paths relative to /samples root
   return JSON.stringify([
-    `${RULE_FOLDER}/rule_sample_001.json`,
-    `${RULE_FOLDER}/rule_sample_002.json`,
-    `${RULE_FOLDER}/rule_sample_003.json`
+    "rule_sample_001.json",
+    "rule_sample_002.json",
+    "rule_sample_003.json",
+    "rule_sample_004.json",
+    "rule_sample_005.json",
+    "rule_sample_006.json",
+    "rule_sample_007.json",
+    "rule_sample_008.json",
+    "rule_sample_009.json",
+    "rule_sample_010.json",
+    "rule_sample_011.json",
+    "rule_sample_012.json",
   ]);
 }
 
@@ -75,6 +87,8 @@ function parseIndexOrSampleList(raw) {
 }
 
 export async function loadSampleRuleData() {
+
+  console.log(" LOAD SAMPLE RULE DATA ");
   try {
     // try fetch the sample files bundled with the app
     const sampleIndex = await loadSampleRuleList();
@@ -82,7 +96,8 @@ export async function loadSampleRuleData() {
     const sampleRules = [];
     for (const rel of files) {
       try {
-        const resp = await fetch(`samples/rules/${rel}`);
+        const normalized = rel.replace(/^rules\//, '');
+        const resp = await fetch(`samples/rules/${normalized}`);
         if (!resp.ok) throw new Error('sample fetch failed');
         const text = await resp.text();
         const parsed = parseRuleJSON(text);

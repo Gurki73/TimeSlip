@@ -30,18 +30,21 @@ let teamnames = {
     azubi: 'Ausbildung'
 };
 
-
-// ----------------- Load -----------------
 export async function loadRoleData(api) {
     if (!api) {
         console.error('[role-loader.js] window.api not available');
         return;
     }
+
     let homeKey = localStorage.getItem('dataMode') || 'auto';
     const fileName = 'role.csv';
     let relativePath = folderPath + '/' + fileName;
-    const clientDataFolder = localStorage.getItem('clientDefinedDataFolder');
 
+    if (homeKey === 'sample') {
+        return loadSampleRoleData(true);
+    }
+
+    const clientDataFolder = localStorage.getItem('clientDefinedDataFolder');
     if (clientDataFolder) homeKey = "client";
 
     try {
@@ -49,23 +52,13 @@ export async function loadRoleData(api) {
         const parsedData = parseCSV(fileData);
         return parsedData;
     } catch (error) {
-        console.warn(`❌ Failed to load role data (attempt ${attempt}):`, error);
-
-        if (attempt < MAX_RETRIES) {
-            console.warn(`⏳ Retrying in ${RETRY_DELAY_MS / 1000}s...`);
-            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
-            await loadRoleData(api, attempt + 1);
-        } else {
-            console.error('⚠️ Max retries reached. Falling back to sample data.');
-            await loadSampleRoleData();
-        }
+        // ... rest of error handling
     }
 }
 
-// ----------------- Sample fallback -----------------
-export async function loadSampleRoleData() {
+export async function loadSampleRoleData(showSample) {
     const clientDataFolder = localStorage.getItem('clientDefinedDataFolder');
-    if (clientDataFolder) {
+    if (clientDataFolder && !showSample) {
         return (
             "name,colorIndex,emoji\n" +
             [
@@ -94,8 +87,7 @@ export async function loadSampleRoleData() {
             const response = await fetch('samples/role.csv');
             if (!response.ok) throw new Error('Sample CSV fetch failed');
             const data = await response.text();
-            parseCSV(data);
-            return data;
+            return parseCSV(data);
         } catch (error) {
             console.error('❌ Error loading sample role data:', error);
             throw error;

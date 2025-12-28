@@ -7,7 +7,7 @@ import { loadRequests } from './loader/request-loader.js';
 import { checkOnboardingState } from './Utils/onboarding.js';
 import { initializeLegend } from '../Components/legend/legend.js';
 import { createPresenceSelector, setOfficeStatus } from '../Components/calendar/calendar.js';
-
+import { createWindowButtons } from './Utils/minMaxFormComponent.js';
 let isRefreshing = false;
 
 if (!localStorage.getItem('dataMode')) {
@@ -41,29 +41,33 @@ function switchPresenceUIMode(newMode) {
   localStorage.setItem('presenceUIMode', newMode);
 }
 
-
-
 window.addEventListener('api-ready', async () => {
-
-  await new Promise(resolve => setTimeout(resolve, 50));
-  await loadRoleData(window.api);
-  await loadEmployeeData(window.api);
-  await loadCalendarData(window.api);
-  await loadStateData(window.api);
-  await loadCompanyHolidayData(window.api);
-  await loadOfficeDaysData(window.api);
-  await loadRequests(window.api);
-
-  const { isOnboarding, dataFolder } = await checkOnboardingState(window.api);
   try {
+    // ✅ Wait until DOM is guaranteed to exist
+    await domReady();
+
+    // ✅ Load data (these are real async risks)
+    await loadRoleData(window.api);
+    await loadEmployeeData(window.api);
+    await loadCalendarData(window.api);
+    await loadStateData(window.api);
+    await loadCompanyHolidayData(window.api);
+    await loadOfficeDaysData(window.api);
+    await loadRequests(window.api);
+
+    const { isOnboarding, dataFolder } =
+      await checkOnboardingState(window.api);
+
     const legendContainer = document.getElementById('legend');
-    if (legendContainer) {
-      await initializeLegend(window.api);
-    } else {
+    if (!legendContainer) {
       console.warn('⚠️ Legend container not found at startup');
+      return;
     }
+
+    await initializeLegend(window.api);
+
   } catch (err) {
-    console.error('❌ Failed to initialize legend at startup:', err);
+    console.error('❌ Startup sequence failed:', err);
   }
 });
 
@@ -524,6 +528,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const savedZoom = await window.cacheAPI.getCacheValue('zoomFactor') || 1;
     document.body.style.zoom = savedZoom;
   })();
+  injectWindowButtonsIntoWelcomeHeader();
 });
 
 export async function globalRefresh(mode = localStorage.getItem('dataMode') || 'default') {
@@ -645,10 +650,12 @@ function loadWelcomePage() {
                     aria-hidden="true"
                   />
                 </h4>
-                <ul class="welcome-list-item">
-                  <li class="noto">📄 Anträge stellen</li>
-                  <li class="noto">⟳ Status ändern</li>
-                </ul>
+                  <p class="text-header-5">
+                    <strong>Wieso</strong> ist jemand nicht da?
+                  </p>
+                  <p class="text-small">
+                    Urlaube, Abwesenheiten und deren Status übersichtlich verwalten.
+                  </p>
               </article>
 
               <article
@@ -670,13 +677,12 @@ function loadWelcomePage() {
                     aria-hidden="true"
                   />
                 </h4>
-                <ul class="welcome-list-item">
-                  <li class="noto">➕ Mitarbeiter erstellen</li>
-                  <li class="noto">🔧 Aufgaben zuweisen</li>
-                  <li class="noto">✏️ Mitarbeiter bearbeiten</li>
-                  <li class="noto">⏰ Regelarbeitszeiten definieren</li>
-                  <li class="noto">🗑️ Mitarbeiter entfernen</li>
-                </ul>
+                  <p class="text-header-5">
+                    <strong>Wer</strong> kann <strong>was</strong> – und <strong>wann</strong>?
+                  </p>
+                  <p class="text-small">
+                    Mitarbeiter definieren und Aufgaben und individuelle Arbeitszeiten zuweisen.
+                  </p>
               </article>
 
               <article
@@ -698,11 +704,12 @@ function loadWelcomePage() {
                     aria-hidden="true"
                   />
                 </h4>
-                <ul class="welcome-list-item">
-                  <li class="noto">🎨 Aufgabenfarben zuweisen</li>
-                  <li class="noto">📝 Aufgaben benennen</li>
-                  <li class="noto">🗑️ Aufgaben löschen</li>
-                </ul>
+                  <p class="text-header-5">
+                    <strong>Was</strong> wird überhaupt gemacht?
+                  </p>
+                  <p class="text-small">
+                    Aufgaben anlegen, benennen und visuell gruppieren.
+                  </p>
               </article>
 
               <article
@@ -724,15 +731,12 @@ function loadWelcomePage() {
                     aria-hidden="true"
                   />
                 </h4>
-                <p class="text-small">
-                  Eine Regel ist eine Bedingung, die für den reibungslosen
-                  Ablauf und die Sicherheit der Mitarbeiter gewährleistet werden
-                  sollte.
-                </p>
-                <ul class="welcome-list-item">
-                  <li class="noto">📝 Regeln erstellen</li>
-                  <li class="noto">🔧 Regeln verwalten</li>
-                </ul>
+                  <p class="text-header-5">
+                    <strong>Wie</strong> sieht ein ideales Team aus?
+                  </p>
+                  <p class="text-small">
+                    Regeln festlegen, die eib optimales Zusamenspiel vorgibt.
+                  </p>
               </article>
 
               <article
@@ -754,17 +758,12 @@ function loadWelcomePage() {
                     aria-hidden="true"
                   />
                 </h4>
-                <p class="text-small">
-                  Der Kalender kann individuell angepasst werden, um Ihre
-                  spezifischen Anforderungen zu erfüllen.
-                </p>
-                <ul class="welcome-list-item">
-                  <li class="noto">📅 Bundesland wählen</li>
-                  <li class="noto">⏱️ Öffnungszeiten festlegen</li>
-                  <li class="noto">🏖️ Betriebsferien eingeben</li>
-                  <li class="noto">👨‍💻 Schichten festlegen</li>
-                  <li class="noto">📆 Brücken- und besondere Tage verwalten</li>
-                </ul>
+                  <p class="text-header-5">
+                    <strong>Wann</strong> wird gearbeitet?
+                  </p>
+                  <p class="text-small">
+                    Öffnungszeiten, Feiertage, Schichten und besondere Tage festlegen.
+                  </p>
               </article>
             </div>
           </section>
@@ -779,5 +778,31 @@ function loadWelcomePage() {
   }
 }
 
+function domReady() {
+  if (document.readyState === 'loading') {
+    return new Promise(resolve =>
+      document.addEventListener('DOMContentLoaded', resolve, { once: true })
+    );
+  }
+  return Promise.resolve();
+}
 
+function injectWindowButtonsIntoWelcomeHeader() {
+  const divider = document.getElementById('horizontal-divider');
+  if (!divider || divider.classList.contains('bg-admin')) return;
+
+  // Avoid double-injection
+  if (divider.querySelector('.window-buttons')) return;
+
+  // Ensure right-side container exists
+  let rightGap = divider.querySelector('.right-gap');
+  if (!rightGap) {
+    rightGap = document.createElement('div');
+    rightGap.className = 'right-gap';
+    divider.appendChild(rightGap);
+  }
+
+  const windowBtns = createWindowButtons();
+  rightGap.appendChild(windowBtns);
+}
 
