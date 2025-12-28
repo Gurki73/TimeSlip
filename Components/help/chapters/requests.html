@@ -1,0 +1,89 @@
+<h2>📆 Kapitel 7 – Urlaubsanträge</h2>
+
+<div class="long">
+    <p>
+        Auch wenn Urlaubsanträge oft formlos eingereicht werden – per Post-it, Fahrstuhlgespräch oder E-Mail ohne
+        Struktur – wollen wir sie hier ordentlich erfassen. Das Formular ist in zwei Tabs unterteilt:
+        <strong>"Urlaubsantrag stellen"</strong> und <strong>"Urlaubsanträge verwalten"</strong>.
+    </p>
+</div>
+
+<div class="tiny">
+    <ul>
+        <li>Urlaubsanträge können verschiedene Abwesenheitsarten haben</li>
+        <li>Das System prüft automatisch auf Regelverstöße</li>
+        <li>Die zweite Ansicht erlaubt das Genehmigen oder Ablehnen</li>
+    </ul>
+</div>
+
+<div class="story-tabs">
+    <button data-tab="antrag">📝 Antrag stellen</button>
+    <button data-tab="genehmigung">✅ Antrag verwalten</button>
+</div>
+
+<div class="story-tab-content" data-tab-id="antrag">
+    <h3>📝 Urlaubsantrag stellen</h3>
+
+    <ol>
+        <li><strong>Mitarbeiter auswählen:</strong><br />
+            Im Dropdown wird Name oder Alias gewählt. Ist ein Urlaubsanspruch hinterlegt, wird dieser angezeigt. Das
+            Antragsdatum wird automatisch ausgefüllt.</li>
+
+        <li><strong>Abwesenheitsart auswählen:</strong><br />
+            Zur Auswahl stehen:
+            <em>Urlaub, Dienstreise, Home Office, Schule, Sonderurlaub, Überstunden abbauen, Krank, Unbezahlt</em>.
+            Danach erfolgt die Eingabe von <strong>Start- und Enddatum</strong> via DatePicker. Bei Einzeltagen kann
+            zusätzlich ausgewählt werden: <em>ganztägig, vormittags, nachmittags</em>.
+        </li>
+
+        <li><strong>Optionaler Kommentar:</strong><br />
+            Ein Freitextfeld, z.B. <em>"Mein Sohn spielt die Hauptrolle im Schultheaterstück."</em></li>
+
+        <li><strong>Speichern nicht vergessen!</strong><br />
+            Ohne Speichern gehen Eingaben verloren. Direkt beim Speichern prüft das System, ob der Antrag gegen
+            definierte Regeln verstößt – z. B. ob zu viele Personen gleichzeitig abwesend sind.</li>
+    </ol>
+</div>
+
+<div class="story-tab-content" data-tab-id="genehmigung">
+    <h3>✅ Urlaubsanträge verwalten</h3>
+
+    <p>Alle eingereichten Anträge werden in einer übersichtlichen Tabelle dargestellt. Diese kann nach Monat, Status
+        oder Mitarbeiter gefiltert werden.</p>
+
+    <ul>
+        <li><strong>Dringende Anträge</strong> (Abwesenheitsbeginn innerhalb von drei Arbeitstagen) können nicht
+            weggefiltert oder nach unten sortiert werden.</li>
+    </ul>
+
+    <table class="styled">
+        <thead>
+            <tr>
+                <th>Mitarbeiter</th>
+                <th>Art</th>
+                <th>Dauer</th>
+                <th>Status</th>
+                <th>Kommentar (Antragsteller)</th>
+                <th>Kommentar (Genehmiger)</th>
+                <th>Entscheidung</th>
+                <th>⚠️ Warnungen</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>🐸 Tiana</td>
+                <td>Urlaub</td>
+                <td>3 Tage</td>
+                <td>Ausstehend</td>
+                <td><a href="#">anzeigen</a></td>
+                <td><input type="text" placeholder="Kommentar..." /></td>
+                <td><button>✅</button> <button>❌</button></td>
+                <td><a href="#">⚠️ 1 Regelverstoß</a></td>
+            </tr>
+            <!-- weitere Zeilen folgen -->
+        </tbody>
+    </table>
+
+    <p>Mit einem Klick auf die Warnung wird angezeigt, welche Regel verletzt würde, wenn der Antrag genehmigt wird. Die
+        Entscheidung bleibt beim Vorgesetzten.</p>
+</div>

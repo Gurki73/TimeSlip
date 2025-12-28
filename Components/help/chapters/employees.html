@@ -1,0 +1,114 @@
+<h2 id="help-chapter-5-title" class="chapter-title">
+    <img src="./assets/svg/person-team-svgrepo-com.svg" alt="Icon: Mitarbeiter" class="nav-icon" />
+    Kapitel 5: Mitarbeiter eintragen & verwalten
+</h2>
+
+<div id="help-chapter-5-content" role="region" aria-labelledby="help-chapter-5-title">
+
+    <!-- STORY-MODUS -->
+    <div class="story">
+        <h3>
+            <i="noto">💬</i> Erzähl-Modus: Datenschutz & Suppe
+        </h3>
+        „Warum heißt der Typ eigentlich <b>Grobi</b>?“ fragt {{Ned-0}}.
+        {{Tiana-0}} grinst: „Weil er einmal mit {{Karen}} wegen einer Fliege in der Suppe aneinandergeraten ist. Seitdem
+        – Suppe, Grobi. 🥣🐀“
+        Ned lacht, wird dann aber ernst:
+        „Und was ist mit echtem Namen, Geburtsdatum und so? Dürfen wir das alles speichern?“
+        {{Tiana-1}} nickt. „Dürfen schon – **aber müssen? Nein.** Alias reicht, Emoji reicht, der Rest ist optional.“
+        „Und wer pflegt das alles ein?“
+        „Du. Willkommen im HR-Bereich.“ 😅
+
+        Im Nebenzimmer murmelt {{Bernd}}: „Ich hatte das alles in 'ner Excel mit drei Tabs.“
+        „Und jetzt haben wir’s im Griff“, sagt {{Tiana-0}}, „jeder Mitarbeiter, sauber dokumentiert, Aufgaben klar
+        zugewiesen, Einsatzzeiten sichtbar –
+        **und niemand muss wissen, wann Grobi wirklich Geburtstag hat.**“
+    </div>
+
+    <!-- TECHNIK-KURZ -->
+    <div class="tiny">
+        <h3>Schnellübersicht</h3>
+        - Wir speichern **nur das, was nötig ist**
+        - Nickname/Alias + Emoji reichen für die Planung
+        - Optionale Angaben: Urlaub, Überstunden, Geburtsdatum, Einsatzzeitraum
+        - Aufgaben: 1–3 Rollen aus dem Pool mit Gewichtung
+        - Einsatzzeiten: aus Standardwochenplan auswählbar (z. B. „nie“, „Früh“, „Spät“)
+    </div>
+
+    <div class="story">Der Steuerberater {{dweight-0}} kommt, ungefähr nur zwei bis 3mal im
+        Monat ins "the staffing Table", {{tianana-0}} wundert sich wie sie das in der App angeben kann?
+        <span class="long"> Sie experimentiert etwas herum, mit Ein- und Austrittsdatum oder
+            eine lange Liste von Urlaubsanträgen für unbezahlte Abwesenheiten... aber {{Dweight-0}}
+            Einsätze sind so unregelmässig, es ist zum Mäuse melken.</span>
+        Aber dann wird {{tianana-0}} bewußt, sie muß {{dweight-0}} gar nicht in die App eintragen.
+        Der "Mitarbeiter-Kalender" hilft beim planen für aufeinander angewisenen Aufgaben, Ob {{Dweight-0}}
+        anwesend ist oder nicht, ob er Home-Office macht oder Dienstags die Vorsteuererkährung macht, hat
+        keinen Einfluss auf den Restaurant-betrieb, <span class="long"> Sie überlegt ihn komplett aus der
+            Liste der Mitarbeiter zu löschen, aber der Mitarbeiter-Kalendar erinnert auch an seinen Geburtstag.
+        </span>Letztendlich läßt sie einfach jeden Wochentag ungechecked.
+    </div>
+
+    <!-- TECHNIK-LANG -->
+    <div class="long">
+        <h3>Datenschutz & Identität</h3>
+        <ul>
+            <li>👤 <strong>Keine Pflichtdaten</strong> außer Nickname (Alias) und Aufgaben</li>
+            <li>🔐 <strong>Datensparsamkeit</strong>: kein Vorname, keine E-Mail, keine Telefonnummer nötig</li>
+            <li>🌐 <strong>Online-frei</strong>: alle Daten bleiben lokal im Browser, es sei denn, du aktivierst den
+                Git-Export</li>
+            <li>🛡️ <strong>Verantwortungsvoll</strong>: Du bist Datenverwalter:in – behandle Personalinfos sorgfältig
+            </li>
+        </ul>
+
+        <h3>Mitarbeiter anlegen oder bearbeiten</h3>
+        - Mitarbeiterliste zeigt alle bereits eingetragenen Personen
+        - Unvollständige Einträge sind mit einem Warnsymbol ⚠️ markiert
+        - Du kannst bestehende Personen löschen oder bearbeiten
+        - Es gibt keine automatische Duplikatsprüfung – aber bei gleichen Nicknames kommt es zu Verwechslungen
+
+        <h4>Abschnitt 1: Grunddaten</h4>
+        <ul>
+            <li><strong>Emoji:</strong> Persönliches Symbol aus dem Picker, Vorschau inkl. Hintergrundfarbe</li>
+            <li><strong>Alias:</strong> Spitzname – was im Kalender angezeigt wird</li>
+            <li><strong>Urlaubsanspruch:</strong> (Tage/Jahr) – optional, wird bei Urlaubsantrag berücksichtigt</li>
+            <li><strong>Überstundenkonto:</strong> (Tage) – ebenfalls optional</li>
+            <li><strong>Einsatzzeitraum:</strong> Start- und Enddatum – ideal für Aushilfen, Ferienjobs etc.</li>
+            <li><strong>Geburtstag:</strong> Nur Tag + Monat – zur Anzeige im Kalender als Erinnerung 🎂</li>
+        </ul>
+
+        <h4>Abschnitt 2: Aufgaben</h4>
+        - Wähle 1 bis 3 Aufgaben aus dem vorher definierten Rollenpool
+        - Für jede Aufgabe kann ein Gewicht (Priorität) via Slider festgelegt werden
+        - Diese Gewichtung hilft bei der automatischen Planung (z. B. bevorzugte Aufgabe)
+
+        <h4>Abschnitt 3: Wocheneinsatzzeiten</h4>
+        - Wähle für jeden Wochentag eine Standard-Schicht aus:
+        <ul>
+            <li><strong>Niemals</strong></li>
+            <li><strong>Früh</strong> (z. B. Reinigung, Einkauf, Vorbereitung)</li>
+            <li><strong>Tag</strong> (z. B. Service, Küche)</li>
+            <li><strong>Spät</strong> (z. B. Bar, Empfang)</li>
+        </ul>
+        - Diese Zeiten gelten **als langfristige Vorgabe** – wöchentliche Feinplanung passiert im Kalender
+        - Für echte Wechselschicht-Modelle (z. B. 5-3-5-3) ist dieses Tool **nicht geeignet** – es ist nicht für
+        Schichtdienste in Industrie oder Pflege optimiert
+
+        <p><strong>Tipp:</strong> Wer an einem Wochentag nie kann (z. B. Montags Uni), sollte dort „niemals“ eintragen –
+            das hilft bei der Wochenplanung enorm!</p>
+    </div>
+
+</div>
+<div class="info save-warning">
+    <h4>💾 Änderungen speichern</h4>
+    <p>Die Eingaben gelten **pro Mitarbeiter** und werden nicht automatisch gespeichert.</p>
+    <p><strong>Klicke nach jeder Änderung auf <code>💾 Speichern</code></strong> – sonst gehen Daten verloren, wenn du
+        das Formular schließt oder zu einem anderen Mitarbeiter wechselst.</p>
+</div>
+<div class="info order-note">
+    <p>🧭 <strong>Hinweis zur Reihenfolge:</strong><br>
+        In der App ist das Mitarbeiterformular direkt hinter „Aufgaben“ einsortiert – weil es zu den am häufigsten
+        genutzten gehört.</p>
+    <p>Im Tutorial erscheint dieses Kapitel **erst jetzt**, weil es auf <strong>Aufgaben</strong> (Kapitel 4) und
+        <strong>Öffnungszeiten</strong> (Kapitel 3) aufbaut.
+    </p>
+</div>
