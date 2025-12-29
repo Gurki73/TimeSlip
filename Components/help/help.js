@@ -124,13 +124,23 @@ function initHelpCollapse() {
         content.style.display = expanded ? 'block' : 'none';
         content.classList.toggle('helpChapterHidden', !expanded);
 
+        const chapterLoading = new Set();
+
         button.addEventListener('click', async () => {
             const chapterName = button.dataset.chapter;
 
+            // Prevent multiple clicks while loading
+            if (chapterLoading.has(chapterName)) return;
+
+            // --- SHOW HOURGLASS ---
+            document.body.style.cursor = 'wait';
+            chapterLoading.add(chapterName);
+
             if (chapterName) {
-                await ensureChapterLoaded(chapterName);
+                await ensureChapterLoaded(chapterName); // load chapter content
             }
 
+            // --- TOGGLE COLLAPSE/EXPAND ---
             const isExpanded = button.getAttribute('aria-expanded') === 'true';
             const newExpanded = !isExpanded;
 
@@ -139,6 +149,10 @@ function initHelpCollapse() {
             content.classList.toggle('helpChapterHidden', !newExpanded);
 
             localStorage.setItem(`helpCollapse_${contentId}`, newExpanded);
+
+            // --- HIDE HOURGLASS ---
+            chapterLoading.delete(chapterName);
+            document.body.style.cursor = 'default';
         });
     });
 }
@@ -191,16 +205,14 @@ function expandChapterBySectionId(sectionId) {
 
 function initTOCScroll() {
     document.querySelectorAll('#help-toc a').forEach(link => {
-        link.addEventListener('click', e => {
+        link.addEventListener('click', async e => {
             e.preventDefault();
             const targetId = link.getAttribute('href').substring(1);
 
-            expandChapterBySectionId(targetId);
+            await expandChapterBySectionId(targetId); // make async, wait for load
 
-            // Scrollen zu section (Eltern-Element vom content)
             const content = document.getElementById(targetId);
             if (content) {
-                // find parent section
                 const section = content.closest('section');
                 if (section) {
                     section.scrollIntoView({ behavior: 'smooth' });
@@ -210,7 +222,6 @@ function initTOCScroll() {
             }
         });
     });
-
 }
 
 function highlightCurrentChapter() {

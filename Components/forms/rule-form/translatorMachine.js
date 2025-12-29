@@ -233,13 +233,10 @@ function createCondition(condition) {
     let timeframeSlots = [0, 1, 2, 3, 4, 5, 6];
     let timeframeThreshold = 0;
 
-
     switch (repeatId) {
         case "w0":
         case "w1":
-            console.log(" repüeat is w0, w1 = ", repeatId)
             if (["t1", "t2"].includes(timeframeId)) {
-                console.log(" and timeframe is t1 or t2 ", timeframeId);
                 timeframeSlots = [].concat(safeDetails(condition.timeframe).days || []);
             }
         case "w2":
@@ -266,7 +263,7 @@ function createCondition(condition) {
     let referenceRoles = [];
     let roleLogicOperator = "total";
 
-    const dependencyId = safeId(condition.dependencies);
+    let dependencyId = safeId(condition.dependencies);
     const groupDetails = safeDetails(condition.group ?? condition.groups);
 
     if (dependencyId === "d0") { // presence
@@ -315,14 +312,17 @@ function createCondition(condition) {
                 break;
         }
     } else { // ratio checks
-        const groupAggregation = (condition.groups?.logic ?? "a0").toLowerCase();
+        const groupAggregation = (condition.group?.id ?? "g0").toLowerCase();
+        dependencyId = (condition.dependency?.id ?? "d0").toLowerCase();
+        console.log(dependencyId, groupAggregation);
         if (dependencyId === "d2") { // needs
-            ratioType = ["a0", "a1"].includes(groupAggregation) ? "WorkloadSumCheck" : "PresenceRequirementCheck";
+            ratioType = ["g0", "g1"].includes(groupAggregation) ? 'WORKLOAD' : 'PRESENCE';
         } else if (dependencyId === "d3") { // helps
-            ratioType = ["a0", "a1"].includes(groupAggregation) ? "CapacityCheck" : "SupervisionCheck";
+            ratioType = ["g0", "g1"].includes(groupAggregation) ? 'CAPACITY' : 'SUPERVISION';
         } else {
             ratioType = "corrupt";
         }
+        console.log(ratioType);
     }
 
     return {

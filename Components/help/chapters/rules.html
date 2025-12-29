@@ -4,7 +4,8 @@
     <p><strong>Wozu überhaupt Regeln?</strong></p>
     <p>Das Regelwerk dient einem einzigen, aber wichtigen Zweck: <strong>Es warnt</strong>. Regeln greifen
         <em>nicht</em> automatisch in Planungen ein, sie verändern keine Schichtverteilungen und lehnen keine
-        Urlaubsanträge ab. Stattdessen geben sie kontextabhängig visuelles Feedback an drei Stellen:</p>
+        Urlaubsanträge ab. Stattdessen geben sie kontextabhängig visuelles Feedback an drei Stellen:
+    </p>
     <ul>
         <li><strong>Beim Erstellen einer Regel</strong>, wenn sie widersprüchlich oder unmöglich ist.</li>
         <li><strong>Beim Einreichen eines Urlaubsantrags</strong>, wenn der Antrag einen Regelverstoß auslösen würde.
@@ -103,3 +104,196 @@
     <p><strong>Grenzen des Systems:</strong> Das Regelwerk ist ein Assistenzsystem – kein Ersatz für vorausschauende
         Planung. Für komplexe Betriebslogiken oder Wechselschicht-Modelle braucht es ggf. zusätzliche Tools.</p>
 </div>
+
+<h3>ratio strategy matrix:</h3>
+<table border="1" cellpadding="8" cellspacing="0">
+    <tr>
+        <th></th>
+        <th>braucht<br><small>zwingt Zielperson</small></th>
+        <th>HELPS<br><small>unterstützt Zielperson</small></th>
+    </tr>
+    <tr>
+        <th>Aufgabe/ Gruppe</th>
+        <td>Auslastung</td>
+        <td>Kapazität</td>
+    </tr>
+    <tr>
+        <th>Alternative</th>
+        <td>Existenz</td>
+        <td>Aufsicht</td>
+    </tr>
+</table>
+
+<h2>Verhältnis- & Anwesenheitsregeln – Mentalmodell</h2>
+
+<strong>Oberste Direktive</strong><br>
+Flexible Verhältnis-Regeln dürfen <b>niemals gleichzeitig</b>
+<ul>
+    <li>das <b>untere Limit (Minimum)</b> und</li>
+    <li>das <b>obere Limit (Maximum)</b></li>
+</ul>
+verschieben.
+<br>
+<b>Jede Regelart berührt genau eine Grenze.</b>
+
+<hr>
+
+<h3>Grundachsen (wichtig zum Wieder-Einordnen)</h3>
+<ul>
+    <li><b>AND</b> → zählt Mengen / skaliert Verhältnisse</li>
+    <li><b>OR</b> → prüft Existenz (mindestens einer)</li>
+    <li><b>NEEDS</b> → verschiebt <b>Minimum</b></li>
+    <li><b>HELPS</b> → verschiebt <b>Maximum</b></li>
+</ul>
+
+<hr>
+
+<h3>Die 4 Arten flexibler Verhältnis-Regeln</h3>
+
+<ol>
+
+    <!-- 1 -->
+    <li>
+        <strong>Auslastung</strong> (AND + NEEDS)<br>
+        <em>nachfragegetriebenes Minimum</em>
+
+        <p>
+            Für eine bestimmte Anzahl Zielpersonen wird Unterstützung benötigt.
+        </p>
+
+        <p><b>Wirkung:</b></p>
+        <ul>
+            <li>✅ verschiebt <b>lowerLimit</b></li>
+            <li>❌ upperLimit bleibt unverändert</li>
+        </ul>
+
+        <p><b>Formel-Idee:</b></p>
+        <pre>
+min = ceil( subjects / ratio )
+        </pre>
+
+        <p><b>Beispiele (Gastronomie / Pflege):</b></p>
+        <ul>
+            <li>1 Koch braucht 2 Kellner
+                → mindestens doppelt so viele Kellner wie Köche
+            </li>
+            <li>3 Kellner + Lieferfahrer brauchen 1 Koch
+                → je 3 Servicekräfte mindestens 1 Koch
+            </li>
+            <li>10 Pflegekräfte → mindestens 1 Arzt</li>
+        </ul>
+
+        <p>
+            <i>Skaliert mit Arbeitslast.</i>
+        </p>
+    </li>
+
+    <!-- 2 -->
+    <li>
+        <strong>Kapazität</strong> (AND + HELPS)<br>
+        <em>angebotsgetriebenes Maximum</em>
+
+        <p>
+            Jede unterstützende Rolle kann nur eine begrenzte Anzahl Zielpersonen bedienen.
+        </p>
+
+        <p><b>Wirkung:</b></p>
+        <ul>
+            <li>❌ lowerLimit bleibt unverändert</li>
+            <li>✅ verschiebt <b>upperLimit</b></li>
+        </ul>
+
+        <p><b>Formel-Idee:</b></p>
+        <pre>
+max = supporters * capacity
+        </pre>
+
+        <p><b>Beispiele:</b></p>
+        <ul>
+            <li>1 Koch kann max. 4 Kellner unterstützen</li>
+            <li>1 Arzt betreut max. 10 Pflegekräfte</li>
+            <li>1 Ausbilder betreut max. 5 Azubis</li>
+        </ul>
+
+        <p>
+            <i>Skaliert mit verfügbarer Unterstützung.</i>
+        </p>
+    </li>
+
+    <!-- 3 -->
+    <li>
+        <strong>Existenzanforderung</strong> (OR + NEEDS)<br>
+        <em>(früher: „Presence“, bewusst umbenannt)</em>
+
+        <p>
+            Wenn irgendeine Zielrolle existiert, muss mindestens eine unterstützende Rolle existieren.
+        </p>
+
+        <p><b>Wirkung:</b></p>
+        <ul>
+            <li>✅ setzt ein <b>hartes Minimum</b> (meist 1)</li>
+            <li>❌ upperLimit bleibt unverändert</li>
+        </ul>
+
+        <p><b>Formel-Idee:</b></p>
+        <pre>
+if (sum(subjects) > 0)
+    min = required
+        </pre>
+
+        <p><b>Beispiele (Sicherheit / Ausbildung):</b></p>
+        <ul>
+            <li>Wenn Maschine läuft → mindestens 1 Ersthelfer</li>
+            <li>Wenn Labor aktiv → mindestens 1 Sicherheitsbeauftragter</li>
+            <li>Wenn Azubi anwesend → mindestens 1 Trainer</li>
+        </ul>
+
+        <p>
+            <b>Wichtig:</b><br>
+            Das ist <u>keine</u> Betreuungskapazität.<br>
+            Es ist eine <b>Existenz-Erlaubnis</b>.
+        </p>
+    </li>
+
+    <!-- 4 -->
+    <li>
+        <strong>Aufsicht / Supervision</strong> (OR + HELPS)<br>
+        <em>geteilter Unterstützer-Pool</em>
+
+        <p>
+            Jede der genannten Rollen kann Zielpersonen beaufsichtigen.
+        </p>
+
+        <p><b>Wirkung:</b></p>
+        <ul>
+            <li>❌ lowerLimit bleibt unverändert</li>
+            <li>✅ verschiebt <b>upperLimit</b></li>
+        </ul>
+
+        <p><b>Formel-Idee:</b></p>
+        <pre>
+max = sum(supervisors) * supervisionCapacity
+        </pre>
+
+        <p><b>Beispiele:</b></p>
+        <ul>
+            <li>Jeder Senior kann 5 Juniors betreuen</li>
+            <li>Jeder Arzt kann 10 Pflegekräfte überwachen</li>
+            <li>Jeder Ausbilder kann 3 Azubis beaufsichtigen</li>
+        </ul>
+
+        <p>
+            <i>Klassischer Ressourcen-Pool – mental am einfachsten.</i>
+        </p>
+    </li>
+
+</ol>
+
+<hr>
+<h3>Merksatz (für Sprint-Ende 😵‍💫)</h3>
+<ul>
+    <li><b>AND</b> zählt und skaliert</li>
+    <li><b>OR</b> triggert Existenz</li>
+    <li><b>NEEDS</b> verschiebt Minimum</li>
+    <li><b>HELPS</b> verschiebt Maximum</li>
+</ul>
