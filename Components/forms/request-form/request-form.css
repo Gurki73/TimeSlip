@@ -104,12 +104,9 @@
   border-top: 2px solid;
 }
 
-.request-button.active {
-  margin-bottom: -8px;
-}
 .request-button {
   padding: 10px 20px;
-  margin: 5px 5px 0px 5px;
+  margin: 5px 5px -2px 5px;
   border-top-left-radius: 15px;
   border-top-right-radius: 15px;
   border-bottom-left-radius: 0;
@@ -133,14 +130,15 @@
   transition: all 0.3s ease;
 }
 
+.request-button:not(.active) {
+  transform: translateY(2px); 
+  z-index: 1;
+}
 .request-button.active {
-  border-bottom: none;
+  transform: translateY(-2px);
   z-index: 3;
 }
 
-.request-button:hover {
-  transform: translateY(2px);
-}
 .request-form-col {
   background-color: wheat;
   border-color: brown;

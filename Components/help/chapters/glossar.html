@@ -1,94 +1,127 @@
-<h3>Admin Tools: Ein letztes Abenteuer – Bernds unerwartete Wendung</h3>
+<h3>Glossar</h3>
 
-<!-- Narration intro -->
-<div class="dialog-row narration-row">
+<!-- Allgemeine Icons -->
+<section id="glossary-icons">
+    <h4>Allgemeine Icons</h4>
+    <dl>
+        <dt><span class="noto">🛟</span> Hilfe</dt>
+        <dd>Unterstützung oder Rettung im Kontext der App.</dd>
+
+        <dt><span class="noto">⟳</span> Refresh-Bildschirm</dt>
+        <dd>Aktualisiert die Ansicht des aktuellen Bildschirms.</dd>
+
+        <dt><span class="noto">◀⏵</span> vorherig / nächster</dt>
+        <dd>Zeigt den vorherigen oder nächsten Monat/Jahr an.</dd>
+
+        <dt><span class="noto">▷</span> Minimieren / Maximieren</dt>
+        <dd>
+            Viele Komponenten der App können detailliert oder kompakt dargestellt werden,
+            um auf kleinen Bildschirmen alle relevanten Daten übersichtlich anzuzeigen.
+        </dd>
+
+        <dt><span class="noto">↕</span> Drag and Drop</dt>
+        <dd>Ermöglicht die Anpassung der Größe des Formularbereichs.</dd>
+    </dl>
+</section>
+
+<!-- Schichtsystem -->
+<section id="glossary-shifts">
+    <h4>Schichtsystem</h4>
+    <dl>
+        <dt><span class="noto">🐓</span> Frühschicht / Vormittag</dt>
+        <dd>Der erste Abschnitt eines Arbeitstages.</dd>
+
+        <dt><span class="noto">🍴</span> Vollschicht / Ganztags</dt>
+        <dd>Der zweite Abschnitt eines Arbeitstages.</dd>
+
+        <dt><span class="noto">🌜</span> Spätschicht / Nachmittags / Abends</dt>
+        <dd>Der dritte Abschnitt eines Arbeitstages.</dd>
+    </dl>
+
     <p>
-        Es ist der letzte Tag der Onboarding-Reise. Tia hat die Rollen, Regeln und Mitarbeiter eingetragen. Die App
-        läuft wie geschmiert. Doch Bernd sitzt noch skeptisch vor dem Bildschirm. Excel? Tabellen? Alles Blödsinn –
-        dachte er. Bis Großmutter Jubaba, die ehemalige Besitzerin des Restaurants, ihm einen sanften Blick zuwirft…
+        Das Schicht-Modell in der Mitarbeiter-Kalender-App ist flexibel und kein klassisches 3-Schicht-System.
+        Teilzeitkräfte können nur nachmittags eingeplant werden, und Mitarbeitende mit speziellen Aufgaben
+        starten morgens, um Türen zu öffnen oder Equipment vorzubereiten. Nutzer können das Modell nach ihren
+        Bedürfnissen anpassen.
     </p>
-</div>
+</section>
 
-<!-- Szene 1: Bernd & Jubaba -->
-<div class="dialog-row">
-    <figure class="help-img character mirror">
-        <img src="./assets/png/employee_Bernd.png" alt="Bernd" />
-        <figcaption>{{Bernd-epic}}</figcaption>
-    </figure>
-    <div class="dialog-content">
-        <div class="bubble left">
-            „Hmm… also diese App… ich weiß nicht. Kann eine Software wirklich alles lösen? Excel war doch immer mein
-            treuer Begleiter…“
-        </div>
-    </div>
-</div>
+<!-- Schulferien -->
+<section id="glossary-school-holidays">
+    <h4>Schulferien</h4>
+    <dl>
+        <dt><span class="noto">❄️</span> Winter</dt>
+        <dd>Dezember bis Februar</dd>
 
-<div class="dialog-row">
-    <figure class="help-img character">
-        <img src="./assets/png/employee_Jubaba.png" alt="Jubaba" />
-        <figcaption>{{Jubaba-epic}}</figcaption>
-    </figure>
-    <div class="dialog-content">
-        <div class="bubble right">
-            „Bernd… du musst nicht alles verstehen, nur vertrauen. Schau genau hin. Sieh, wie alles zusammenpasst, wie
-            die Rollen wie Puzzleteile ineinander greifen…“
-        </div>
-    </div>
-</div>
+        <dt><span class="noto">🌹</span> Frühling</dt>
+        <dd>März bis Juni</dd>
 
-<!-- Narration: Bernd entdeckt Admin Tools -->
-<div class="dialog-row narration-row">
+        <dt><span class="noto">☀️</span> Sommer</dt>
+        <dd>Juli bis September</dd>
+
+        <dt><span class="noto">🍁</span> Herbst</dt>
+        <dd>Oktober bis November</dd>
+    </dl>
+</section>
+
+<!-- Rollen -->
+<section id="glossary-roles">
+    <h4>Rollen / Hüte</h4>
+    <dl>
+        <dt>Rolle / Hut</dt>
+        <dd>
+            Rollen beschreiben Tätigkeiten, nicht Personen. Ein Mitarbeiter kann mehrere Rollen besitzen
+            (z. B. Kochmütze, Lieferfahrerhelm), aber nicht gleichzeitig in Konflikt stehende Rollen übernehmen.
+            Die Rollen definieren, wer welche Aufgaben übernimmt, wer Hauptverantwortung trägt und wer im Notfall
+            einspringt.
+        </dd>
+    </dl>
+</section>
+
+<!-- Allgemeine Begriffe -->
+<section id="glossary-terms">
+    <h4>Worterklärungen</h4>
+    <dl>
+        <dt>Aufgabe</dt>
+        <dd>Im Kontext der Mitarbeiter-Kalender-App bezeichnet eine Aufgabe eine Sammlung von Tätigkeiten, die
+            zusammen ein bestimmtes Ziel oder Ergebnis bilden.</dd>
+
+        <dt>Request Form</dt>
+        <dd>Formular, mit dem Mitarbeiter Urlaubs-, Schicht- oder Sonderanfragen stellen.</dd>
+
+        <dt>Rule Violation</dt>
+        <dd>Ein Hinweis, dass eine eingegebene Anfrage oder Planung gegen definierte Regeln verstößt.</dd>
+
+        <dt>Evaluation Engine</dt>
+        <dd>Systemkomponente, die alle Regeln prüft und Warnungen oder Hinweise ausgibt.</dd>
+
+        <dt>Self-Healing</dt>
+        <dd>Automatische Korrektur von fehlerhaften Daten, z. B. fehlende Mitarbeiter in Listen.</dd>
+    </dl>
+</section>
+
+<!-- Feiertage -->
+<section id="glossary-holidays">
+    <h4>Feiertage (Beispiele)</h4>
+    <dl>
+        <dt><span class="noto">🎉</span> Neujahrstag</dt>
+        <dd>1. Januar – bundesweit</dd>
+
+        <dt><span class="noto">🌼</span> Tag der Arbeit</dt>
+        <dd>1. Mai – bundesweit</dd>
+
+        <dt><span class="noto">🎄</span> Weihnachten</dt>
+        <dd>25.–26. Dezember – bundesweit</dd>
+
+        <dt><span class="noto">🕊️</span> Pfingstmontag</dt>
+        <dd>Datum variiert – bundesweit</dd>
+
+        <dt><span class="noto">🙏</span> Buß- & Bettag</dt>
+        <dd>Bundeslandabhängig – Beispiel: Sachsen</dd>
+    </dl>
+
     <p>
-        Bernd zögert, klickt auf das Admin-Tools-Symbol 🛠️ und entdeckt einen kleinen, kaum sichtbaren Button:
-        <strong>Buy Me a Coffee ☕</strong>. Ein schelmisches Grinsen huscht über sein Gesicht.
+        Feiertage werden abhängig vom gewählten Bundesland angezeigt, z. B. Bayern, Berlin, Sachsen oder
+        Mecklenburg-Vorpommern.
     </p>
-</div>
-
-<!-- Szene 2: Bernd klickt -->
-<div class="dialog-row">
-    <figure class="help-img character mirror">
-        <img src="./assets/png/employee_Bernd.png" alt="Bernd" />
-        <figcaption>{{Bernd-epic2}}</figcaption>
-    </figure>
-    <div class="dialog-content">
-        <div class="bubble left">
-            „Na gut… mal sehen, was das kann. Admin Tools… check. Buy Me a Coffee… warum nicht? Ein Klick, und
-            fertig.“ 😏
-        </div>
-    </div>
-</div>
-
-<!-- Narration: Der epische Moment -->
-<div class="dialog-row narration-row">
-    <p>
-        Ein Klick – und eine neue Seite öffnet sich. 25€ spenden für die Mühe der Entwickler. Bernd lehnt sich
-        zurück, zufrieden, als hätte er gerade die letzte, geheime Zutat für das perfekte Gericht entdeckt. Excel?
-        Überbewertet. Diese App? Ein Meisterwerk.
-    </p>
-</div>
-
-<!-- Szene 3: Jubaba lächelt -->
-<div class="dialog-row">
-    <figure class="help-img character">
-        <img src="./assets/png/employee_Jubaba.png" alt="Jubaba" />
-        <figcaption>{{Jubaba-epic2}}</figcaption>
-    </figure>
-    <div class="dialog-content">
-        <div class="bubble right">
-            „Siehst du, Bernd… manchmal muss man nur klicken, um die Welt zu verändern. Oder zumindest, um einem
-            Entwickler den Kaffee zu spendieren.“ ☕✨
-        </div>
-    </div>
-</div>
-
-<!-- Narration: Abschluss & moral -->
-<div class="dialog-row narration-row">
-    <p>
-        Und so endet Bernds Reise: vom grummeligen Skeptiker zum dankbaren Unterstützer. Ein epischer Moment, der in
-        keiner Onboarding-Story fehlen darf. 💡 <strong>Tipp:</strong> Admin Tools enthalten viele kleine Helfer für
-        Verantwortliche, von Rollenverwaltung bis hin zu besonderen Aktionen wie „Buy Me a Coffee“. Probieren Sie es
-        aus – vielleicht entdecken Sie Ihr eigenes kleines Wunder.
-    </p>
-</div>
-
-<hr />
+</section>

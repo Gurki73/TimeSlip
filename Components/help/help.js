@@ -90,6 +90,17 @@ export async function initializeHelp(container, topicId = 'intro') {
         console.error('Error loading help page:', err);
         container.innerHTML = `<p>Unable to load help page.</p>`;
     }
+
+    document.querySelectorAll('[data-help-toggle]').forEach(btn => {
+        const contentId = btn.getAttribute('aria-controls');
+        const content = document.getElementById(contentId);
+        if (!content) return;
+
+        btn.setAttribute('aria-expanded', 'true');
+        content.style.display = 'block';
+        content.classList.remove('helpChapterHidden');
+    });
+
 }
 
 function focusFirstTOCEntry() {
@@ -102,25 +113,23 @@ function focusFirstTOCEntry() {
     }
 }
 
-
 function initHelpCollapse() {
     document.querySelectorAll('[data-help-toggle]').forEach(button => {
+        // Avoid binding multiple times
+        if (button.dataset.bound) return;
+        button.dataset.bound = 'true';
+
         const contentId = button.getAttribute('aria-controls');
         const content = document.getElementById(contentId);
-
-        // Try to get persisted state from localStorage
-        const savedState = localStorage.getItem(`helpCollapse_${contentId}`);
-        // If savedState is null, fallback to the aria-expanded attribute, else use savedState
-        const expanded = savedState !== null ? savedState === 'true' : button.getAttribute('aria-expanded') === 'true';
-
-        // Set initial state based on persisted or default
-        button.setAttribute('aria-expanded', expanded);
-
         if (!content) {
             console.warn(`⚠️ No content element for ${contentId}`);
             return;
         }
 
+        const savedState = false;
+        const expanded = savedState !== null ? savedState === 'false' : button.getAttribute('aria-expanded') === 'false';
+
+        button.setAttribute('aria-expanded', expanded);
         content.style.display = expanded ? 'block' : 'none';
         content.classList.toggle('helpChapterHidden', !expanded);
 
@@ -132,33 +141,25 @@ function initHelpCollapse() {
             // Prevent multiple clicks while loading
             if (chapterLoading.has(chapterName)) return;
 
-            // --- SHOW HOURGLASS ---
-            document.body.style.cursor = 'wait';
-            chapterLoading.add(chapterName);
-
-            if (chapterName) {
-                await ensureChapterLoaded(chapterName); // load chapter content
-            }
-
-            // --- TOGGLE COLLAPSE/EXPAND ---
+            // Toggle UI immediately
             const isExpanded = button.getAttribute('aria-expanded') === 'true';
             const newExpanded = !isExpanded;
-
             button.setAttribute('aria-expanded', newExpanded);
             content.style.display = newExpanded ? 'block' : 'none';
             content.classList.toggle('helpChapterHidden', !newExpanded);
-
             localStorage.setItem(`helpCollapse_${contentId}`, newExpanded);
 
-            // --- HIDE HOURGLASS ---
-            chapterLoading.delete(chapterName);
-            document.body.style.cursor = 'default';
+            // If expanding, load chapter in background
+            if (newExpanded && chapterName && !loadedChapters.has(chapterName)) {
+                chapterLoading.add(chapterName);
+                document.body.style.cursor = 'wait';
+                await ensureChapterLoaded(chapterName);
+                chapterLoading.delete(chapterName);
+                document.body.style.cursor = 'default';
+            }
         });
     });
 }
-
-
-
 
 function runHelpSetup() {
     const helpContent = document.getElementById("help-scroll-container");
@@ -209,8 +210,10 @@ function initTOCScroll() {
             e.preventDefault();
             const targetId = link.getAttribute('href').substring(1);
 
-            await expandChapterBySectionId(targetId); // make async, wait for load
+            // Expand visually immediately
+            expandChapterBySectionId(targetId);
 
+            // Then scroll (load happens async in background)
             const content = document.getElementById(targetId);
             if (content) {
                 const section = content.closest('section');

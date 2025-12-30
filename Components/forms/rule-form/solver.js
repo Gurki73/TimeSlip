@@ -1,4 +1,41 @@
 /*
+SOLVER DISCLAIMER:
+
+⚠️ This solver is NOT a full scheduling engine.
+- Its only purpose is to reduce blinking / spammy warnings by performing minor, safe reassignments.
+- It does not know real employees or candidate preferences.
+- Moves are simulated on "role hats" only.
+- Imperfect solutions are acceptable; the main goal is to avoid warning noise.
+- Safety-first: the solver must never violate hard demand constraints.
+
+Think of the solver as a warning reducer, not a scheduler.
+*/
+
+/*
+runSolverPerShift(attendanceByShift, rules)
+│
+├─> runSolver({ timeframe, attendance, rules, options })
+│    └─> solveShift({ timeframe, attendance, rules, options })
+│         ├─> buildStaticDemand(rules.static, timeframe)       // builds hard minimum/maximum per role
+│         ├─> feasibilityCheck(attendance, staticDemand)       // pre-solve feasibility gate
+│         ├─> shrinkFlexDemand(rules.flexible, attendanceClone, timeframe)  // computes flexible demand
+│         │    └─> extractFlexibleDemand(rule, attendanceClone, timeframe)
+│         │         ├─> workloadDemand(rule, attendance)
+│         │         ├─> capacityDemand(rule, attendance)
+│         │         ├─> presenceDemand(rule, attendance)
+│         │         └─> supervisionDemand(rule, attendance)
+│         ├─> mergeDemand(staticDemand, flexDemand)           // computes effective demand
+│         ├─> computeRoleFlexibility(attendanceClone, effectiveDemand)
+│         ├─> rankRolesByPriority(roleStatus)
+│         └─> attemptMove(targetRole, effectiveDemand)
+│              └─> replaceRoleInCloneAttendance(attendanceClone, donorRoleId, fromRank, targetRoleId, toRank)
+│
+├─> cloneAttendance(attendance)                                // used for safe trial moves
+├─> createEmptyDemand(roleCount)                                // used by buildStaticDemand / shrinkFlexDemand
+└─> sumRoles(attendance, roleIds)                               // used in flexible demand computations
+*/
+
+/*
 SOLVER BLACK-BOX CONTRACT
 
 SolverInput = {
@@ -48,8 +85,6 @@ SolverResult = {
 
 */
 
-
-
 /**
  * Terminology:
  * - Employees wear exactly ONE role hat at a time (main)
@@ -57,7 +92,7 @@ SolverResult = {
  * - Solver moves hats, not people
  */
 
-export function runSolver(attendanceByShift, rules) {
+export function runSolverPerShift(attendanceByShift, rules) {
     return {
         early: runSolver({
             timeframe: 'early',
@@ -94,18 +129,108 @@ export function runSolver(input) {
     });
 }
 
+function solveShift({ timeframe, attendance, rules, options = {} }) {
+    const maxSteps = options.maxSteps ?? 10;
+    const allowEmergency = options.allowEmergency ?? false;
 
-function solveShift({ timeframe, attendance, rules, options }) {
-    // 1️⃣ Build static demand
-    // 2️⃣ Feasibility check (hat supply)
-    // 3️⃣ Solver loop
-    // 4️⃣ Return result
+    /*
+    ⚠️ SOLVER DISCLAIMER:
+    - This solver is NOT a full scheduling engine.
+    - Its main goal is to reduce blinking/spammy warnings by performing safe, minimal reassignments of role "hats".
+    - It does NOT know real employees or preferences.
+    - Imperfect solutions are acceptable; safety first: never violate staticDemand.
+    */
+
+    const staticDemand = buildStaticDemand(rules.static, timeframe);
+    const feasibility = feasibilityCheck(attendance, staticDemand);
+    const infeasibleRoles = feasibility.filter(r => !r.feasible);
+
+    if (infeasibleRoles.length) {
+        return {
+            status: 'infeasible',
+            demand: { static: staticDemand, effective: null },
+            feasibility,
+            roleStatus: null,
+            moves: [],
+            finalAttendance: attendance,
+            warnings: infeasibleRoles.map(r => `Role ${r.roleId} cannot be satisfied`)
+        };
+    }
+
+    let attendanceClone = cloneAttendance(attendance);
+    let moves = [];
+    let steps = 0;
+
+    const attemptMove = (targetRole, effectiveDemand) => {
+        for (let fromRank = 0; fromRank < 3; fromRank++) {
+            for (let toRank = 0; toRank < 3; toRank++) {
+                if (!allowEmergency && toRank === 2) continue;
+
+                for (let donorRoleId = 0; donorRoleId < attendanceClone.length; donorRoleId++) {
+                    if (donorRoleId === targetRole.roleId) continue;
+
+                    const donorStatus = computeRoleFlexibility(attendanceClone, effectiveDemand)[donorRoleId];
+                    if (!donorStatus || donorStatus.slackMin <= 0) continue;
+
+                    const trialClone = replaceRoleInCloneAttendance(
+                        cloneAttendance(attendanceClone),
+                        donorRoleId, fromRank,
+                        targetRole.roleId, toRank
+                    );
+
+                    const trialStatus = computeRoleFlexibility(trialClone, effectiveDemand);
+                    const allValid = trialStatus.every(rs =>
+                        rs.total + rs.slackMax >= effectiveDemand[rs.roleId].min &&
+                        rs.total - rs.slackMin <= effectiveDemand[rs.roleId].max
+                    );
+
+                    if (allValid) {
+                        attendanceClone = trialClone;
+                        moves.push({
+                            from: { roleId: donorRoleId, rank: fromRank },
+                            to: { roleId: targetRole.roleId, rank: toRank },
+                            reason: targetRole.deficit > 0 ? 'deficit' : 'surplus'
+                        });
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    };
+
+    while (steps++ < maxSteps) {
+        const flexDemand = shrinkFlexDemand(rules.flexible, attendanceClone, timeframe);
+        const effectiveDemand = mergeDemand(staticDemand, flexDemand);
+
+        const roleStatus = computeRoleFlexibility(attendanceClone, effectiveDemand);
+        const targetRole = rankRolesByPriority(roleStatus).find(r => r.deficit > 0 || r.surplus > 0);
+        if (!targetRole) break;
+
+        if (!attemptMove(targetRole, effectiveDemand)) break;
+    }
+
+    const finalRoleStatus = computeRoleFlexibility(
+        attendanceClone,
+        mergeDemand(staticDemand, shrinkFlexDemand(rules.flexible, attendanceClone, timeframe))
+    );
+
+    if (!moves.length) console.info(`[Solver] No safe moves found for "${timeframe}".`);
+    else console.info(`[Solver] Committed ${moves.length} safe moves for "${timeframe}".`);
+
+    const effectiveDemand = mergeDemand(staticDemand, shrinkFlexDemand(rules.flexible, attendanceClone, timeframe));
+    const warnings = finalRoleStatus
+        .filter(r => r.deficit > 0)
+        .map(r => `Role ${r.roleId} remains underfilled: missing ${r.deficit}`);
 
     return {
-        status: 'todo',
-        effectiveDemand: null,
-        roleStatus: null,
-        moves: []
+        status: moves.length > 0 ? 'ok' : 'unsolved',
+        demand: { static: staticDemand, effective: effectiveDemand },
+        feasibility,
+        roleStatus: finalRoleStatus,
+        moves,
+        finalAttendance: attendanceClone,
+        warnings
     };
 }
 
@@ -547,9 +672,10 @@ export function checkRulesForSpecial(specialName, shiftAttendance) {
 }
 
 // Check all weekly rules against weeklyAttendance
-export function checkRulesForWeek(weeklyAttendance) {
+export function checkRulesForWeek(weeklyAttendance, machineRuleSet) {
     const violations = [];
 
+    if (!machineRuleSet || !machineRuleSet.weekly) return;
     machineRuleSet.weekly.forEach(rule => {
         const roles = rule.dominantCondition.subjectRoles || [];
         const min = rule.dominantCondition.lowerLimit ?? 0;

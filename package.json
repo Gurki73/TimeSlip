@@ -1,6 +1,6 @@
 {
   "name": "mitarbeiterkalender",
-  "version": "1.4.17",
+  "version": "1.4.18",
   "description": "An- und Abwesentheits Planer App",
   "author": "Gurki73 <no-reply@example.com>",
   "main": "js/main.js",
@@ -19,23 +19,25 @@
     "icon": "assets/icons/icon.ico",
     "appId": "com.MitarbeiterKalender.app",
     "productName": "MitarbeiterKalenderApp",
-
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "category": "Office",
       "icon": "assets/png/Icon.png"
     },
-
     "win": {
       "icon": "assets/icons/icon.ico",
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
-
     "nsis": {
       "oneClick": false,
       "perMachine": true,
@@ -46,8 +48,8 @@
       "deleteAppDataOnUninstall": true
     }
   },
-
   "dependencies": {
+    "ansi-styles": "^6.2.3",
     "axios": "^1.7.9",
     "xlsx": "^0.18.5"
   }

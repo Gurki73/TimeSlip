@@ -263,8 +263,8 @@
 
 
 .helpChapter {
-  padding: 1rem;
-  margin: 1 rem;
+  padding: 0.85rem;
+  margin: 0.85rem;
   border-radius: 1rem;
   border-style: groove;
   border-color: blue;
@@ -272,7 +272,18 @@
   scroll-margin-top: 4rem; /* equal to control bar height */
 }
 
+#help-exit-button {
+  height: 2.5rem;
+  width: 2.5rem;
+  background-color: rgba(1, 1, 1, 0.15);
+  border-color: antiquewhite;
+  border-radius: 0.3rem;
+}
+
 #help-controlbar {
+  height: 2.2rem;
+  align-content: center;
+  vertical-align: middle;
   position: sticky;
   top: 0;
   z-index: 999; /* stay above scrollable content */

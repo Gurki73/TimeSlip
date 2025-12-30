@@ -895,6 +895,9 @@ function renderWeekRow(week, monthRequests) {
   const weeklyViolations = checkRulesForWeek(weeklyAttendance);  // TO:DO Legacy
 
   if (warningContainer) {
+
+    console.log(" warning weekly calanedar stuff ");
+    /*
     weeklyViolations.forEach((v) => {
       const icon = document.createElement('span');
       icon.innerHTML = v.icon;
@@ -902,6 +905,7 @@ function renderWeekRow(week, monthRequests) {
       icon.classList.add('violation-icon');
       warningContainer.appendChild(icon);
     });
+    */
   }
 
   return weekRow;
@@ -1127,13 +1131,14 @@ function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts) 
   const officeShiftStatus = keyToBools(officeSchedule);
   const isOfficeClosed = officeSchedule === 'never';
 
+  /*   TO:DO
   const attendanceByShift = {
     early: attendanceMorning ?? createEmptyAttendance(),
     day: attendanceDay ?? createEmptyAttendance(),
     late: attendanceAfternoon ?? createEmptyAttendance()
   };
 
-  /*   TO:DO
+  
   const solverResult = runSolver(
     attendanceByShift,
     {

@@ -1,58 +1,119 @@
-✅ = finished; ☐ = open; 🚧 = in Work / unfinished ; ❌ = cancelled
+Legend
+✅ = finished ☐ = open 🚧 = in work ❌ = cancelled
+🧠 = internal / solver backbone (mostly invisible to users)
+🧱 = for build / beta release only
 
-Core Bug Fixes & Ruleset Finalization
+1. Core Bug Fixes & Ruleset Finalization (User-visible stability)
+
 1.1 ✅ Fix vacation day duration counter
 1.2 ✅ Investigate/fix first employee missing in dropdowns and legends
 1.3 ✅ Fix missing employee rendering on Mondays and Tuesdays
 1.4 ✅ Finish sanity checks — validate rule consistency before saving
 1.5 ✅ Add minimal warnings & hints to request entry
-1.6 ☐ Evaluate rules on loaded data and show warnings in UI
+1.6 🚧 Evaluate rules on loaded data and show warnings in UI
 1.7 ☐ Show rule violations inside Request Form
 1.8 ✅ Ensure first employee/role legend fixes integrate with evaluation engine
 
-Feature Completion & Core Enhancements
+2. Feature Completion & Core Enhancements (Visible features)
+
 2.1 ☐ Hide prevent/sample mode option in admin tool
 2.2 🚧 Add zodiac feature similar to Chinese year
-2.3 ❌ Support drag-and-drop of e-mail text into Request Form
-2.4 ❌ Support drag-and-drop of .eml files for auto-parsed vacation requests
-2.5 ❌ Clipboard watcher: auto-suggest request creation when copied text contains dates
-2.6 ❌ Add “Paste & Parse” box to Request Form (text or email body)
-2.7 ❌ Add parser for WhatsApp exported messages (.txt)
+2.3 ❌ Drag & drop e-mail text into Request Form
+2.4 ❌ Drag & drop .eml files for auto-parsed vacation requests
+2.5 ❌ Clipboard watcher for copied dates
+2.6 ❌ “Paste & Parse” request box
+2.7 ❌ WhatsApp export parser
 
+3. Help Pages & Documentation (Visible, client-facing)
 
-Finish & publish Help Pages (FAQ/shortcuts/workflows)
-3.1 🚧 Finish Glossary skeleton + integrate with UI
+3.1 ✅ Finish Glossary skeleton + integrate with UI
 3.2 ☐ Color customization skeleton (optional)
 
-Rule Execution & Testing
-4.1 🚧 Interpreter skeleton
-4.2 🚧 Evaluation engine integration with employee/day/role dataset
-4.3 ☐ Ensure request triggers correct warnings & highlights in form
-4.4 🚧 Test engine skeleton
-4.5 ☐ Migrate old calendar & rule tests into system
-4.6 ☐ Special-day + shift tests (holidays, birthdays, vacation edge cases)
-4.7 ✅ Run internal QA on Monday/Tuesday rendering bug and first employee missing
-4.8 ☐ Implement basic self-healing for employee list issues
-4.9 🚧 Check rule simplification pipeline (merge identical conditions, flatten exceptions)
-4.10 ❌ Machine-readable → human text preview (optional)
+4. Rule Execution, Solver & Testing (🧠 Internal Backbone)
+4A. Solver / Ruleset Backbone (from Solver To-Do)
 
-Final Polish & Pre-Release
-5.1 ☐ Finish Help Page chapters polish
-5.2 ☐ Finish Glossary polish
+4.1 🧠🚧 Interpreter skeleton
 
-Minor UX improvements: tooltips, icons, clippy hints
-6.1 ☐ Finish feedback bar & state panel
+Demand & Attendance
+4.2 🧠🚧 Evaluation engine integration with employee/day/role dataset
+4.2.1 ✅ Initialize empty demand per role (min/max)
+4.2.2 ✅ Shrink demand via total rules
+4.2.3 🚧 Shrink demand via flexible rules
+4.2.4 ☐ Final demand object per timeframe
+
+4.2.5 ✅ Attendance totals per role (main + secondary + trinary)
+4.2.6 ✅ Attendance clone utility
+4.2.7 🚧 Apply / revert reassignment
+
+4.3 🧠 Feasibility Gate
+4.3.1 ✅ Check if attendance can reach demand.min
+4.3.2 ☐ Abort timeframe if impossible
+
+4.4 🧠 Role Status & Prioritization
+4.4.1 ✅ Compute deficit / surplus
+4.4.2 ✅ Sort by severity & rule priority
+
+4.5 🧠 Reassignment Engine
+4.5.1 ☐ Find candidate employees
+4.5.2 ☐ Validate safe moves
+4.5.3 ☐ Rank by disruption & preference
+
+4.6 🧠 Simulation Loop
+4.6.1 ☐ Simulate reassignment
+4.6.2 ☐ Recompute demand & attendance
+4.6.3 ☐ Commit only valid improvements
+4.6.4 ☐ Stop when stuck
+
+4.7 🧠 Safety Nets
+4.7.1 ☐ Max moves per timeframe
+4.7.2 ☐ Max moves per employee
+4.7.3 ☐ Detect no-op loops
+
+4.8 🧠 Timeframe Strategy
+4.8.1 ☐ Shift-level solve
+4.8.2 ☐ Day-level solve (primary)
+4.8.3 ☐ Week-level warn-only
+4.8.4 ✅ No upward reassignment
+
+4.9 🧠 Diagnostics
+4.9.1 ☐ Log demand before/after
+4.9.2 ☐ Log every move
+4.9.3 ☐ Clear solver stop reason
+
+4.10 🧠 Beta Guardrails
+4.10.1 ✅ Ignore special rules
+4.10.2 ✅ Fixed role ranges
+4.10.3 ✅ No cross-day moves
+
+4B. Testing & QA (bridges solver → UI)
+
+4.11 🚧 Test engine skeleton
+4.12 ❌  Migrate old calendar & rule tests
+4.13 ☐ Special-day & shift edge-case tests
+4.14 ✅ Internal QA: Monday/Tuesday + missing employee
+4.15 ☐ Basic self-healing for employee list issues
+4.16 🚧 Rule simplification pipeline
+4.17 ❌ Machine-readable → human text preview
+
+5. Final Polish & Pre-Release
+
+5.1 🚧 Finish Help Page chapter polish
+5.2 ✅ Finish Glossary
+
+6. UX, Packaging & Release
+
+6.1 ☐ Feedback bar & state panel
 6.2 🚧 Automatic machine translator skeleton
 6.3 ☐ Flow wizard final integration
-6.4 ☐ Build final Itch.io version
-6.5 🚧 Build final GitHub release version
-6.6 🚧 Verify USB-stick installer
+6.4 🧱 Build final Itch.io version
+6.5 🚧 Build final GitHub release
+6.6 ✅ Verify USB-stick installer
 6.7 🚧 Emoji customization (optional)
-6.8 ☐ Release, Marketing & Promo
-6.9 ☐ End-to-end test on packaged builds (Itch.io + GitHub)
-6.10 ✅ Verify all critical fixes are working (Monday/Tuesday bug, vacation counters, birthdays, rules)
-6.11 ☐ Write email to all potential clients who showed interest
-6.12 ☐ Write GitHub release notes / README
-6.13 ☐ Write Itch.io store description / upload screenshots
-6.14 ☐ Backup code + final tagged release
-6.15 ☐ Optional: post teaser GIF or screenshot for social media/newsletter
+6.8 🧱 Release, Marketing & Promo
+6.9 🧱 End-to-end packaged build tests
+6.10 ✅ Verify all critical fixes
+6.11 🧱 Client follow-up emails
+6.12 🧱 GitHub release notes / README
+6.13 🧱 Itch.io description & screenshots
+6.14 🧱 Backup + final tagged release
+6.15 🧱 Optional teaser GIF / screenshot

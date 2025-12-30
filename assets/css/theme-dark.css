@@ -1,46 +1,69 @@
 .theme-dark {
-    --role-0-color: #1e1e1e;
-    --role-1-color: #7aa2f7;
-    --role-2-color: #5c8aff;
-    --role-3-color: #9f7aea;
-    --role-4-color: #9ae6b4;
-    --role-5-color: #f6e05e;
-    --role-6-color: #48bb78;
-    --role-7-color: #ed64a6;
-    --role-8-color: #f56565;
-    --role-9-color: #c53030;
-    --role-10-color: #a0aec0;
-    --role-11-color: #6b46c1;
-    --role-12-color: #e2e8f0;
-    --role-13-color: #f6ad55;
-    --background-color: #121212;          /* Very dark, near black */
-    --text-color: #c8e6c9;                /* Soft pale green, easier on eyes */
-    
-    --primary-accent-color: #81c784;      /* Medium green for highlights */
-    --secondary-accent-color: #4caf50;    /* Slightly deeper green */
-    
-    --button-active-color: #2e7d32;       /* Strong green */
-    --button-inactive-color: #1b5e20;     /* Darker green */
-    --button-hover-color: #388e3c;        /* Hover highlight */
-    
-    /* Calendar Day Backgrounds */
-    --calendar-day-closed-bg: #4a2511;   /* Warm brown, still visible */
-    --calendar-day-regular-bg: #2a3a4d;  /* Muted navy blue */
-    --calendar-day-weekend-bg: #3e6a38;  /* Softer green */
-    --calendar-day-holiday-bg: #b71c1c;  /* Bright red */
-    
-    --holiday-color: #ff8a80;             /* Softer holiday red for text */
-    --weekend-color: #a5d6a7;             /* Light green for weekends */
-    --office-closed-color: #8d6e63;       /* Medium brown */
-    
-    --text-muted-color: #757575;          /* Gray for less important text */
+    --role-0-color: #1a1a1a;             /* Slightly softer black */
+    --role-1-color: #6699ff;             /* Muted blue for main accents */
+    --role-2-color: #4d80ff;             /* Slightly darker accent blue */
+    --role-3-color: #b084cc;             /* Softer purple */
+    --role-4-color: #7fd4a6;             /* Softer green */
+    --role-5-color: #f0d76d;             /* Warm yellow, not harsh */
+    --role-6-color: #43a047;             /* Medium green */
+    --role-7-color: #ec407a;             /* Soft pink */
+    --role-8-color: #ef5350;             /* Warm red */
+    --role-9-color: #c62828;             /* Darker red */
+    --role-10-color: #90a4ae;            /* Cool gray for text/secondary UI */
+    --role-11-color: #6d4c9c;            /* Deep purple */
+    --role-12-color: #dce1e6;            /* Soft off-white for text */
+    --role-13-color: #f4a261;            /* Warm accent orange */
 
-    --color-layout-container-light: black;
-    --color-layout-container-medium: rgb(39, 15, 15);
-    --color-layout-container-dark: darkslategray;
+    --background-color: #121212;         /* Very dark, near black */
+    --text-color: #e0e0e0;               /* Soft neutral gray for main text */
+
+    --primary-accent-color: #2e7d32;     /* Medium green, readable */
+    --secondary-accent-color: #1b5e20;   /* Dark green for depth */
+    --accent-active: darkslateblue;
+    --accent-hover: #5c6bc0;             /* Softer hover blue */
+    --accent-inactive: #37474f;          /* Muted slate gray */
+    --accent-muted: #546e7a;             /* Lighter muted gray-blue */
+
+    --button-active-color: #388e3c;      /* Vibrant green */
+    --button-inactive-color: #2e7d32;    /* Darker green */
+    --button-hover-color: #43a047;       /* Slightly brighter green for hover */
+
+    /* Calendar Day Backgrounds */
+    --calendar-day-closed-bg: #332b27;   /* Deep, warm brown */
+    --calendar-day-regular-bg: #1f2a38;  /* Muted navy for neutral days */
+    --calendar-day-weekend-bg: #2e503f;  /* Muted green for weekends */
+    --calendar-day-holiday-bg: #b71c1c;  /* Strong, clear red */
+
+    --calendar-shift-early-bg: #3f51b5;  /* Muted blue/purple */
+    --calendar-shift-day-bg: #212121;    /* Very dark gray */
+    --calendar-shift-late-bg: #3f51b5;   /* Same muted blue/purple */
+
+    --shift-border-color: #455a64;       /* Slate-gray border */
+
+    --holiday-color: #ff8a80;            /* Soft red for holiday text */
+    --weekend-color: #a5d6a7;            /* Soft green for weekends */
+    --office-closed-color: #795548;      /* Medium brown for office closed */
     
-    --bg-white: black;
-    --bg-soft-white: darkslateblue;
-    --bg-inactive: darkslategray;
+    --text-muted-color: #9e9e9e;         /* Softer gray for secondary text */
+
+    --color-layout-container-light: #1c1c1c; /* Dark charcoal */
+    --color-layout-container-medium: #2b2b2b; /* Slightly lighter charcoal */
+    --color-layout-container-dark: #333f4f;  /* Deep muted blue-gray */
+
+    --bg-white: #1c1c1c;                 /* Soft near-black instead of black */
+    --bg-soft-white: #2c387e;            /* Muted indigo for softer backgrounds */
+    --bg-inactive: #455a64;              /* Slate gray for inactive panels */
+
+    --color-text-request: #a05116;       /* Darker orange, less glaring */
+    --color-text-employee: #2a3d6b;      /* Deep muted blue */
+    --color-text-tasks: #1e4d1e;         /* Dark forest green */
+    --color-text-rules: #2f4f4f;         /* Dark slate gray, easier on eyes */
+    --color-text-calendar: #a42b1f;      /* Deep red for calendar items */
+    --color-text-welcome: #3c5a99;       /* Muted deep blue, still friendly */
+    --color-text-admin: #4b0082;         /* Dark purple, maintains authority feel */
+
+    --color-request-form: #b8860b;       /* Dark goldenrod, rich but not glaring */
+    --color-request-border: #5c3a21;     /* Dark, warm brown */
+    --color-request-list: #8b7d6b;       /* Muted wheat / beige for softer contrast */
+
 }
-  

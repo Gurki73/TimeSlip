@@ -8,9 +8,9 @@ Solver To-Do List (v0 – Working Backbone)
 1.4 ☐ Result: one final demand object per timeframe
 
 2. Attendance Helpers
-2.5 ☐ Function to compute total per role, total = main + secondary + trinary
-2.6 ☐ Utility to clone attendance (for simulation) 
-2.7 ☐ Utility to apply / revert a reassignment
+2.5 ✔️ Function to compute total per role, total = main + secondary + trinary
+2.6 ✔️ Utility to clone attendance (for simulation) 
+2.7 🟠 Utility to apply / revert a reassignment
 
 3. Feasibility Check (Hard Gate)
 3.8 ✔️ For each role: Check if attendance.total can reach demand.min - Include potential reassignable employees
@@ -188,9 +188,3 @@ SOLVER LOOP:
   merge STATIC + FLEX => EFFECTIVE DEMAND
   classify roles
   simulate moves
-
-in work = 🟠 , done = ✅ , to do
-1️⃣ 🟠 Wire static + flex + merge lifecycle cleanly
-2️⃣ ☐ Define solver loop skeleton (no employee logic yet)
-3️⃣ ☐ Design first atomic reassignment with real employees
-4️⃣ ✅ Refactor naming & comments to reduce mental load
