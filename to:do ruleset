@@ -189,7 +189,7 @@ SOLVER LOOP:
   classify roles
   simulate moves
 
-
+in work = 🟠 , done = ✅ , to do
 1️⃣ 🟠 Wire static + flex + merge lifecycle cleanly
 2️⃣ ☐ Define solver loop skeleton (no employee logic yet)
 3️⃣ ☐ Design first atomic reassignment with real employees
