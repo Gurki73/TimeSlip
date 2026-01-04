@@ -72,7 +72,7 @@ function initializeFormState() {
     setStepActive("step2", false);
 
     const requesterEmoji = document.getElementById('requester-emoji');
-    if (requesterEmoji) requesterEmoji.textContent = '❓';
+    if (requesterEmoji) requesterEmoji.textContent = '⊖';
 
     const requestId = document.getElementById('request-id');
     if (requestId) requestId.textContent = 'xx.xx.xxxx. xx.xx';

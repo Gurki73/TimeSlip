@@ -62,19 +62,19 @@ export async function loadSampleRoleData(showSample) {
         return (
             "name,colorIndex,emoji\n" +
             [
-                { name: '?', colorIndex: '0', emoji: '❓' },
-                { name: '?', colorIndex: '1', emoji: '❓' },
-                { name: '?', colorIndex: '2', emoji: '❓' },
-                { name: '?', colorIndex: '3', emoji: '❓' },
-                { name: '?', colorIndex: '4', emoji: '❓' },
-                { name: '?', colorIndex: '5', emoji: '❓' },
-                { name: '?', colorIndex: '6', emoji: '❓' },
-                { name: '?', colorIndex: '7', emoji: '❓' },
-                { name: '?', colorIndex: '8', emoji: '❓' },
-                { name: '?', colorIndex: '9', emoji: '❓' },
-                { name: '?', colorIndex: '10', emoji: '❓' },
-                { name: '?', colorIndex: '11', emoji: '❓' },
-                { name: '?', colorIndex: '12', emoji: '❓' },
+                { name: '?', colorIndex: '0', emoji: '⊖' },
+                { name: '?', colorIndex: '1', emoji: '⊖' },
+                { name: '?', colorIndex: '2', emoji: '⊖' },
+                { name: '?', colorIndex: '3', emoji: '⊖' },
+                { name: '?', colorIndex: '4', emoji: '⊖' },
+                { name: '?', colorIndex: '5', emoji: '⊖' },
+                { name: '?', colorIndex: '6', emoji: '⊖' },
+                { name: '?', colorIndex: '7', emoji: '⊖' },
+                { name: '?', colorIndex: '8', emoji: '⊖' },
+                { name: '?', colorIndex: '9', emoji: '⊖' },
+                { name: '?', colorIndex: '10', emoji: '⊖' },
+                { name: '?', colorIndex: '11', emoji: '⊖' },
+                { name: '?', colorIndex: '12', emoji: '⊖' },
                 { name: 'Azubi', colorIndex: '13', emoji: '✏️' }
             ]
                 .map(role => `${role.name},${role.colorIndex},${role.emoji}`)
@@ -113,7 +113,7 @@ export async function saveRoleData(api) {
     const csvHeader = 'name,colorIndex,emoji';
     const csvContent = [
         csvHeader,
-        ...allRoles.map(role => `${role.name || '?'},${role.colorIndex || 0},${role.emoji || '❓'}`)
+        ...allRoles.map(role => `${role.name || '?'},${role.colorIndex || 0},${role.emoji || '⊖'}`)
     ].join('\n');
 
     try {

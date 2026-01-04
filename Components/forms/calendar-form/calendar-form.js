@@ -9,7 +9,7 @@ import * as Util from './calendar-form-utils.js';
 import { createDateRangePicker } from '../../customDatePicker/customDatePicker.js';
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
-import { createBranchSelect, branchPresetsRoles } from '../../../js/Utils/branch-select.js';
+import { createBranchSelect } from '../../../js/Utils/branch-select.js';
 import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js';
 import { keyToBools } from './calendar-form-utils.js';
 
@@ -1070,6 +1070,9 @@ function populateCompanyHolidaysList(companyHolidays = []) {
     empty.textContent = "Keine Betriebsferien hinterlegt";
     listBody.appendChild(empty);
   } else {
+    // SORT HOLIDAYS BY START DATE (earliest first)
+    companyHolidays.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+
     companyHolidays.forEach(period => {
       const tplItem = document.getElementById('tpl-list-item');
       const fragment = tplItem.content.cloneNode(true);
@@ -2258,7 +2261,7 @@ function analyzeShiftMatrix(boolMatrix) {
     } else if (allFalse) {
       result[shift] = { emoji: '🔒', status: false };      // closed
     } else {
-      result[shift] = { emoji: '❓', status: true };        // inconsistent but still "open"
+      result[shift] = { emoji: '⊖', status: true };        // inconsistent but still "open"
     }
   });
 
@@ -2820,14 +2823,14 @@ function restoreOfficeDaysUI(officeDays) {
 
       if (emoji === '🔑') {
         icon.classList.add('unlocked');
-      } else if (emoji === '❓') {
+      } else if (emoji === '⊖') {
         icon.classList.add('ambigious');
       }
       // 🔒 is default — no class needed
       const wrapper = checkbox.closest('.data-box');
       if (wrapper) {
         wrapper.classList.remove('ambigious');
-        if (emoji === '❓') {
+        if (emoji === '⊖') {
           wrapper.classList.add('ambigious');
         }
       }

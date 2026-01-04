@@ -1,7 +1,75 @@
 // js/loader/loader.js
 import { globalRefresh } from '../renderer.js';
 
+export const states = [
+    { code: 'XX', name: 'Nimmerland' },
+    { code: 'SH', name: 'Schleswig-Holstein' },
+    { code: 'NI', name: 'Niedersachsen' },
+    { code: 'MV', name: 'Mecklenburg-Vorpommern' },
+    { code: 'HB', name: 'Bremen' },
+    { code: 'HH', name: 'Hamburg' },
+    { code: 'NW', name: 'Nordrhein-Westfalen' },
+    { code: 'BB', name: 'Brandenburg' },
+    { code: 'BE', name: 'Berlin' },
+    { code: 'ST', name: 'Sachsen-Anhalt' },
+    { code: 'HE', name: 'Hessen' },
+    { code: 'TH', name: 'Thüringen' },
+    { code: 'RP', name: 'Rheinland-Pfalz' },
+    { code: 'BW', name: 'Baden-Württemberg' },
+    { code: 'SN', name: 'Sachsen' },
+    { code: 'SL', name: 'Saarland' },
+    { code: 'BY', name: 'Bayern' },
+];
+
 const validHomeKeys = ['auto', 'sample', 'client'];
+
+const friendlyNames = {
+    'employee.csv': 'Mitarbeiter Liste',
+    'bridgeDays.csv': 'Brückentage',
+    'officeDays.csv': 'geöffnete Tage',
+    'publicHolidays.csv': 'Feiertage',
+    'state.txt': 'Bundesland',
+    '2025.csv': 'Betriebsferien für Jahr xxxx', // <== need another fix here
+    '2025_requests.csv': 'Urlaubsanträge für Jahr xxxx', // <== need another fix here
+    'emojis.json': 'Benutzerdefinierte Icons',
+    'HB_2025_holidays.csv': 'Schulferien Jahr xxxx in Bundesland', // // <== need another fix here for state and year
+    'role.csv': 'Aufgaben',
+    'teamnames.csv': 'Teamnamen',
+    'rule_002.json': 'Regel', // <= maybe skip id
+};
+
+
+
+function getFriendlyName(fileName) {
+
+    const cleanName = fileName.replace(/\.\w+$/, '');
+    // 1. Static map first
+    if (friendlyNames[fileName]) return friendlyNames[fileName];
+
+    // 2. Dynamic patterns
+    const yearMatch = fileName.match(/(\d{4})/); // match 4-digit year
+    const year = yearMatch ? yearMatch[1] : '';
+
+    if (/^\d{4}\.csv$/.test(fileName)) {
+        return `Betriebsferien für Jahr ${year}`;
+    }
+
+    if (/^\d{4}_requests\.csv$/.test(fileName)) {
+        return `Urlaubsanträge für Jahr ${year}`;
+    }
+
+    // Pattern for state-specific holidays: e.g., HB_2025_holidays.csv
+    const stateMatch = fileName.match(/^([A-Z]{2})_(\d{4})_holidays\.csv$/);
+    if (stateMatch) {
+        const stateCode = stateMatch[1];
+        const state = states.find(s => s.code === stateCode);
+        const stateName = state ? state.name : stateCode;
+        return `Schulferien Jahr ${stateMatch[2]} in ${stateName}`;
+    }
+
+    // fallback: remove extension
+    return fileName.replace(/\.\w+$/, '');
+}
 
 // --- Popup feedback helpers ---
 function showSuccess(message) {
@@ -65,6 +133,8 @@ export async function loadFile(api, homeKey, relativePath, fallbackFunc = null, 
 export async function saveFile(api, folderPath, fileName, content) {
     if (!api) throw new Error('API reference missing');
 
+    const friendlyName = getFriendlyName(fileName);
+
     try {
         const savedPath = await api.saveCSV(folderPath, fileName, content);
 
@@ -83,17 +153,17 @@ export async function saveFile(api, folderPath, fileName, content) {
                 }
             }
 
-            showSuccess(`✅ ${fileName} gespeichert`);
+            showSuccess(`✅ ${friendlyName} gespeichert`);
             console.log(`✅ Successfully saved ${fileName} → ${savedPath}`);
         } else {
-            showFailure(`⚠️ ${fileName} konnte nicht gespeichert werden`);
+            showFailure(`⚠️ ${friendlyName} konnte nicht gespeichert werden`);
             console.warn(`⚠ Failed to save ${fileName}`);
         }
 
         globalRefresh('client');
         return savedPath;
     } catch (err) {
-        showFailure(`❌ Fehler beim Speichern von ${fileName}`);
+        showFailure(`❌ Fehler beim Speichern von ${friendlyName}`);
         console.error(`❌ Error saving ${fileName}:`, err);
         throw err;
     }

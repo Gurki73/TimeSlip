@@ -10,21 +10,62 @@ import { exec } from 'child_process';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+const ZOOM_LEVELS = [
+    { label: '75%', factor: 0.75 },
+    { label: '90%', factor: 0.9 },
+    { label: '100%', factor: 1.0 },
+    { label: '125%', factor: 1.25 },
+    { label: '150%', factor: 1.5 },
+];
+
 let mainWindow;
+let currentZoomFactor = 1.0;
+
+function setZoom(factor) {
+    currentZoomFactor = factor;
+    mainWindow.webContents.setZoomFactor(factor);
+    updateZoomMenu();
+}
+
+function updateZoomMenu() {
+    const menu = Menu.getApplicationMenu();
+    const zoomMenu = menu.getMenuItemById('zoomMenu');
+    if (zoomMenu) {
+        zoomMenu.submenu.clear(); // Clear old items
+        ZOOM_LEVELS.forEach(({ label, factor }) => {
+            zoomMenu.submenu.append(new MenuItem({
+                label,
+                type: 'radio',
+                checked: Math.abs(currentZoomFactor - factor) < 0.01,
+                click: () => setZoom(factor)
+            }));
+        });
+    }
+}
 
 function autoAdjustZoom() {
     const { width } = screen.getPrimaryDisplay().workAreaSize;
 
-    if (width < 1400) {
-        mainWindow.webContents.setZoomFactor(0.75);
-    } else if (width < 1600) {
-        mainWindow.webContents.setZoomFactor(0.8);
+    if (width < 1600) {
+        setZoom(0.75);
     } else if (width < 1920) {
-        mainWindow.webContents.setZoomFactor(1.0);
+        setZoom(0.9);
+    } else if (width < 2560) {
+        setZoom(1.0);
     } else {
-        mainWindow.webContents.setZoomFactor(1.15);
+        setZoom(1.25);
     }
 }
+
+function buildZoomSubmenu() {
+    return ZOOM_LEVELS.map(({ label, factor }) => ({
+        label,
+        type: 'radio',
+        checked: Math.abs(currentZoomFactor - factor) < 0.01,
+        click: () => setZoom(factor),
+    }));
+}
+
 
 function sendThemeToRenderer(themeName) {
     const focusedWindow = BrowserWindow.getFocusedWindow();
@@ -71,324 +112,7 @@ async function createWindow() {
         console.error('Error loading index.html:', error);
     }
 
-
-    const template = [
-        {
-            label: 'Datei',
-            submenu: [
-                {
-                    label: 'Daten Ordner öffnen',
-                    click: async () => {
-                        let folderPath = getClientDataFolder('client');
-
-                        if (!folderPath || !fs.existsSync(folderPath)) {
-                            folderPath = path.join(app.getPath('home'), 'mitarbeiterKalender', 'clientData');
-                            fs.mkdirSync(folderPath, { recursive: true });
-
-                            const markerPath = path.join(folderPath, '.mitarbeiterkalender');
-                            if (!fs.existsSync(markerPath)) fs.writeFileSync(markerPath, 'home-folder-initialized');
-                        }
-                        let files;
-                        try {
-                            files = fs.readdirSync(folderPath);
-                            if (files.length === 0) {
-                                console.log('Folder is empty.');
-                            } else {
-                                console.log('Files in folder:', files);
-                            }
-                        } catch (err) {
-                            console.error('Failed to read folder:', err);
-                            files = [];
-                        }
-
-                        // Open folder in OS
-                        if (process.platform === 'win32') {
-                            const result = await shell.openPath(folderPath);
-                            if (result) {
-                                console.error('Error opening folder in Explorer:', result);
-                                await dialog.showOpenDialog({ defaultPath: folderPath, properties: ['openDirectory'] });
-                            }
-                        } else {
-                            exec(`xdg-open "${folderPath}"`, async (err) => {
-                                if (err) {
-                                    console.warn('xdg-open failed, opening fallback dialog.');
-                                    await dialog.showOpenDialog({
-                                        defaultPath: folderPath,
-                                        properties: ['openDirectory', 'showHiddenFiles', 'multiSelections'],
-                                        filters: [{ name: 'CSV Files', extensions: ['csv'] }]
-                                    });
-                                }
-                            });
-                        }
-                    }
-                },
-                {
-                    label: 'Excel-Datei exportieren…',
-                    click: async () => {
-                        try {
-                            const mod = await import('../excel/excelExport.js');
-                            await mod.exportExcelFile(mainWindow);
-                        } catch (err) {
-                            console.error('Export menu error', err);
-                            dialog.showErrorBox('Export Fehler', String(err));
-                        }
-                    }
-                },
-                {
-                    label: 'Excel-Datei importieren…',
-                    click: async () => {
-                        try {
-                            const mod = await import('../excel/excelImport.js');
-                            await mod.importExcelFile(mainWindow);
-                        } catch (err) {
-                            console.error('Import menu error', err);
-                            dialog.showErrorBox('Import Fehler', String(err));
-                        }
-                    }
-                },
-                { type: 'separator' },
-                {
-                    label: 'Excel-Vorlage erstellen…',
-                    click: async () => {
-                        try {
-                            const mod = await import('../excel/excelTemplate.js');
-                            // NEW function name:
-                            const filePath = mod.buildTemplateToDownloads();
-                            console.log('Template created at:', filePath);
-                        } catch (err) {
-                            console.error('Template menu error', err);
-                            dialog.showErrorBox('Vorlage Fehler', String(err));
-                        }
-                    }
-                },
-                {
-                    label: 'App weitergeben…',
-                    click: () => {
-                        showShareAppDialog(mainWindow);
-                    }
-                },
-                { label: 'Exit', role: 'quit' }
-            ]
-        },
-        {
-            label: 'Anzeige',
-            submenu: [
-                {
-                    label: 'Aktualisieren',
-                    accelerator: 'F5',
-                    click: () => mainWindow.webContents.send('refresh-calendar')
-                },
-                {
-                    label: 'Auto Zoom',
-                    accelerator: 'Ctrl+Z',
-                    click: () => autoAdjustZoom()
-                },
-                {
-                    label: 'Feste Zoomstufe',
-                    submenu: [
-                        {
-                            label: '50%',
-                            accelerator: 'Ctrl+1',
-                            click: () => mainWindow.webContents.setZoomFactor(0.50)
-                        },
-
-                        {
-                            label: '75%',
-                            accelerator: 'Ctrl+2',
-                            click: () => mainWindow.webContents.setZoomFactor(0.75)
-                        },
-                        {
-                            label: '80%',
-                            accelerator: 'Ctrl+3',
-                            click: () => mainWindow.webContents.setZoomFactor(0.80)
-                        },
-                        {
-                            label: '90%',
-                            accelerator: 'Ctrl+4',
-                            click: () => mainWindow.webContents.setZoomFactor(0.90)
-                        },
-                        {
-                            label: '100%',
-                            accelerator: 'Ctrl+0',
-                            click: () => mainWindow.webContents.setZoomFactor(1.00)
-                        },
-                        {
-                            label: '125%',
-                            accelerator: 'Ctrl+5',
-                            click: () => mainWindow.webContents.setZoomFactor(1.25)
-                        },
-                    ]
-                },
-                { type: 'separator' },
-                {
-                    label: 'Farbschemata',
-                    submenu: [
-                        { label: 'Hell', click: () => sendThemeToRenderer('default') },
-                        { label: 'Pastell', click: () => sendThemeToRenderer('pastel') },
-                        { label: 'Dunkel', click: () => sendThemeToRenderer('dark') },
-                        { label: 'Graustufen', click: () => sendThemeToRenderer('greyscale') },
-                    ]
-                },
-                {
-                    label: 'Schalter-Stiel',
-                    submenu: [
-                        { label: 'Umschalter', type: 'radio', checked: true, click: () => sendPresenceUIMode('toggle') },
-                        { label: 'Radio-Tasten', type: 'radio', click: () => sendPresenceUIMode('radio') },
-                    ]
-                },
-                { type: 'separator' },
-                {
-                    label: 'Sternzeichen',
-                    submenu: [
-                        { label: 'versteckt', type: 'radio', checked: true, click: () => setZodiacStyle('none') },
-                        { label: 'astronomisch', type: 'radio', click: () => setZodiacStyle('symbol') },
-                        { label: 'bildlich', type: 'radio', click: () => setZodiacStyle('icon') }
-                    ]
-                }
-            ]
-        },
-        {
-            label: 'Formulare',
-            submenu: [
-                {
-                    label: 'Urlaub',
-                    accelerator: 'CmdOrCtrl+U',
-                    click: () => {
-                        loadFormAndSendToRenderer('request-form', mainWindow.webContents);
-                    }
-                },
-                {
-                    label: 'Mitarbeiter',
-                    accelerator: 'CmdOrCtrl+M',
-                    click: () => {
-                        loadFormAndSendToRenderer('employee-form', mainWindow.webContents);
-                    }
-                },
-                {
-                    label: 'Aufgaben',
-                    accelerator: 'CmdOrCtrl+A',
-                    click: () => {
-                        loadFormAndSendToRenderer('role-form', mainWindow.webContents);
-                    }
-                },
-                {
-                    label: 'Regeln',
-                    accelerator: 'CmdOrCtrl+R',
-                    click: () => {
-                        loadFormAndSendToRenderer('rule-form', mainWindow.webContents);
-                    }
-                },
-                {
-                    label: 'Kalender',
-                    accelerator: 'CmdOrCtrl+K',
-                    click: () => {
-                        loadFormAndSendToRenderer('calendar-form', mainWindow.webContents);
-                    }
-                },
-                {
-                    label: 'Werkzeuge',
-                    accelerator: 'CmdOrCtrl+W',
-                    click: () => {
-                        loadFormAndSendToRenderer('admin-form', mainWindow.webContents);
-                    }
-                },
-                {
-                    label: 'Startseite',
-                    accelerator: 'CmdOrCtrl+H',
-                    click: () => {
-                        loadFormAndSendToRenderer('welcome', mainWindow.webContents);
-                    }
-                },
-            ]
-        },
-        {
-            label: 'Hilfe',
-            submenu: [
-                {
-                    label: 'Anleitung',
-                    accelerator: 'f1',
-                    click: () => mainWindow.webContents.send('open-help', 'anleitung')
-                },
-                {
-                    label: 'Glossar',
-                    accelerator: 'Ctrl+I',
-                    click: () => mainWindow.webContents.send('open-help', 'chapter-glossar')
-                },
-                { type: 'separator' },
-                {
-                    label: 'Statusfeld',
-                    accelerator: 'F11',
-                    click: (menuItem, browserWindow) => {
-                        showStatusPanel(browserWindow);
-                    }
-                },
-                {
-                    label: 'Konsole',
-                    accelerator: 'F12',
-                    click: (menuItem, browserWindow) => {
-                        if (browserWindow) {
-                            browserWindow.webContents.openDevTools();
-                        } else {
-                            console.log('No active window');
-                        }
-                    }
-                },
-                { type: 'separator' },
-                {
-                    label: 'Lizenz',
-                    click: (menuItem, browserWindow) => {
-                        showLicenseDialog(browserWindow);
-                    },
-                },
-                {
-                    label: 'GitHub',
-                    click: (menuItem, browserWindow) => {
-                        showGitHubDialog(browserWindow);
-                    },
-                },
-                {
-                    label: 'Danksagungen',
-                    submenu: [
-                        {
-                            label: 'open holiday api',
-                            click: (menuItem, browserWindow) => {
-                                showAcknowledgementsDialog(browserWindow, 'holidayApi');
-                            }
-                        },
-                        {
-                            label: 'electron',
-                            click: (menuItem, browserWindow) => {
-                                showAcknowledgementsDialog(browserWindow, 'electron');
-                            }
-                        },
-                        {
-                            label: 'axios',
-                            click: (menuItem, browserWindow) => {
-                                showAcknowledgementsDialog(browserWindow, 'axios');
-                            }
-                        },
-                        {
-                            label: 'SVG Repo',
-                            click: (menuItem, browserWindow) => {
-                                showAcknowledgementsDialog(browserWindow, 'svgRepo');
-                            }
-                        },
-                        {
-                            label: 'SheetJS',
-                            click: (menuItem, browserWindow) => {
-                                showAcknowledgementsDialog(browserWindow, 'sheetjs');
-                            }
-                        }
-
-                    ]
-                },
-                {
-                    label: `Version ${app.getVersion()}`,
-                    enabled: false     // so it's just an info line
-                }
-            ]
-        }
-    ];
+    const template = buildMenuTemplate();
 
     const menu = Menu.buildFromTemplate(template);
     Menu.setApplicationMenu(menu);
@@ -565,6 +289,294 @@ function showAcknowledgementsDialog(browserWindow, topic) {
         detail: topicData.detail,
         buttons: ['OK']
     });
+}
+
+function buildMenuTemplate() {
+    return [
+        {
+            label: 'Datei',
+            submenu: [
+                {
+                    label: 'Daten Ordner öffnen',
+                    click: async () => {
+                        let folderPath = getClientDataFolder('client');
+
+                        if (!folderPath || !fs.existsSync(folderPath)) {
+                            folderPath = path.join(app.getPath('home'), 'mitarbeiterKalender', 'clientData');
+                            fs.mkdirSync(folderPath, { recursive: true });
+
+                            const markerPath = path.join(folderPath, '.mitarbeiterkalender');
+                            if (!fs.existsSync(markerPath)) fs.writeFileSync(markerPath, 'home-folder-initialized');
+                        }
+                        let files;
+                        try {
+                            files = fs.readdirSync(folderPath);
+                            if (files.length === 0) {
+                                console.log('Folder is empty.');
+                            } else {
+                                console.log('Files in folder:', files);
+                            }
+                        } catch (err) {
+                            console.error('Failed to read folder:', err);
+                            files = [];
+                        }
+
+                        // Open folder in OS
+                        if (process.platform === 'win32') {
+                            const result = await shell.openPath(folderPath);
+                            if (result) {
+                                console.error('Error opening folder in Explorer:', result);
+                                await dialog.showOpenDialog({ defaultPath: folderPath, properties: ['openDirectory'] });
+                            }
+                        } else {
+                            exec(`xdg-open "${folderPath}"`, async (err) => {
+                                if (err) {
+                                    console.warn('xdg-open failed, opening fallback dialog.');
+                                    await dialog.showOpenDialog({
+                                        defaultPath: folderPath,
+                                        properties: ['openDirectory', 'showHiddenFiles', 'multiSelections'],
+                                        filters: [{ name: 'CSV Files', extensions: ['csv'] }]
+                                    });
+                                }
+                            });
+                        }
+                    }
+                },
+                {
+                    label: 'Excel-Datei exportieren…',
+                    click: async () => {
+                        try {
+                            const mod = await import('../excel/excelExport.js');
+                            await mod.exportExcelFile(mainWindow);
+                        } catch (err) {
+                            console.error('Export menu error', err);
+                            dialog.showErrorBox('Export Fehler', String(err));
+                        }
+                    }
+                },
+                {
+                    label: 'Excel-Datei importieren…',
+                    click: async () => {
+                        try {
+                            const mod = await import('../excel/excelImport.js');
+                            await mod.importExcelFile(mainWindow);
+                        } catch (err) {
+                            console.error('Import menu error', err);
+                            dialog.showErrorBox('Import Fehler', String(err));
+                        }
+                    }
+                },
+                { type: 'separator' },
+                {
+                    label: 'Excel-Vorlage erstellen…',
+                    click: async () => {
+                        try {
+                            const mod = await import('../excel/excelTemplate.js');
+                            // NEW function name:
+                            const filePath = mod.buildTemplateToDownloads();
+                            console.log('Template created at:', filePath);
+                        } catch (err) {
+                            console.error('Template menu error', err);
+                            dialog.showErrorBox('Vorlage Fehler', String(err));
+                        }
+                    }
+                },
+                {
+                    label: 'App weitergeben…',
+                    click: () => {
+                        showShareAppDialog(mainWindow);
+                    }
+                },
+                { label: 'Exit', role: 'quit' }
+            ]
+        },
+        {
+            label: 'Anzeige',
+            submenu: [
+                {
+                    label: 'Aktualisieren',
+                    accelerator: 'F5',
+                    click: () => mainWindow.webContents.send('refresh-calendar')
+                },
+                {
+                    label: 'Auto Zoom',
+                    accelerator: 'Ctrl+Z',
+                    click: () => autoAdjustZoom()
+                },
+                {
+                    label: 'Feste Zoomstufe',
+                    submenu: buildZoomSubmenu(),
+                },
+                { type: 'separator' },
+                {
+                    label: 'Farbschemata',
+                    submenu: [
+                        { label: 'Hell', click: () => sendThemeToRenderer('default') },
+                        { label: 'Pastell', click: () => sendThemeToRenderer('pastel') },
+                        { label: 'Dunkel', click: () => sendThemeToRenderer('dark') },
+                        { label: 'Graustufen', click: () => sendThemeToRenderer('greyscale') },
+                    ]
+                },
+                {
+                    label: 'Schalter-Stiel',
+                    submenu: [
+                        { label: 'Umschalter', type: 'radio', checked: true, click: () => sendPresenceUIMode('toggle') },
+                        { label: 'Radio-Tasten', type: 'radio', click: () => sendPresenceUIMode('radio') },
+                    ]
+                },
+                { type: 'separator' },
+                {
+                    label: 'Sternzeichen',
+                    submenu: [
+                        { label: 'versteckt', type: 'radio', checked: true, click: () => setZodiacStyle('none') },
+                        { label: 'astronomisch', type: 'radio', click: () => setZodiacStyle('symbol') },
+                        { label: 'bildlich', type: 'radio', click: () => setZodiacStyle('icon') }
+                    ]
+                }
+            ]
+        },
+        {
+            label: 'Formulare',
+            submenu: [
+                {
+                    label: 'Urlaub',
+                    accelerator: 'CmdOrCtrl+U',
+                    click: () => {
+                        loadFormAndSendToRenderer('request-form', mainWindow.webContents);
+                    }
+                },
+                {
+                    label: 'Mitarbeiter',
+                    accelerator: 'CmdOrCtrl+M',
+                    click: () => {
+                        loadFormAndSendToRenderer('employee-form', mainWindow.webContents);
+                    }
+                },
+                {
+                    label: 'Aufgaben',
+                    accelerator: 'CmdOrCtrl+A',
+                    click: () => {
+                        loadFormAndSendToRenderer('role-form', mainWindow.webContents);
+                    }
+                },
+                {
+                    label: 'Regeln',
+                    accelerator: 'CmdOrCtrl+R',
+                    click: () => {
+                        loadFormAndSendToRenderer('rule-form', mainWindow.webContents);
+                    }
+                },
+                {
+                    label: 'Kalender',
+                    accelerator: 'CmdOrCtrl+K',
+                    click: () => {
+                        loadFormAndSendToRenderer('calendar-form', mainWindow.webContents);
+                    }
+                },
+                {
+                    label: 'Werkzeuge',
+                    accelerator: 'CmdOrCtrl+W',
+                    click: () => {
+                        loadFormAndSendToRenderer('admin-form', mainWindow.webContents);
+                    }
+                },
+                {
+                    label: 'Startseite',
+                    accelerator: 'CmdOrCtrl+H',
+                    click: () => {
+                        loadFormAndSendToRenderer('welcome', mainWindow.webContents);
+                    }
+                },
+            ]
+        },
+        {
+            label: 'Hilfe',
+            submenu: [
+                {
+                    label: 'Anleitung',
+                    accelerator: 'f1',
+                    click: () => mainWindow.webContents.send('open-help', 'anleitung')
+                },
+                {
+                    label: 'Glossar',
+                    accelerator: 'Ctrl+I',
+                    click: () => mainWindow.webContents.send('open-help', 'chapter-glossar')
+                },
+                { type: 'separator' },
+                {
+                    label: 'Statusfeld',
+                    accelerator: 'F11',
+                    click: (menuItem, browserWindow) => {
+                        showStatusPanel(browserWindow);
+                    }
+                },
+                {
+                    label: 'Konsole',
+                    accelerator: 'F12',
+                    click: (menuItem, browserWindow) => {
+                        if (browserWindow) {
+                            browserWindow.webContents.openDevTools();
+                        } else {
+                            console.log('No active window');
+                        }
+                    }
+                },
+                { type: 'separator' },
+                {
+                    label: 'Lizenz',
+                    click: (menuItem, browserWindow) => {
+                        showLicenseDialog(browserWindow);
+                    },
+                },
+                {
+                    label: 'GitHub',
+                    click: (menuItem, browserWindow) => {
+                        showGitHubDialog(browserWindow);
+                    },
+                },
+                {
+                    label: 'Danksagungen',
+                    submenu: [
+                        {
+                            label: 'open holiday api',
+                            click: (menuItem, browserWindow) => {
+                                showAcknowledgementsDialog(browserWindow, 'holidayApi');
+                            }
+                        },
+                        {
+                            label: 'electron',
+                            click: (menuItem, browserWindow) => {
+                                showAcknowledgementsDialog(browserWindow, 'electron');
+                            }
+                        },
+                        {
+                            label: 'axios',
+                            click: (menuItem, browserWindow) => {
+                                showAcknowledgementsDialog(browserWindow, 'axios');
+                            }
+                        },
+                        {
+                            label: 'SVG Repo',
+                            click: (menuItem, browserWindow) => {
+                                showAcknowledgementsDialog(browserWindow, 'svgRepo');
+                            }
+                        },
+                        {
+                            label: 'SheetJS',
+                            click: (menuItem, browserWindow) => {
+                                showAcknowledgementsDialog(browserWindow, 'sheetjs');
+                            }
+                        }
+
+                    ]
+                },
+                {
+                    label: `Version ${app.getVersion()}`,
+                    enabled: false     // so it's just an info line
+                }
+            ]
+        }
+    ];
 }
 
 export { createWindow };

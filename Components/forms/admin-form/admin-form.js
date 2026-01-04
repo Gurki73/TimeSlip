@@ -356,8 +356,8 @@ export async function initDeletedEmployees(api) {
     const normalized = normalizeEmojiData ? normalizeEmojiData(loadedEmoji) : { pool: (loadedEmoji.pool || []), employees: [], roles: [] };
     emojiPool = normalized.pool || [];
 
-    // filter deleted employees (emoji === '🚮')
-    deletedEmployees = (loadedEmps || []).filter(e => e.personalEmoji === '🚮');
+    // filter deleted employees (emoji === '🗑️')
+    deletedEmployees = (loadedEmps || []).filter(e => e.personalEmoji === '🗑️');
 
     // Sort by nearest endDate to oldest (null/invalid dates go to end)
     deletedEmployees.sort((a, b) => {
@@ -574,7 +574,7 @@ function attachControls() {
 async function refreshList() {
   try {
     const all = await loadEmployeeData(apiRef) || [];
-    deletedEmployees = all.filter(e => e.personalEmoji === '🚮');
+    deletedEmployees = all.filter(e => e.personalEmoji === '🗑️');
     deletedEmployees.sort((a, b) => {
       const aDate = a.endDate ? new Date(a.endDate) : new Date(8640000000000000);
       const bDate = b.endDate ? new Date(b.endDate) : new Date(8640000000000000);

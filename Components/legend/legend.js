@@ -124,7 +124,7 @@ export function renderEmployees(container, employeesToRender = legendEmployees) 
         if (!employee.name ||
             employee.name === '?' ||
             employee.name === 'name' ||
-            employee.personalEmoji === '🚮'
+            employee.personalEmoji === '🗑️'
         ) return;
 
         const listItem = document.createElement('li');
@@ -198,7 +198,7 @@ function renderRoles(container) {
     let lastClick = 0;
 
     lengendRoles.forEach((role, index) => {
-        if (role.emoji === "❓" || ['keine', '?', 'name'].includes(role.name)) return;
+        if (role.emoji === "⊖" || ['keine', '?', 'name'].includes(role.name)) return;
 
         const listItem = document.createElement('li');
         listItem.classList.add('legend-item');

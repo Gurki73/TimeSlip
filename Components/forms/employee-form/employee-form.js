@@ -5,7 +5,7 @@ import { loadOfficeDaysData, officeDays } from '../../../js/loader/calendar-load
 import { keyToBools } from '../calendar-form/calendar-form-utils.js';
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
-import { createBranchSelect, branchPresetsRoles } from '../../../js/Utils/branch-select.js';
+import { createBranchSelect } from '../../../js/Utils/branch-select.js';
 import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js';
 import { createDateRangePicker } from '../../customDatePicker/customDatePicker.js';
 import { loadEmojiData } from '../../../js/loader/custom-loader.js';
@@ -31,8 +31,16 @@ let currentEmployeeId;
 let cachedEmployees = [];
 let cachedRoles = [];
 let deletionLock = false;
+let isDividerUpdating = false;
 
 export async function initializeEmployeeForm(passedApi) {
+
+  console.groupCollapsed(
+    "[EmployeeForm] initializeEmployeeForm called"
+  );
+  console.trace();
+  console.groupEnd();
+
 
   api = passedApi;
   if (!api) console.error("Api was not passed ==> " + api);
@@ -41,7 +49,7 @@ export async function initializeEmployeeForm(passedApi) {
     cachedEmployees = await loadEmployeeData(api);
 
     cachedRoles = await loadRoleData(api);
-    currentOfficeDays = await loadOfficeDaysData();
+    currentOfficeDays = await loadOfficeDaysData(api);
   } catch (error) {
     console.error("Failed to load initial data:", error);
     return;
@@ -104,6 +112,22 @@ export async function initializeEmployeeForm(passedApi) {
   setButtonVisibility({ delete: false, store: false, reset: false });
   initPrivacyWarningToggle();
   populateShiftOptions();
+  initDeleteBirthday();
+}
+
+function initDeleteBirthday() {
+  const resetBtn = document.getElementById('employee-birthday-reset');
+  if (resetBtn) {
+    // Remove previous listener if it exists
+    if (resetBtn._resetHandler) {
+      resetBtn.removeEventListener('click', resetBtn._resetHandler);
+    }
+
+    // Create and store handler
+    const handler = () => resetEmployeeBirthday();
+    resetBtn.addEventListener('click', handler);
+    resetBtn._resetHandler = handler;
+  }
 }
 
 function getEmployeeById(employeeId) {
@@ -170,8 +194,8 @@ function renderNewEmployeeForm() {
 
   const newEmployeeDefaults = {
     id: Date.now(), // temp ID
-    name: "neuer Mitarbeiter",
-    personalEmoji: "❓",
+    name: "Name eingeben",
+    personalEmoji: "⊖",
     mainRoleIndex: 0,
     secondaryRoleIndex: 0,
     tertiaryRoleIndex: 0,
@@ -229,7 +253,6 @@ function rebindEmployeeFormEvents(employee) {
   bindEmployeeDateAndNumberInputs(employee);
 }
 
-/*
 function resetEmployeeForm(defaults = {}) {
   const clear = (id, val = "") => {
     const el = document.getElementById(id);
@@ -255,57 +278,7 @@ function resetEmployeeForm(defaults = {}) {
 
   const emojiBtn = document.getElementById("employee-emoji-picker-btn");
   if (emojiBtn) {
-    emojiBtn.innerHTML = defaults.personalEmoji ?? "❓";
-    emojiBtn.setAttribute("data-role", defaults.mainRoleIndex ?? 0);
-    const newEmojiBtn = emojiBtn.cloneNode(true);
-    emojiBtn.replaceWith(newEmojiBtn);
-  }
-
-  const dayIds = [
-    "employee-form-shift-mon",
-    "employee-form-shift-tue",
-    "employee-form-shift-wed",
-    "employee-form-shift-thu",
-    "employee-form-shift-fri",
-    "employee-form-shift-sat",
-    "employee-form-shift-sun"
-  ];
-  dayIds.forEach((id, i) => {
-    const el = document.getElementById(id);
-    if (el) el.value = defaults.workDays?.[i] ? "regular" : "never";
-  });
-  clear('employee-details-icon-main', `<span class="noto">🚫</span>`);
-  clear('employee-details-icon-trinary', `<span class="noto">🚫</span>`);
-  clear('employee-details-icon-secondary', `<span class="noto">🚫</span>`);
-}
-*/
-
-function resetEmployeeForm(defaults = {}) {
-  const clear = (id, val = "") => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if ("value" in el) el.value = val;
-    else el.textContent = val;
-  };
-
-  clear("employee-name", defaults.name ?? "?");
-  clear("employee-id", defaults.id ?? Date.now());
-  clear("available-days-off", defaults.availableDaysOff ?? 30);
-  clear("remaining-days-off", defaults.remainingDaysOff ?? 30);
-  clear("overtime", defaults.overtime ?? 0);
-  clear("employee-form-birthday-day", defaults.birthday ?? "");
-  clear("employee-form-birthday-month", defaults.birthMonth ?? "");
-
-  const startFormatted = formatDateInput(defaults.startDate);
-  const endFormatted = formatDateInput(defaults.endDate);
-  clear("employee-form-start-work", startFormatted);
-  clear("employee-form-end-work", endFormatted);
-  clear("employee-preview-start", startFormatted);
-  clear("employee-preview-end", endFormatted);
-
-  const emojiBtn = document.getElementById("employee-emoji-picker-btn");
-  if (emojiBtn) {
-    emojiBtn.innerHTML = defaults.personalEmoji ?? "❓";
+    emojiBtn.innerHTML = defaults.personalEmoji ?? "⊖";
     emojiBtn.setAttribute("data-role", defaults.mainRoleIndex ?? 0);
     const newEmojiBtn = emojiBtn.cloneNode(true);
     emojiBtn.replaceWith(newEmojiBtn);
@@ -385,6 +358,8 @@ function gatherEmployeeData(api, action = "create") {
 }
 
 function updateDivider(className) {
+  if (isDividerUpdating) return;
+  isDividerUpdating = true;
   const divider = document.getElementById('horizontal-divider');
   divider.innerHTML = '';
 
@@ -581,7 +556,7 @@ function deleteEmoji(emoji) {
 }
 
 function addEmoji(emoji) {
-  if (emoji === "❓") return;
+  if (emoji === "⊖") return;
   if (!employeeEmojiOptions.includes(emoji)) {
     employeeEmojiOptions.push(emoji);
   } else {
@@ -677,7 +652,7 @@ function createNewEmployee() {
   const newEmployee = {
     id: Date.now(),
     name: "neuer Mitarbeiter",
-    personalEmoji: "❓",
+    personalEmoji: "⊖",
     mainRoleIndex: -1,
     secondaryRoleIndex: -1,
     tertiaryRoleIndex: -1,
@@ -703,7 +678,7 @@ function selectExsitingEmployee(id) {
 }
 
 function isValidEmployeeEmoji(emoji, emojiField) {
-  const isValid = emoji !== "❓";
+  const isValid = emoji !== "⊖";
   if (emojiField) emojiField.classList.toggle('invalid-field', !isValid);
   return isValid;
 }
@@ -714,6 +689,7 @@ function isValidEmployeeName(name, nameField) {
     name !== "" &&
     name !== "neuer Mitarbeiter" &&
     name !== "undefined" &&
+    name !== "Name eingeben" &&
     name !== null;
 
   if (nameField) {
@@ -922,7 +898,7 @@ function updateBasicInfo(employee) {
 
   const emojiBtn = document.getElementById('employee-emoji-picker-btn');
   if (emojiBtn) {
-    emojiBtn.textContent = employee.personalEmoji || '❓';
+    emojiBtn.textContent = employee.personalEmoji || '⊖';
     emojiBtn.setAttribute('data-role', employee.mainRoleIndex ?? '');
   }
 
@@ -1015,6 +991,23 @@ function bindEmployeeDateAndNumberInputs(employee) {
   });
 }
 
+function resetEmployeeBirthday() {
+  const employee = getEmployeeById(currentEmployeeId);
+  console.log("remove birthday");
+  if (!employee) return;
+  const bdayDay = document.getElementById('employee-form-birthday-day');
+  const bdayMonth = document.getElementById('employee-form-birthday-month');
+
+  if (bdayDay) bdayDay.value = ''; // or '0' if you prefer
+  if (bdayMonth) bdayMonth.value = ''; // or '0' if you prefer
+
+  // Update employee object
+  employee.birthday = '';
+  employee.birthMonth = '';
+
+  validateEmployeeFields(employee); // keep validation consistent
+}
+
 function validateEmployeeFields(employee) {
   const emojiBtn = document.getElementById('employee-emoji-picker-btn');
   const nameInput = document.getElementById('employee-name');
@@ -1026,7 +1019,7 @@ function validateEmployeeFields(employee) {
   const name = nameInput.value.trim();
 
   const nameValid = isValidEmployeeName(name, nameInput);
-  const defaultEmojis = ['❓', '👤'];
+  const defaultEmojis = ['⊖', '👤'];
   const isDefaultEmoji = defaultEmojis.includes(emoji);
 
   if (!nameValid) {
@@ -1580,7 +1573,7 @@ function deleteEmployee(employee) {
 }
 
 function deleteCurrentEmployee() {
-  console.log("🚮 Delete Current Employee button clicked.");
+  console.log("🗑️ Delete Current Employee button clicked.");
 }
 
 function storeCurrentEmployee() {
@@ -1628,8 +1621,8 @@ function sanityCheckEmployeeMandatory(employee) {
     console.info(`[mandatory] Assigned new ID: ${employee.id}`);
   }
 
-  const forbiddenNames = ['?', 'neuer Mitarbeiter', ''];
-  const forbiddenEmojies = ['', '👤', '❓'];
+  const forbiddenNames = ['?', 'neuer Mitarbeiter', '', 'Name eingeben'];
+  const forbiddenEmojies = ['', '👤', '⊖'];
 
   if (!employee.name || forbiddenNames.includes(employee.name.trim())) {
     console.warn(`[mandatory] Invalid name: "${employee.name}"`);
@@ -1658,7 +1651,7 @@ function sanityCheckEmployeeRoles(employee) {
   if (employee.mainRoleIndex < 1 || employee.mainRoleIndex > 13) {
     console.warn('[roles] Main role out of bounds, attempting self-heal');
     result = true;
-    trySelfhealRoles(employee);
+    // trySelfhealRoles(employee);
     console.log(`[roles] After self-heal: MainRoleIndex=${employee.mainRoleIndex}, SecondaryRoleIndex=${employee.secondaryRoleIndex}, TertiaryRoleIndex=${employee.tertiaryRoleIndex}`);
   }
 
@@ -1761,7 +1754,7 @@ function renderEmployeeList() {
 
   cachedEmployees.forEach(employee => {
 
-    if (employee.personalEmoji === '🚮') return;
+    if (employee.personalEmoji === '🗑️') return;
 
     employee.corrupt = false;
     employee.warning = '';
@@ -1781,7 +1774,7 @@ function renderEmployeeList() {
     const deleteBtn = document.createElement('button');
     deleteBtn.classList.add('employee-delete-inline');
     deleteBtn.title = "Mitarbeiter löschen";
-    deleteBtn.textContent = "🚮";
+    deleteBtn.textContent = "🗑️";
     deleteBtn.addEventListener("click", (e) => {
       e.stopPropagation(); // prevent opening the employee form
       deleteEmployeeSafely(employee.id);

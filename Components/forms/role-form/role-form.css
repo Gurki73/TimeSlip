@@ -290,7 +290,15 @@ input:disabled {
 
 .role-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 5px 0; /* 5px between columns, 0px between rows */
+}
+
+/* add extra gap before last column */
+.role-table th:nth-child(5),
+.role-table td:nth-child(5) {
+  padding-left: 40px;
+  margin-left: 300px;
 }
 
 .post-it-note.hint {

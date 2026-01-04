@@ -102,6 +102,8 @@
   background-color: var(--color-request-list);
   border-color: var(--color-request-form);
   border-top: 2px solid;
+  border-left-style: none;
+  border-right-style: none;
 }
 
 .request-button {

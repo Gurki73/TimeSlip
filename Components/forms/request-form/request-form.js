@@ -5,7 +5,7 @@ import { loadRequests, appendRequest, updateRequest, getAvailableRequestFiles, s
 import { filterPublicHolidaysByYearAndState, getAllHolidaysForYear } from '../../../js/Utils/holidayUtils.js';
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
-import { createBranchSelect, branchPresetsRoles } from '../../../js/Utils/branch-select.js';
+import { createBranchSelect } from '../../../js/Utils/branch-select.js';
 import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js';
 import { recalcWarnings, resetWarnings } from "./request-warnings.js";
 import { createDateRangePicker } from '../../../Components/customDatePicker/customDatePicker.js';
@@ -394,7 +394,7 @@ function renderRequesterList() {
   console.log("🔹 renderRequesterList -> validEmployees:", validEmployees);
 
   validEmployees.forEach(employee => {
-    if (['❓', 'keine', '?', 'name'].includes(employee.personalEmoji)) return;
+    if (['⊖', 'keine', '?', 'name'].includes(employee.personalEmoji)) return;
 
     const opt = document.createElement('option');
     const roleColor = getComputedStyle(document.body)
@@ -552,7 +552,7 @@ function resetRequestForm() {
   document.getElementById('request-overtime').innerHTML = "X";
   document.getElementById('pick-request-start').value = "";
   document.getElementById('pick-request-end').value = "";
-  document.getElementById('requester-emoji').innerHTML = "❓";
+  document.getElementById('requester-emoji').innerHTML = "⊖";
   document.getElementById('requester-emoji').style.backgroundColor = "white";
 }
 
@@ -784,7 +784,7 @@ function renderRequestsTable(requests) {
     const effectiveDaysUnit = request.effectiveDays > 1 ? 'Tage' : 'Tag';
     row.innerHTML = `
       <td class='noto flex-row-2'>${firstColContent}</td>
-      <td class='noto'>${(requestEmployees.find(e => e.id === request.employeeID)?.personalEmoji) || '❓'} ${(requestEmployees.find(e => e.id === request.employeeID)?.name) || 'Unbekannt'}</td>
+      <td class='noto'>${(requestEmployees.find(e => e.id === request.employeeID)?.personalEmoji) || '⊖'} ${(requestEmployees.find(e => e.id === request.employeeID)?.name) || 'Unbekannt'}</td>
       <td class='noto'>${getVacationIcon(request.vacationType)}</td>
       <td>${startFormatted} bis<br>${endFormatted}</td>
       <td>${request.effectiveDays} ${effectiveDaysUnit}</td>
@@ -919,7 +919,7 @@ function getVacationIcon(type) {
     "vac": "🏖️ Urlaub", "spe": "🎁 Sonderurlaub", "otc": "⚖️ Ausgleichstag", "but": "🚕  Geschäftreise",
     "hom": "🏠 Home Office", "sho": "📐 Berufsschule", "sik": "💉 Genesung", "par": "🧸 Elternzeit", "unp": "💸 unbezahlt"
   };
-  return icons[type] || "❓";
+  return icons[type] || "⊖";
 }
 
 function getWarningsIcon(request) {

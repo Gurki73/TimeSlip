@@ -18,7 +18,7 @@ export function createHelpButton(topicId) {
     let btn = document.createElement('button');
     btn.type = 'button';
     btn.classList.add("noto");
-    btn.textContent = '🛟';
+    btn.textContent = '❓';
     btn.title = `Hilfe zum ${topicName}`;
     btn.setAttribute('aria-label', `Hilfe öffnen für ${topicName}`);
 

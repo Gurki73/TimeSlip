@@ -1,5 +1,5 @@
 name,colorIndex,emoji
-?,0,❓
+?,0,⊖
 Koch,1,👨‍🍳
 Spüler,2,🧼
 scooter,3,🛵
@@ -9,7 +9,7 @@ Lieferfahrer,6,🚚
 Einkauf,7,🛒
 Manager,8,🧑‍💼
 Empfang,9,📞
-?,10,❓
-?,11,❓
-?,12,❓
+?,10,⊖
+?,11,⊖
+?,12,⊖
 Azubi,13,✏️

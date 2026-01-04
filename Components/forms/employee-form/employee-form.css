@@ -131,6 +131,13 @@ input[type="range"] {
   height: 60vh;
 }
 
+#employee-list-column h3 {
+  text-align: center; /* centers the text */
+  margin-top: 0.5rem; /* optional spacing from top */
+  margin-bottom: 1rem; /* optional spacing from items below */
+  font-weight: bold;   /* optional, for emphasis */
+}
+
 .employee-item {
   padding: 0.5rem;
   background-color: #ffffff;
@@ -929,11 +936,12 @@ input[type="range"] {
 }
 
 .employee-role-select-warning::after {
-  content: "✎"; /* Unicode warning symbol */
+  content: "⚠️"; /* Unicode warning symbol */
   position: absolute;
   top: -5px;
   left: -5px;
-  font-size: 1.5rem;
+  font-family: "NotoEmoji";
+  font-size: 0.85rem;
   background: yellow;
   border-radius: 50%;
   border-color: red;

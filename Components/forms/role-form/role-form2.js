@@ -4,7 +4,7 @@ import { resetAndBind } from '../../../js/Utils/bindEventListner.js';
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
 import { createBranchSelect, branchPresetsRoles } from '../../../js/Utils/branch-select.js';
-import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js';
+import { createSaveButton } from '../../../js/Utils/saveButton.js';
 import { loadEmojiData } from '../../../js/loader/custom-loader.js';
 
 let roleChanges = Array(12).fill(false);
@@ -153,8 +153,6 @@ function applyBranchPreset(branch, api) {
   });
 }
 
-
-
 function getFormContainer() {
   const formContainer = document.getElementById('form-container');
   if (!formContainer) {
@@ -205,6 +203,8 @@ async function renderRoleTable() {
     nameInput.dataset.index = roleIndex;
 
     const { shouldShowDelete, shouldShowStore } = updateRoleButtonsVisibility(roleIndex);
+
+
 
     const storeBtn = roleDiv.querySelector('.store-button');
     storeBtn.classList.toggle('hidden', !shouldShowStore);

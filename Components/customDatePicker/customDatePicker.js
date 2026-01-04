@@ -20,13 +20,23 @@ export function createDateRangePicker(config) {
   const previewE = document.querySelector(previewEnd);
   const previewD = document.querySelector(previewDuration);
 
-  // ---- HARDENED ISO DATE VALIDATION ----
+  if (!startBtn || !endBtn || !startEl || !endEl) {
+    throw new Error("DateRangePicker: missing required elements");
+  }
+
+  // ─────────────────────────────────────────────
+  // Utilities
+  // ─────────────────────────────────────────────
+
   function isISO(dateStr) {
     return typeof dateStr === "string" &&
       /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
   }
 
-  // ---- SAFER FORMATTER ----
+  function todayISO() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
   function format(dateStr, type = "default") {
     if (!isISO(dateStr)) return "--.--.--";
 
@@ -42,11 +52,6 @@ export function createDateRangePicker(config) {
     }
   }
 
-  function todayISO() {
-    return new Date().toISOString().slice(0, 10);
-  }
-
-  // ---- SAFE DURATION CALC ----
   function calcDuration(a, b) {
     if (!isISO(a) || !isISO(b)) return "?";
 
@@ -56,107 +61,117 @@ export function createDateRangePicker(config) {
     const startUTC = Date.UTC(ay, am - 1, ad);
     const endUTC = Date.UTC(by, bm - 1, bd);
 
-    const daysBetween = (endUTC - startUTC) / 86400000;
-
-    if (isNaN(daysBetween) || daysBetween < 0) return "?";
-
-    return daysBetween + 1; // inclusive [start, end]
+    const days = (endUTC - startUTC) / 86400000;
+    return days >= 0 ? days + 1 : "?";
   }
 
-  // ---- UNIFIED PREVIEW UPDATE ----
+  // ─────────────────────────────────────────────
+  // Preview update (NO side effects)
+  // ─────────────────────────────────────────────
+
   function updatePreview() {
-    // detect if employee picker
-    const isEmployeePicker = previewS.id?.includes("employee");
+    const isEmployeePicker = previewS?.id?.includes("employee");
     const fmtType = isEmployeePicker ? "employee" : "year";
 
-    previewS.textContent = format(startEl.value, fmtType);
-    previewE.textContent = format(endEl.value, fmtType);
+    if (previewS) previewS.textContent = format(startEl.value, fmtType);
+    if (previewE) previewE.textContent = format(endEl.value, fmtType);
 
     if (previewD) {
       previewD.textContent = calcDuration(startEl.value, endEl.value);
     }
-
-    if (isISO(startEl.value) && isISO(endEl.value)) {
-      onChange?.(startEl.value, endEl.value);
-    }
   }
 
-  // ---- BUTTON → SHOW PICKER ----
+  // ─────────────────────────────────────────────
+  // Safe picker opening (CRITICAL)
+  // ─────────────────────────────────────────────
 
-  if (!startBtn || !startEl) {
-    throw new Error("DateRangePicker: missing required elements");
-  }
-  startBtn.addEventListener("click", () => {
-    if (!isISO(startEl.value)) {
-      startEl.value = todayISO();
+  function openPickerSafe(inputEl, fallbackValue) {
+    if (!isISO(inputEl.value)) {
+      inputEl.value = fallbackValue;
     }
 
-    updatePreview(); // 👈 ensure preview is fresh
+    // DO NOT touch preview here
+    // DO NOT call focus after showPicker
 
-    startEl.showPicker?.() || startEl.focus();
-  });
-
-  if (!endBtn || !endEl) {
-    throw new Error("DateRangePicker: missing required elements");
-  }
-  endBtn.addEventListener("click", () => {
-    if (!isISO(endEl.value)) {
-      endEl.value = isISO(startEl.value) ? startEl.value : todayISO();
-    }
-
-    updatePreview(); // 👈 ensure preview is fresh
-
-    endEl.showPicker?.() || endEl.focus();
-  });
-
-  // ---- INPUT CHANGES ----
-  startEl.addEventListener("change", () => {
-    if (isISO(startEl.value)) {
-      endEl.min = startEl.value;
-
-      // If end is now invalid, snap it to start
-      if (isISO(endEl.value) && endEl.value < startEl.value) {
-        endEl.value = startEl.value;
-      }
+    if (inputEl.showPicker) {
+      inputEl.showPicker();
     } else {
-      endEl.removeAttribute("min");
+      inputEl.focus();
     }
+  }
+
+  // ─────────────────────────────────────────────
+  // Button handlers (focus-safe)
+  // ─────────────────────────────────────────────
+
+  function onStartClick(e) {
+    e.preventDefault();
+    openPickerSafe(startEl, todayISO());
+  }
+
+  function onEndClick(e) {
+    e.preventDefault();
+    openPickerSafe(
+      endEl,
+      isISO(startEl.value) ? startEl.value : todayISO()
+    );
+  }
+
+  startBtn.addEventListener("mousedown", e => e.preventDefault());
+  startBtn.addEventListener("click", onStartClick);
+
+  endBtn.addEventListener("mousedown", e => e.preventDefault());
+  endBtn.addEventListener("click", onEndClick);
+
+  // ─────────────────────────────────────────────
+  // Input change handlers (single source of truth)
+  // ─────────────────────────────────────────────
+
+  startEl.addEventListener("change", () => {
+    // Keep values sane, but do NOT touch min/max while picker is open
+    if (
+      isISO(startEl.value) &&
+      isISO(endEl.value) &&
+      endEl.value < startEl.value
+    ) {
+      endEl.value = startEl.value;
+    }
+
     updatePreview();
     onChange?.(startEl.value, endEl.value);
   });
 
   endEl.addEventListener("change", () => {
-    if (isISO(endEl.value)) {
-      startEl.max = endEl.value;
-
-      // If start is now invalid, snap it to end
-      if (isISO(startEl.value) && startEl.value > endEl.value) {
-        startEl.value = endEl.value;
-      }
-    } else {
-      startEl.removeAttribute("max");
+    if (
+      isISO(startEl.value) &&
+      isISO(endEl.value) &&
+      startEl.value > endEl.value
+    ) {
+      startEl.value = endEl.value;
     }
+
     updatePreview();
     onChange?.(startEl.value, endEl.value);
   });
 
-  // ---- PUBLIC API ----
+  // Initial render
+  updatePreview();
+
+  // ─────────────────────────────────────────────
+  // Public API
+  // ─────────────────────────────────────────────
+
   return {
     update: updatePreview,
     getStart: () => startEl.value,
     getEnd: () => endEl.value,
-    setStart: (v) => { startEl.value = v; updatePreview(); },
-    setEnd: (v) => { endEl.value = v; updatePreview(); }
+    setStart: (v) => {
+      startEl.value = v;
+      updatePreview();
+    },
+    setEnd: (v) => {
+      endEl.value = v;
+      updatePreview();
+    }
   };
-
-  function formatEU(dateStr) {
-    if (!isISO(dateStr)) return "--.--.----";
-
-    const date = new Date(dateStr + "T00:00:00"); // avoid timezone shift
-    return new Intl.DateTimeFormat("de-DE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric"
-    }).format(date);
-  }
 }

@@ -41,6 +41,11 @@ function switchPresenceUIMode(newMode) {
   localStorage.setItem('presenceUIMode', newMode);
 }
 
+function applyModeClass(mode) {
+  document.body.classList.toggle('mode-sample', mode === 'sample');
+  document.body.classList.toggle('mode-client', mode === 'client');
+}
+
 window.addEventListener('api-ready', async () => {
   try {
     // ✅ Wait until DOM is guaranteed to exist
@@ -438,6 +443,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   window.addEventListener('dataModeChanged', async (event) => {
     const { mode } = event.detail || {};
+    applyModeClass(event.detail.mode);
     await globalRefresh(mode);
   });
 
@@ -541,15 +547,6 @@ export async function globalRefresh(mode = localStorage.getItem('dataMode') || '
     localStorage.setItem('dataMode', mode);
     document.body.setAttribute('data-mode', mode);
 
-    //const roles = await loadRoleData(window.api);
-    //const employees = await loadEmployeeData(window.api);
-    //const calendarData = await loadCalendarData(window.api);
-
-    //await loadStateData(window.api);
-    //await loadCompanyHolidayData(window.api);
-    //await loadOfficeDaysData(window.api);
-    //await loadRequests(window.api);
-
     const calendarContainer = document.getElementById('calendar');
     if (calendarContainer) {
       await loadCalendarIntoContainer(calendarContainer);
@@ -606,7 +603,7 @@ function loadWelcomePage() {
           >
             <p class="text-header-4">
               Ihr Werkzeug zur einfachen Belegschaftsplanung. Rufe die Anleitung
-              <span class="noto">🛟</span> mit [F1] oder unter Menü
+              <span class="noto">❓</span> mit [F1] oder unter Menü
               <span class="noto">⇨ </span> Hilfe auf.
             </p>
 
@@ -784,6 +781,9 @@ function domReady() {
       document.addEventListener('DOMContentLoaded', resolve, { once: true })
     );
   }
+  const savedMode = localStorage.getItem('dataMode') || 'sample';
+  applyModeClass(savedMode);
+
   return Promise.resolve();
 }
 

@@ -151,7 +151,7 @@ export async function storeEmployeeChange(api, employeeData, action = "update") 
     }
 
     if (action === "delete") {
-        employeeData.personalEmoji = "🚮";
+        employeeData.personalEmoji = "🗑️";
         employeeData.endDate = new Date().toISOString().split("T")[0];
         action = "update"; // treat as update for saving
     }

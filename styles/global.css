@@ -53,19 +53,6 @@ body[data-mode="sandbox"] {
   cursor: not-allowed !important;
 }
 
-/* Left panel container 
-#left-panel {
-  width: var(--left-panel-width, 70px);
-  background-color: var(--color-layout-container-dark);
-  display: flex;
-  flex-direction: column;
-  height: 100vh; 
-  overflow-x: hidden;
-  position: relative;
-  box-sizing: border-box;
-  transition: width 0.3s ease;
-}
-*/
 
 #left-panel {
   display: flex;
@@ -863,4 +850,106 @@ select.noto {
 fieldset {
   min-inline-size: 0 !important;
   min-width: 0 !important;
+}
+
+body.mode-sample::before {
+  content: "🛑 BEISPIEL-MODUS – Beispieldaten, nichts wird gespeichert 🛑";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  z-index: 9999;
+
+  font-family: "NotoEmoji";
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+
+  color: #2a001f;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(255, 0, 150, 0.25),
+      rgba(255, 0, 150, 0.25) 10px,
+      rgba(255, 0, 150, 0.4) 10px,
+      rgba(255, 0, 150, 0.4) 20px
+    );
+
+  pointer-events: none; /* critical */
+}
+
+body.mode-sample #main-container {
+  padding-top: 48px;
+}
+
+.save-button {
+  position: relative;
+  opacity: 1;
+  cursor: pointer;
+}
+
+.form.is-dirty .save-button::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  background: red;
+  border-radius: 50%;
+}
+
+.save-button.is-discouraged {
+  opacity: 0.4;
+}
+
+.save-button.is-blocked {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.save-button.is-readonly {
+  opacity: 0.85;
+  cursor: not-allowed;
+  color: #2a001f;
+
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(255, 0, 150, 0.25),
+      rgba(255, 0, 150, 0.25) 10px,
+      rgba(255, 0, 150, 0.4) 10px,
+      rgba(255, 0, 150, 0.4) 20px
+    );
+
+  border: 1px solid rgba(255, 0, 150, 0.6);
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+  100% { transform: translateX(0); }
+}
+
+.save-button.is-shake {
+  animation: shake 0.4s ease;
+}
+
+body.sample-feedback::before {
+  animation: banner-flash 0.4s ease;
+}
+
+@keyframes banner-flash {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(1.4); }
+  100% { filter: brightness(1); }
 }

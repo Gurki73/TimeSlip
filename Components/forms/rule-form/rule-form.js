@@ -4,7 +4,7 @@ import { loadOfficeDaysData } from '../../../js/loader/calendar-loader.js';
 import { toggleExceptionTable, updateWizard, clearHighlights } from './ruleFlowWizzard.js';
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
-import { createBranchSelect, branchPresetsRoles } from '../../../js/Utils/branch-select.js';
+import { createBranchSelect } from '../../../js/Utils/branch-select.js';
 import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js';
 import { blocks, createRuleFromBlueprint } from "./buildingBlocks.js";
 import { translateCurrentRule, translateExistingRules } from "./translatorHuman.js";
@@ -519,7 +519,7 @@ function handleTopCellDependency(id) {
     });
 
     cachedRoles.forEach((role, index) => {
-        if (['❓', 'keine', '?', 'name'].includes(role.name)) return;
+        if (['⊖', 'keine', '?', 'name'].includes(role.name)) return;
 
         const dependencyRoleOption = document.createElement('option');
         const roleColor = getComputedStyle(document.body).getPropertyValue(
@@ -822,12 +822,12 @@ function handleTopCellRoles(id) {
     const roleLabel = document.createElement('div');
     roleLabel.classList.add('noto', 'rule-role-label');
 
-    if (!Array.isArray(cachedRoles) || cachedRoles.filter(r => !['❓', 'keine', '?', 'name'].includes(r.name)).length === 0) {
+    if (!Array.isArray(cachedRoles) || cachedRoles.filter(r => !['⊖', 'keine', '?', 'name'].includes(r.name)).length === 0) {
         roleLabel.textContent = '⚠️ Bitte zuerst Rollen zuweisen!';
         roleElement.appendChild(roleLabel);
 
     } else if (['g1', 'g2'].includes(id.toLowerCase())) {
-        const validRoles = cachedRoles.filter(r => !['❓', 'keine', '?', 'name'].includes(r.name));
+        const validRoles = cachedRoles.filter(r => !['⊖', 'keine', '?', 'name'].includes(r.name));
 
         if (validRoles.length < 2) {
             roleLabel.textContent = '⚠️ Mindestens 2 Rollen nötig für "und/or"';
@@ -861,7 +861,7 @@ function handleTopCellRoles(id) {
         singleRoleSelection.id = `${id}-select`;
         singleRoleSelection.name = 'roleIndicee';
 
-        const validRoles = cachedRoles.filter(r => !['❓', 'keine', '?', 'name'].includes(r.name));
+        const validRoles = cachedRoles.filter(r => !['⊖', 'keine', '?', 'name'].includes(r.name));
 
         if (validRoles.length === 0) {
             const placeholderOption = document.createElement('option');
