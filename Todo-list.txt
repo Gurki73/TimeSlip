@@ -119,111 +119,93 @@ Demand & Attendance
 6.15 🧱 Optional teaser GIF / screenshot
 
 1 ☐ state flag in calandar sheet not interactive
-2 ☐ length icons in legend
-3 ☐ gabs in Menu _ -> _ _ _ _Hilfe
+2 ✅ length icons in legend
+3 ✅ gabs in Menu _ -> _ _ _ _Hilfe
 4 ☐ unten tipp abgeschuttet(?)
 5 ☐ Devider line drag and drob is not win-style
-6 ☐ calendar ( started in absence mode ) seams to be interactive
-7.1 ☐ date picker in Request isnt responsive after first pick anymore
-7.2 ☐ date picker in Employee isnt responsive after first pick anymore
-7.3 ☐ date picker in company holydays isnt responsive after first pick anymore
-8 ☐ to many chars "dauer: => =" keep only Completion
+6 ✅ calendar ( started in absence mode ) seams to be interactive
+7.1 ✅ date picker in Request isnt responsive after first pick anymore
+7.2 ✅ date picker in Employee isnt responsive after first pick anymore
+7.3 ✅ date picker in company holydays isnt responsive after first pick anymore
+8 ✅ to many chars "dauer: => =" keep only Completion
 9 ☐ no save btn in Rules
-10 ☐ tab flag in requests have multiple colors
+10 ✅ tab flag in requests have multiple colors
 11 ☐ request list doesnt load/ render
-12 ☐ only one can be selected in select type and select requester 
-13 ☐ header "Mitarbeiter Auswahl" in center/middle
-14 ☐ font noto for icon in privacy warnings
-15 ☐ Employee ${} not replaced with actual name in employees
-16 ☐ "<span" in text without closing ">"
+12 ✅ only one can be selected in select type and select requester 
+13 ✅ header "Mitarbeiter Auswahl" in center/middle
+14 ✅ font noto for icon in privacy warnings
+15 ✅ Employee ${} not replaced with actual name in employees
+16 ✅ "<span" in text without closing ">"
 17 ☐ delete btn in end of row instead of start for employee list
-18 ☐ noto font for icons in employee list
+18 ✅ noto font for icons in employee list
 19 ☐ ... extended menu instaed of buttons ( delete , edit , warn)
 10 ☐ ... extend menu instead of multi btns in rule list ( edit, delete )
-11 ☐ warn icon , triangle instead of pencil in employees
-12 ☐ a red dot on warning buttons if unsaved changes
+11 ✅ warn icon , triangle instead of pencil in employees
+12 ✅ a red dot on warning buttons if unsaved changes
 13 ☐ scrollbox to big ... lot of empty space... expected more to come at bottom
 14 ☐ warnings for assigned shift sometimes above sometime beneath shift
 15 ☐ wrong shift closed
-16 ☐ a gab is needed between dayname [gab] and select in shift asignment
-17 ☐ radio btn for samples, label next to help button, gab needed
-18 ☐ better/simpler trashcan icon needed
+16 ✅ a gab is needed between dayname [gab] and select in shift asignment
+17 ✅ radio btn for samples, label next to help button, gab needed
+18 ✅ better/simpler trashcan icon needed
 19 ☐ simpler consitent edit/pencil icon 
-20 ☐ no cockwheel icon for tools , looks like setting not like tools
-21 ☐ no lifebelt icon for helppage
-22 ☐ no questionmark icon for missing data / unknown
+20 ✅ no cockwheel icon for tools , looks like setting not like tools
+21 ✅ no lifebelt icon for helppage
+22 ✅ no questionmark icon for missing data / unknown
 23 ☐ new table triggered by choosing exeception not selfexplonary
 23 ☐ content in employees is longer than container
-24 ☐ collapsibles hall header as button not chevron only
+24 ✅ collapsibles hall header as button not chevron only
 25 ☐ tooltip text for "exestree?" btn
-26 ☐ exception change icon, looks like a refresh button
-27 ☐ color for/signal  sample mode 
-28 ☐ disable all save buttons in save mode
-29 ☐ tooltip text for change button in sample mode
+26 ✅ exception change icon, looks like a refresh button
+27 ✅ color for/signal  sample mode 
+28 ✅ disable all save buttons in save mode
+29 ✅ tooltip text for change button in sample mode
 30 ☐ options for shift names in calendar sheet rendering
 31 ☐ sub menu for styling options in main menu / view
-32 ☐ current font size marked in zoom menu
-33 ☐ to many small sizes in zoom not enough big font sizes
+32 ✅ current font size marked in zoom menu
+33 ✅ to many small sizes in zoom not enough big font sizes
 34 ☐ divider btn drag and drob , no nervous movement
 35 ✅ shrink enlarge window, in form more like standart win icons
-36 ☐ add a delete/reset button for birthdays
-37 ☐ no english filenames in Feedback popups
-38 ☐ "neuer Mitarbeiter" => "enter name" 
+36 ✅ add a delete/reset button for birthdays
+37 ✅ no english filenames in Feedback popups
+38 ✅ "neuer Mitarbeiter" => "enter name" 
 39 ☐ use standart chevron in calandar setting list headers
-40 ☐ preview mode /edit ms unintuitive (?)
-41 ☐ company holidays should be sorted by date
-42 ☐ employees in calandar shift should be sorted by role
+40 ✅ preview mode /edit ms unintuitive (?)
+41 ✅ company holidays should be sorted by date
+42 ✅ employees in calandar shift should be sorted by role
 43 ☐ in requests/ employees naming for pdo remaining unclear
-44 ☐ half day off option needed
+44 ✅ half day off option needed
 
 
 🧭 Interaction & Behavior Bugs
 1 ☐ Calendar sheet: state flag not interactive
-2 ☐ Calendar started in absence mode still interactive
-3 ☐ Request list doesn’t load / render
-4 ✅ Date picker stops responding after first pick:
- 4.1 ✅ Requests
- 4.2 ✅ Employees
- 4.3 ✅ Company holidays
- => marking the range with datePicker.min /.Max and "?...|| focus()" were blocking the chromium date picker 
-5 ☐ Only one option selectable in: Select type & Select requester
-6 ☐ Wrong shift gets closed in employee asignment (?)
-7 ☐ Warnings for assigned shift appear sometimes above, sometimes below
-8 ☐ New table triggered by choosing exception is not self-explanatory
-9 ☐ Content in Employees view overflows container
-10 ☐ Scrollbox too large → empty space, user expects more content
-12 ☐ Disable all save buttons in sample mode
-13 ☐ Half-day off option missing
+2 ☐ Request list doesn’t load / render
+4 ☐ Wrong shift gets closed in employee asignment (?)
+5 ☐ Warnings for assigned shift appear sometimes above, sometimes below
+6 ☐ New table triggered by choosing exception is not self-explanatory
+7 ☐ Content in Employees view overflows container
+8 ☐ Scrollbox too large → empty space, user expects more content
 
 🎛️ Controls, Drag & Window Behavior
-14 ☐ Divider line drag & drop not Windows-style
-15 ☐ Divider drag & drop feels nervous / jittery
-17 ☐ Collapsible hall header should be clickable button, not chevron only
-18 ☐ Calendar setting list headers should use standard chevron
+10 ☐ Divider line drag & drop not Windows-style
+11 ☐ Divider drag & drop feels nervous / jittery
+13 ☐ Calendar setting list headers should use standard chevron
 
 🎨 Icons, Visual Language & Consistency
-19 ☐ Legend: length icons unclear
-22 ☐ Add red dot on warning buttons if unsaved changes
-30 ☐ Employee list icons => ✅ => 🗑️ => Ellipsis "..."
+14 ☐ Employee list icons => ✅ => 🗑️ => Ellipsis "..."
 
 🧩 Menus, Layout & Spacing
-31 ☐ Gaps in menu: _ -> _ _ _ _ Hilfe
-34 ☐ Extended menu preferred instead of multiple buttons:
- 34.1 ☐ Employees list (delete / edit / warn)
- 34.2 ☐ Rules list (edit / delete)
-35 ☐ Sub-menu for styling options in main menu / view
+15 ☐ Extended menu preferred instead of multiple buttons: (Ellipsis)
+ 15.1 ☐ Employees list (delete / edit / warn)
+ 15.2 ☐ Rules list (edit / delete)
+16 ☐ Sub-menu for styling options in main menu / view
 
 📝 Text, Labels & Microcopy
-39 ☐ No Save button in Rules
-40 ☐ Employee ${} placeholder not replaced with actual name
- 40.1 ☐ in employees
- 40.2 ☐ in help page story mode (dweith)
-41 ☐ "<span" appears without closing ">"
-42 ☐ Tooltip text missing for:
- 42.1 ☐ “exestree?” button
- 42.2 ☐ Change button in sample mode
-44 ☐ PDO remaining naming unclear in requests / employees
+17 ☐ No Save button in Rule
+20 ☐ Tooltip text missing for:
+ 20.1 ☐ “exestree?” button
+ 20.2 ☐ Change button in sample mode
+21 ☐ PDO remaining naming unclear in requests / employees
 
 📅 Sorting, Data & Defaults
-46 ☐ Employees in calendar shifts should be sorted by role
-47 ☐ Options needed for shift name rendering in calendar sheet
+22 ☐ Options needed for shift name rendering in calendar sheet

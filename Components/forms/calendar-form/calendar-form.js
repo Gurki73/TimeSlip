@@ -12,6 +12,7 @@ import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
 import { createBranchSelect } from '../../../js/Utils/branch-select.js';
 import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js';
 import { keyToBools } from './calendar-form-utils.js';
+import { createSaveButton } from '../../../js/Utils/saveButton.js';
 
 /**
  * 🎉 Special Days & Schützenfest (Future Enhancements)
@@ -158,6 +159,7 @@ let companyHolidays = [];
 let officeDays = [];
 let publicHolidayState = {};
 let bridgeDayState = {};
+let saveButtonHeader;
 
 export async function initializeCalendarForm(passedApi) {
   if (!passedApi) {
@@ -1665,15 +1667,18 @@ function updateDivider(className = "bg-calendar") {
     onChange: (val) => applyBranchPreset(val)
   });
 
-  // --- New global window buttons ---
+  saveButtonHeader = createSaveButton({ onSave: () => storeAllCalendarSettings(api) });
+
   const windowBtns = createWindowButtons(); // your new min/max buttons
 
-  // Compose: add branchSelect, helpBtn, saveBtn, then windowBtns
-  buttonContainer.append(branchSelect, helpBtn, windowBtns);
+  buttonContainer.append(saveButtonHeader.el, helpBtn, branchSelect, windowBtns);
 
   divider.append(leftGap, h2, buttonContainer);
 }
 
+function storeAllCalendarSettings(api) {
+  console.log(" store all calendar settings");
+}
 
 function saveAllChanges() {
 

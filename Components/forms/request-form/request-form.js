@@ -9,7 +9,7 @@ import { createBranchSelect } from '../../../js/Utils/branch-select.js';
 import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js';
 import { recalcWarnings, resetWarnings } from "./request-warnings.js";
 import { createDateRangePicker } from '../../../Components/customDatePicker/customDatePicker.js';
-
+import { createSaveButton } from '../../../js/Utils/saveButton.js';
 
 let requestYear = 2000;
 let api;
@@ -19,6 +19,7 @@ let requestEmployees = [];
 let officeDays = [];
 let publicHolidays = [];
 let federalState = '';
+let saveButtonHeader;
 
 const rankEmojis = {
   1: "📝",   // Hint / minor
@@ -125,10 +126,6 @@ export async function initializeRequestForm(passedApi) {
     });
   }
 
-  // 5️⃣ Buttons
-  const refreshBtn = document.getElementById('refresh-request-form');
-  if (refreshBtn) refreshBtn.addEventListener('click', async () => await initializeRequestForm(api));
-
   const createRequestBtn = document.getElementById("create-request-mode-btn");
   const approveRequestBtn = document.getElementById("approve-request-mode-btn");
   const decisionContainer = document.getElementById("request-enter-container");
@@ -193,6 +190,34 @@ function initFilterListener() {
   });
 }
 
+function switchVacationType(ev) {
+  const select = ev.target;
+  const option = select.selectedOptions[0];
+
+  if (!option || option.value === 'none') return;
+
+  const emoji = option.dataset.emoji;
+  const label = option.dataset.label;
+
+  const emojiSpan = document.getElementById('vacation-type-emoji');
+  emojiSpan.innerHTML = emoji;
+  emojiSpan.classList.add('noto');
+
+  const originalText = option.innerHTML;
+  option.innerHTML = label;
+
+  select.addEventListener(
+    'mousedown',
+    () => {
+      option.innerHTML = originalText;
+    },
+    { once: true }
+  );
+
+  newRequest.type = option.value;
+  recalcWarnings();
+}
+
 function resetRequestWarnings() {
   resetNewRequest();
   resetRequestForm();
@@ -224,13 +249,29 @@ function updateDivider(className) {
       // applyBranchPreset(val);
     }
   });
-  // --- New global window buttons ---
+  saveButtonHeader = createSaveButton({ onSave: () => storeAllRequests(api) });
+  saveButtonHeader.setState('blocked');
   const windowBtns = createWindowButtons(); // your new min/max buttons
 
-  // Compose: add branchSelect, helpBtn, saveBtn, then windowBtns
-  buttonContainer.append(branchSelect, helpBtn, windowBtns);
+
+  const refreshBtn = document.createElement('button');
+  // <button id="refresh-request-form" class="noto">⟳</button>
+  refreshBtn.id = "refresh-request-form";
+  refreshBtn.classList.add('noto');
+  refreshBtn.classList.add('button');
+  refreshBtn.textContent = '⟳';
+  refreshBtn.title = "Formular auffrischen"
+  refreshBtn.setAttribute('aria-label', 'Formular auffrische');
+  refreshBtn.addEventListener('click', async () => await initializeRequestForm(api));
+
+  buttonContainer.append(refreshBtn, saveButtonHeader.el, helpBtn, branchSelect, windowBtns);
 
   divider.append(leftGap, h2, buttonContainer);
+}
+
+function storeAllRequests(api) {
+  storeRequest(api);
+  console.log(" store all requests");
 }
 
 function initDatePickers() {
@@ -251,12 +292,19 @@ function handleDateChange() {
   console.log("handle date change");
 
   const start = document.querySelector("#request-start-picker")?.value;
-  let end = document.querySelector("#request-end-picker")?.value; // let, so we can override
+  let end = document.querySelector("#request-end-picker")?.value;
+
+  const durationEl = document.querySelector("#request-durration");
+  const unitEl = document.querySelector("#request-duration-unit");
+  const halfDayCheckbox = document.querySelector("#request-halfDay");
 
   if (!start) {
-    document.querySelector("#request-durration").textContent = "";
+    durationEl.textContent = "";
+    halfDayCheckbox.checked = false;
+    halfDayCheckbox.disabled = true;
     return;
   }
+
   let days;
   if (!end) {
     end = start;
@@ -264,10 +312,27 @@ function handleDateChange() {
   } else {
     days = calculateDaysOff(start, end);
   }
-  document.querySelector("#request-durration").textContent = days;
-  document.querySelector('#request-duration-unit').textContent = days < 2 ? 'Tag' : 'Tage';
 
-  fireWarnings(); // ⚡ recalcWarnings + update UI
+  // ✅ Allow checkbox ONLY for exactly 1 calendar day
+  if (days === 1) {
+    halfDayCheckbox.disabled = false;
+  } else {
+    halfDayCheckbox.checked = false;
+    halfDayCheckbox.disabled = true;
+  }
+
+  // 🔹 Compute effective duration
+  let effectiveDays = days;
+  if (days === 1 && halfDayCheckbox.checked) {
+    effectiveDays = 0.5;
+  }
+
+  durationEl.textContent = effectiveDays;
+  unitEl.textContent = effectiveDays === 1
+    ? "Tag"
+    : "Tage";
+
+  fireWarnings();
 }
 
 function calculateDaysOff(startDate, endDate, federalState) {
@@ -413,10 +478,6 @@ function renderRequesterList() {
 
 function initRequestEventListener() {
 
-  const requestStoreButton = document.getElementById('requestStoreButton');
-  requestStoreButton.addEventListener('click', () => storeRequest());
-  requestStoreButton.title = "Antrag speichern";
-
   const requesterSelection = document.getElementById('requester-select');
   requesterSelection.addEventListener("change", (ev) => {
     switchRequester(ev);
@@ -426,6 +487,7 @@ function initRequestEventListener() {
   const requestTypeSelect = document.getElementById('request-type-select');
   requestTypeSelect.addEventListener("change", (ev) => {
     updateRequestType(ev);
+    switchVacationType(ev);
     fireWarnings();
   });
 
@@ -543,7 +605,6 @@ function afterEndDatePicked() {
   recalcWarnings(); // ⚡ final recalculation
 }
 
-
 function resetRequestForm() {
   document.getElementById('request-type-select').selectedId = '0';
   document.getElementById('multiline-input').value = "";
@@ -554,6 +615,8 @@ function resetRequestForm() {
   document.getElementById('pick-request-end').value = "";
   document.getElementById('requester-emoji').innerHTML = "⊖";
   document.getElementById('requester-emoji').style.backgroundColor = "white";
+  document.getElementById('vacation-type-emoji').innerHTML = "⊖";
+  document.getElementById('vacation-type-emoji').style.backgroundColor = "white";
 }
 
 function switchRequester(ev) {
@@ -564,8 +627,14 @@ function switchRequester(ev) {
 
   if (selectedId === 'xy') {
     currentEmployee = null;
-    resetRequestForm();
-    resetNewRequest();
+    newRequest.employeeID = null;
+
+    // only reset employee-related UI
+    document.getElementById('requester-emoji').innerHTML = '⊖';
+    document.getElementById('request-vacation-left').innerHTML = 'xx';
+    document.getElementById('request-vacation-total').innerHTML = 'xx';
+    document.getElementById('request-overtime').innerHTML = 'xx';
+
     recalcWarnings();
     return;
   }
@@ -707,8 +776,6 @@ function renderRequestsTable(requests) {
   const availableStatuses = new Set();
   const availableWarnings = new Set();
 
-
-
   if (allRequests.length < 1) {
     allRequests = requests.filter(r => r.start && r.employeeID);
   }
@@ -730,7 +797,7 @@ function renderRequestsTable(requests) {
       availableWarnings.add(request.violations > 1 ? "multi" : "single");
   });
 
-  disableAllOptions();
+  // disableAllOptions();
 
   const employeeFilter = document.getElementById("requester-filter");
   if (employeeFilter) {

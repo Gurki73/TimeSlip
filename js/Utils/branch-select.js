@@ -89,6 +89,8 @@ export function createBranchSelect({ id = 'branch-select', defaultValue = 'onboa
 
 }
 
+export const branchPresetsRoles = [];
+
 function initBranchSelectLogic(select, onChange) {
     const LOCAL_STORAGE_KEY = 'customBranchWord';
     let previousValue = select.value;

@@ -180,11 +180,12 @@ export function registerEventHandlers(mainWindow) {
             }
 
             const files = await fs.promises.readdir(requestsFolder);
+            console.log("files in dir", files);
             const validFiles = files
                 .filter(file => /^\d{4}_requests\.csv$/.test(file)) // match year_requests.csv
                 .map(file => path.join(requestsFolder, file));
 
-            console.log("[ main data io]  valid request files:", validFiles);
+            console.log("[ events ]  valid request files:", validFiles);
             return validFiles;
 
         } catch (error) {

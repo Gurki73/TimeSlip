@@ -1,5 +1,3 @@
-// js/Utils/saveButton.js
-
 export function createSaveButton({ onSave }) {
     const button = document.createElement('button');
     button.className = 'save-button noto';
@@ -11,6 +9,7 @@ export function createSaveButton({ onSave }) {
     function setState(newState) {
         state = newState;
 
+        // remove all state classes
         button.classList.remove(
             'is-clean',
             'is-dirty',
@@ -19,8 +18,10 @@ export function createSaveButton({ onSave }) {
             'is-saving'
         );
 
+        // add the current state class
         button.classList.add(`is-${state}`);
 
+        // update title
         switch (state) {
             case 'readonly':
                 button.title = 'Beispielmodus – Speichern deaktiviert';
@@ -49,9 +50,10 @@ export function createSaveButton({ onSave }) {
     }
 
     button.addEventListener('click', async e => {
+        console.log(' save button was clicked');
         e.preventDefault();
 
-        if (state !== 'dirty') {
+        if (state === 'blocked') {
             forbiddenFeedback();
             return;
         }

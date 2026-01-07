@@ -9,6 +9,7 @@ import { createBranchSelect } from '../../../js/Utils/branch-select.js';
 import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js';
 import { createDateRangePicker } from '../../customDatePicker/customDatePicker.js';
 import { loadEmojiData } from '../../../js/loader/custom-loader.js';
+import { createSaveButton } from '../../../js/Utils/saveButton.js';
 
 const employeeEmojiOptions = [
   "⚽️", "🏀", "🏈", "🎾", "🐶", "🐱", "🐻",
@@ -32,6 +33,7 @@ let cachedEmployees = [];
 let cachedRoles = [];
 let deletionLock = false;
 let isDividerUpdating = false;
+let saveButtonHeader;
 
 export async function initializeEmployeeForm(passedApi) {
 
@@ -383,13 +385,17 @@ function updateDivider(className) {
       // applyBranchPreset(val);
     }
   });
-  // --- New global window buttons ---
+  saveButtonHeader = createSaveButton({ onSave: () => storeAllEmployees(api) });
+
   const windowBtns = createWindowButtons(); // your new min/max buttons
 
-  // Compose: add branchSelect, helpBtn, saveBtn, then windowBtns
-  buttonContainer.append(branchSelect, helpBtn, windowBtns);
+  buttonContainer.append(saveButtonHeader.el, helpBtn, branchSelect, windowBtns);
 
   divider.append(leftGap, h2, buttonContainer);
+}
+
+function storeAllEmployees(api) {
+  console.log("store all employees");
 }
 
 function initSliderListeners(employee) {

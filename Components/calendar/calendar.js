@@ -68,6 +68,8 @@ export async function initializeCalendar(api) {
 
     setupCalendarEnvironment();
 
+    cachedZodiacStyle = localStorage.getItem('zodiacTyle') || 'none';
+    isInOffice = localStorage.getItem('presenceState') || true;
     const colorTheme = localStorage.getItem('colorTheme');
     const zoomFactor = localStorage.getItem('zoomFactor');
     const clientDefinedDataFolder = localStorage.getItem('clientDefinedDataFolder');
@@ -149,7 +151,6 @@ function setupCalendarEnvironment() {
 
 
 function initializeCalendarData() {
-  isInOffice = true;
   const currentDate = new Date();
   currentMonthIndex = currentDate.getMonth() + 1;
   currentYear = currentDate.getFullYear();
@@ -210,7 +211,6 @@ function generateCalendar(month, year) {
   const weeks = [];
   let currentWeek = [];
   let weekNumber = getWeekNumber(firstDay);
-  let isInOffice = true;
   let currentState;
 
   for (let i = 0; i < firstDayOfWeek; i++) {
@@ -746,6 +746,14 @@ function populateShift(type, shift, day, index, monthRequests) {
 
   const attendance = createEmptyAttendance();
 
+  calendarEmployees.sort((a, b) => {
+    if (a.mainRoleIndex < b.mainRoleIndex) return -1;
+    if (a.mainRoleIndex > b.mainRoleIndex) return 1;
+    return 0;
+  });
+
+  let employeesPerShiftCount = 0;
+
   calendarEmployees.forEach(employee => {
     if (employee.workDays[index] === 'never') return;
 
@@ -757,10 +765,12 @@ function populateShift(type, shift, day, index, monthRequests) {
 
     if (!showEmployee) return;
 
+
     if (
       employee.workDays[index] === type ||
       (employee.workDays[index] === 'full' && officeDays[index] !== 'full')
     ) {
+      employeesPerShiftCount++;
       const roleColor = getComputedStyle(document.body)
         .getPropertyValue(`--role-${employee.mainRoleIndex}-color`)
         .trim();
@@ -802,6 +812,13 @@ function populateShift(type, shift, day, index, monthRequests) {
       }
     }
   });
+
+  if (employeesPerShiftCount < 1) {
+    const noOne = document.createElement('span');
+    noOne.classList.add('hint');
+    noOne.textContent = '  Niemand';
+    shift.appendChild(noOne);
+  }
 
   return attendance;
 }

@@ -10,6 +10,7 @@ import { blocks, createRuleFromBlueprint } from "./buildingBlocks.js";
 import { translateCurrentRule, translateExistingRules } from "./translatorHuman.js";
 import { updateRulesPreview } from "./translatorMachine.js";
 import { loadRuleData, saveRuleData } from '../../../js/loader/rule-loader.js';
+import { createSaveButton } from '../../../js/Utils/saveButton.js';
 
 let cachedRoles = [];
 let ruleOfficeDays;
@@ -18,6 +19,7 @@ let eventDelegationInitialized = false;
 let ruleForEdeting = {};
 let ruleSet = [];
 let testPassed = false;
+let saveButtonHeader;
 
 const map = {
     W: "repeat",
@@ -216,13 +218,16 @@ function updateDivider(className) {
             console.log('Branch changed to:', val);
         }
     });
-    // --- New global window buttons ---
+    saveButtonHeader = createSaveButton({ onSave: () => storeAllRules(api) });
+
     const windowBtns = createWindowButtons(); // your new min/max buttons
 
-    // Compose: add branchSelect, helpBtn, saveBtn, then windowBtns
-    buttonContainer.append(branchSelect, helpBtn, windowBtns);
+    buttonContainer.append(saveButtonHeader.el, helpBtn, branchSelect, windowBtns);
 
     divider.append(leftGap, h2, buttonContainer);
+}
+function storeAllRules(api) {
+    console.log(" store all rules ");
 }
 
 function validateRule(ruleObject) {

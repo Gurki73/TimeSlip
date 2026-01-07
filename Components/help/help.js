@@ -63,8 +63,6 @@ const HELP_CHAPTERS = {
     glossar: { title: "Glossar", color: "calendar" }
 };
 
-
-
 export async function initializeHelp(container, topicId = 'intro') {
     if (!container) return;
 
@@ -96,7 +94,7 @@ export async function initializeHelp(container, topicId = 'intro') {
         const content = document.getElementById(contentId);
         if (!content) return;
 
-        btn.setAttribute('aria-expanded', 'true');
+        btn.setAttribute('aria-expanded', 'false');
         content.style.display = 'block';
         content.classList.remove('helpChapterHidden');
     });
@@ -115,45 +113,40 @@ function focusFirstTOCEntry() {
 
 function initHelpCollapse() {
     document.querySelectorAll('[data-help-toggle]').forEach(button => {
-        // Avoid binding multiple times
         if (button.dataset.bound) return;
         button.dataset.bound = 'true';
 
         const contentId = button.getAttribute('aria-controls');
         const content = document.getElementById(contentId);
-        if (!content) {
-            console.warn(`⚠️ No content element for ${contentId}`);
-            return;
-        }
+        if (!content) return;
 
-        const savedState = false;
-        const expanded = savedState !== null ? savedState === 'false' : button.getAttribute('aria-expanded') === 'false';
-
+        // default: collapsed
+        const expanded = false;
         button.setAttribute('aria-expanded', expanded);
-        content.style.display = expanded ? 'block' : 'none';
+        content.hidden = !expanded;
         content.classList.toggle('helpChapterHidden', !expanded);
 
         const chapterLoading = new Set();
 
         button.addEventListener('click', async () => {
             const chapterName = button.dataset.chapter;
-
-            // Prevent multiple clicks while loading
-            if (chapterLoading.has(chapterName)) return;
-
-            // Toggle UI immediately
             const isExpanded = button.getAttribute('aria-expanded') === 'true';
             const newExpanded = !isExpanded;
+
             button.setAttribute('aria-expanded', newExpanded);
-            content.style.display = newExpanded ? 'block' : 'none';
+            content.hidden = !newExpanded;
             content.classList.toggle('helpChapterHidden', !newExpanded);
+
             localStorage.setItem(`helpCollapse_${contentId}`, newExpanded);
 
-            // If expanding, load chapter in background
             if (newExpanded && chapterName && !loadedChapters.has(chapterName)) {
+                if (chapterLoading.has(chapterName)) return;
+
                 chapterLoading.add(chapterName);
                 document.body.style.cursor = 'wait';
+
                 await ensureChapterLoaded(chapterName);
+
                 chapterLoading.delete(chapterName);
                 document.body.style.cursor = 'default';
             }
@@ -203,26 +196,46 @@ function expandChapterBySectionId(sectionId) {
     content.style.display = 'block'; // oder: content.classList.remove('helpChapterHidden');
 }
 
-
 function initTOCScroll() {
+    const controlBar = document.getElementById('help-controlbar');
+    const scrollContainer = document.getElementById('help-scroll-container') || window;
+
     document.querySelectorAll('#help-toc a').forEach(link => {
         link.addEventListener('click', async e => {
             e.preventDefault();
-            const targetId = link.getAttribute('href').substring(1);
 
-            // Expand visually immediately
+            const targetId = link.getAttribute('href').substring(1);
+            const target = document.getElementById(targetId);
+            if (!target) return;
+
+            // Hide control bar
+            controlBar?.classList.add('is-hidden');
+
+            // Expand chapter immediately
             expandChapterBySectionId(targetId);
 
-            // Then scroll (load happens async in background)
-            const content = document.getElementById(targetId);
-            if (content) {
-                const section = content.closest('section');
-                if (section) {
-                    section.scrollIntoView({ behavior: 'smooth' });
-                } else {
-                    content.scrollIntoView({ behavior: 'smooth' });
-                }
-            }
+            // Scroll with offset
+            const y =
+                target.getBoundingClientRect().top +
+                window.pageYOffset -
+                controlBar.offsetHeight;
+
+            window.scrollTo({
+                top: y,
+                behavior: 'smooth'
+            });
+
+            // Restore bar on next user scroll
+            const restore = () => {
+                controlBar?.classList.remove('is-hidden');
+                window.removeEventListener('wheel', restore, { passive: true });
+                window.removeEventListener('touchstart', restore);
+                window.removeEventListener('keydown', restore);
+            };
+
+            window.addEventListener('wheel', restore, { passive: true });
+            window.addEventListener('touchstart', restore);
+            window.addEventListener('keydown', restore);
         });
     });
 }
@@ -275,7 +288,6 @@ function scanAndReplaceHelpContent(container) {
         const original = el.innerHTML;
 
         el.innerHTML = original.replace(/\{\{([\w\-]+)\}\}/g, (_, token) => {
-            console.log(`🔍 Found placeholder: {{${token}}}`);
             return renderEmployeeTag(token);
         });
     });

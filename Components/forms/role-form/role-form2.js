@@ -8,19 +8,11 @@ import { createSaveButton } from '../../../js/Utils/saveButton.js';
 import { loadEmojiData } from '../../../js/loader/custom-loader.js';
 
 let roleChanges = Array(12).fill(false);
-const roleEmojis = [
-  "🛠️", "📚", "💻", "🧑‍⚖️", "🚓", "🔍", "🎤",
-  "🔬", "🪥", "🩺", "🧹", "🪣", "⚙️", "🧯",
-  "📦", "🛒", "✂️", "🔌", "🖨️", "🎨", "📞",
-  "⛑️", "🖋️", "💵", "💳", "🍲", "💪", "🔒",
-  "🩻", "🦷", "💬", "📊", "🧠", "🌙", "📸",
-  "🛵", "⚕️", '🧤', '🧱', '🪓', '🗃️', '🖥️',
-  '🚜', '⚗️', '⚡', '🦷', '🪥'
-];
-
+const roleEmojis = ["🛠️", "📚", "💻",];
 let api;
 let roleFormRoles = [];
 let teamnames = {};
+let saveButtonHeader;
 
 export async function initializeRoleForm(passedApi) {
   setApi(passedApi);
@@ -111,11 +103,12 @@ function updateDivider(className) {
       applyBranchPreset(val);
     }
   });
-  // --- New global window buttons ---
+
+  saveButtonHeader = createSaveButton({ onSave: () => storeAllRoles(api) });
+
   const windowBtns = createWindowButtons(); // your new min/max buttons
 
-  // Compose: add branchSelect, helpBtn, saveBtn, then windowBtns
-  buttonContainer.append(branchSelect, helpBtn, windowBtns);
+  buttonContainer.append(saveButtonHeader.el, helpBtn, branchSelect, windowBtns);
 
   divider.append(leftGap, h2, buttonContainer);
 }
@@ -124,6 +117,20 @@ function setApi(passedApi) {
   api = passedApi;
   if (!api) console.error("Api was not passed ==> " + api);
 }
+
+function storeAllRoles(api) {
+
+  // 1. Find all changed roles
+  const dirtyRoles = roleFormRoles.filter((role, idx) => roleChanges[idx]);
+
+  // 2. Save roles (example)
+  saveRoleData(api, dirtyRoles).then(() => {
+    console.log("All roles saved successfully!");
+  }).catch(err => console.error("Failed to save roles:", err));
+
+  saveButtonHeader?.setState('clean');
+}
+
 
 async function loadInitialData(api) {
   try {
@@ -207,7 +214,7 @@ async function renderRoleTable() {
 
 
     const storeBtn = roleDiv.querySelector('.store-button');
-    storeBtn.classList.toggle('hidden', !shouldShowStore);
+    storeBtn.classList.toggle('hidden', true);
     storeBtn.dataset.index = roleIndex;
 
     const deleteBtn = roleDiv.querySelector('.delete-button');
@@ -283,8 +290,10 @@ function handleRoleInputKeydown(event, index) {
 
 function markRoleAsChanged(index) {
   roleChanges[index] = true;
+  saveButtonHeader?.setState('dirty');
   focusNext(index);
 }
+
 
 function processRoleInput(index) {
 
@@ -346,7 +355,7 @@ function updateRoleButtonsVisibility(index) {
   const name = role.name?.trim();
   const emoji = role.emoji;
   const isValidName = name !== undefined && name.trim() !== '' && name.trim() !== '?';
-  const isValidEmoji = emoji !== undefined && emoji.trim() !== '' && emoji.trim() !== '❓';
+  const isValidEmoji = emoji !== undefined && emoji.trim() !== '' && emoji.trim() !== '⊖';
 
   const isChanged = roleChanges[index];
   const isNameUnique = !roleFormRoles.some((r, i) => i !== index && r.name?.trim() === name);

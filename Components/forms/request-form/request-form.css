@@ -91,6 +91,16 @@
   z-index: 2;
   width: 100%;
 }
+
+#decision,
+#approve {
+  height: 4rem;
+}
+#create-request-mode-btn ,
+#approve-request-mode-btn {
+ height: 3.1rem;
+}
+
 #request-enter-container,
 #create-request-mode-btn {
   background-color: var(--color-request-form);
@@ -155,7 +165,7 @@
   min-width: 20%;
   flex-grow: 2;
 }
-
+#vacation-type-emoji,
 #requester-emoji {
   padding: 5px;
   margin-right: 10px;
@@ -478,3 +488,26 @@
   text-align: center; /* optional: centers text lines */
   vertical-align: middle; /* fallback for non-flex content */
 }
+
+.date-select-wrapper {
+  display: flex;
+  flex-direction: row;
+}
+
+#halfDayCheckbox {
+  display: inline-flex;
+  align-items: center;   /* vertical alignment only */
+  gap: 0.4rem;           /* normal spacing between items */
+  color: gray;
+  margin-top: 0.35rem;
+}
+
+#halfDayCheckbox input {
+  margin: 0;             /* remove browser default weird spacing */
+}
+
+#halfDayCheckbox input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+

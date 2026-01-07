@@ -58,11 +58,11 @@ body[data-mode="sandbox"] {
   display: flex;
   flex-direction: column;
   height: 100vh; /* full viewport height */
-  width: var(--left-panel-width, 70px);
+  width: var(--left-panel-width, 4.35rem);
 }
 
 #left-panel.expanded {
-  width: 16%;
+  width: 14.5rem;
 }
 
 #main-container {
@@ -894,7 +894,7 @@ body.mode-sample #main-container {
   cursor: pointer;
 }
 
-.form.is-dirty .save-button::after {
+.save-button.is-dirty::after {
   content: '';
   position: absolute;
   top: 4px;
