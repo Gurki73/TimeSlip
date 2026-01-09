@@ -178,7 +178,7 @@ export function registerEventHandlers(mainWindow) {
                 console.warn(`⚠️ Requests folder does not exist: ${requestsFolder}`);
                 return [];
             }
-
+            console.log("requested folder:", requestsFolder);
             const files = await fs.promises.readdir(requestsFolder);
             console.log("files in dir", files);
             const validFiles = files

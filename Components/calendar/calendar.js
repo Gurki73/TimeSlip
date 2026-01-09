@@ -382,6 +382,21 @@ function initPresence() {
   container.appendChild(presenceSelector);
 }
 
+function onStateFlagClick() {
+  const navItem = document.getElementById('nav-calendar-settings');
+  const navItemHint = document.getElementById('state-image-hint');
+  if (navItem) {
+    navItem.focus();
+    if (navItemHint) navItemHint.classList.remove('hidden');
+    navItem.classList.add('hint-highlight');
+    setTimeout(() => {
+      navItem.classList.remove('hint-highlight');
+      if (navItemHint) navItemHint.classList.add('hidden');
+    }, 2250);
+  }
+}
+
+
 async function createCalendarNavigation() {
   const stateImage = document.getElementById('state-image');
   const monthLabel = document.getElementById('calendar-month');
@@ -408,7 +423,12 @@ async function createCalendarNavigation() {
   ];
 
   currentState = await loadStateData(cachedApi);
-  if (stateImage) updateStateFlag(currentState, stateImage);
+  if (stateImage) {
+    updateStateFlag(currentState, stateImage);
+    stateImage.removeEventListener('click', onStateFlagClick);
+    stateImage.addEventListener('click', onStateFlagClick);
+  }
+
 
   monthLabel.textContent = monthNames[currentMonthIndex];
   yearLabel.textContent = currentYear;

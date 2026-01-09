@@ -3,6 +3,7 @@
 // Uses client role names exactly as provided (no pluralization).
 // Exports: translateToHuman(rule, roles), generateHumanSentence(rule, roles), populateExistingRules(ruleSet, roles)
 import { populateFormFromRule } from './rule-form.js';
+import { createEllipsis } from '../../../js/Utils/ellipsisButton.js';
 
 // ========== CONSTANTS & CONFIGURATIONS ==========
 const WEEKDAY_CONFIG = [
@@ -280,6 +281,7 @@ function translateToHuman(rule = {}, roles = []) {
     return true;
 }
 
+/*
 export function translateExistingRules(ruleSet = [], roles = []) {
     const rulesList = document.getElementById('rules-list');
     const template = document.getElementById('rule-item-template');
@@ -315,6 +317,33 @@ export function translateExistingRules(ruleSet = [], roles = []) {
         rulesList.appendChild(fragment);
     });
 }
+*/
+
+export function translateExistingRules(ruleSet = [], roles = []) {
+    const rulesList = document.getElementById('rules-list');
+    const template = document.getElementById('rule-item-template');
+
+    if (!rulesList || !template) return;
+
+    rulesList.innerHTML = '';
+
+    ruleSet.forEach((rule, idx) => {
+        const fragment = template.content.cloneNode(true);
+        const li = fragment.querySelector('li');
+        const ruleTextEl = fragment.querySelector('.rule-text');
+
+        ruleTextEl.textContent =
+            generateFullHumanSentence(rule, roles) ||
+            `Regel ${rule.id || idx}`;
+
+        li.dataset.ruleId = rule.id || String(idx);
+
+        // 🔹 Add ellipsis instead of buttons
+        li.appendChild(createRuleEllipsis(rule));
+
+        rulesList.appendChild(fragment);
+    });
+}
 
 function applyTypingEffectWithCursor(container, text) {
     if (!container) return;
@@ -339,4 +368,30 @@ function applyTypingEffectWithCursor(container, text) {
             container.textContent = text;
         }
     }, speed);
+}
+
+function createRuleEllipsis(rule) {
+    return createEllipsis(
+        ['edit', 'copy', 'delete'],
+        {
+            onEdit: () => {
+                populateFormFromRule(rule);
+                document
+                    .getElementById('rule-form-container')
+                    ?.scrollIntoView({ behavior: 'smooth' });
+            },
+
+            onCopy: async () => {
+                await navigator.clipboard.writeText(
+                    generateFullHumanSentence(rule)
+                );
+            },
+
+            onDelete: async () => {
+                if (confirm('Regel löschen?')) {
+                    console.log('Delete rule:', rule.id);
+                }
+            }
+        }
+    );
 }

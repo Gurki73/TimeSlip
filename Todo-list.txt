@@ -118,7 +118,7 @@ Demand & Attendance
 6.14 🧱 Backup + final tagged release
 6.15 🧱 Optional teaser GIF / screenshot
 
-1 ☐ state flag in calandar sheet not interactive
+1 ✅ state flag in calandar sheet not interactive
 2 ✅ length icons in legend
 3 ✅ gabs in Menu _ -> _ _ _ _Hilfe
 4 ☐ unten tipp abgeschuttet(?)
@@ -130,7 +130,7 @@ Demand & Attendance
 8 ✅ to many chars "dauer: => =" keep only Completion
 9 ☐ no save btn in Rules
 10 ✅ tab flag in requests have multiple colors
-11 ☐ request list doesnt load/ render
+11 ✅ request list doesnt load/ render
 12 ✅ only one can be selected in select type and select requester 
 13 ✅ header "Mitarbeiter Auswahl" in center/middle
 14 ✅ font noto for icon in privacy warnings
@@ -164,7 +164,7 @@ Demand & Attendance
 31 ☐ sub menu for styling options in main menu / view
 32 ✅ current font size marked in zoom menu
 33 ✅ to many small sizes in zoom not enough big font sizes
-34 ☐ divider btn drag and drob , no nervous movement
+34 ✅ divider btn drag and drob , no nervous movement
 35 ✅ shrink enlarge window, in form more like standart win icons
 36 ✅ add a delete/reset button for birthdays
 37 ✅ no english filenames in Feedback popups
@@ -178,9 +178,8 @@ Demand & Attendance
 
 
 🧭 Interaction & Behavior Bugs
-1 ☐ Calendar sheet: state flag not interactive
-2 ☐ Request list doesn’t load / render
 4 ☐ Wrong shift gets closed in employee asignment (?)
+    => needs a repair option
 5 ☐ Warnings for assigned shift appear sometimes above, sometimes below
 6 ☐ New table triggered by choosing exception is not self-explanatory
 7 ☐ Content in Employees view overflows container
@@ -188,7 +187,6 @@ Demand & Attendance
 
 🎛️ Controls, Drag & Window Behavior
 10 ☐ Divider line drag & drop not Windows-style
-11 ☐ Divider drag & drop feels nervous / jittery
 13 ☐ Calendar setting list headers should use standard chevron
 
 🎨 Icons, Visual Language & Consistency

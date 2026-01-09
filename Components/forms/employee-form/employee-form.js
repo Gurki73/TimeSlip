@@ -710,7 +710,6 @@ function isValidEmployeeMainRoleIndex(mainRoleIndex, mainRoleField) {
   if (mainRoleField) mainRoleField.classList.toggle('invalid-field', !isValid);
   return isValid;
 }
-
 function populateShiftOptions() {
   const dayIds = [
     "employee-form-shift-mon",
@@ -719,15 +718,13 @@ function populateShiftOptions() {
     "employee-form-shift-thu",
     "employee-form-shift-fri",
     "employee-form-shift-sat",
-    "employee-form-shift-sun"
-  ];
+    "employee-form-shift-sun"];
 
   dayIds.forEach((id, dayIndex) => {
     const select = document.getElementById(id);
     select.classList.add('noto');
     if (!select) return;
-
-    select.innerHTML = ""; // Clear existing options
+    select.innerHTML = "";
 
     function updateSelectBg() {
       const opt = select.options[select.selectedIndex];
@@ -735,40 +732,32 @@ function populateShiftOptions() {
       setButtonVisibility({ store: true });
     }
 
-    // --- CASE: "never" => show label, hide dropdown ---
+    // --- CASE: "never" => show label, hide dropdown --- 
     if (currentOfficeDays[dayIndex] === "never") {
-      select.style.display = "none"; // hide dropdown
-
+      select.style.display = "none"; // hide dropdown 
       let label = document.getElementById(id + "-closed-label");
       if (!label) {
         label = document.createElement("label");
         label.id = id + "-closed-label";
-        label.classList.add("noto", "flex-row");
-        label.textContent = "🔒 geschlossen";
-        label.style.backgroundColor = getComputedStyle(document.body)
-          .getPropertyValue("--calendar-day-closed-bg");
-
-        // Insert label right after the select element
+        label.classList.add("flex-row");
+        label.innerHTML = `<span class="noto">🔒</span> geschlossen`;
+        label.style.backgroundColor = getComputedStyle(document.body).getPropertyValue("--calendar-day-closed-bg"); // Insert label right after the select element 
         select.insertAdjacentElement("afterend", label);
       }
-
       return; // skip the rest
     }
 
-    // --- CASE: normal shifts => show dropdown, remove label ---
+    // --- CASE: normal shifts => show dropdown, remove label --- 
     select.style.display = "inline-block";
     const oldLabel = document.getElementById(id + "-closed-label");
-    if (oldLabel) oldLabel.remove();
-
-    // never option
+    if (oldLabel) oldLabel.remove(); // never option 
     const neverOpt = document.createElement("option");
     neverOpt.value = "never";
     neverOpt.textContent = "nicht eingeplant";
-    neverOpt.style.backgroundColor = getComputedStyle(document.body)
-      .getPropertyValue("--calendar-day-weekend-bg");
+    neverOpt.style.backgroundColor = getComputedStyle(document.body).getPropertyValue("--calendar-day-weekend-bg");
     select.appendChild(neverOpt);
 
-    // shift options
+    // shift options 
     if (currentOfficeDays[dayIndex]) {
       const shiftKeys = keyToBools(currentOfficeDays[dayIndex]);
 
@@ -777,8 +766,7 @@ function populateShiftOptions() {
         opt.value = "early";
         opt.innerHTML = "🐓 früh/vormittag";
         opt.classList.add('noto');
-        opt.style.backgroundColor = getComputedStyle(document.body)
-          .getPropertyValue("--calendar-shift-early-bg");
+        opt.style.backgroundColor = getComputedStyle(document.body).getPropertyValue("--calendar-shift-early-bg");
         select.appendChild(opt);
       }
 
@@ -787,8 +775,7 @@ function populateShiftOptions() {
         opt.value = "day";
         opt.textContent = "🍴 voll/ganztag";
         opt.classList.add("noto");
-        opt.style.backgroundColor = getComputedStyle(document.body)
-          .getPropertyValue("--calendar-shift-day-bg");
+        opt.style.backgroundColor = getComputedStyle(document.body).getPropertyValue("--calendar-shift-day-bg");
         select.appendChild(opt);
       }
 
@@ -797,8 +784,7 @@ function populateShiftOptions() {
         opt.value = "late";
         opt.textContent = "🌛 spät/abend";
         opt.classList.add("noto");
-        opt.style.backgroundColor = getComputedStyle(document.body)
-          .getPropertyValue("--calendar-shift-late-bg");
+        opt.style.backgroundColor = getComputedStyle(document.body).getPropertyValue("--calendar-shift-late-bg");
         select.appendChild(opt);
       }
     }
@@ -839,16 +825,33 @@ function populateWeekdaySelection(employee) {
       optionToSelect.selected = true;
       selectElement.style.backgroundColor = optionToSelect.style.backgroundColor || '';
     } else if (selectedShift) {
+      let warningMessage = 'ungültige Schicht';
+      let bgColor = 'yellow';
+
+      const officeClosed = currentOfficeDays[index] === 'never';
+
+      if (officeClosed) {
+        warningMessage = 'Büro geschlossen – Einteilung prüfen';
+        bgColor = '#ffd6d6';
+      }
+
       selectElement.classList.add('shift-warning');
-      selectElement.style.backgroundColor = 'yellow';
+      selectElement.style.backgroundColor = bgColor;
       selectElement.style.border = '2px solid red';
 
       warningText = document.createElement('span');
       warningText.id = warningTextId;
-      warningText.textContent = 'Falsche Schicht';
+      warningText.textContent = warningMessage;
       warningText.style.color = 'red';
+      warningText.backgroundColor = 'yellow';
       warningText.style.fontWeight = 'bold';
-      selectElement.parentNode.insertBefore(warningText, selectElement.nextSibling);
+      warningText.style.display = 'block';
+      warningText.style.marginTop = '4px';
+
+      selectElement.parentNode.insertBefore(
+        warningText,
+        selectElement.nextSibling
+      );
     }
   });
 }

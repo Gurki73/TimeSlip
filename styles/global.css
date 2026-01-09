@@ -200,11 +200,37 @@ body[data-mode="sandbox"] {
   transition: all 0.2s ease-in-out;
 }
 
+.hint-highlight {
+  background-color: rgba(0, 120, 212, 0.15);
+  border-radius: 4px !important;
+  background-color: yellow !important;
+  border-color: orangered !important;
+  transition: background-color 0.3s ease; 
+}
+
+.state-flag-hint {
+  margin-left: 2.6rem;
+  margin-bottom: 5px;
+  display: block;
+  width: 9rem;
+  transform: translateY(-0.5rem);
+}
+
+.ellipsis {
+  position: relative;
+}
+
+.ellipsis-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 100;
+}
+
 /* Smooth highlight on hover */
 #horizontal-divider:hover::after {
   opacity: 1;
   background: rgba(0, 123, 255, 0.3);
-  transform: translateX(-50%) scale(1.1);
   box-shadow: 0 0 6px rgba(0, 123, 255, 0.6);
 }
 

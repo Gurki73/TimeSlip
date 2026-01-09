@@ -20,6 +20,7 @@ let officeDays = [];
 let publicHolidays = [];
 let federalState = '';
 let saveButtonHeader;
+let filtersInitialized = false;
 
 const rankEmojis = {
   1: "📝",   // Hint / minor
@@ -172,6 +173,20 @@ export async function initializeRequestForm(passedApi) {
   resetRequestWarnings();
 }
 
+function getRequestMonth(request) {
+  if (!request?.start) return null;
+
+  const date =
+    request.start instanceof Date
+      ? request.start
+      : new Date(request.start);
+
+  if (isNaN(date)) return null;
+
+  return String(date.getMonth() + 1).padStart(2, "0");
+}
+
+
 function handleFilterChange() {
   const filteredRequests = filterRequests(allRequests);
   renderRequestsTable(filteredRequests);
@@ -188,6 +203,11 @@ function initFilterListener() {
     select.removeEventListener("change", handleFilterChange);
     select.addEventListener("change", handleFilterChange);
   });
+}
+
+function matchesMonthFilter(request, selectedMonth) {
+  if (!selectedMonth) return true;
+  return getRequestMonth(request) === selectedMonth;
 }
 
 function switchVacationType(ev) {
@@ -714,11 +734,10 @@ async function loadAndRenderRequests() {
       requests = [{ info: `Noch keine Anträge für ${year} gestellt` }];
     }
   }
-  const filteredRequests = filterRequests(requests);
+  allRequests = requests.filter(r => r.start && r.employeeID);
 
-  console.log("📄 Loaded requests:", filteredRequests.length);
-
-  renderRequestsTable(filteredRequests);
+  initRequestsOnce(allRequests);
+  renderRequestsTable(allRequests);
 }
 
 
@@ -731,7 +750,10 @@ function filterRequests(requests) {
     month: document.getElementById("month-filter")?.value || 'all',
   };
 
-  if (filters.employee === 'all' && filters.type === 'all' && filters.month === 'all' && filters.status === 'all') {
+  if (filters.employee === 'all' &&
+    filters.type === 'all' &&
+    filters.month === 'all' &&
+    filters.status === 'all') {
     return requests;
   }
 
@@ -739,8 +761,10 @@ function filterRequests(requests) {
     if (filters.employee !== "all" && String(request.employeeID) !== filters.employee) return false; // filter employee
     if (filters.type !== "all" && request.vacationType !== filters.type) return false;
     if (filters.month !== "all") {
-      const requestMonth = request.start?.substring(5, 7);
-      if (requestMonth !== filters.month) return false;
+      const requestMonth = getRequestMonth(request);
+      if (requestMonth !== filters.month) {
+        return false;
+      }
     }
     if (filters.status !== "all" && request.status !== filters.status) return false;
 
@@ -765,130 +789,219 @@ function initDecisionEventListener() {
 }
 
 function renderRequestsTable(requests) {
-  const tbody = document.querySelector("#decision-table tbody");
+  const tbody = getTableBody();
   if (!tbody) return;
-  tbody.innerHTML = "";
 
-  // Collect available filters
-  const availableEmployees = new Set();
-  const availableTypes = new Set();
-  const availableMonths = new Set();
-  const availableStatuses = new Set();
-  const availableWarnings = new Set();
+  clearTable(tbody);
 
-  if (allRequests.length < 1) {
-    allRequests = requests.filter(r => r.start && r.employeeID);
-  }
+  initAllRequests(requests);
 
-  console.log("all request ==> ", allRequests);
-
-  allRequests.forEach(request => {
-
-    if (!request || !request.start || !request.employeeID) {
-      console.warn("Skipping non-request object:", request);
-      return;
-    }
-
-    availableStatuses.add(request.status);
-    availableEmployees.add(request.employeeID);
-    availableTypes.add(request.vacationType);
-    availableMonths.add(request.start.substring(5, 7)); // <== line 683
-    if (request.violations > 0)
-      availableWarnings.add(request.violations > 1 ? "multi" : "single");
-  });
-
-  // disableAllOptions();
-
-  const employeeFilter = document.getElementById("requester-filter");
-  if (employeeFilter) {
-    populateEmployeeFilter([...availableEmployees]);
-  }
-  toggleFilterOptions("requester-filter", new Set([...availableEmployees].map(String)));
-  toggleFilterOptions("decision-type-select", new Set([...availableTypes].map(String)));
-  toggleFilterOptions("month-filter", new Set([...availableMonths].map(String)));
-  toggleFilterOptions("status-filter", new Set([...availableStatuses].map(String)));
+  const filters = collectAvailableFilters(allRequests);
+  initFiltersOnce(filters);
 
   if (requests.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="text-center">No pending requests to display.</td></tr>`;
+    renderEmptyState(tbody);
     return;
   }
 
   requests.forEach(request => {
-    const row = document.createElement("tr");
-
-    // ✅ Create button container (if pending)
-    let firstColContent = "";
-    if (request.status === "pending") {
-      firstColContent = `
-        <div class="flex-row-2">
-          <button class="noto approveButton" data-id="${request.id}">✅</button>
-          <button class="noto rejectButton" data-id="${request.id}">❌</button>
-        </div>`;
-    } else {
-      firstColContent =
-        request.status === "approved"
-          ? `<span class="noto request-status-pill request-approved">✅ genehmigt</span>`
-          : `<span class="noto request-status-pill request-rejected">❌ abgelehnt</span>`;
-    }
-
-    const startFormatted = formatDateDMY(request.start);
-    const endFormatted = formatDateDMY(request.end);
-
-    if (request.effectiveDays == null || Number.isNaN(request.effectiveDays)) {
-      const employeeToFix = getEmployeeById(request.employeeID);
-      if (employeeToFix && request.start && request.end) {
-        const startDate = new Date(request.start);
-        const endDate = new Date(request.end);
-        request.effectiveDays = calculateDaysOff(startDate, endDate, employeeToFix.workdays);
-
-        const yearToFix = startDate.getFullYear();
-        updateRequest(api, request.id, request, yearToFix);
-      } else {
-        request.effectiveDays = 1;
-      }
-    }
-    if (request.effectiveDays < 1) request.effectiveDays = 1;
-    const effectiveDaysUnit = request.effectiveDays > 1 ? 'Tage' : 'Tag';
-    row.innerHTML = `
-      <td class='noto flex-row-2'>${firstColContent}</td>
-      <td class='noto'>${(requestEmployees.find(e => e.id === request.employeeID)?.personalEmoji) || '⊖'} ${(requestEmployees.find(e => e.id === request.employeeID)?.name) || 'Unbekannt'}</td>
-      <td class='noto'>${getVacationIcon(request.vacationType)}</td>
-      <td>${startFormatted} bis<br>${endFormatted}</td>
-      <td>${request.effectiveDays} ${effectiveDaysUnit}</td>
-      <td class='request-msg-cell'>${request.requesterMSG || ""}</td>
-      <td class='noto approverCell'>${request.approverMSG || ""}</td>
-      <td>${getWarningsIcon(request)}</td>
-    `;
-
-    if (request.status === "pending") {
-      const approverTextarea = document.createElement("textarea");
-      approverTextarea.value = request.approverMSG || "";
-      approverTextarea.placeholder = "Enter approver message…";
-
-      const yearInput = document.getElementById('request-year');
-      const year = yearInput && !isNaN(parseInt(yearInput.value, 10))
-        ? parseInt(yearInput.value, 10)
-        : new Date().getFullYear();
-
-      let debounceTimer;
-      approverTextarea.addEventListener("input", () => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-          storeApproval(api, request.id, approverTextarea.value, null, year);
-        }, 600); // Wait 600ms after typing stops
-      });
-      row.querySelector(".approverCell").innerHTML = "";
-      row.querySelector(".approverCell").appendChild(approverTextarea);
-    }
-
+    const row = createRequestRow(request);
     tbody.appendChild(row);
   });
 
-  const table = document.getElementById("decision-table");
-
-  table.removeEventListener("click", handleTableClick);
-  table.addEventListener("click", handleTableClick);
+  setupTableEvents();
 }
+
+function getTableBody() {
+  return document.querySelector("#decision-table tbody");
+}
+
+function clearTable(tbody) {
+  tbody.innerHTML = "";
+}
+
+function renderEmptyState(tbody) {
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="9" class="text-center">
+        No pending requests to display.
+      </td>
+    </tr>`;
+}
+
+function applyAndRenderFilters() {
+  const filtered = applyFilters(allRequests);
+  renderRequestsTable(filtered);
+}
+
+
+function initAllRequests(requests) {
+  if (allRequests.length > 0) return;
+
+  allRequests = requests.filter(isValidRequest);
+  console.log("allRequests =>", allRequests);
+}
+
+function isValidRequest(request) {
+  if (!request || !request.start || !request.employeeID) {
+    console.warn("Skipping non-request object:", request);
+    return false;
+  }
+  return true;
+}
+
+function collectAvailableFilters(requests) {
+  const filters = {
+    employees: new Set(),
+    types: new Set(),
+    months: new Set(),
+    statuses: new Set(),
+    warnings: new Set()
+  };
+
+  requests.forEach(request => {
+    filters.employees.add(request.employeeID);
+    filters.types.add(request.vacationType);
+    filters.statuses.add(request.status);
+
+    const month = getRequestMonth(request);
+    if (month) {
+      filters.months.add(month);
+    }
+
+    if (request.violations > 0) {
+      filters.warnings.add(request.violations > 1 ? "multi" : "single");
+    }
+  });
+
+  return filters;
+}
+
+function initFiltersOnce(filters) {
+  populateEmployeeFilter([...filters.employees]);
+
+  if (filtersInitialized) return;
+
+  toggleFilterOptions("requester-filter", new Set([...filters.employees].map(String)));
+  toggleFilterOptions("decision-type-select", new Set([...filters.types].map(String)));
+  toggleFilterOptions("month-filter", new Set([...filters.months].map(String)));
+  toggleFilterOptions("status-filter", new Set([...filters.statuses].map(String)));
+
+  filtersInitialized = true;
+}
+
+function createRequestRow(request) {
+  const row = document.createElement("tr");
+
+  ensureEffectiveDays(request);
+
+  row.innerHTML = `
+    <td class='noto flex-row-2'>${renderStatusCell(request)}</td>
+    <td class='noto'>${renderEmployeeCell(request)}</td>
+    <td class='noto'>${getVacationIcon(request.vacationType)}</td>
+    <td>${formatDateDMY(request.start)} bis<br>${formatDateDMY(request.end)}</td>
+    <td>${renderEffectiveDays(request)}</td>
+    <td class='request-msg-cell'>${request.requesterMSG || ""}</td>
+    <td class='noto approverCell'>${request.approverMSG || ""}</td>
+    <td>${getWarningsIcon(request)}</td>
+  `;
+
+  if (request.status === "pending") {
+    attachApproverTextarea(row, request);
+  }
+
+  return row;
+}
+
+function ensureEffectiveDays(request) {
+  if (!request.start || !request.end) {
+    request.effectiveDays = 1;
+    return;
+  }
+
+  if (request.effectiveDays != null && !Number.isNaN(request.effectiveDays)) {
+    return;
+  }
+
+  const employee = getEmployeeById(request.employeeID);
+  if (!employee) {
+    request.effectiveDays = 1;
+    return;
+  }
+
+  const start = new Date(request.start);
+  const end = new Date(request.end);
+
+  request.effectiveDays = Math.max(
+    1,
+    calculateDaysOff(start, end, employee.workdays)
+  );
+
+  updateRequest(api, request.id, request, start.getFullYear());
+}
+
+function renderStatusCell(request) {
+  if (request.status === "pending") {
+    return `
+      <div class="flex-row-2">
+        <button class="noto approveButton" data-id="${request.id}">✅</button>
+        <button class="noto rejectButton" data-id="${request.id}">❌</button>
+      </div>`;
+  }
+
+  return request.status === "approved"
+    ? `<span class="noto request-status-pill request-approved">✅ genehmigt</span>`
+    : `<span class="noto request-status-pill request-rejected">❌ abgelehnt</span>`;
+}
+
+function renderEmployeeCell(request) {
+  const employee = requestEmployees.find(e => e.id === request.employeeID);
+  return `${employee?.personalEmoji || "⊖"} ${employee?.name || "Unbekannt"}`;
+}
+
+function renderEffectiveDays(request) {
+  const unit = request.effectiveDays > 1 ? "Tage" : "Tag";
+  return `${request.effectiveDays} ${unit}`;
+}
+
+function attachApproverTextarea(row, request) {
+  const textarea = document.createElement("textarea");
+  textarea.value = request.approverMSG || "";
+  textarea.placeholder = "Enter approver message…";
+
+  const year = getSelectedYear();
+  let debounceTimer;
+
+  textarea.addEventListener("input", () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      storeApproval(api, request.id, textarea.value, null, year);
+    }, 600);
+  });
+
+  const cell = row.querySelector(".approverCell");
+  cell.innerHTML = "";
+  cell.appendChild(textarea);
+}
+
+function getSelectedYear() {
+  const input = document.getElementById("request-year");
+  const year = parseInt(input?.value, 10);
+  return isNaN(year) ? new Date().getFullYear() : year;
+}
+
+function initRequestsOnce(requests) {
+  if (allRequests.length === 0) {
+    allRequests = requests.filter(isValidRequest);
+  }
+}
+
+
+function setupTableEvents() {
+  const table = document.getElementById("decision-table");
+  table.removeEventListener("click", handleTableClick);
+}
+
 
 function getEmployeeById(employeeId) {
   return requestEmployees.find(emp => emp.id === employeeId) ?? null;
@@ -905,6 +1018,9 @@ function formatDateDMY(dateStr) {
 }
 
 async function handleTableClick(e) {
+  console.log("TABLE CLICK", e.target);
+
+  return;
   const target = e.target;
 
   const yearInput = document.getElementById('request-year');

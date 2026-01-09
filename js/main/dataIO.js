@@ -670,78 +670,91 @@ function validateAndAttemptRepair(fullPath, relativePath, rawContent) {
 }
 
 export async function loadCSV(homeKey, relativePath) {
-
-    let resolvedClientFolder = getClientDataFolder(homeKey);
+    const resolvedClientFolder = getClientDataFolder(homeKey);
 
     if (!resolvedClientFolder) {
         console.warn('⚠️ No client data folder, returning null to trigger sample fallback.');
-        return null; // first-run: fallback to sample data
+        return null;
     }
 
     const fullPath = path.join(resolvedClientFolder, relativePath);
-    console.log("homekey:", homeKey);
-    console.log(" relative path:", relativePath);
-    console.log("[main data IO]loading csv     full Path --> ", fullPath);
+    console.log("[main data IO] loading csv -->", fullPath);
 
     if (!fs.existsSync(fullPath)) {
-        console.warn(`⚠️ File not found at path: ${fullPath}, using sample fallback.`);
-        return null; // fallback
+        console.warn(`⚠️ File not found: ${fullPath}, using sample fallback.`);
+        return null;
     }
 
     try {
         const content = fs.readFileSync(fullPath, 'utf8');
 
-        // ⛔ NEW GUARD → Only validate CSV files
+        // Non-CSV files: load verbatim, never validate
         if (!relativePath.toLowerCase().endsWith('.csv')) {
             return content;
         }
 
-        // ---- Run validation & allowed repair on every load attempt ----
-        const check = validateAndAttemptRepair(fullPath, relativePath, content);
+        // -------------------------------
+        // PHASE 1: read-only validation
+        // -------------------------------
+        const check = validateCSVReadOnly(content);
 
         if (check.status === 'ok') {
             return content;
         }
 
-        if (check.status === 'repaired') {
-            // 1) rename original (never delete)
-            const corruptBak = safeRenameOriginalToCorrupt(fullPath);
-            // 2) write repaired copy atomically using existing writeCSVFileSafely
-            //    keep original baseFolder for recovery marker writing
-            const baseFolder = resolvedClientFolder;
-            const wrote = writeCSVFileSafely(fullPath, check.content, baseFolder);
-            if (!wrote) {
-                // If writing repaired file failed, keep corrupt backup in place and return null
-                console.error('⚠️ Writing repaired CSV failed; original saved as corrupt backup:', corruptBak);
-                // notify renderer that repair failed (optional)
-                try { getMainWindow()?.webContents?.send('file-corrupt', { path: fullPath, corruptBak }); } catch (e) { }
-                return null;
-            }
-            console.log(`🩹 Repaired CSV saved: ${fullPath} (original moved to ${corruptBak})`, check.stats);
-            // You allowed silent padding when header + good rows exist → return repaired content
-            return check.content;
+        // ---------------------------------------
+        // PHASE 2: repairable but NOT dangerous
+        // ---------------------------------------
+        if (check.status === 'repairable' && check.severity !== 'major') {
+            console.warn('⚠️ CSV minor issues detected; loading without mutation:', {
+                file: relativePath,
+                issues: check.issues
+            });
+            return content;
         }
 
-        // unusable / major corruption
-        if (check.status === 'unusable') {
-            // rename original to corrupt backup (never delete)
+        // ---------------------------------------
+        // PHASE 3: confirmed corruption
+        // ---------------------------------------
+        if (check.status === 'repairable' && check.severity === 'major') {
+            console.warn('🩹 Attempting CSV repair:', relativePath);
+
+            const repaired = repairCSV(content, check);
+
+            if (!repaired || repaired.trim().length === 0) {
+                throw new Error('Repair produced empty CSV');
+            }
+
             const corruptBak = safeRenameOriginalToCorrupt(fullPath);
-            console.error(`❌ CSV deemed unusable for ${fullPath}:`, check.reason, check.details);
-            // send an IPC event so renderer can show a manual "Restore from backup" UI
-            try { getMainWindow()?.webContents?.send('file-corrupt', { path: fullPath, corruptBak, reason: check.reason, details: check.details }); } catch (e) { }
-            // no automatic restore — return null so renderer falls back to sample and the user can choose restore manually
+            const wrote = writeCSVFileSafely(fullPath, repaired, resolvedClientFolder);
+
+            if (!wrote) {
+                console.error('❌ Failed to write repaired CSV; keeping corrupt backup:', corruptBak);
+                notifyFileCorrupt(fullPath, corruptBak, 'write_failed');
+                return null;
+            }
+
+            console.log(`🩹 CSV repaired and saved: ${fullPath}`);
+            return repaired;
+        }
+
+        // ---------------------------------------
+        // PHASE 4: unusable
+        // ---------------------------------------
+        if (check.status === 'unusable') {
+            const corruptBak = safeRenameOriginalToCorrupt(fullPath);
+            console.error(`❌ CSV unusable: ${relativePath}`, check.reason);
+            notifyFileCorrupt(fullPath, corruptBak, check.reason, check.details);
             return null;
         }
 
-        // fallback
         return null;
 
     } catch (err) {
-        console.error(`❌ Error reading CSV from ${fullPath}:`, err);
-        return null; // fallback
+        console.error(`❌ Error reading CSV: ${fullPath}`, err);
+        return null;
     }
 }
-
 
 function sendChecklistUpdate(event, step, status) {
     event?.sender?.send('download-checklist-update', step, status);
