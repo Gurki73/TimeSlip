@@ -1,7 +1,7 @@
 <div class="employee-form-container" id="employee-form-container">
   <!-- Privacy and Warning Section -->
 
-  <fieldset class="privacy-collapsible" id="privacy-warning-collapsible">
+  <div class="privacy-collapsible" id="privacy-warning-collapsible">
 
     <legend class="legend-with-button">
       <button id="privacy-warn-chev" class="chevron-btn active">▶</button>
@@ -24,161 +24,145 @@
       </div>
     </div>
 
-  </fieldset>
+  </div>
 
   <!-- Employee Selection -->
   <div id="employee-list-column">
     <h3>Mitarbeiter Auswahl</h3>
-    <div>
-      <div class="employee-item" id="employeeForm-new-btn">
-        <span class="employee-item">
-          <span class="employee-emoji noto">⊖</span>
-          <span> ⇨ neuer Mitarbeiter </span>
-        </span>
-      </div>
-      <ul id="employee-list" class="employee-list"></ul>
+    <div class="employee-item" id="employeeForm-new-btn">
+      <span class="employee-item">
+        <span class="employee-emoji noto">⊖</span>
+        <span> ⇨ neuer Mitarbeiter </span>
+      </span>
     </div>
+    <ul id="employee-list" class="employee-list"></ul>
   </div>
   <!-- Employee Details -->
   <div id="employee-form-details">
     <!-- Left Section -->
     <div id="employee-details-left">
+      <h3>Persönlich:</h3>
       <div class="employee-flex-row">
         <button id="employee-emoji-picker-btn" class="emoji-picker-btn noto" title="Emoji ändern">
           ⊖
         </button>
         <input type="text" id="employee-name" class="layout-column-small" placeholder="Name eingeben" />
       </div>
-      <div class="text-line-spacer layout-container-light"></div>
-      <div class="flex-row employe-id-style">
-        Mitarbeiter id:
-        <div id="employee-id"></div>
-      </div>
-      <div class="text-line-spacer layout-container-light"></div>
-
-      <div class="employee-flex-row future-feature" title="Geplantes zukünftiges Feature"
-        aria-label="Urlaubstage, geplantes zukünftiges Feature, momentan deaktiviert">
-        <span class="disabled-label">U-anspr.</span>
-        <input type="number" class="employee-details-number" id="employee-form-vacation-left" step="0.5" disabled
-          aria-disabled="true" />
-        <span class="disabled-label">von</span>
-        <input type="number" class="employee-details-number" id="employee-form-vacation-total" step="0.5" disabled
-          aria-disabled="true" />
-      </div>
-
-      <div class="employee-flex-row future-feature" title="Geplantes zukünftiges Feature"
-        aria-label="Überstunden, geplantes zukünftiges Feature, momentan deaktiviert">
-        <span class="disabled-label">Überstunden</span>
-        <input type="number" class="employee-details-number" id="employee-form-overtime-input" value="0" step="0.5"
-          disabled aria-disabled="true" />
-        <span class="disabled-label">[Tage]</span>
-      </div>
-
-      <div class="employee-flex-row">
-        <button id="pick-employee-start" class="noto" title="Startdatum wählen">
-          🔜 von
-        </button>
-        <input type="date" id="employee-form-start-work" class="employee-details-date visually-hidden-date-picker" />
-        <span id="employee-preview-start">--.--</span>
-      </div>
-
-      <div class="employee-flex-row">
-        <button id="pick-employee-end" class="noto" title="Enddatum wählen">
-          bis 🔚
-        </button>
-        <input type="date" id="employee-form-end-work" class="employee-details-date visually-hidden-date-picker" />
-        <span id="employee-preview-end">--.--</span>
-      </div>/span
-
-      <div class="employee-preview flex-row" id="employee-date-preview">
-        <span id="employee-duration" class="hidden">?</span>
-        <span class="hidden">Tage</span>
-      </div>
-
-      <div class="employee-flex-row">
-        <br />
-        <span><i>optional</i> Geburtstag</span>
-        <div class="hint flex-row">
-          <p class="noto">💡</p> Nur als Erinnerung im Kalender – keine weitere Auswirkung
+      <br>
+      <div>
+        <div class="employee-flex-row">
+          <span>verfügbar :</span>
+          <input type="number" class="employee-details-number" id="employee-form-vacation-left" step="1" value="0" />
+          <span class="disabled-label">[Tage]</span>
         </div>
-        <br />
-        <div class=" flex-row">
-          <input type="number" min="1" max="31" step="1" class="employee-details-number"
-            id="employee-form-birthday-day" />
+        <div class="employee-flex-row">
+          <span>Jahres-Urlaub: </span>
+          <input type="number" class="employee-details-number" id="employee-form-vacation-total" step="1" value="30" />
+          <span class="disabled-label">[Tage]</span>
+        </div>
+        <div class="employee-flex-row">
+          <span>genommen:</span>
+          <input type="number" class="employee-details-number" id="employee-form-vacation-used" step="0.5" value="0" />
+          <span class="disabled-label">[Tage]</span>
+        </div>
+        <div class="employee-flex-row">
+          <span>Überstunden</span>
+          <input type="number" class="employee-details-number" id="employee-form-overtime-input" value="0" step="0.5" />
+          <span class="disabled-label">[Tage]</span>
+        </div>
 
-          <input type="number" min="1" max="12" step="1" class="employee-details-number"
-            id="employee-form-birthday-month" />
-          <span id="employee-form-birthday-month-label" class="month-label"></span>
+        <div>
+          <h4>Beschäftigungs-Zeitraum:</h4>
+          <div class="employee-flex-row">
+            <button id="pick-employee-start" class="noto employee-date-picker" title="Startdatum wählen">📅 von:
+            </button>
+            <input type="date" id="employee-form-start-work"
+              class="employee-details-date visually-hidden-date-picker" />
+            <span id="employee-preview-start">--.--.--</span>
+          </div>
+          <div class="employee-flex-row">
+            <button id="pick-employee-end" class="noto employee-date-picker" title="Enddatum wählen">📅 bis:</button>
+            <input type="date" id="employee-form-end-work" class="employee-details-date visually-hidden-date-picker" />
+            <span id="employee-preview-end">--.--.--</span>
+          </div>
+          <div class="employee-preview flex-row" id="employee-date-preview">
+            <span id="employee-duration" class="hidden">?</span>
+            <span class="hidden">Tage</span>
+          </div>
+        </div>
+        <div>
+          <h3><i class="hint">optional</i><strong> Geburtstag</strong></h3>
+          <div class="hint flex-row">
+            <p class="noto">💡</p> Nur als Erinnerung im Kalender – keine weitere Auswirkung
+          </div>
+          <br />
+          <div class="flex-row">
+            <input type="number" min="1" max="31" step="1" class="employee-details-number"
+              id="employee-form-birthday-day" />
 
-          <button type="button" id="employee-birthday-reset" class="reset-btn noto"
-            title="Geburtstag löschen">🗑️</button>
+            <input type="number" min="1" max="12" step="1" class="employee-details-number"
+              id="employee-form-birthday-month" />
+            <span id="employee-form-birthday-month-label" class="month-label"></span>
+
+            <button type="button" id="employee-birthday-reset" class="reset-btn noto"
+              title="Geburtstag löschen">🗑️</button>
+          </div>
+          <div class="flex-row employe-id-style">
+            Mitarbeiter id:
+            <div id="employee-id"></div>
+          </div>
         </div>
       </div>
     </div>
     <div>
       <!-- Middle Section -->
-      <div id="employee-detail-middle">
-        <div id="employee-detail-top-row">
-          <button id="employee-reset-button" class="noto" type="button" title="Rückgängig">
-            ⤺
-          </button>
+      <div id="employee-ratio">
 
-          <button id="employee-delete-button" class="noto" type="button" title="Mitarbeiter löschen">
-            🗑️
-          </button>
-          <button id="employee-store-button" class="noto" type="button" title="Änderungen speichern">
-            💾
-          </button>
-          <label id="employe-form-warnings"> Warnungen: 0</label>
+        <h3><span class="noto">🧩</span>Aufgaben</h3>
+
+
+        <div class="layout-container-light">
+          Haupt-Aufgabe
+          <div class="flex-row double-row">
+            <span id="employee-details-icon-main" class="employee-details-icon noto big">⊖</span>
+            <select id="employee-details-role-main" class="noto"></select>
+            <div class="slider-container hidden">
+              <span class="slider-value" id="role1-value">Präferenz 100%</span>
+              <input type="range" id="employee-form-role1" min="0" max="10" value="7" step="1" />
+            </div>
+          </div>
         </div>
-        <fieldset id="employee-ratio">
-          <legend class="noto">
-            <h3>🧩 Aufgaben</h3>
-          </legend>
 
-          <fieldset class="layout-container-light">
-            Haupt-Aufgabe
-            <div class="flex-row double-row">
-              <span id="employee-details-icon-main" class="employee-details-icon noto big">⊖</span>
-              <select id="employee-details-role-main" class="noto"></select>
-              <div class="slider-container hidden">
-                <span class="slider-value" id="role1-value">Präferenz 100%</span>
-                <input type="range" id="employee-form-role1" min="0" max="10" value="7" step="1" />
-              </div>
+        <div class="layout-container-medium">
+          Neben-Aufgabe
+          <div class="flex-row double-row">
+            <span id="employee-details-icon-secondary" class="employee-details-icon noto big">⊖</span>
+            <select id="employee-details-role-secondary" class="noto"></select>
+            <div class="slider-container hidden">
+              <span class="slider-value" id="role2-value">Präferenz 0%</span>
+              <input type="range" id="employee-form-role2" min="0" max="10" value="2" step="1" />
             </div>
-          </fieldset>
+          </div>
+        </div>
 
-          <fieldset class="layout-container-medium">
-            Neben-Aufgabe
-            <div class="flex-row double-row">
-              <span id="employee-details-icon-secondary" class="employee-details-icon noto big">⊖</span>
-              <select id="employee-details-role-secondary" class="noto"></select>
-              <div class="slider-container hidden">
-                <span class="slider-value" id="role2-value">Präferenz 0%</span>
-                <input type="range" id="employee-form-role2" min="0" max="10" value="2" step="1" />
-              </div>
+        <div class="layout-container-dark">
+          Notfall-Aufgabe
+          <div class="flex-row double-row">
+            <span id="employee-details-icon-trinary" class="employee-details-icon noto big">⊖</span>
+            <select id="employee-details-role-trinary" class="noto"></select>
+            <div class="slider-container hidden ">
+              <span class="slider-value" id="role3-value">Präferenz 0%</span>
+              <input type="range" id="employee-form-role3" min="0" max="10" value="1" step="1" />
             </div>
-          </fieldset>
+          </div>
+        </div>
 
-          <fieldset class="layout-container-dark">
-            Notfall-Aufgabe
-            <div class="flex-row double-row">
-              <span id="employee-details-icon-trinary" class="employee-details-icon noto big">⊖</span>
-              <select id="employee-details-role-trinary" class="noto"></select>
-              <div class="slider-container hidden ">
-                <span class="slider-value" id="role3-value">Präferenz 0%</span>
-                <input type="range" id="employee-form-role3" min="0" max="10" value="1" step="1" />
-              </div>
-            </div>
-          </fieldset>
-
-          <p class="hint">
-            <span class="noto">💡</span> Die Aufteilung zeigt nur Ihre
-            <strong>Rollen-Präferenzen</strong> an. Die tatsächliche
-            Einteilung richtet sich später nach den Einsatzregeln (z. B. 1
-            Koch & 1 Kellner pro Schicht) und der Verfügbarkeit.
-          </p>
-        </fieldset>
+        <p class="hint">
+          <span class="noto">💡</span> Die Aufteilung zeigt nur Ihre
+          <strong>Rollen-Präferenzen</strong> an. Die tatsächliche
+          Einteilung richtet sich später nach den Einsatzregeln (z. B. 1
+          Koch & 1 Kellner pro Schicht) und der Verfügbarkeit.
+        </p>
       </div>
     </div>
     <!-- Right Section -->

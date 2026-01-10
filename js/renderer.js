@@ -8,11 +8,22 @@ import { checkOnboardingState } from './Utils/onboarding.js';
 import { initializeLegend } from '../Components/legend/legend.js';
 import { createPresenceSelector, setOfficeStatus } from '../Components/calendar/calendar.js';
 import { createWindowButtons } from './Utils/minMaxFormComponent.js';
+import { resizeFormContainer, resizeByPreferredForm } from './resizer.js';
+// resizerLookup.js
+
+const SHIFT_SYMBOL_PRESETS = {
+  empty: ["", "", ""],
+  letters: ["ϝ", "τ", "s"],
+  emoji: ["🐓", "🍴", "🌙"]
+};
+
 let isRefreshing = false;
 
 if (!localStorage.getItem('dataMode')) {
   localStorage.setItem('dataMode', 'auto');
 }
+
+
 // --- PRESENCE UI SWITCHER ---
 function switchPresenceUIMode(newMode) {
   const container = document.getElementById('presence-container');
@@ -74,6 +85,7 @@ window.addEventListener('api-ready', async () => {
   } catch (err) {
     console.error('❌ Startup sequence failed:', err);
   }
+  window.addEventListener('resize', resizeFormContainer);
 });
 
 let formInitializers = {};
@@ -248,7 +260,11 @@ function restoreLayoutFromLocalStorage() {
 }
 
 function setupFormLoader() {
+
   window.electron.onFormLoaded(async (event, { formName, htmlContent }) => {
+
+    console.log("[renderer] on form loaded", formName);
+
     const formContainer = document.getElementById('form-container');
     if (!formContainer) {
       console.error('❌ form-container not found!');
@@ -273,6 +289,8 @@ function setupFormLoader() {
     } else {
       console.warn(`⚠ No initializer found for form: ${formName}`);
     }
+    resizeByPreferredForm(formName);
+    resizeFormContainer();
   });
 }
 
@@ -350,6 +368,16 @@ function setupIPCListeners() {
     } catch (err) {
       console.error('❌ Failed to update localStorage:', err);
     }
+  });
+
+  window.api.receive('set-shift-symbols', async (presetKey) => {
+    await window.cacheAPI.setCacheValue('shiftSymbols', presetKey);
+    window.api.send('refresh-calendar');
+  });
+
+  window.api.receive('set-zodiac-style', async (style) => {
+    await window.cacheAPI.setCacheValue('zodiacStyle', style);
+    window.api.send('refresh-calendar');
   });
 
   window.api.receive('mode-changed', (mode) => {
@@ -578,6 +606,9 @@ export async function globalRefresh(mode = localStorage.getItem('dataMode') || '
 }
 
 function loadWelcomePage() {
+
+  currentPage = 'welcome';
+
   const formContainer = document.getElementById('form-container');
   if (!formContainer) return;
 
@@ -793,6 +824,8 @@ function injectWindowButtonsIntoWelcomeHeader() {
 
   // Avoid double-injection
   if (divider.querySelector('.window-buttons')) return;
+
+  divider.addEventListener('mouseup', resizeFormContainer);
 
   // Ensure right-side container exists
   let rightGap = divider.querySelector('.right-gap');

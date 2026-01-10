@@ -158,12 +158,20 @@ body[data-mode="sandbox"] {
   flex-shrink: 0;
 }
 
+#horizontal-divider:hover {
+  cursor: row-resize;
+}
+
+body.resizing {
+  cursor: row-resize !important;
+}
+
 #horizontal-divider {
   color: var(--bg-soft-white);
   height: 3rem !important;
   border-color: var(--bg-soft-white);
   border-style: double;
-  cursor: row-resize;
+  cursor: n-resize !important;
   width: 98%;
   position: relative;
   z-index: 10;
@@ -175,6 +183,21 @@ body[data-mode="sandbox"] {
 }
 
 /* Refined resize indicator */
+
+#horizontal-divider::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: 3px;
+  background: rgba(255, 255, 255, 0.35);
+
+  pointer-events: none; /* IMPORTANT: no event interference */
+  transition: background 0.15s ease;
+}
+
 #horizontal-divider::after {
   content: "↕️";
   position: absolute;
@@ -193,7 +216,7 @@ body[data-mode="sandbox"] {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(2px);
 
-  color: var(--bg-soft-white);
+  color: var(--accent-active);
   opacity: 0.7;
   pointer-events: none;
   user-select: none;
@@ -215,23 +238,41 @@ body[data-mode="sandbox"] {
   width: 9rem;
   transform: translateY(-0.5rem);
 }
-
 .ellipsis {
   position: relative;
 }
 
 .ellipsis-menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 10rem;
   position: absolute;
   top: 100%;
   right: 0;
-  z-index: 100;
+  margin-top: 0.25rem;
+  z-index: 1000;
 }
+
+.ellipsis-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: lightcoral;
+  border: 1 solid gray;
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+}
+
 
 /* Smooth highlight on hover */
 #horizontal-divider:hover::after {
   opacity: 1;
   background: rgba(0, 123, 255, 0.3);
   box-shadow: 0 0 6px rgba(0, 123, 255, 0.6);
+}
+
+#horizontal-divider:hover::before {
+  background: rgba(255, 255, 255, 0.7);
 }
 
 .divider {
@@ -278,6 +319,7 @@ body[data-mode="sandbox"] {
   flex-direction: column;
   height: 85vh; /* max height */
   min-height: 300px; /* clamp minimum */
+  overflow:auto;
 }
 .top-section {
   flex: 1 1 auto; /* grows/shrinks */
@@ -978,4 +1020,9 @@ body.sample-feedback::before {
   0% { filter: brightness(1); }
   50% { filter: brightness(1.4); }
   100% { filter: brightness(1); }
+}
+
+#horizontal-divider,
+#horizontal-divider * {
+  cursor: row-resize;
 }

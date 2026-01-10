@@ -18,20 +18,23 @@ export function createBranchToggle({
     sampleRadio.name = 'dataMode';
     sampleRadio.value = 'sample';
     sampleRadio.id = `${id}-sample`;
-
+    sampleRadio.title = 'Einführungs-Besipiel anzeigen';
     const sampleLabel = document.createElement('label');
     sampleLabel.htmlFor = sampleRadio.id;
     sampleLabel.textContent = 'Beispiel';
+    sampleLabel.title = 'Einführungs-Besipiel anzeigen';
 
     const clientRadio = document.createElement('input');
     clientRadio.type = 'radio';
     clientRadio.name = 'dataMode';
     clientRadio.value = 'client';
     clientRadio.id = `${id}-client`;
+    clientRadio.title = 'Eigene Daten anzeigen';
 
     const clientLabel = document.createElement('label');
     clientLabel.htmlFor = clientRadio.id;
     clientLabel.textContent = 'Daten';
+    clientLabel.title = 'Eigene Daten anzeigen';
 
     wrapper.appendChild(sampleRadio);
     wrapper.appendChild(sampleLabel);

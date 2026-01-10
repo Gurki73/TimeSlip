@@ -15,7 +15,7 @@ import '../Components/forms/role-form/role-form2.js';
 import '../Components/forms/rule-form/rule-form.js';
 import '../Components/forms/calendar-form/calendar-form.js';
 import '../Components/forms/employee-form/employee-form.js';
-
+import '../Components/forms/admin-form/admin-form.js';
 import '../Components/forms/rule-form/ruleFlowWizzard.js';
 
 // components

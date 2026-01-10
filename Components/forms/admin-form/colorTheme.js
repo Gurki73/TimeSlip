@@ -1,0 +1,102 @@
+// colorSchema.js
+import { loadTeamnames, saveTeamnames } from "../../../js/loader/role-loader.js";
+
+const colorCustomTheme = {
+    roles: {
+        label: "Aufgaben / Teams",
+        description: "Farbzuordnung für Aufgaben und Teams",
+        items: [
+            { key: "role-1-color", label: "Team 1 – Aufgabe 1", group: "Team blue" },
+            { key: "role-2-color", label: "Team 1 – Aufgabe 2", group: "Team blue" },
+            { key: "role-3-color", label: "Team 1 – Aufgabe 2", group: "Team blue" },
+            { key: "role-4-color", label: "Team 1 – Aufgabe 2", group: "Team green" },
+            { key: "role-5-color", label: "Team 1 – Aufgabe 2", group: "Team green" },
+            { key: "role-6-color", label: "Team 1 – Aufgabe 2", group: "Team green" },
+            { key: "role-7-color", label: "Team 1 – Aufgabe 2", group: "Team red" },
+            { key: "role-8-color", label: "Team 1 – Aufgabe 2", group: "Team red" },
+            { key: "role-9-color", label: "Team 1 – Aufgabe 2", group: "Team red" },
+            { key: "role-10-color", label: "Team 1 – Aufgabe 2", group: "Team black" },
+            { key: "role-11-color", label: "Team 1 – Aufgabe 2", group: "Team black" },
+            { key: "role-12-color", label: "Team 1 – Aufgabe 2", group: "Team black" },
+            { key: "role-13-color", label: "Team 5 – Aufgabe 13", group: "Team trainee" }
+        ]
+    },
+
+    calendar: {
+        label: "Kalender",
+        items: [
+            { key: "calendar-day-regular-bg", label: "Werktag" },
+            { key: "calendar-day-weekend-bg", label: "Wochenende" },
+            { key: "calendar-day-holiday-bg", label: "Feiertag" },
+            { key: "calendar-day-closed-bg", label: "Geschlossen" },
+
+            { key: "calendar-shift-early-bg", label: "Frühschicht" },
+            { key: "calendar-shift-day-bg", label: "Tagschicht" },
+            { key: "calendar-shift-late-bg", label: "Spätschicht" }
+        ]
+    },
+
+    app: {
+        label: "App Design",
+        items: [
+            { key: "bg-white", label: "Hintergrund (hell)" },
+            { key: "bg-inactive", label: "Inaktiv" },
+            { key: "button-active-color", label: "Button aktiv" },
+            { key: "button-hover-color", label: "Button Hover" },
+            { key: "text-color", label: "Standard Text" }
+        ]
+    }
+};
+
+let teamnames = { blue: "Team Blau", green: "Team Grün", red: "Team Rot", black: "Team Schwarz" }
+
+export async function initRoleColorTab(api) {
+    // team names reuse your existing logic
+    // teamnames = await loadTeamnames(api);
+
+    const cells = document.querySelectorAll('#tab-roles td[data-role]');
+
+    cells.forEach(cell => {
+        const roleIndex = cell.dataset.role;
+        const varName = `--role-${roleIndex}-color`;
+
+        const currentColor =
+            getComputedStyle(document.documentElement)
+                .getPropertyValue(varName)
+                .trim();
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'role-color-editor';
+
+        const preview = document.createElement('div');
+        preview.className = 'role-preview';
+        preview.style.backgroundColor = currentColor;
+
+        const label = document.createElement('span');
+        label.className = 'role-index';
+        label.textContent = `#${roleIndex}`;
+
+        const picker = document.createElement('input');
+        picker.type = 'color';
+        picker.value = normalizeHex(currentColor);
+
+        picker.addEventListener('input', () => {
+            document.documentElement
+                .style
+                .setProperty(varName, picker.value);
+
+            preview.style.backgroundColor = picker.value;
+        });
+
+        wrapper.append(label, preview, picker);
+        cell.appendChild(wrapper);
+    });
+}
+
+function normalizeHex(color) {
+    if (color.startsWith('#')) return color;
+    // rgb → hex fallback
+    const ctx = document.createElement('canvas').getContext('2d');
+    ctx.fillStyle = color;
+    return ctx.fillStyle;
+}

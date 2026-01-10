@@ -332,6 +332,8 @@ export function translateExistingRules(ruleSet = [], roles = []) {
         const li = fragment.querySelector('li');
         const ruleTextEl = fragment.querySelector('.rule-text');
 
+        li.classList.add('rule-item');
+
         ruleTextEl.textContent =
             generateFullHumanSentence(rule, roles) ||
             `Regel ${rule.id || idx}`;

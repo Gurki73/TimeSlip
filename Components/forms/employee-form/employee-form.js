@@ -10,6 +10,7 @@ import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js
 import { createDateRangePicker } from '../../customDatePicker/customDatePicker.js';
 import { loadEmojiData } from '../../../js/loader/custom-loader.js';
 import { createSaveButton } from '../../../js/Utils/saveButton.js';
+import { createEllipsis } from '../../../js/Utils/ellipsisButton.js';
 
 const employeeEmojiOptions = [
   "⚽️", "🏀", "🏈", "🎾", "🐶", "🐱", "🐻",
@@ -1780,16 +1781,7 @@ function renderEmployeeList() {
       warningIcon.title = employee.warning || 'Daten unvollständig oder fehlerhaft';
       listItem.appendChild(warningIcon);
     }
-    const deleteBtn = document.createElement('button');
-    deleteBtn.classList.add('employee-delete-inline');
-    deleteBtn.title = "Mitarbeiter löschen";
-    deleteBtn.textContent = "🗑️";
-    deleteBtn.addEventListener("click", (e) => {
-      e.stopPropagation(); // prevent opening the employee form
-      deleteEmployeeSafely(employee.id);
-    });
 
-    listItem.appendChild(deleteBtn);
 
     const emojiElement = document.createElement('span');
     emojiElement.classList.add('employee-emoji', 'noto');
@@ -1799,9 +1791,56 @@ function renderEmployeeList() {
     listItem.appendChild(emojiElement);
     listItem.appendChild(document.createTextNode(` ⇨ ${employee.name}`));
 
-    listItem.addEventListener('click', () => selectExsitingEmployee(employee.id));
+    listItem.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectExsitingEmployee(employee.id);
+    });
+    listItem.classList.add('employee-item');
+
+    const content = document.createElement('div');
+    content.className = 'employee-content';
+
+    content.appendChild(emojiElement);
+    content.appendChild(document.createTextNode(` ⇨ ${employee.name}`));
+
+    listItem.appendChild(content);
+    listItem.appendChild(createEmployeeEllipsis(employee));
+
+
     listContainer.appendChild(listItem);
   });
+}
+
+function getEmployeeEllipsisActions(employee) {
+  const actions = ['delete', 'copy'];
+
+  if (employee.warning || employee.corrupt) {
+    actions.unshift('inspect', 'repair');
+  }
+
+  return actions;
+}
+
+function createEmployeeEllipsis(employee) {
+  return createEllipsis(
+    getEmployeeEllipsisActions(employee),
+    {
+      delete: () => deleteEmployeeSafely(employee.id),
+
+      copy: () => {
+        const copyData = {
+          roles: employee.roles,
+          shifts: employee.shifts,
+          availability: employee.availability
+        };
+        navigator.clipboard.writeText(JSON.stringify(copyData, null, 2));
+      },
+
+      repair: () => autoRepairEmployee(employee),
+
+      inspect: () => showEmployeeWarnings(employee)
+    }
+  );
 }
 
 function deleteEmployeeSafely(employeeId) {

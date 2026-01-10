@@ -128,6 +128,11 @@ async function setZodiacStyle(style) {
     window.api.send('refresh-calendar');
 }
 
+async function setShiftSymbols(presetKey) {
+    await window.cacheAPI.setCacheValue('shiftSymbols', presetKey);
+    window.api.send('refresh-calendar');
+}
+
 
 function sendPresenceUIMode(mode) {
     mainWindow.webContents.send('set-presence-ui-mode', mode);
@@ -417,20 +422,33 @@ function buildMenuTemplate() {
                         { label: 'Graustufen', click: () => sendThemeToRenderer('greyscale') },
                     ]
                 },
-                {
-                    label: 'Schalter-Stiel',
-                    submenu: [
-                        { label: 'Umschalter', type: 'radio', checked: true, click: () => sendPresenceUIMode('toggle') },
-                        { label: 'Radio-Tasten', type: 'radio', click: () => sendPresenceUIMode('radio') },
-                    ]
-                },
                 { type: 'separator' },
                 {
-                    label: 'Sternzeichen',
+                    label: 'Optik',
                     submenu: [
-                        { label: 'versteckt', type: 'radio', checked: true, click: () => setZodiacStyle('none') },
-                        { label: 'astronomisch', type: 'radio', click: () => setZodiacStyle('symbol') },
-                        { label: 'bildlich', type: 'radio', click: () => setZodiacStyle('icon') }
+                        {
+                            label: 'Schalter-Stil',
+                            submenu: [
+                                { label: 'Umschalter', type: 'radio', checked: true, click: () => sendPresenceUIMode('toggle') },
+                                { label: 'Radio-Tasten', type: 'radio', click: () => sendPresenceUIMode('radio') },
+                            ]
+                        },
+                        {
+                            label: 'Schicht-Symbole',
+                            submenu: [
+                                { label: 'Leer', type: 'radio', checked: true, click: () => setShiftSymbols('empty') },
+                                { label: 'Buchstaben', type: 'radio', click: () => setShiftSymbols('letters') },
+                                { label: 'Emoji / Icons', type: 'radio', click: () => setShiftSymbols('emoji') }
+                            ]
+                        },
+                        {
+                            label: 'Sternzeichen',
+                            submenu: [
+                                { label: 'Versteckt', type: 'radio', checked: true, click: () => setZodiacStyle('none') },
+                                { label: 'Astronomisch', type: 'radio', click: () => setZodiacStyle('symbol') },
+                                { label: 'Bildlich', type: 'radio', click: () => setZodiacStyle('icon') }
+                            ]
+                        },
                     ]
                 }
             ]

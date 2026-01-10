@@ -7,9 +7,8 @@
   padding: 1rem; /* Add spacing inside */
   gap: 1rem; /* Add space between child columns */
   overflow-y: auto; /* Enable scrolling for vertical overflow */
-  height: calc(100vh - 2rem); /* Fill available vertical space */
+  height: 100%;
   z-index: 50;
-  max-height: 80vh;
 }
 #employee-emoji-picker-btn {
   font-size: 1.25rem;
@@ -32,6 +31,7 @@
 }
 
 .employee-form-detail-top-row {
+  display:none;
   background-color: lightgray;
   padding-bottom: 10px;
 }
@@ -42,13 +42,17 @@
   flex-direction: column;
   flex: 1 1 14rem;
   flex-grow: 1;
-  min-height: 100%;
+  max-height: 95%;
   margin: 10px;
   padding: 10px;
   border-radius: 10px;
   border-color: silver;
   border-style: double;
-  min-width: 250px;
+  min-width: 16rem;
+  width: 18rem;
+  max-width: 22rem;
+  width: 20rem;
+  overflow: auto;
 }
 
 .slider-container {
@@ -114,21 +118,26 @@ input[type="range"] {
 }
 
 #employee-list-column {
-  flex: 0 0 14rem;
+  flex-grow: 3;
   background-color: var(--bg-white);
   border-color: slategray;
   border-radius: 6px;
   border-style: double;
-  width: fit-content;
-  max-width: 15rem;
-  min-width: 8rem; /* optional */
+  width: 30%;
+  max-width: 16rem;
+  min-width: 10rem; /* optional */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  height: 98%;
 }
 #employee-list {
   overflow-y: scroll;
-  height: 60vh;
+  height: 76%;
+  margin-bottom: 5px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
 }
 
 #employee-list-column h3 {
@@ -150,7 +159,18 @@ input[type="range"] {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
+
+.employee-content {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 .weekday-row {
   display: flex;
   flex-direction: row;
@@ -371,6 +391,8 @@ input[type="range"] {
   font-weight: bold;
   color: #d9534f;
   flex-shrink: 0;
+  width: 1rem;
+  max-width: 1rem !important;
 }
 
 #privacy-warning-collapsible .rule-collapsible-content {
@@ -847,16 +869,40 @@ input[type="range"] {
   }
 }
 
+.employee-flex-row {
+  display: inline-block;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-content: space-evenly;
+  vertical-align: middle;
+}
+
+.employee-flex-row > * {
+  white-space: nowrap;
+}
+
+.employee-date-picker {
+  display: block;
+  height: 1.75rem;
+  width: 5.25rem;
+  border-radius: 4px;
+  border-color: var(--calendar-day-regular-bg);
+  border-style: solid;
+  border-width: 1px;
+  margin: 3px;
+}
+
 #employee-form-details {
   background-color: var(--bg-white);
   display: flex;
   flex-direction: row;
-  flex-grow: 6;
+  flex-grow: 3;
   padding: 20px;
   border: 2px double var(--text-color);
   border-radius: 8px;
-  height: 70vh;
-  width: 95%;
+  max-height: 92%;
+  min-height: 92%;
+  width: 70%;
 }
 
 .month-label {
@@ -913,21 +959,25 @@ input[type="range"] {
   border-radius: 10px;
   border-color: silver;
   border-style: double;
-  flex: 0 0 10rem; /* fixed width */
-  min-width: 0;
   min-height: 100%;
+  min-width: 16rem;
+  width: 28rem;
+  max-width: 22rem;
 }
 
 #employee-ratio {
   background-color: var(--bg-white);
   border-color: darkslategray;
   border-radius: 8px;
-  border-style: double;
+  border-style:  solid;
   margin-bottom: 25px;
   padding: 5px;
   display: flex;
   flex-direction: column;
-  height: fit-content;
+  height: 94%;
+  min-width: 16rem;
+  width: 18rem;
+  max-width: 22rem;
 }
 
 .employee-role-select-warning {
@@ -958,8 +1008,8 @@ input[type="range"] {
 }
 
 .employee-details-number {
-  max-width: 50px;
-  min-width: 50px;
+  max-width: 3.65rem;
+  min-width: 2.8rem;
   box-sizing: border-box;
 }
 

@@ -1,4 +1,18 @@
 /* General Button Styles */
+.ellipsis-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  margin: 2px;
+  width: 2.5rem;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: 1px solid var(--btn-border-color);
+  background-color: var(--button-active-color);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
 .mybutton {
   display: inline-flex;
   align-items: center;
@@ -38,6 +52,7 @@
   color: var(--text-white);
 }
 
+.ellipsis-button:hover,
 .mybutton:hover {
   background-color: var(--button-hover-color);
 }

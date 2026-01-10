@@ -16,9 +16,57 @@
 }
 
 .rule-table {
-  width: 100%;
+  width: 90%;
   border-collapse: collapse;
-  margin-bottom: 1em;
+  margin-bottom: 1rem;
+}
+
+.rule-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 1rem;
+  width: 95%;
+  padding: 0.5rem 0.75rem;
+}
+
+.rule-item:nth-child(even) {
+  background-color: var(--color-layout-container-light);
+}
+
+.rule-item:nth-child(odd) {
+  background-color: var(-color-layout-container-medium);
+}
+
+
+.rule-text {
+  flex: 1;
+  margin-right: 0.5rem;
+}
+
+#rules-list {
+  /* list-style-position: inside; */
+  list-style: decimal;
+  padding-left: 1.5rem;
+}
+
+.rule-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* force marker to appear */
+.rule-item::marker {
+  font-weight: 600;
+}
+
+#rules-list li::marker {
+  font-weight: 600;
+}
+
+#rules-list li::marker {
+  content: counter(list-item) ") ";
 }
 
 .inputRow {
@@ -265,4 +313,45 @@ select.error {
   border-color: red;
   border-width: 4 px;
   color: darkred;
+}
+
+#rule-second-condition {
+  width: 90%;
+  position: relative;
+  border-left: 3px solid #007bff; /* vertical line connecting from above */
+  margin-top: 10px;
+  padding-left: 10px; /* small padding so content doesn’t stick to line */
+}
+
+#rule-second-condition::before {
+  content: '';
+  position: absolute;
+  top: -20px; /* start line above table */
+  left: 15px; /* align with exception column */
+  width: 0;
+  height: 20px;
+  border-left: 2px solid #007bff;
+}
+
+#rule-second-condition::after {
+  content: '';
+  position: absolute;
+  top: -1px; /* connect horizontally to left */
+  left: 15px;
+  width: 15px;
+  height: 0;
+  border-top: 2px solid #007bff;
+}
+
+.tab-gab {
+  background-color: hotpink;
+  width: 15rem;
+  min-width: 15rem;
+  max-width: 15rem;
+}
+
+.opaque {
+  color: rgba(0, 0, 0, 0.3) !important;
+  background-color: rgba(255, 255,255, 0.4) !important;
+  border-color: rgba(0, 0, 0, 0.3) !important;
 }

@@ -1,5 +1,4 @@
 import { loadFile, saveFile } from './loader.js';
-import { Role } from './role.js';
 
 const folderPath = "role-data";
 let roles = [];

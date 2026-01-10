@@ -8,7 +8,7 @@ const validReceiveChannels = [
   'update-cache', 'open-help', 'checklist-update', 'refresh-calendar',
   'mode-changed', 'set-presence-ui-mode',
   'excel-import-done', 'excel-import-error', 'excel-export-done', 'excel-export-error',
-  'excel-template-done', 'excel-template-error'
+  'excel-template-done', 'excel-template-error', 'set-shift-symbols', 'set-zodiac-style'
 ];
 const validInvokeChannels = [
   'load-data', 'save-data', 'check-path', 'save-csv', 'load-csv',  // <-- add here
@@ -24,7 +24,8 @@ const CACHE_WHITELIST = [
   'presenceUIMode',
   'autoSave',
   'presenceState',
-  'zodiacStyle'
+  'zodiacStyle',
+  'shiftSymbols'
 ];
 
 const nonce = crypto.randomBytes(16).toString('base64');

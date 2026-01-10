@@ -3,6 +3,7 @@ import { loadEmojiData, normalizeEmojiData, saveEmojiData } from '../../../js/lo
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
 import { loadEmployeeData, storeEmployeeChange } from '../../../js/loader/employee-loader.js';
+import { initRoleColorTab } from './colorTheme.js';
 
 export const adminTools = [
   { id: 'color-customization', name: 'Color Customization', icon: 'cog-wheel-settings-svgrepo-com.svg', enabled: true },
@@ -15,11 +16,13 @@ export const adminTools = [
   { id: 'buy-coffee', name: 'Buy Coffee', icon: 'BuyMeACoffee.png', enabled: true }
 ];
 
+let adminApi;
 
-export function initializeAdminForm(api) {
+export async function initializeAdminForm(api) {
   const toolGrid = document.getElementById('tool-grid');
   if (!toolGrid) return console.error('❌ Tool grid not found');
 
+  adminApi = api;
   toolGrid.innerHTML = '';
 
   // Build admin tiles
@@ -130,6 +133,11 @@ async function loadToolPage(htmlFile) {
     if (htmlFile === 'emoji-customization.html') {
       initEmojiCustomizer();
     }
+    if (htmlFile === 'color-customization.html') {
+      initRoleColorTabSafe(adminApi);
+    }
+
+
   } catch (err) {
     container.innerHTML = `
       <div class="tool-page">
@@ -139,11 +147,27 @@ async function loadToolPage(htmlFile) {
   }
 }
 
+async function initRoleColorTabSafe(api) {
+  // Wait for the table to exist
+  let attempts = 0;
+  while (!document.querySelector('#tab-roles') && attempts < 10) {
+    await new Promise(r => setTimeout(r, 50)); // 50ms
+    attempts++;
+  }
+
+  if (!document.querySelector('#tab-roles')) {
+    console.warn('#tab-roles not found, skipping role color init');
+    return;
+  }
+
+  await initRoleColorTab(api);
+}
+
 // ---------------------------------------------------------
 // Emoji Customizer (NOW COMPLETELY SELF-INERT)
 // ---------------------------------------------------------
 export async function initEmojiCustomizer() {
-  const loaded = await loadEmojiData(api);
+  const loaded = await loadEmojiData(adminApi);
   const { pool, employees, roles } = normalizeEmojiData(loaded);
 
   let poolEmojis = [...pool];
@@ -312,7 +336,7 @@ export async function initEmojiCustomizer() {
 
   /* ------------------ SAVE BUTTON ------------------ */
   saveBtn.addEventListener("click", () => {
-    saveEmojiData(api, {
+    saveEmojiData(adminApi, {
       categories: loaded.categories,
       employees: employeeEmojis,
       roles: roleEmojis

@@ -314,7 +314,7 @@ function createCondition(condition) {
     } else { // ratio checks
         const groupAggregation = (condition.group?.id ?? "g0").toLowerCase();
         dependencyId = (condition.dependency?.id ?? "d0").toLowerCase();
-        console.log(dependencyId, groupAggregation);
+        // console.log(dependencyId, groupAggregation);
         if (dependencyId === "d2") { // needs
             ratioType = ["g0", "g1"].includes(groupAggregation) ? 'WORKLOAD' : 'PRESENCE';
         } else if (dependencyId === "d3") { // helps
@@ -322,7 +322,7 @@ function createCondition(condition) {
         } else {
             ratioType = "corrupt";
         }
-        console.log(ratioType);
+        // console.log(ratioType);
     }
 
     return {
@@ -346,7 +346,7 @@ export function updateRuleset(storedRuleset) {
         return machineRuleset;
     }
 
-    console.log("stored ruleset:", storedRuleset);
+    // console.log("stored ruleset:", storedRuleset);
 
     machineRuleset = createRuleset(machineRuleset);
     fillRulesetFromUiRules(machineRuleset, storedRuleset);

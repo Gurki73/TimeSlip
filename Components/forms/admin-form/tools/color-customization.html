@@ -18,9 +18,96 @@
     </div>
 
     <!-- Tab Contents -->
-    <div class="tab-contents">
+    <div class="tab-contents table-scroll">
       <div class="tab-content active" id="tab-roles">
-        <!-- Role color pickers and preview table go here -->
+        <table class="color-role-table color-table" aria-label="Aufgaben und Teams Farbzuordnung">
+          <thead>
+            <tr>
+              <th><span class="teamname-editable" data-team="blue">Team Blau</span></th>
+              <th><span class="teamname-editable" data-team="green">Team Grün</span></th>
+              <th><span class="teamname-editable" data-team="red">Team Rot</span></th>
+              <th><span class="teamname-editable" data-team="black">Team Schwarz</span></th>
+              <th>Ausbildung</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td data-role="1">
+                <span class="role-index" aria-hidden="true">#1</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 1" />
+              </td>
+              <td data-role="4">
+                <span class="role-index" aria-hidden="true">#4</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 4" />
+              </td>
+              <td data-role="7">
+                <span class="role-index" aria-hidden="true">#7</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 7" />
+              </td>
+              <td data-role="10">
+                <span class="role-index" aria-hidden="true">#10</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 10" />
+              </td>
+              <td data-role="13">
+                <span class="role-index" aria-hidden="true">#13 Azubi</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe Azubi" />
+              </td>
+            </tr>
+            <tr>
+              <td data-role="2">
+                <span class="role-index" aria-hidden="true">#2</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 2" />
+              </td>
+              <td data-role="5">
+                <span class="role-index" aria-hidden="true">#5</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 5" />
+              </td>
+              <td data-role="8">
+                <span class="role-index" aria-hidden="true">#8</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 8" />
+              </td>
+              <td data-role="11">
+                <span class="role-index" aria-hidden="true">#11</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 11" />
+              </td>
+              <td></td>
+            </tr>
+            <tr>
+              <td data-role="3">
+                <span class="role-index" aria-hidden="true">#3</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 3" />
+              </td>
+              <td data-role="6">
+                <span class="role-index" aria-hidden="true">#6</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 6" />
+              </td>
+              <td data-role="9">
+                <span class="role-index" aria-hidden="true">#9</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 9" />
+              </td>
+              <td data-role="12">
+                <span class="role-index" aria-hidden="true">#12</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 9" />
+              </td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+
       </div>
 
       <div class="tab-content" id="tab-calendar">

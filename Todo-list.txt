@@ -122,7 +122,7 @@ Demand & Attendance
 2 ✅ length icons in legend
 3 ✅ gabs in Menu _ -> _ _ _ _Hilfe
 4 ☐ unten tipp abgeschuttet(?)
-5 ☐ Devider line drag and drob is not win-style
+5 ✅ Devider line drag and drob is not win-style
 6 ✅ calendar ( started in absence mode ) seams to be interactive
 7.1 ✅ date picker in Request isnt responsive after first pick anymore
 7.2 ✅ date picker in Employee isnt responsive after first pick anymore
@@ -136,32 +136,32 @@ Demand & Attendance
 14 ✅ font noto for icon in privacy warnings
 15 ✅ Employee ${} not replaced with actual name in employees
 16 ✅ "<span" in text without closing ">"
-17 ☐ delete btn in end of row instead of start for employee list
+17 ✅ delete btn in end of row instead of start for employee list
 18 ✅ noto font for icons in employee list
-19 ☐ ... extended menu instaed of buttons ( delete , edit , warn)
-10 ☐ ... extend menu instead of multi btns in rule list ( edit, delete )
+19 ✅ ... extended menu instaed of buttons ( delete , edit , warn)
+10 ✅ ... extend menu instead of multi btns in rule list ( edit, delete )
 11 ✅ warn icon , triangle instead of pencil in employees
 12 ✅ a red dot on warning buttons if unsaved changes
-13 ☐ scrollbox to big ... lot of empty space... expected more to come at bottom
+13 ✅ scrollbox to big ... lot of empty space... expected more to come at bottom
 14 ☐ warnings for assigned shift sometimes above sometime beneath shift
 15 ☐ wrong shift closed
 16 ✅ a gab is needed between dayname [gab] and select in shift asignment
 17 ✅ radio btn for samples, label next to help button, gab needed
 18 ✅ better/simpler trashcan icon needed
-19 ☐ simpler consitent edit/pencil icon 
+19 ✅ simpler consitent edit/pencil icon 
 20 ✅ no cockwheel icon for tools , looks like setting not like tools
 21 ✅ no lifebelt icon for helppage
 22 ✅ no questionmark icon for missing data / unknown
 23 ☐ new table triggered by choosing exeception not selfexplonary
-23 ☐ content in employees is longer than container
+23 ✅ content in employees is longer than container
 24 ✅ collapsibles hall header as button not chevron only
 25 ☐ tooltip text for "exestree?" btn
 26 ✅ exception change icon, looks like a refresh button
 27 ✅ color for/signal  sample mode 
 28 ✅ disable all save buttons in save mode
 29 ✅ tooltip text for change button in sample mode
-30 ☐ options for shift names in calendar sheet rendering
-31 ☐ sub menu for styling options in main menu / view
+30 ✅ options for shift names in calendar sheet rendering
+31 ✅ sub menu for styling options in main menu / view
 32 ✅ current font size marked in zoom menu
 33 ✅ to many small sizes in zoom not enough big font sizes
 34 ✅ divider btn drag and drob , no nervous movement
@@ -175,7 +175,7 @@ Demand & Attendance
 42 ✅ employees in calandar shift should be sorted by role
 43 ☐ in requests/ employees naming for pdo remaining unclear
 44 ✅ half day off option needed
-
+45 ☐ fix colors of eastern zodiac
 
 🧭 Interaction & Behavior Bugs
 4 ☐ Wrong shift gets closed in employee asignment (?)
@@ -183,27 +183,15 @@ Demand & Attendance
 5 ☐ Warnings for assigned shift appear sometimes above, sometimes below
 6 ☐ New table triggered by choosing exception is not self-explanatory
 7 ☐ Content in Employees view overflows container
-8 ☐ Scrollbox too large → empty space, user expects more content
 
 🎛️ Controls, Drag & Window Behavior
-10 ☐ Divider line drag & drop not Windows-style
 13 ☐ Calendar setting list headers should use standard chevron
 
-🎨 Icons, Visual Language & Consistency
-14 ☐ Employee list icons => ✅ => 🗑️ => Ellipsis "..."
-
 🧩 Menus, Layout & Spacing
-15 ☐ Extended menu preferred instead of multiple buttons: (Ellipsis)
- 15.1 ☐ Employees list (delete / edit / warn)
- 15.2 ☐ Rules list (edit / delete)
-16 ☐ Sub-menu for styling options in main menu / view
+15 ☐ Extended menu preferred instead of multiple buttons: (Ellipsis) /Employees list (delete / edit / warn) 
 
 📝 Text, Labels & Microcopy
 17 ☐ No Save button in Rule
-20 ☐ Tooltip text missing for:
- 20.1 ☐ “exestree?” button
- 20.2 ☐ Change button in sample mode
-21 ☐ PDO remaining naming unclear in requests / employees
+21 ☐ PDO remaining naming unclear in requests
 
-📅 Sorting, Data & Defaults
-22 ☐ Options needed for shift name rendering in calendar sheet
+45 ☐ fix colors of eastern zodiac

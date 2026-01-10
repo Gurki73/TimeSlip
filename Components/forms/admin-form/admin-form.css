@@ -369,6 +369,64 @@
   color: #666;
   width: 70px;
 }
+
+.admin-tabs {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.admin-tab {
+  flex: 0 0 auto;
+  min-width: 140px;
+}
+
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.color-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.color-table th:nth-child(1),
+.color-table td:nth-child(1) {
+  width: 240px; /* label */
+}
+
+.color-table th:nth-child(2),
+.color-table td:nth-child(2) {
+  width: 160px; /* preview + picker */
+}
+
+.color-table th:nth-child(3),
+.color-table td:nth-child(3) {
+  width: 120px; /* optional */
+}
+
+.role-color-editor {
+  display: grid;
+  grid-template-columns: 1fr 32px 44px;
+  align-items: center;
+  gap: 8px;
+}
+
+.role-preview {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+}
+
+input[type="color"] {
+  width: 40px;
+  height: 28px;
+  padding: 0;
+}
+
 .deleted-item .emoji-btn {
   font-size: 1.6rem;
   width: 48px;
@@ -617,4 +675,42 @@
 .theme-popup-failure {
   background-color: var(--color-text-calendar, tomato);
   color: white;
+}
+
+.color-role-table {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 900px;
+}
+
+.color-role-table th,
+.color-role-table td {
+  border: 1px solid var(--accent-muted);
+  padding: 8px;
+  text-align: center;
+}
+
+.role-color-editor {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+}
+
+.role-preview {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: 1px solid #0002;
+}
+
+.role-index {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.role-color-editor input[type="color"] {
+  border: none;
+  background: transparent;
+  cursor: pointer;
 }
