@@ -163,20 +163,23 @@ let lastPrivacyState = true;
 
 export function initPrivacyWarningToggle() {
   const button = document.getElementById('privacy-warn-chev');
-  const fieldset = document.getElementById('privacy-warning-collapsible');
-  if (!button || !fieldset) return;
+  const root = document.getElementById('privacy-warning-collapsible');
+  if (!button || !root) return;
 
-  // restore last cached state
-  const isActive = lastPrivacyState;
+  const isOpen = lastPrivacyState ?? true;
 
-  button.classList.toggle('active', isActive);
-  fieldset.classList.toggle('active', isActive);
-  button.textContent = isActive ? '▼' : '▶';
+  setExpanded(isOpen);
 
-  if (privacyClickListener) {
-    button.removeEventListener('click', privacyClickListener);
+  button.onclick = () => {
+    const next = root.getAttribute('aria-expanded') !== 'true';
+    setExpanded(next);
+    lastPrivacyState = next;
+  };
+
+  function setExpanded(value) {
+    root.setAttribute('aria-expanded', value);
+    button.setAttribute('aria-expanded', value);
   }
-
   privacyClickListener = () => {
     const isActive = fieldset.classList.toggle('active');
     button.classList.toggle('active', isActive);

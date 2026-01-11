@@ -6,8 +6,8 @@
   min-width: 100%; /* Stretch to full width */
   padding: 1rem; /* Add spacing inside */
   gap: 1rem; /* Add space between child columns */
-  overflow-y: auto; /* Enable scrolling for vertical overflow */
-  height: 100%;
+  overflow-y: hidden; /* Enable scrolling for vertical overflow */
+  height: 98%;
   z-index: 50;
 }
 #employee-emoji-picker-btn {
@@ -260,6 +260,7 @@ input[type="range"] {
 #employee-details-form button.btn-danger:hover {
   background-color: #c82333;
 }
+
 #employee-details-role-secondary {
   height: 2rem;
   min-width: 160px;
@@ -272,6 +273,7 @@ input[type="range"] {
   max-width: 160px;
   align-self: center;
 }
+
 #employee-details-role-trinary {
   height: 2rem;
   min-width: 160px;
@@ -279,19 +281,6 @@ input[type="range"] {
   align-self: center;
 }
 
-#privacy-warning-panel {
-  margin-bottom: 1rem; /* Space below the warning panel */
-  padding: 1rem;
-  background-color: #fff4e5;
-  border-style: double;
-  border-color: darkorange;
-  color: var(--text-color); /* Neutral text color */
-  border-radius: 0.5rem; /* Slightly rounded corners */
-  line-height: 1.12;
-  max-width: 20%;
-  min-height: 100%;
-  flex-grow: 1;
-}
 /* Default styles for weekday labels */
 .weekday-row label {
   font-weight: normal;
@@ -335,20 +324,6 @@ input[type="range"] {
   color: slategray;
 }
 
-#privacy-warning-panel b {
-  color: #d9534f; /* Highlighted warning in red */
-}
-
-#privacy-warning-panel p {
-  margin: 0.5rem 0;
-}
-
-.input-warning {
-  background-color: #fff9c4; /* Light yellow */
-  border: 2px solid #d9534f; /* Red border */
-  color: var(--text-color); /* Neutral text color */
-}
-
 #privacy-warning-collapsible {
   display: flex;
   flex-direction: row;
@@ -356,12 +331,11 @@ input[type="range"] {
   gap: 0.5rem;
   border: 2px double darkorange;
   padding: 0.5rem;
+  min-height: 96%;
+  max-height: 96%;
+  overflow: hidden;
 }
 
-.legend-with-button {
-  padding: 0;
-  margin: 0;
-}
 
 .privacy-rotated-header {
   writing-mode: vertical-rl;
@@ -371,8 +345,8 @@ input[type="range"] {
   padding: 0.25rem;
   flex-shrink: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items:flex-start;
+  justify-content:flex-start;
 }
 
 #privacy-header {
@@ -383,25 +357,28 @@ input[type="range"] {
   color: #d9534f;
 }
 
-#privacy-warning-collapsible legend {
-  margin: 0;
-  padding: 0.25rem;
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  font-weight: bold;
-  color: #d9534f;
-  flex-shrink: 0;
-  width: 1rem;
-  max-width: 1rem !important;
+.privacy-collapsible {
+  display: flex;
+  flex-direction: row;
+  flex-basis: 1rem;
+  align-items: stretch;
+  border: 2px double darkorange;
+  border-radius: 0.5rem;
+  background-color: #fff4e5;
+  overflow: hidden;
+  transition: flex-basis 0.3s ease, width 0.3s ease;
+  width:fit-content;
 }
 
-#privacy-warning-collapsible .rule-collapsible-content {
+.privacy-collapsible .rule-collapsible-content {
   background-color: #fff4e5;
   border: 2px double darkorange;
   border-radius: 0.5rem;
   padding: 0.5rem 1rem;
   line-height: 1.2;
   flex-grow: 1;
+  max-height: 75%;
+  overflow: hidden;
 }
 
 .privacy-flexbox {
@@ -410,6 +387,9 @@ input[type="range"] {
   gap: 0.5rem;
   flex: 1 1 auto; /* fill remaining space */
   min-width: 0; /* allow shrinking */
+  min-height: 98%;
+  height: 98%;
+  max-height: 98%;
 }
 
 .privacy-warning-content {
@@ -422,25 +402,6 @@ input[type="range"] {
 
 .privacy-warning-content p b {
   color: #d9534f;
-}
-
-.privacy-collapsible {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  border: 2px double darkorange;
-  border-radius: 0.5rem;
-  background-color: #fff4e5;
-  overflow: hidden;
-  transition: flex-basis 0.3s ease, width 0.3s ease;
-}
-
-.privacy-collapsible.active {
-  flex-basis: 900px; /* expanded width */
-}
-
-.privacy-collapsible:not(.active) {
-  flex-basis: 10px; /* collapsed width (just enough for chevron + icon) */
 }
 
 .privacy-collapsible .legend-with-button {
@@ -458,6 +419,50 @@ input[type="range"] {
   padding: 0.25rem;
   color: #d9534f;
 }
+
+#privacy-warn-chev {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  margin-left: -0.5rem;
+}
+
+.privacy-collapsible {
+  overflow: hidden;
+}
+
+.privacy-collapsible[aria-expanded="false"] {
+  flex-basis: 55rem; 
+}
+
+.privacy-collapsible[aria-expanded="false"] .privacy-warning-content {
+  display: inline-block;
+  min-width: 20rem;
+  width: 20rem;
+  max-width: 30rem;
+  max-height: 98%;
+}
+
+.privacy-collapsible[aria-expanded="true"] .privacy-warning-content {
+  display:none;
+}
+
+.legend-with-button {
+  display: flex;
+  flex-direction: column;
+  min-width: 2.5rem;
+  max-width: 2.5rem;
+  min-height: 56.5%;
+  padding: 0;
+  margin: 0;
+}
+
+.input-warning {
+  background-color: #fff9c4; /* Light yellow */
+  border: 2px solid #d9534f; /* Red border */
+  color: var(--text-color); /* Neutral text color */
+}
+
 
 #employee-reset-button {
   font-size: 1.125rem;

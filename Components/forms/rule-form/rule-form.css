@@ -1,281 +1,152 @@
 #rule-form-container {
-  background-color: var(--bg-white);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  align-items: center;
+  padding: 1rem;
+  min-width: 95%;
+}
+
+#rules-scrollbox {
+  background-color: var(--bg-soft-white);
+  flex: 1;
+  overflow-y: auto;
+  min-height: calc(4 * 1.5rem);
+  line-height: 1.5rem;
+}
+
+#rule-tables-container {
+  min-width: 100%;
+}
+
+#table-container {
+  min-width: 95%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sticky-bottom {
+  flex-shrink: 0;
 }
 
 #newRule {
   background-color: var(--bg-soft-white);
-  border-color: black;
+  border: double black 4px;
   border-radius: 4px;
-  border-style: double;
   width: 80%;
   color: black;
   margin: 0.5rem;
   padding-left: 100px;
   display: inline-block;
-  align-content: start;
 }
 
+.tables-row {
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+}
+
+.table-wrapper {
+  position: relative;
+}
+
+.left-table {
+  width: 15rem;
+  min-width: 15rem;
+}
+
+.right-table {
+  width: 15rem;
+  min-width: 15rem;
+}
+
+.tab-gab {
+
+  width: 15rem;
+  min-width: 15rem;
+  max-width: 15rem;
+}
+
+/* Rule tables */
 .rule-table {
   width: 90%;
-  border-collapse: collapse;
-  margin-bottom: 1rem;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 4rem 0;
 }
 
-.rule-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-right: 1rem;
-  width: 95%;
-  padding: 0.5rem 0.75rem;
-}
-
-.rule-item:nth-child(even) {
-  background-color: var(--color-layout-container-light);
-}
-
-.rule-item:nth-child(odd) {
-  background-color: var(-color-layout-container-medium);
-}
-
-
-.rule-text {
-  flex: 1;
-  margin-right: 0.5rem;
-}
-
-#rules-list {
-  /* list-style-position: inside; */
-  list-style: decimal;
-  padding-left: 1.5rem;
-}
-
-.rule-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-/* force marker to appear */
-.rule-item::marker {
-  font-weight: 600;
-}
-
-#rules-list li::marker {
-  font-weight: 600;
-}
-
-#rules-list li::marker {
-  content: counter(list-item) ") ";
-}
-
-.inputRow {
-  display: flex;
-  display: row;
-}
-.rule-table tr {
-  min-height: 150px;
-}
-
-.rule-number-input {
-  min-width: 30px;
-  max-width: 30px;
+.rule-table td {
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  background-color:pink;
 }
 
 .rule-table th,
 .rule-table td {
-  border: 1px solid #ddd;
+  border: 1px solid black;
+  padding: 0.5rem 0.75rem;
+  min-width: 20rem;
+  min-height: 3rem;
   text-align: center;
-  padding: 8px;
+  vertical-align: middle;
+  
 }
 
 .rule-table th {
   background-color: var(--accent-active);
   font-weight: bold;
+  border-top-right-radius: 8px;
+  border-top-left-radius: 8px;
 }
 
-.rule-table.inactive select,
-.rule-table.inactive button {
-  background-color: lightgray;
-  color: #808080;
-  cursor: not-allowed;
-  opacity: 0.7;
+.rule-table tr {
+  min-height: 150px;
+ 
 }
-
-.blinking-cursor {
-  animation: blink 1s step-end infinite;
-}
-
-.rule-table.inactive select:hover,
-.rule-table.inactive select:focus,
-.rule-table.inactive button:hover {
-  background-color: lightgray;
-  color: silver;
-}
-
-@keyframes blink {
-  from,
-  to {
-    color: transparent;
-  }
-  50% {
-    color: black;
-  }
-}
-
-input.valid,
-select.valid {
-  background-color: lightgreen;
-  border-color: green;
-}
-
-input.warning,
-select.warning {
-  background-color: yellow;
-  border-color: orange;
-}
-
-input.error,
-select.error {
-  background-color: red;
-  border-color: darkred;
-}
-
-.rule-table.inactive {
-  background-color: lightgray;
-}
-
-#typing-text {
-  font-family: "Courier New", monospace;
-  white-space: pre; /* Preserve spaces for formatting */
-  overflow: hidden; /* Hide overflowing text during typing animation */
-}
-
-.rule-table.inactive th {
-  background-color: silver;
-  color: #808080;
-  opacity: 0.8;
-}
-
 .rule-table th[data-highlight="true"] {
-  background-color: seagreen;
-  border: 2px solid lime;
+  min-width: 16rem;
+  background-color: seagreen;;
   animation: pulse 1.5s infinite;
 }
 
+
 .rule-table td[data-highlight="true"] {
+  min-width: 16rem;
   background-color: rgba(144, 238, 144, 0.4);
   border: 2px solid lime;
   animation: pulse 1.5s infinite;
 }
 
 @keyframes pulse {
-  0% {
-    box-shadow: 0 0 2px lime;
-  }
-  50% {
-    box-shadow: 0 0 10px lime;
-  }
-  100% {
-    box-shadow: 0 0 2px lime;
-  }
+  0%, 100% { box-shadow: 0 0 2px lime; }
+  50% { box-shadow: 0 0 10px lime; }
 }
 
-.rule-table:last-of-type th:nth-child(6),
-.rule-table:last-of-type td:nth-child(6) {
-  background-color: rgba(255, 165, 0, 0.4); /* Orange with transparency */
-  border: 2px solid orangered;
-  animation: warningPulse 1s infinite;
+/* Typing animation */
+.blinking-cursor {
+  animation: blink 1s step-end infinite;
 }
 
-.rule-table:last-of-type th:nth-child(6) {
-  /* Slightly darker header */
-  background-color: rebeccapurple;
+@keyframes blink {
+  0%, 100% { color: transparent; }
+  50% { color: black; }
 }
 
-@keyframes warningPulse {
-  0% {
-    box-shadow: 0 0 5px red;
-  }
-  50% {
-    box-shadow: 0 0 15px orange;
-  }
-  100% {
-    box-shadow: 0 0 5px orangered;
-  }
+#typing-text {
+  font-family: "Courier New", monospace;
+  white-space: pre;
+  overflow: hidden;
 }
 
-.repeat-icon {
-  color: yellow;
-  font-size: 1.5rem;
-}
-
-.rule-role-element {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.rule-role-label {
+#space-between-tables {
   width: 100%;
-  text-align: center;
-  font-size: 1.2em;
-  margin-bottom: 10px;
+  min-height: 1.5rem;
 }
 
-#rule-form-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-#rules-scrollbox {
-  background-color: var(--bg-soft-white);
-  flex: 1; /* take available space */
-  overflow-y: auto; /* scroll if content overflows */
-  min-height: calc(
-    4 * 1.5rem
-  ); /* 4 lines of text, assuming 1.5rem line-height */
-  line-height: 1.5rem; /* optional, ensures consistent line height */
-}
-
-.sticky-bottom {
-  flex-shrink: 0; /* always show tables, don’t shrink */
-}
-
-/* Namespace for rule-set checkboxes */
-.rule-checkbox {
-  display: flex;
-  align-items: center;
-  padding: 2px;
-  border-radius: 6px;
-  margin: 2px 0;
-  width: 25%;
-  gap: 5px;
-  border: 1px solid #ccc;
-}
-
-.rule-checkbox.weekday {
-  background-color: var(--calendar-day-regular-bg);
-}
-.rule-checkbox.weekend {
-  background-color: var(--calendar-day-weekend-bg);
-}
-.rule-checkbox.sunday {
-  background-color: var(--calendar-day-holiday-bg);
-}
-.rule-checkbox.closed {
-  background-color: var(--calendar-day-closed-bg);
-}
-
-.rule-form-shift-early {
-  background-color: var(--calendar-shift-early-bg);
-}
-.rule-form-shift-day {
-  background-color: var(--calendar-shift-day-bg);
-}
-.rule-form-shift-late {
-  background-color: var(--calendar-shift-late-bg);
+.rule-number-input {
+  width: 1.5rem;
+  min-width: 2rem;
+  max-width: 2.5rem;
 }
 
 #debug-output {
@@ -285,73 +156,93 @@ select.error {
   color: #0f0;
   padding: 8px;
   border-radius: 6px;
-  height: 5rem; /* fixed height */
-  overflow: auto; /* scroll when needed */
-  margin-top: 1rem; /* space above calendar */
-  border: 1px solid #444; /* subtle frame */
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+  height: 5rem;
+  overflow: auto;
+  margin-top: 1rem;
+  border: 1px solid #444;
+  box-shadow: 0 0 4px rgba(0,0,0,0.3);
 }
 
-.checkbox-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  width: 100%;
-}
-.checkbox-item {
-  display: flex;
-  align-items: center;
-  width: 25%;
-  padding: 2px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-.forbidden {
-  background-color: yellow;
-  border-style: solid;
-  border-color: red;
-  border-width: 4 px;
-  color: darkred;
+#rule-first-condition {
+  width: fit-content;
+  margin-right: 15rem;
 }
 
 #rule-second-condition {
   width: 90%;
   position: relative;
-  border-left: 3px solid #007bff; /* vertical line connecting from above */
+  border-left: 2px solid var(--color-text);
   margin-top: 10px;
-  padding-left: 10px; /* small padding so content doesn’t stick to line */
+  margin-left: 15rem;
+  padding-left: 10px;
+  opacity: 0.25;
+  filter: grayscale(0.6);
+  pointer-events: none;
+  transition: opacity 300ms ease, filter 300ms ease;
 }
 
-#rule-second-condition::before {
-  content: '';
+#rule-second-condition.active {
+  opacity: 1;
+  filter: none;
+  pointer-events: auto;
+}
+
+#rule-diagram {
+  position: relative;
+  overflow: visible;
+}
+
+#rule-lines {
   position: absolute;
-  top: -20px; /* start line above table */
-  left: 15px; /* align with exception column */
-  width: 0;
-  height: 20px;
-  border-left: 2px solid #007bff;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
 }
 
-#rule-second-condition::after {
-  content: '';
-  position: absolute;
-  top: -1px; /* connect horizontally to left */
-  left: 15px;
-  width: 15px;
-  height: 0;
-  border-top: 2px solid #007bff;
+#rule-diagram,
+#rule-first-condition,
+#rule-second-condition {
+  overflow: visible;
 }
 
-.tab-gab {
-  background-color: hotpink;
-  width: 15rem;
-  min-width: 15rem;
-  max-width: 15rem;
+#rule-lines path {
+  stroke: #007bff;
+  stroke-width: 3;
+  opacity: 0.25;
+  transition: opacity 300ms ease;
 }
 
-.opaque {
-  color: rgba(0, 0, 0, 0.3) !important;
-  background-color: rgba(255, 255,255, 0.4) !important;
-  border-color: rgba(0, 0, 0, 0.3) !important;
+#rule-lines.active path {
+  opacity: 1;
+}
+
+#rule-line-flow {
+  stroke: #007bff;
+  stroke-width: 3;
+  fill: none;
+  stroke-dasharray: 2 14;
+  animation: flow 1.2s linear infinite;
+  opacity: 0;
+}
+
+#rule-lines.active #rule-line-flow {
+  opacity: 1;
+}
+
+#rule-line-base {
+  stroke: #007bff;
+  stroke-width: 3;
+  opacity: 0.25;
+  fill: none;
+}
+
+#rule-lines.active #rule-line-base {
+  opacity: 1;
+}
+
+@keyframes flow {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -16; }
 }

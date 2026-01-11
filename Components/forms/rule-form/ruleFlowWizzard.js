@@ -175,13 +175,22 @@ export function updateSaveButtonState() {
 }
 
 export function toggleExceptionTable(isActive) {
-    const exceptionTable = document.getElementById('rule-second-condition');
-    if (exceptionTable) {
-        exceptionTable.classList.toggle('hidden', !isActive); // match your current hidden toggle 
-        exceptionTable.classList.toggle('inactive', !isActive);
-        console.warn("Exception table visibility set to:", isActive);
-    } else {
-        console.warn("Exception table not found.");
+    const table = document.getElementById("rule-second-condition");
+    const svg = document.getElementById("rule-lines");
+
+    table?.classList.toggle("active", isActive);
+    svg?.classList.toggle("active", isActive);
+}
+
+
+function activateExceptionUI(active) {
+    const diagram = document.getElementById("rule-diagram");
+    diagram.classList.toggle("active", active);
+
+    if (active) {
+        diagram.classList.add("flow-once");
+        setTimeout(() => diagram.classList.remove("flow-once"), 1500);
     }
 }
+
 

@@ -516,15 +516,27 @@ function updateZodiac() {
     { emoji: "🐉", mA: "des", mZ: "Drachens", fA: "der", fZ: "Drachin" },
     { emoji: "🐍", mA: "der", mZ: "Schlange", fA: "der", fZ: "Schlange" },
     { emoji: "🐎", mA: "des", mZ: "Hengstes", fA: "der", fZ: "Stute" },
-    { emoji: "🐑", mA: "der", mZ: "Ziege", fA: "des", fZ: "Schafs" },
+    { emoji: "🐑", mA: "der", mZ: "Ziege", fA: "des", fZ: "Schafes" },
     { emoji: "🐒", mA: "des", mZ: "Affen", fA: "der", fZ: "Affin" },
     { emoji: "🐓", mA: "des", mZ: "Hahns", fA: "des", fZ: "Huhns" },
     { emoji: "🐕", mA: "des", mZ: "Hundes", fA: "der", fZ: "Hündin" },
     { emoji: "🐖", mA: "des", mZ: "Schweins", fA: "der", fZ: "Sau" }
   ];
 
-  const colors = ["weißen", "blauen", "grünen", "grünen", "roten", "roten", "gelben", "gelben", "weißen", "weißen"];
-  const elements = ["Eisen", "Wasser", "Holz", "Holz", "Feuer", "Feuer", "Erde", "Erde", "Eisen", "Eisen"];
+  const colors = [
+    "grünen", "grünen",   // Wood
+    "roten", "roten",    // Fire
+    "gelben", "gelben",   // Earth
+    "weißen", "weißen",   // Metal
+    "blauen", "blauen"  // Water (sometimes "blauen")
+  ];
+  const elements = [
+    "Holz", "Holz",
+    "Feuer", "Feuer",
+    "Erde", "Erde",
+    "Eisen", "Eisen",
+    "Wasser", "Wasser"
+  ];
 
   const zIndex = (currentYear - 4) % 12;
   const z = zodiac[zIndex];

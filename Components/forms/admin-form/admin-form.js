@@ -6,14 +6,14 @@ import { loadEmployeeData, storeEmployeeChange } from '../../../js/loader/employ
 import { initRoleColorTab } from './colorTheme.js';
 
 export const adminTools = [
-  { id: 'color-customization', name: 'Color Customization', icon: 'cog-wheel-settings-svgrepo-com.svg', enabled: true },
-  { id: 'emoji-customization', name: 'Emoji Customization', icon: 'smiley-happy-svgrepo-com.svg', enabled: true },
-  { id: 'auto-save-toggle', name: 'Auto Save', icon: 'rocket-svgrepo-com.svg', enabled: true },
-  { id: 'clear-cache', name: 'Clear Cache', icon: 'safe-svgrepo-com.svg', enabled: true },
-  { id: 'rules-settings', name: 'Rules / Exceptions', icon: 'puzzle-piece-svgrepo-com.svg', enabled: false },
-  { id: 'calendar-settings', name: 'Calendar Settings', icon: 'calendar-svgrepo-com.svg', enabled: true },
-  { id: 'deleted-employees', name: 'Deleted Employees', icon: 'reshot-icon-trash-SX6L89TFAM.svg', enabled: true },
-  { id: 'buy-coffee', name: 'Buy Coffee', icon: 'BuyMeACoffee.png', enabled: true }
+  { id: 'color-customization', name: 'Eigene Farben', icon: 'cog-wheel-settings-svgrepo-com.svg', enabled: true },
+  { id: 'emoji-customization', name: 'Symbol Auswahl', icon: 'smiley-happy-svgrepo-com.svg', enabled: true },
+  { id: 'auto-save-toggle', name: 'Automatisch Speichern', icon: 'rocket-svgrepo-com.svg', enabled: true },
+  { id: 'clear-cache', name: 'Puffer leeren', icon: 'safe-svgrepo-com.svg', enabled: true },
+  { id: 'rules-settings', name: 'Regel Toleranzen', icon: 'puzzle-piece-svgrepo-com.svg', enabled: false },
+  { id: 'calendar-settings', name: 'Kalendar Anpassung', icon: 'calendar-svgrepo-com.svg', enabled: true },
+  { id: 'deleted-employees', name: 'Mitarbeiter Wiederherstellen', icon: 'reshot-icon-trash-SX6L89TFAM.svg', enabled: true },
+  { id: 'buy-coffee', name: 'Spenden Unterstützen', icon: 'BuyMeACoffee.png', enabled: true }
 ];
 
 let adminApi;

@@ -12,15 +12,7 @@ import { updateRulesPreview } from "./translatorMachine.js";
 import { loadRuleData, saveRuleData } from '../../../js/loader/rule-loader.js';
 import { createSaveButton } from '../../../js/Utils/saveButton.js';
 
-let cachedRoles = [];
-let ruleOfficeDays;
-let api;
-let eventDelegationInitialized = false;
-let ruleForEdeting = {};
-let ruleSet = [];
-let testPassed = false;
-let saveButtonHeader;
-
+const SVG_NS = "http://www.w3.org/2000/svg";
 const map = {
     W: "repeat",
     T: "timeframe",
@@ -45,6 +37,16 @@ const defaultRules = [
     `ÜBER DEN FIGHT CLUB WIRD AUF KEINEN FALL GESPROCHEN.`,
     `Wenn jemand „Stopp“ sagt, schlaff wird oder aufgibt, ist der Kampf vorbei.`
 ];
+
+let cachedRoles = [];
+let ruleOfficeDays;
+let api;
+let eventDelegationInitialized = false;
+let ruleForEdeting = {};
+let ruleSet = [];
+let testPassed = false;
+let saveButtonHeader;
+
 export async function initializeRuleForm(passedApi) {
     api = passedApi;
     if (!api) console.error("API was not passed ==> " + api);
@@ -110,6 +112,7 @@ export async function initializeRuleForm(passedApi) {
 
     initEventDelegation();
     //initVisibilityChecker();
+    drawRuleLine();
 }
 
 function initSaveButtons() {
@@ -789,6 +792,51 @@ function updateShiftSelectColor(select) {
             break;
     }
 }
+
+function drawRuleLine() {
+    const svg = document.getElementById("rule-lines");
+    svg.innerHTML = "";
+
+    const a = document.getElementById("exception-cell")?.getBoundingClientRect();
+    const b = document.getElementById("space-between-tables")?.getBoundingClientRect();
+    const c = document.getElementById("ex-repeat-header")?.getBoundingClientRect();
+    const container = document.getElementById("rule-diagram")?.getBoundingClientRect();
+
+    if (!a || !b || !c || !container) return;
+
+    const startX = a.right - container.left;
+    const startY = a.top + a.height / 2 - container.top;
+
+    const midX1 = startX + 32; // 2rem
+    const midY = b.top + b.height / 2 - container.top;
+
+    const endX = c.left - container.left;
+    const endY = c.top + c.height / 2 - container.top;
+
+    const midX2 = endX - 32;
+
+    const d = `
+    M ${startX} ${startY}
+    L ${midX1} ${startY}
+    L ${midX1} ${midY}
+    L ${midX2} ${midY}
+    L ${midX2} ${endY}
+    L ${endX} ${endY}
+  `;
+
+    // Base line (static)
+    const base = document.createElementNS(SVG_NS, "path");
+    base.id = "rule-line-base";
+    base.setAttribute("d", d);
+
+    // Flow line (animated dots)
+    const flow = document.createElementNS(SVG_NS, "path");
+    flow.id = "rule-line-flow";
+    flow.setAttribute("d", d);
+
+    svg.append(base, flow);
+}
+
 
 function createCheckboxGroup(type, items, parent, onChange, options = {}) {
     const container = document.createElement('div');

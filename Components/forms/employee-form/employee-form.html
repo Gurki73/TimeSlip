@@ -1,25 +1,25 @@
 <div class="employee-form-container" id="employee-form-container">
   <!-- Privacy and Warning Section -->
 
-  <div class="privacy-collapsible" id="privacy-warning-collapsible">
+  <div class="privacy-collapsible" id="privacy-warning-collapsible" aria-expanded="true" data-collapse="warning">
+
 
     <legend class="legend-with-button">
-      <button id="privacy-warn-chev" class="chevron-btn active">▶</button>
-    </legend>
-
-    <!-- FLEX WRAPPER (new!) -->
-    <div class="privacy-flexbox">
+      <button id="privacy-warn-chev" class="resize-button" aria-expanded="false"
+        aria-controls="privacy-warning-content"></button>
       <div class="privacy-rotated-header">
         <p id="privacy-header">⚠️ Datenschutzhinweis</p>
       </div>
-
-      <div class="privacy-warning-content">
+    </legend>
+    <!-- FLEX WRAPPER (new!) -->
+    <div class="privacy-flexbox">
+      <div class="privacy-warning-content" id="privacy-warning-content">
         <p>Beachten Sie bitte: Diese Anwendung enthält sensible Daten.</p>
         <p>Nur autorisierte Benutzer dürfen auf diese Daten zugreifen.</p>
         <p class="noto">❗<b>Wichtig:</b> Diese Anwendung speichert Daten lokal auf Ihrem Rechner, ähnlich wie
           Excel-Tabellen.
           Wir übernehmen keine Verantwortung für die Sicherheit Ihrer Daten.</p>
-        <p class="noto">💡 Empfehlung: Verwenden Sie <b>Aliase oder verschlüsselte Namen</b>,
+        <p class="noto">💡 Empfehlung: Verwenden Sie <b>Spitznamen oder verschlüsselte Namen</b>,
           statt echte sensible Daten einzugeben, um Ihre Privatsphäre zu schützen.</p>
       </div>
     </div>

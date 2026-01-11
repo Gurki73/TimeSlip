@@ -126,7 +126,7 @@ body[data-mode="sandbox"] {
 }
 
 .resize-button {
-  background-image: url("../assets/svg/next-svgrepo-com.svg");
+  background-image: url("../assets/svg/play-svgrepo-com.svg");
   background-repeat: no-repeat;
   background-size: contain;
   border: double;
@@ -147,7 +147,8 @@ body[data-mode="sandbox"] {
   background-color: var(--accent-hover);
 }
 
-.resize-button.expanded {
+.resize-button.expanded,
+.resize-button[aria-expanded="true"] {
   transform: rotate(180deg);
 }
 
@@ -163,15 +164,15 @@ body[data-mode="sandbox"] {
 }
 
 body.resizing {
-  cursor: row-resize !important;
+  cursor: row-resize;
 }
 
 #horizontal-divider {
   color: var(--bg-soft-white);
-  height: 3rem !important;
+  height: 3rem;
   border-color: var(--bg-soft-white);
   border-style: double;
-  cursor: n-resize !important;
+  cursor: n-resize;
   width: 98%;
   position: relative;
   z-index: 10;

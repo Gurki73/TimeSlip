@@ -152,10 +152,10 @@ Demand & Attendance
 20 ✅ no cockwheel icon for tools , looks like setting not like tools
 21 ✅ no lifebelt icon for helppage
 22 ✅ no questionmark icon for missing data / unknown
-23 ☐ new table triggered by choosing exeception not selfexplonary
+23 ✅ new table triggered by choosing exeception not selfexplonary
 23 ✅ content in employees is longer than container
 24 ✅ collapsibles hall header as button not chevron only
-25 ☐ tooltip text for "exestree?" btn
+25 ✅ tooltip text for "exesample?" btn
 26 ✅ exception change icon, looks like a refresh button
 27 ✅ color for/signal  sample mode 
 28 ✅ disable all save buttons in save mode
@@ -173,25 +173,32 @@ Demand & Attendance
 40 ✅ preview mode /edit ms unintuitive (?)
 41 ✅ company holidays should be sorted by date
 42 ✅ employees in calandar shift should be sorted by role
-43 ☐ in requests/ employees naming for pdo remaining unclear
+43 ✅ in requests/ employees naming for pdo remaining unclear
 44 ✅ half day off option needed
-45 ☐ fix colors of eastern zodiac
+45 ✅ fix colors of eastern zodiac
+46 ☐ finish admin tools
+  46.1 ☐ color customizer calendar
+  46.2 ☐ color customizer app and buttons
+  46.3 ☐ auto save
+  46.4 ☐ tolerances setting for rules
+  46.5 ☐ callendar settings (?)
+  46.6 ✅ revive deleted employees
+
+
 
 🧭 Interaction & Behavior Bugs
 4 ☐ Wrong shift gets closed in employee asignment (?)
     => needs a repair option
 5 ☐ Warnings for assigned shift appear sometimes above, sometimes below
-6 ☐ New table triggered by choosing exception is not self-explanatory
 7 ☐ Content in Employees view overflows container
-
 🎛️ Controls, Drag & Window Behavior
 13 ☐ Calendar setting list headers should use standard chevron
-
 🧩 Menus, Layout & Spacing
 15 ☐ Extended menu preferred instead of multiple buttons: (Ellipsis) /Employees list (delete / edit / warn) 
-
-📝 Text, Labels & Microcopy
-17 ☐ No Save button in Rule
-21 ☐ PDO remaining naming unclear in requests
-
-45 ☐ fix colors of eastern zodiac
+46 ☐ finish admin tools
+  46.1 ☐ color customizer calendar
+  46.2 ☐ color customizer app and buttons
+  46.3 ☐ auto save
+  46.4 ☐ tolerances setting for rules
+  46.5 ☐ callendar settings (?)
+  46.6 ☐ revive deleted employees

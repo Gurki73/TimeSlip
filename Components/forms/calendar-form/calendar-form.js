@@ -218,7 +218,7 @@ export async function initializeCalendarForm(passedApi) {
   populateSchoolHolidaysListUnified(cachedApi, ruleFormState, currentYear);
 
   requestAnimationFrame(() => {
-    initializeYearAndState();
+    // initializeYearAndState();
     initCalendarStateFromCSV(officeDays);
     updateCalendarUIFromState();
     initCollapseExpandToggles();
@@ -352,10 +352,12 @@ async function handleYearUpdate(year) {
 
 }
 
-
+/*
 async function initializeYearAndState() {
   const container = document.getElementById("state-year-container");
   if (!container) return;
+
+  container.innerHTML = '';
 
   publicHolidayState = await loadStateData(cachedApi);
 
@@ -448,7 +450,122 @@ async function initializeYearAndState() {
     populateSchoolHolidaysListUnified(cachedApi, selectedStateCode, currentYear);
   });
 }
+*/
+async function createYearAndStateSpan() {
+  const span = document.createElement("span");
+  span.id = "state-year-ui";
 
+  publicHolidayState = await loadStateData(cachedApi);
+
+  /* ======================
+     YEAR INPUT
+  ====================== */
+
+  const yearInput = document.createElement("input");
+  yearInput.id = "calendar-form-year";
+  yearInput.type = "number";
+
+  const cachedYear = parseInt(localStorage.getItem("calendarSettingYear"), 10);
+  currentYear = cachedYear || new Date().getFullYear();
+  yearInput.value = currentYear;
+
+  yearInput.addEventListener("change", async (e) => {
+    const selectedYear = parseInt(e.target.value, 10);
+    localStorage.setItem("calendarSettingYear", selectedYear);
+    currentYear = selectedYear;
+    await handleYearUpdate(selectedYear);
+  });
+
+  /* ======================
+     FLAG
+  ====================== */
+
+  const flagDiv = document.createElement("div");
+  flagDiv.id = "state-flag";
+  flagDiv.classList.add("state-flag-icon");
+
+  /* ======================
+     STATE SELECT
+  ====================== */
+
+  const stateSelect = document.createElement("select");
+  stateSelect.id = "state-select";
+
+  const filteredStates =
+    publicHolidayState !== "XX"
+      ? states.filter(s => !s.hidden)
+      : states;
+
+  filteredStates.forEach(s => {
+    const opt = document.createElement("option");
+    opt.value = s.code;
+    opt.textContent = s.name;
+    opt.selected = s.code === publicHolidayState;
+    stateSelect.appendChild(opt);
+  });
+
+  /* ======================
+     SAVE BUTTON
+  ====================== */
+
+  const saveBtn = document.createElement("button");
+  saveBtn.id = "save-state-btn";
+  saveBtn.textContent = "🛡️💾";
+  saveBtn.title = "Bundesland speichern";
+  saveBtn.setAttribute("aria-label", "Bundesland speichern");
+  saveBtn.classList.add("noto", "hidden");
+
+  saveBtn.addEventListener("click", async () => {
+    await saveStateData(cachedApi, stateSelect.value);
+    saveBtn.classList.add("hidden");
+  });
+
+  /* ======================
+     WIRING
+  ====================== */
+
+  updateStateFlag(stateSelect.value, flagDiv);
+
+  stateSelect.addEventListener("change", async (e) => {
+    const selectedStateCode = e.target.value;
+
+    ruleFederalState = selectedStateCode;
+    publicHolidayState = selectedStateCode;
+
+    saveBtn.classList.remove("hidden");
+    updateStateFlag(selectedStateCode, flagDiv);
+
+    // sync other UI if they exist
+    const topFlag = document.getElementById("state-image");
+    if (topFlag) updateStateFlag(selectedStateCode, topFlag);
+
+    const stateSelector = document.getElementById("state-select");
+    if (stateSelector) stateSelector.value = selectedStateCode;
+
+    const publicHolidaysLocal =
+      filterPublicHolidaysByYearAndState(currentYear, selectedStateCode);
+
+    populatePublicHolidayList(publicHolidaysLocal);
+
+    const bridgedays = findBridgeDays(publicHolidaysLocal, weekdaysData);
+    populateBridgeDaysList(bridgedays);
+
+    populateSchoolHolidaysListUnified(cachedApi, selectedStateCode, currentYear);
+  });
+
+  /* ======================
+     ASSEMBLE SPAN
+  ====================== */
+
+  span.append(
+    flagDiv,
+    stateSelect,
+    saveBtn,
+    yearInput
+  );
+
+  return span;
+}
 
 async function clearAndLoadDOM() {
   const container = document.getElementById('form-container');
@@ -1636,7 +1753,7 @@ function dayAbbr(dayId) {
 //            old                  oldoldold       oldold
 //
 
-function updateDivider(className = "bg-calendar") {
+async function updateDivider(className = "bg-calendar") {
   const divider = document.getElementById('horizontal-divider');
   if (!divider) {
     console.error("❌ horizontal-divider not found");
@@ -1645,6 +1762,8 @@ function updateDivider(className = "bg-calendar") {
 
   divider.className = className;
   divider.innerHTML = '';
+
+  const yearAndState = await createYearAndStateSpan();
 
   // Left gap
   const leftGap = document.createElement('div');
@@ -1673,7 +1792,7 @@ function updateDivider(className = "bg-calendar") {
 
   buttonContainer.append(saveButtonHeader.el, helpBtn, branchSelect, windowBtns);
 
-  divider.append(leftGap, h2, buttonContainer);
+  divider.append(yearAndState, h2, buttonContainer);
 }
 
 function storeAllCalendarSettings(api) {

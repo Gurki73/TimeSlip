@@ -656,6 +656,22 @@
   flex-direction: row;
 }
 
+#state-year-ui {
+  display: flex;
+  flex-direction: row;
+  min-height: 2.35rem;
+  max-height: 2.35rem;
+  background-color: ghostwhite;
+  border-color: red;
+  border-style: solid;
+  border-width: 5px;
+  z-index: 9999999;
+  pointer-events: none;
+}
+
+#state-year-ui > * {
+  pointer-events: auto;
+}
 /* ================================
    Shift Matrix Color Classes
    ================================ */
