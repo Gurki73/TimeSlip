@@ -133,16 +133,22 @@ export async function initializeRequestForm(passedApi) {
   const requestEnter = document.getElementById("decision");
 
   const switchMode = async (mode) => {
+
     if (mode === "approve") {
       createRequestBtn.classList.replace("inactive", "active");
       approveRequestBtn.classList.replace("active", "inactive");
       requestEnter.classList.replace("inactive", "active");
       decisionContainer.classList.replace("active", "inactive");
-
+      if (saveButtonHeader) saveButtonHeader.el.classList.add('hidden');
       initDecisionEventListener();
       initFilterListener();
       await loadAndRenderRequests();
     } else {
+      if (saveButtonHeader) {
+        saveButtonHeader.el.classList.remove('hidden');
+        if (localStorage.getItem('dataMode') !== 'sample') saveButtonHeader.setState('blocked');
+        else saveButtonHeader.setState('is-readonly');
+      }
       createRequestBtn.classList.replace("active", "inactive");
       approveRequestBtn.classList.replace("inactive", "active");
       requestEnter.classList.replace("active", "inactive");
@@ -235,18 +241,18 @@ function switchVacationType(ev) {
   );
 
   newRequest.type = option.value;
-  recalcWarnings();
+  recalcWarnings(saveButtonHeader);
 }
 
 function resetRequestWarnings() {
   resetNewRequest();
   resetRequestForm();
-  recalcWarnings();
+  recalcWarnings(saveButtonHeader);
   updateDurationPreview();
 }
 
 function updateDivider(className) {
-  const divider = document.getElementById('horizontal-divider');
+  const divider = document.getElementById('horizontal-divider-box');
   divider.innerHTML = '';
 
   const leftGap = document.createElement('div');
@@ -270,12 +276,11 @@ function updateDivider(className) {
     }
   });
   saveButtonHeader = createSaveButton({ onSave: () => storeAllRequests(api) });
-  saveButtonHeader.setState('blocked');
+  saveButtonHeader.el.id = 'new-request-save-btn';
   const windowBtns = createWindowButtons(); // your new min/max buttons
 
 
   const refreshBtn = document.createElement('button');
-  // <button id="refresh-request-form" class="noto">⟳</button>
   refreshBtn.id = "refresh-request-form";
   refreshBtn.classList.add('noto');
   refreshBtn.classList.add('button');
@@ -284,7 +289,7 @@ function updateDivider(className) {
   refreshBtn.setAttribute('aria-label', 'Formular auffrische');
   refreshBtn.addEventListener('click', async () => await initializeRequestForm(api));
 
-  buttonContainer.append(refreshBtn, saveButtonHeader.el, helpBtn, branchSelect, windowBtns);
+  buttonContainer.append(saveButtonHeader.el, refreshBtn, helpBtn, branchSelect, windowBtns);
 
   divider.append(leftGap, h2, buttonContainer);
 }
@@ -292,6 +297,8 @@ function updateDivider(className) {
 function storeAllRequests(api) {
   storeRequest(api);
   console.log(" store all requests");
+  if (localStorage.getItem('dataMode') !== 'sample') saveButtonHeader.saveButtonHeader.setState('blocked');
+  else saveButtonHeader.saveButtonHeader.setState('readonly');
 }
 
 function initDatePickers() {
@@ -594,7 +601,7 @@ function handleRequestMSG(event) {
 
 function afterTypePicked() {
   // Enable hints or anything else if needed
-  recalcWarnings(); // trigger warning update
+  recalcWarnings(saveButtonHeader); // trigger warning update
 }
 
 function afterRequesterSelected() {
@@ -605,7 +612,7 @@ function afterRequesterSelected() {
   setEnabled(document.getElementById('requestStoreButton'), false);
   setStepActive("step1", true);
 
-  recalcWarnings(); // ⚡ trigger warnings safely here
+  recalcWarnings(saveButtonHeader); // ⚡ trigger warnings safely here
 }
 
 function afterStartDatePicked() {
@@ -616,13 +623,13 @@ function afterStartDatePicked() {
   setTimeout(() => {
     const warningContainer = document.querySelector(".request-form-warn");
     if (warningContainer) warningContainer.style.opacity = 1;
-    recalcWarnings(); // ⚡ trigger warnings after container visible
+    recalcWarnings(saveButtonHeader); // ⚡ trigger warnings after container visible
   }, 1500);
 }
 
 function afterEndDatePicked() {
   setEnabled(document.getElementById('requestStoreButton'), true);
-  recalcWarnings(); // ⚡ final recalculation
+  recalcWarnings(saveButtonHeader); // ⚡ final recalculation
 }
 
 function resetRequestForm() {
@@ -655,7 +662,7 @@ function switchRequester(ev) {
     document.getElementById('request-vacation-total').innerHTML = 'xx';
     document.getElementById('request-overtime').innerHTML = 'xx';
 
-    recalcWarnings();
+    recalcWarnings(saveButtonHeader);
     return;
   }
 
@@ -702,7 +709,7 @@ function formatDate(timestamp) {
 function updateRequestType(event) {
   const selectedType = event.target.value;
   checkAutoApprovalWarning(selectedType);
-  recalcWarnings();
+  recalcWarnings(saveButtonHeader);
 }
 
 async function loadAndRenderRequests() {
@@ -1151,7 +1158,7 @@ export function updateDurationPreview(savePTOchange = false) {
   const endVal = endInput?.value;
   const vacationType = document.getElementById("request-type-select")?.value;
 
-  recalcWarnings();
+  recalcWarnings(saveButtonHeader);
   if (!currentEmployee) {
     const idRaw = document.getElementById("requester-select").value;
     const id = isNaN(idRaw) ? idRaw : Number(idRaw);
@@ -1201,12 +1208,12 @@ export function updateDurationPreview(savePTOchange = false) {
     durEl.textContent = message.msg;
     durElUnit.textContent = message.msgUnit;
   }
-  recalcWarnings();
+  recalcWarnings(saveButtonHeader);
 }
 
 function checkAutoApprovalWarning(selectedType) {
 
-  recalcWarnings();
+  recalcWarnings(saveButtonHeader);
 }
 
 function showError(message) {
@@ -1249,3 +1256,18 @@ function parsePreviewDate(previewText) {
   return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`; // ISO format for storage
 }
 
+function fireWarnings() {
+
+}
+
+function setEnabled() {
+
+}
+
+function setStepActive() {
+
+}
+
+function applyFilters() {
+
+}

@@ -81,7 +81,7 @@ export async function initTeamnames(passedApi) {
 }
 
 function updateDivider(className) {
-  const divider = document.getElementById('horizontal-divider');
+  const divider = document.getElementById('horizontal-divider-box');
   divider.innerHTML = '';
 
   const leftGap = document.createElement('div');

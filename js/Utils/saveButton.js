@@ -7,7 +7,8 @@ export function createSaveButton({ onSave }) {
     let state = isSampleMode ? 'readonly' : 'clean';
 
     function setState(newState) {
-        state = newState;
+
+        state = localStorage.getItem('dataMode') === 'sample' ? 'readOnly' : newState;
 
         // remove all state classes
         button.classList.remove(

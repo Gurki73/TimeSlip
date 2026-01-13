@@ -6,7 +6,6 @@ import { keyToBools } from '../calendar-form/calendar-form-utils.js';
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
 import { createBranchSelect } from '../../../js/Utils/branch-select.js';
-import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js';
 import { createDateRangePicker } from '../../customDatePicker/customDatePicker.js';
 import { loadEmojiData } from '../../../js/loader/custom-loader.js';
 import { createSaveButton } from '../../../js/Utils/saveButton.js';
@@ -25,8 +24,7 @@ const employeeEmojiOptions = [
 
 const employeeEmojis = [...employeeEmojiOptions];
 
-let employeeFormDataChanged;
-let employeeFormDataNew;
+let employeeFormDataNew = false;
 let currentOfficeDays;
 let api;
 let currentEmployeeId;
@@ -58,7 +56,6 @@ export async function initializeEmployeeForm(passedApi) {
     return;
   }
 
-  // NEW: Load custom emoji data
   const emojiData = await loadEmojiData(api);
   if (emojiData?.employeeEmojis?.length) {
     console.log("[EmployeeForm] Using custom employee emojis:", emojiData.employeeEmojis);
@@ -96,7 +93,6 @@ export async function initializeEmployeeForm(passedApi) {
   renderNewEmployeeBtn(container);
   renderEmployeeList();
 
-  //selectEmployee(getEmployeeById(currentEmployeeId));
   updateDivider("bg-employee");
 
   requestAnimationFrame(() => {
@@ -112,7 +108,6 @@ export async function initializeEmployeeForm(passedApi) {
   });
   initEventListenerRoleSelect();
   initEmployeeDatePickers();
-  setButtonVisibility({ delete: false, store: false, reset: false });
   initPrivacyWarningToggle();
   populateShiftOptions();
   initDeleteBirthday();
@@ -152,7 +147,7 @@ function initEmployeeDatePickers() {
         endDate: endVal || ""
       };
       validateEmployeeFields(employee);
-      setButtonVisibility({ store: true });
+      saveButtonHeader.setState('dirty');
     }
   });
 }
@@ -191,9 +186,9 @@ export function initPrivacyWarningToggle() {
 }
 
 function renderNewEmployeeForm() {
-  // mark form as "new"
   window.employeeFormDataNew = true;
-
+  document.getElementById('employee-form-details').classList.remove('employee-opaque');
+  saveButtonHeader.setState('clean');
   const today = new Date();
   const tenYearsLater = new Date();
   tenYearsLater.setFullYear(today.getFullYear() + 35);
@@ -229,28 +224,21 @@ function renderNewEmployeeForm() {
     birthMonth: "0"
   };
 
-  // reset form fields and rebind events
   resetEmployeeForm(newEmployeeDefaults);
   rebindEmployeeFormEvents(newEmployeeDefaults);
 
-  // log for debugging
   console.log("office data:", officeDays);
 
-  // hide delete/reset/store buttons for new employee (corrected the copy/paste bug)
   const deleteButton = document.getElementById("employee-delete-button");
   if (deleteButton) deleteButton.style.display = "none";
 
   const resetButton = document.getElementById("employee-reset-button");
-  if (resetButton) resetButton.style.display = "none"; // <--- fixed
-
+  if (resetButton) resetButton.style.display = "none";
   const storeButton = document.getElementById("employee-store-button");
-  if (storeButton) storeButton.style.display = ""; // allow store button to show for new
+  if (storeButton) storeButton.style.display = "";
 
   fillRoleDropdowns(newEmployeeDefaults);
   initEventListenerRoleSelect();
-
-  // ensure the button wiring reflects "new" mode
-  setButtonVisibility({ delete: false, store: true, reset: false });
 }
 
 function rebindEmployeeFormEvents(employee) {
@@ -357,16 +345,15 @@ function gatherEmployeeData(api, action = "create") {
 
   if (action === "delete") {
     employeeData.personalEmoji = "🗑️";
-    action = "update"; // treat as update for saving
+    action = "update";
   }
   storeEmployeeChange(api, employeeData, action);
-  setButtonVisibility({ delete: false, store: false, reset: false });
 }
 
 function updateDivider(className) {
   if (isDividerUpdating) return;
   isDividerUpdating = true;
-  const divider = document.getElementById('horizontal-divider');
+  const divider = document.getElementById('horizontal-divider-box');
   divider.innerHTML = '';
 
   const leftGap = document.createElement('div');
@@ -390,7 +377,7 @@ function updateDivider(className) {
     }
   });
   saveButtonHeader = createSaveButton({ onSave: () => storeAllEmployees(api) });
-
+  saveButtonHeader.setState('blocked');
   const windowBtns = createWindowButtons(); // your new min/max buttons
 
   buttonContainer.append(saveButtonHeader.el, helpBtn, branchSelect, windowBtns);
@@ -401,161 +388,6 @@ function updateDivider(className) {
 function storeAllEmployees(api) {
   console.log("store all employees");
 }
-
-function initSliderListeners(employee) {
-  const roles = [employee.mainRoleIndex, employee.secondaryRoleIndex, employee.tertiaryRoleIndex];
-
-  // Special case: Apprentice (role 13) must have secondary role
-  if (employee.mainRoleIndex === 13 && employee.secondaryRoleIndex === 0) {
-    // Force apprentice to have a secondary role
-    employee.secondaryRoleIndex = 1; // Default to first available role
-    fillRoleDropdowns(employee);
-  }
-
-  // Special case: No main role (0) - should not happen but handle it
-  if (employee.mainRoleIndex === 0) {
-    initializeNoRoleSliders();
-    return;
-  }
-
-
-  const activeRoles = roles.filter(r => r && r != 0).length;
-
-  // Rebind all sliders
-  [1, 2, 3].forEach(i => {
-    const slider = document.getElementById(`employee-form-role${i}`);
-    if (!slider) return;
-
-    const newSlider = slider.cloneNode(true);
-    slider.parentNode.replaceChild(newSlider, slider);
-  });
-
-  // Initialize based on active roles
-  if (activeRoles === 1) {
-    initializeSingleRoleSliders(employee);
-  } else if (activeRoles === 2) {
-    initializeTwoRoleSliders(employee);
-  } else if (activeRoles === 3) {
-    initializeThreeRoleSliders(employee);
-  }
-}
-
-function initializeThreeRoleSliders(employee) {
-  // Apprentice cannot have three roles - revert to two-role mode
-  if (employee.mainRoleIndex === 13 || employee.secondaryRoleIndex === 13) {
-    initializeTwoRoleSliders(employee);
-    return;
-  }
-
-  const s1 = document.getElementById("employee-form-role1");
-  const s2 = document.getElementById("employee-form-role2");
-  const s3 = document.getElementById("employee-form-role3");
-
-  // Set initial values with proper constraints
-  let mainValue = employee.roleSplitMain || 4;
-  let secondaryValue = employee.roleSplitSecondary || 3;
-  let tertiaryValue = employee.roleSplitTertiary || 3;
-
-  // Normalize to ensure constraints
-  [mainValue, secondaryValue, tertiaryValue] = normalizeThreeSliders(mainValue, secondaryValue, tertiaryValue);
-
-  s1.value = mainValue;
-  s2.value = secondaryValue;
-  s3.value = tertiaryValue;
-
-  enableSliders([1, 2, 3]);
-
-  // Remove old listeners and add new ones
-  s1.oninput = null;
-  s2.oninput = null;
-  s3.oninput = null;
-
-  s1.addEventListener("input", () => onThreeRoleSliderChange("employee-form-role1", +s1.value));
-  s2.addEventListener("input", () => onThreeRoleSliderChange("employee-form-role2", +s2.value));
-  s3.addEventListener("input", () => onThreeRoleSliderChange("employee-form-role3", +s3.value));
-
-  updateSliderLabels();
-}
-
-
-
-function initializeSingleRoleSliders(employee) {
-  // Special case: Apprentice with only main role (shouldn't happen but handle it)
-  if (employee.mainRoleIndex === 13) {
-    // Apprentice must have secondary role - force two-role mode
-    initializeTwoRoleSliders(employee);
-    return;
-  }
-
-  document.getElementById("employee-form-role1").value = 10;
-  document.getElementById("employee-form-role2").value = 0;
-  document.getElementById("employee-form-role3").value = 0;
-
-  disableSlidersExcept(1);
-  updateSliderLabels();
-}
-
-function initializeTwoRoleSliders(employee) {
-  const s1 = document.getElementById("employee-form-role1");
-  const s2 = document.getElementById("employee-form-role2");
-  const s3 = document.getElementById("employee-form-role3");
-
-  // Special apprentice rules
-  if (employee.mainRoleIndex === 13) {
-    // Apprentice: main role (school) gets fixed percentage
-    const apprenticeMainValue = 4; // Fixed 40% for school
-    const apprenticeSecondaryValue = 6; // Remaining 60% for work
-
-    s1.value = apprenticeMainValue;
-    s2.value = apprenticeSecondaryValue;
-    s3.value = 0;
-
-    // Apprentice sliders are fixed - cannot be changed
-    s1.disabled = true;
-    s2.disabled = true;
-    s3.disabled = true;
-
-    updateSliderLabels();
-    return;
-  }
-
-  // Normal two-role case
-  let mainValue = employee.roleSplitMain || 5;
-  let secondaryValue = employee.roleSplitSecondary || 5;
-
-  // Ensure they sum to 10
-  if (mainValue + secondaryValue !== 10) {
-    mainValue = 5;
-    secondaryValue = 5;
-  }
-
-  s1.value = mainValue;
-  s2.value = secondaryValue;
-  s3.value = 0;
-
-  enableSliders([1, 2]);
-
-  // Remove old listeners and add new ones
-  s1.oninput = null;
-  s2.oninput = null;
-
-  s1.addEventListener("input", () => onTwoRoleSliderChange("employee-form-role1", +s1.value));
-  s2.addEventListener("input", () => onTwoRoleSliderChange("employee-form-role2", +s2.value));
-
-  updateSliderLabels();
-}
-
-
-function initializeNoRoleSliders() {
-  // When no main role is selected, disable everything
-  document.getElementById("employee-form-role1").value = 0;
-  document.getElementById("employee-form-role2").value = 0;
-  document.getElementById("employee-form-role3").value = 0;
-
-  disableSlidersExcept(-1); // Disable all
-  updateSliderLabels();
-}
-
 
 
 function deleteEmoji(emoji) {
@@ -733,7 +565,7 @@ function populateShiftOptions() {
     function updateSelectBg() {
       const opt = select.options[select.selectedIndex];
       select.style.backgroundColor = opt.style.backgroundColor || "";
-      setButtonVisibility({ store: true });
+      saveButtonHeader.setState('dirty');
     }
 
     // --- CASE: "never" => show label, hide dropdown --- 
@@ -883,9 +715,9 @@ function updateSelectColor(selectElement) {
   }
 }
 
-
-// Also add this function to properly initialize the employee selection:
 function selectEmployee(employee) {
+  document.getElementById('employee-form-details').classList.remove('employee-opaque');
+  saveButtonHeader.setState('clean');
   const form = document.getElementById("employee-form-details");
   if (!form) {
     console.warn("Employee details form not found!");
@@ -903,8 +735,6 @@ function selectEmployee(employee) {
   fillRoleDropdowns(employee);
   populateWeekdaySelection(employee);
   rebindEmployeeFormEvents(employee);
-  initSliderListeners(employee); // ADD THIS LINE!
-  setButtonVisibility({ delete: true, store: false, reset: false });
 }
 
 function updateBasicInfo(employee) {
@@ -961,7 +791,7 @@ function initEventListenerRoleSelect() {
       newSelectEl.addEventListener("change", (e) => {
         const newValue = e.target.value;
         handleRoleChange(type, newValue);
-        setButtonVisibility({ store: true });
+        saveButtonHeader.setState('dirty');
       });
     } else {
       console.warn(`⚠️ Missing select element: #${selectId}`);
@@ -1037,17 +867,17 @@ function validateEmployeeFields(employee) {
 
   if (!nameValid) {
     nameInput.focus();
-    setButtonVisibility({ delete: false, store: false, reset: false });
+    saveButtonHeader.setState('blocked');
     return;
   }
 
   if (isDefaultEmoji) {
     emojiBtn.focus();
-    setButtonVisibility({ delete: false, store: false, reset: false });
+    saveButtonHeader.setState('blocked');
     return;
   }
 
-  setButtonVisibility({ delete: false, store: true, reset: false });
+  saveButtonHeader.setState('dirty');
   saveBtn.focus();
 }
 
@@ -1214,51 +1044,6 @@ function fillSecondaryRoleDropdown(employee) {
   return employee;
 }
 
-// Update the disableSlidersExcept function to handle apprentice case
-function disableSlidersExcept(indexToKeep) {
-  for (let i = 1; i <= 3; i++) {
-    const slider = document.getElementById(`employee-form-role${i}`);
-    const label = document.getElementById(`role${i}-value`);
-    if (!slider) continue;
-
-    if (i === indexToKeep) {
-      slider.disabled = true;
-      if (indexToKeep === 1) slider.value = 10;
-      if (label) label.textContent = `Präferenz ${slider.value * 10}%`;
-    } else {
-      slider.disabled = true;
-      slider.value = 0;
-      if (label) label.textContent = "Präferenz 0%";
-    }
-  }
-}
-
-function enableSliders(indexArray) {
-  for (let i = 1; i <= 3; i++) {
-    const slider = document.getElementById(`employee-form-role${i}`);
-    if (!slider) continue;
-
-    const shouldEnable = indexArray.includes(i);
-    slider.disabled = !shouldEnable;
-
-    if (shouldEnable && slider.value === "") {
-      slider.value = 1;
-    }
-  }
-}
-
-function updateSliderLabels() {
-  for (let i = 1; i <= 3; i++) {
-    const slider = document.getElementById(`employee-form-role${i}`);
-    const label = document.getElementById(`role${i}-value`);
-    if (slider && label) {
-      const value = Number(slider.value);
-      label.textContent = `Präferenz ${value * 10}%`;
-    }
-  }
-  setButtonVisibility({ delete: false, store: true, reset: false });
-}
-
 function handleRoleChange(roleType, newValue) {
   const employee = getEmployeeById(currentEmployeeId);
   if (!employee) return;
@@ -1301,10 +1086,8 @@ function handleRoleChange(roleType, newValue) {
       return;
   }
 
-  // Reinitialize sliders with new role configuration
   fillRoleDropdowns(employee);
-  initSliderListeners(employee);
-  setButtonVisibility({ store: true });
+  saveButtonHeader.setState('dirty');
 }
 
 function fillRoleDropdowns(employee) {
@@ -1353,195 +1136,6 @@ function fillTrinaryRoleDropdown(employee) {
   return employee;
 }
 
-function onTwoRoleSliderChange(changedSliderId, value) {
-  const s1 = document.getElementById("employee-form-role1");
-  const s2 = document.getElementById("employee-form-role2");
-
-  // Special case: Apprentice mode - sliders are fixed
-  const employee = getEmployeeById(currentEmployeeId);
-  if (employee && employee.mainRoleIndex === 13) {
-    // Restore fixed values for apprentice
-    s1.value = 4;
-    s2.value = 6;
-    updateSliderLabels();
-    return;
-  }
-
-  let mainValue = +s1.value;
-  let secondaryValue = +s2.value;
-
-  if (changedSliderId === "employee-form-role1") {
-    // Main slider changed - adjust secondary
-    secondaryValue = Math.max(1, 10 - value);
-    s2.value = secondaryValue;
-  } else {
-    // Secondary slider changed - adjust main
-    mainValue = Math.max(1, 10 - value);
-    s1.value = mainValue;
-  }
-
-  // Ensure hierarchy: main >= secondary
-  if (mainValue < secondaryValue) {
-    if (changedSliderId === "employee-form-role1") {
-      s2.value = mainValue;
-    } else {
-      s1.value = secondaryValue;
-    }
-  }
-
-  updateSliderLabels();
-  updateEmployeeFromSliders();
-}
-function updateEmployeeFromSliders() {
-  const employee = getEmployeeById(currentEmployeeId);
-  if (!employee) return;
-
-  employee.roleSplitMain = +document.getElementById("employee-form-role1").value;
-  employee.roleSplitSecondary = +document.getElementById("employee-form-role2").value;
-  employee.roleSplitTertiary = +document.getElementById("employee-form-role3").value;
-
-  setButtonVisibility({ store: true });
-}
-
-function enforceHierarchy(s1, s2, s3) {
-  // Ensure s3 <= s2 <= s1
-  const sorted = [s1, s2, s3].sort((a, b) => b - a);
-  return [sorted[0], sorted[1], sorted[2]];
-}
-
-function onThreeRoleSliderChange(changedId, value) {
-  let s1 = Number(document.getElementById("employee-form-role1").value);
-  let s2 = Number(document.getElementById("employee-form-role2").value);
-  let s3 = Number(document.getElementById("employee-form-role3").value);
-
-  if (changedId === "employee-form-role1") s1 = value;
-  if (changedId === "employee-form-role2") s2 = value;
-  if (changedId === "employee-form-role3") s3 = value;
-
-  // Ensure sum = 10 and order constraint
-  [s1, s2, s3] = normalizeThreeSliders(s1, s2, s3);
-
-  document.getElementById("employee-form-role1").value = s1;
-  document.getElementById("employee-form-role2").value = s2;
-  document.getElementById("employee-form-role3").value = s3;
-  updateSliderLabels();
-  setButtonVisibility({ store: true });
-}
-
-// FIXED normalizeThreeSliders function:
-function normalizeThreeSliders(s1, s2, s3) {
-  // Step 1: Ensure minimum of 1 for all active roles
-  s1 = Math.max(1, s1);
-  s2 = Math.max(1, s2);
-  s3 = Math.max(1, s3);
-
-  // Step 2: Enforce hierarchy: s3 <= s2 <= s1
-  [s1, s2, s3] = enforceHierarchy(s1, s2, s3);
-
-  // Step 3: Adjust sum to exactly 10
-  let sum = s1 + s2 + s3;
-
-  while (sum !== 10) {
-    if (sum > 10) {
-      // Reduce from the largest possible while maintaining hierarchy
-      if (s1 > s2 && s1 > 1) {
-        s1--;
-      } else if (s2 > s3 && s2 > 1) {
-        s2--;
-      } else if (s3 > 1) {
-        s3--;
-      } else {
-        // If we can't reduce further, break to avoid infinite loop
-        break;
-      }
-    } else {
-      // Increase the smallest possible while maintaining hierarchy
-      if (s3 < s2) {
-        s3++;
-      } else if (s2 < s1) {
-        s2++;
-      } else {
-        s1++;
-      }
-    }
-
-    // Re-enforce hierarchy after adjustments
-    [s1, s2, s3] = enforceHierarchy(s1, s2, s3);
-    sum = s1 + s2 + s3;
-
-    // Safety break
-    if (sum < 3 || sum > 30) break;
-  }
-
-  return [s1, s2, s3];
-}
-
-
-function setButtonVisibility(options = {}) {
-
-  const storeLock = createButtonLock(5000);
-  const deleteLock = createButtonLock(5000);
-
-  const buttons = [
-    {
-      id: 'employee-reset-button',
-      key: 'reset',
-      callback: () => resetEmployeeForm(),
-    },
-    {
-      id: 'employee-store-button',
-      key: 'store',
-      callback: async () => {
-        if (storeLock.isLocked()) return;
-        storeLock.lock();
-        try {
-          // If the form is in "new" mode, send create; otherwise update
-          const action = (window.employeeFormDataNew === true) ? 'create' : 'update';
-          await gatherEmployeeData(api, action);
-        } finally {
-          storeLock.unlock();
-        }
-      }
-    },
-    {
-      id: 'employee-delete-button',
-      key: 'delete',
-      callback: debounceDelete(async () => {
-        if (deleteLock.isLocked()) return;
-
-        deleteLock.lock();
-        try {
-          await gatherEmployeeData(api, 'delete');
-        } finally {
-          deleteLock.unlock();
-        }
-      })
-    }
-  ];
-
-  buttons.forEach(({ id, key, callback }) => {
-    const btn = document.getElementById(id);
-    if (!btn) return;
-
-    const shouldShow = options.hasOwnProperty(key) ? options[key] : null;
-    if (shouldShow !== null) {
-      btn.style.display = shouldShow ? '' : 'none';
-      btn.disabled = !shouldShow;
-    }
-
-    if (btn._clickHandler) {
-      btn.removeEventListener('click', btn._clickHandler);
-    }
-
-    if (shouldShow) {
-      btn.addEventListener('click', callback);
-      btn._clickHandler = callback;
-    } else {
-      delete btn._clickHandler;
-    }
-  });
-}
-
 function debounceDelete(fn, delay = 300) {
   let timeout;
   return (...args) => {
@@ -1551,22 +1145,6 @@ function debounceDelete(fn, delay = 300) {
   };
 }
 
-
-function saveEmployee(employee) {
-  const name = document.getElementById('employee-name').textContent;
-  const emoji = document.getElementById('emoji-picker-btn').textContent;
-  const mainRole = parseInt(document.getElementById('main-role').value, 10);
-  const birthday = document.getElementById('employee-birthday').value;
-
-  employee.name = name;
-  employee.emoji = emoji;
-  employee.mainRoleIndex = mainRole;
-  employee.birthday = birthday;
-
-  validateEmployeeData(cachedEmployees);
-  renderEmployeeList();
-}
-
 function formatDateInput(date) {
   if (!date) return "";
   const d = new Date(date);
@@ -1574,23 +1152,6 @@ function formatDateInput(date) {
   const month = String(d.getMonth() + 1).padStart(2, '0'); // month is 0-based
   const year = d.getFullYear();
   return `${day}.${month}.${year}`;
-}
-
-function deleteEmployee(employee) {
-  const index = cachedEmployees.indexOf(employee);
-  if (index > -1) {
-    cachedEmployees.splice(index, 1);
-    renderEmployeeList();
-    document.getElementById('employee-details-form').innerHTML = '';
-  }
-}
-
-function deleteCurrentEmployee() {
-  console.log("🗑️ Delete Current Employee button clicked.");
-}
-
-function storeCurrentEmployee() {
-  console.log("💾 Store Current Employee button clicked.");
 }
 
 function sanityCheckEmployee(employee) {
@@ -1850,7 +1411,6 @@ function deleteEmployeeSafely(employeeId) {
   if (deletionLock) return;
   deletionLock = true;
 
-  // Disable old big delete button too
   const btn = document.getElementById("employee-delete-button");
   if (btn) btn.disabled = true;
 
@@ -1863,12 +1423,10 @@ function performDelete(employeeId) {
   const employee = cachedEmployees.find(e => String(e.id) === String(employeeId));
   if (!employee) return console.error("Cannot delete: employee not found");
 
-  const api = window.api; // same as existing code
-
   const employeeData = {
     ...employee,
     personalEmoji: "🗑️",
-    endDate: new Date().toISOString().split("T")[0] // auto overwrite end date ← TASK 2.9
+    endDate: new Date().toISOString().split("T")[0]
   };
 
   storeEmployeeChange(api, employeeData, "delete");
@@ -1886,7 +1444,6 @@ function createButtonLock(timeoutMs = 5000) {
     lock() {
       locked = true;
 
-      // Auto-heal safety release
       timer = setTimeout(() => {
         console.warn("⚠ UI lock auto-released after timeout");
         locked = false;

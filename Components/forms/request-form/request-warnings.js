@@ -17,19 +17,19 @@ const posWarnings = {
 
 let warningList = new Set();
 
-export function resetWarnings() {
+export function resetWarnings(saveBtn) {
     warningList.clear();
-    updateWarningsUI();
+    updateWarningsUI(saveBtn);
 }
 
 export function addWarning(type) {
     if (posWarnings[type]) warningList.add(type);
 }
 
-export function recalcWarnings() {
+export function recalcWarnings(saveBtn) {
     const state = getCurrentFormState();
 
-    resetWarnings();
+    resetWarnings(saveBtn);
 
     const startDate = state.startDate ? new Date(state.startDate) : null;
     const endDate = state.endDate ? new Date(state.endDate) : null;
@@ -43,10 +43,10 @@ export function recalcWarnings() {
     if (state.type === "hom") addWarning("homHint"); // match your <select> value
     if (!state.type || state.type === "none") addWarning("notype");
 
-    updateWarningsUI();
+    updateWarningsUI(saveBtn);
 }
 
-export function updateWarningsUI() {
+export function updateWarningsUI(saveBtn) {
     const container = document.querySelector(".request-form-warn");
     if (!container) return;
 
@@ -61,7 +61,7 @@ export function updateWarningsUI() {
         empty.textContent = "Keine Warnungen.";
         empty.style.opacity = "0.5";
         container.appendChild(empty);
-        updateSaveButtonState(sorted);
+        if (localStorage.getItem('dataMode') !== 'sample') updateSaveButtonState(saveBtn, sorted);
         return;
     }
 
@@ -81,7 +81,7 @@ export function updateWarningsUI() {
     });
 
     container.appendChild(list);
-    updateSaveButtonState(sorted);
+    updateSaveButtonState(saveBtn, sorted);
 
     console.log("warnings list:", sorted);
 
@@ -89,19 +89,21 @@ export function updateWarningsUI() {
     updateWarningFrameStyle({ isEmpty: sorted.length < 1, maxRank });
 }
 
-function updateSaveButtonState(sortedWarnings) {
-    const saveBtn = document.getElementById("requestStoreButton");
-    if (!saveBtn) return;
+function updateSaveButtonState(saveBtn, sortedWarnings) {
+    console.log("[request warning js] update save button state: ", saveBtn, sortedWarnings);
+
+    if (!saveBtn || typeof saveBtn.setState !== 'function') {
+        console.error("Invalid saveBtn passed:", saveBtn);
+        return;
+    }
 
     const maxRank = sortedWarnings.reduce(
         (max, type) => Math.max(max, posWarnings[type].rank),
         0
     );
-
-    const enabled = maxRank <= 1;
-    saveBtn.disabled = !enabled;
-    saveBtn.style.opacity = enabled ? "1" : "0.4";
-    saveBtn.style.filter = enabled ? "none" : "grayscale(80%)";
+    console.log(maxRank);
+    if (maxRank <= 1) saveBtn.setState('dirty');
+    else saveBtn.setState('blocked');
 }
 
 function updateWarningFrameStyle({ isEmpty, maxRank }) {

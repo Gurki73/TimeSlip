@@ -110,7 +110,7 @@ export async function initializeRuleForm(passedApi) {
 
 
 function updateDivider(className) {
-    const divider = document.getElementById('horizontal-divider');
+    const divider = document.getElementById('horizontal-divider-box');
     divider.innerHTML = '';
 
     const leftGap = document.createElement('div');

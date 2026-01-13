@@ -53,7 +53,6 @@ body[data-mode="sandbox"] {
   cursor: not-allowed !important;
 }
 
-
 #left-panel {
   display: flex;
   flex-direction: column;
@@ -168,11 +167,17 @@ body.resizing {
 }
 
 #horizontal-divider {
+  height: 6px;
+  width: 100%;
+  z-index: 20;
+  margin-bottom: 3rem;
+}
+
+#horizontal-divider-box {
   color: var(--bg-soft-white);
   height: 3rem;
   border-color: var(--bg-soft-white);
   border-style: double;
-  cursor: n-resize;
   width: 98%;
   position: relative;
   z-index: 10;
@@ -181,6 +186,11 @@ body.resizing {
   align-items: center;
   justify-content: space-between;
   padding: 0 1rem;
+  pointer-events: none;
+}
+
+#horizontal-divider-box * {
+  pointer-events: auto;
 }
 
 /* Refined resize indicator */
@@ -229,7 +239,7 @@ body.resizing {
   border-radius: 4px !important;
   background-color: yellow !important;
   border-color: orangered !important;
-  transition: background-color 0.3s ease; 
+  transition: background-color 0.3s ease;
 }
 
 .state-flag-hint {
@@ -263,7 +273,6 @@ body.resizing {
   text-align: left;
   padding: 0.4rem 0.6rem;
 }
-
 
 /* Smooth highlight on hover */
 #horizontal-divider:hover::after {
@@ -320,7 +329,7 @@ body.resizing {
   flex-direction: column;
   height: 85vh; /* max height */
   min-height: 300px; /* clamp minimum */
-  overflow:auto;
+  overflow: auto;
 }
 .top-section {
   flex: 1 1 auto; /* grows/shrinks */
@@ -922,7 +931,7 @@ fieldset {
 }
 
 body.mode-sample::before {
-  content: "🛑 BEISPIEL-MODUS – Beispieldaten, nichts wird gespeichert 🛑";
+  content: "🟣🟣🟣 BEISPIEL-MODUS – Beispieldaten, nichts wird gespeichert 🟣🟣🟣";
   position: fixed;
   top: 0;
   left: 0;
@@ -941,14 +950,13 @@ body.mode-sample::before {
   text-transform: uppercase;
 
   color: #2a001f;
-  background:
-    repeating-linear-gradient(
-      -45deg,
-      rgba(255, 0, 150, 0.25),
-      rgba(255, 0, 150, 0.25) 10px,
-      rgba(255, 0, 150, 0.4) 10px,
-      rgba(255, 0, 150, 0.4) 20px
-    );
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 0, 150, 0.25),
+    rgba(255, 0, 150, 0.25) 10px,
+    rgba(255, 0, 150, 0.4) 10px,
+    rgba(255, 0, 150, 0.4) 20px
+  );
 
   pointer-events: none; /* critical */
 }
@@ -964,7 +972,7 @@ body.mode-sample #main-container {
 }
 
 .save-button.is-dirty::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 4px;
   right: 4px;
@@ -988,25 +996,36 @@ body.mode-sample #main-container {
   cursor: not-allowed;
   color: #2a001f;
 
-  background:
-    repeating-linear-gradient(
-      -45deg,
-      rgba(255, 0, 150, 0.25),
-      rgba(255, 0, 150, 0.25) 10px,
-      rgba(255, 0, 150, 0.4) 10px,
-      rgba(255, 0, 150, 0.4) 20px
-    );
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 0, 150, 0.25),
+    rgba(255, 0, 150, 0.25) 10px,
+    rgba(255, 0, 150, 0.4) 10px,
+    rgba(255, 0, 150, 0.4) 20px
+  );
 
   border: 1px solid rgba(255, 0, 150, 0.6);
 }
 
 @keyframes shake {
-  0% { transform: translateX(0); }
-  20% { transform: translateX(-4px); }
-  40% { transform: translateX(4px); }
-  60% { transform: translateX(-3px); }
-  80% { transform: translateX(3px); }
-  100% { transform: translateX(0); }
+  0% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-4px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
 .save-button.is-shake {
@@ -1018,9 +1037,15 @@ body.sample-feedback::before {
 }
 
 @keyframes banner-flash {
-  0% { filter: brightness(1); }
-  50% { filter: brightness(1.4); }
-  100% { filter: brightness(1); }
+  0% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.4);
+  }
+  100% {
+    filter: brightness(1);
+  }
 }
 
 #horizontal-divider,

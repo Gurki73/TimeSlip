@@ -1,204 +1,331 @@
+1️⃣ Save Buttons
+Request Form
+✅ Save button disabled incorrectly
+✅ No way to save in list mode
+Rule Form
+🔥 Save button not marked dirty
+Employee Form
+✅in  New save button not showing state
+Calendar / Calendar Settings
+🔥 Save buttons / state handling
+Admin Tools
+🧩 Old style save button in wrong place
+🧩 Auto Save – Missing UI
+2️⃣ Ellipses Menus
+Rule Form
+🔥 Ellipses menu not rendering
+Employee Form
+🔥 Ellipses buttons dead
+
+
 Legend
-✅ = finished ☐ = open 🚧 = in work ❌ = cancelled
-🧠 = internal / solver backbone (mostly invisible to users)
-🧱 = for build / beta release only
+✅ = finished;  ☐ = open;  🚧 = in work;  ❌ = cancelled
+🔥 = urgent;  🧩= nice to have ; 🧠 = postphoned after beta-release
 
-1. Core Bug Fixes & Ruleset Finalization (User-visible stability)
+Request-form
+🚨 Ship-Blockers (these can corrupt data or break trust)
+  🔥 Infinite rerender loop on refresh
+  🔥 Filter shows filtered list then jumps back
+  🔥 Selecting one field clears another (order-dependent)
+  🔥 “No start date entered” while one exists
+  ✅  Save button disabled incorrectly
+  ✅ No way to save in list mode
+  🔥 Used days not calculated
+  ✅ Sample mode showing disabled save instead of hatched sample mode
+rule-form
+🚨 Ship-Blockers (dangerous)
+  🔥 Typing effect not updating after editing existing rule
+  🔥 Endless loop after refresh
+  🔥 Save button not marked dirty
+  🔥 Flow wizard enforcing wrong order
+  🔥 Flow wizard colors lying (green = missing)
+  🔥 Ellipses menu not rendering
+  🔥 Forbidden combinations list incomplete
+calendar
+  🔥 Warnings not shown in calendar
 
-1.1 ✅ Fix vacation day duration counter
-1.2 ✅ Investigate/fix first employee missing in dropdowns and legends
-1.3 ✅ Fix missing employee rendering on Mondays and Tuesdays
-1.4 ✅ Finish sanity checks — validate rule consistency before saving
-1.5 ✅ Add minimal warnings & hints to request entry
-1.6 🚧 Evaluate rules on loaded data and show warnings in UI
-1.7 ☐ Show rule violations inside Request Form
-1.8 ✅ Ensure first employee/role legend fixes integrate with evaluation engine
+employee-form
+  Privacy warning container not responsive
+  🔥 Employee select list: ellipses, icons, indentation, cluttered symbols
+  🔥 Wrong shift assignments on closed days
+  🔥 Ellipses buttons dead
+  🔥 New save button not showing state
 
-2. Feature Completion & Core Enhancements (Visible features)
+admin-tools
+  🔥 Tabs not working
+  🔥 emoji: JSON not loaded
 
-2.1 ☐ Hide prevent/sample mode option in admin tool
-2.2 🚧 Add zodiac feature similar to Chinese year
-2.3 ❌ Drag & drop e-mail text into Request Form
-2.4 ❌ Drag & drop .eml files for auto-parsed vacation requests
-2.5 ❌ Clipboard watcher for copied dates
-2.6 ❌ “Paste & Parse” request box
-2.7 ❌ WhatsApp export parser
+calendar setting:
+  🔥 Background colors
+  🔥 Save buttons / state handling
+  🔥 Shift matrix colors
+  🔥 Responsive state/year select
+  🔥 Public holiday rendering
+  
+request-form
+🧩 Beta-Value (should be fixed, but won’t break data)
+  Examples from your list:
+  Missing funnel icon
+  Blocky filter layout
+  Header colors
+  Not enough contrast
+  Misaligned date pickers
+  Cursor wrong on buttons
+  warnings for conflicting request
+rule-form
+🧩 Beta-Value (big UX wins)
+  Warnings vs rules in same container
+  Warnings should be sticky & collapsible
+  Categories for rules (shift/day/week/special)
+  Test button placement
+  Relation line animations
+  Count of rules
+  Scroll to end on start
+  Cursor blink, pumping effect
+calendar
+  🧩 Shift icon set cached but not updating
+  🧩 Empty shift text: “nobody” → should read “nobody is working / missing”
+  🧩 Western zodiac cached but not rendered
+  🧩 PTO calculations?
 
-3. Help Pages & Documentation (Visible, client-facing)
+employee-form
+  🧩 End date datepicker slow for long ranges → need quick +/- 1, 10 year buttons
+  🧩 PDO calculation wrong
+  🧩 Hints low contrast
+  🧩 Number inputs misaligned
+  🧩 Detail pane inactive style missing when no employee selected
+  🧩 Shift select font/inline issues
+  🧩 Birthday input UX (month select preferred)
 
-3.1 ✅ Finish Glossary skeleton + integrate with UI
-3.2 ☐ Color customization skeleton (optional)
+Admin-tools
+🧩 old style save button in wrong place
+🧩 Color Customization
+   Color pickers missing / not rendered
+   Team names not editable visually
+   Calendar previews incomplete
+   app styling missing
+🧩 Emoji Select
+   Left and right mouse click was confusing tester/ Tester didn’t understand pooled
+   JSON not loaded
+   Add new emoji broken
+   Pooled/unpooled explanation unclear
+   Arrows for moving emojis missing
+🧩 Auto Save - Missing UI
+🧩 Clean Cache - Needs translation
+🧩 Revive Deleted Employees
+   Missing save button, no “no deleted employees” message, missing meta info
 
-4. Rule Execution, Solver & Testing (🧠 Internal Backbone)
-4A. Solver / Ruleset Backbone (from Solver To-Do)
+Help:
+🧩 Add basic content per chapter
+🧩 Story arc + protagonist idea
+🧩 Glossary icons update
+🧩 Iconography & nomenclature explanation
 
-4.1 🧠🚧 Interpreter skeleton
+misc:
+🧩 Fix drag & drop divider
+🧩 Restore cached themes / state
+🧩 Minimal form size calculation
+🧩 Radio / toggle defaults
 
-Demand & Attendance
-4.2 🧠🚧 Evaluation engine integration with employee/day/role dataset
-4.2.1 ✅ Initialize empty demand per role (min/max)
-4.2.2 ✅ Shrink demand via total rules
-4.2.3 🚧 Shrink demand via flexible rules
-4.2.4 ☐ Final demand object per timeframe
+roles:
+🧩 Boundary fix last column
+🧩 Prevent autosave if team names unchanged
 
-4.2.5 ✅ Attendance totals per role (main + secondary + trinary)
-4.2.6 ✅ Attendance clone utility
-4.2.7 🚧 Apply / revert reassignment
+calendar-settings:
+🧩 Legend explanations
+🧩 Company holiday inputs / height / alignment
+🧩 Feedback on corrupted datasets
 
-4.3 🧠 Feasibility Gate
-4.3.1 ✅ Check if attendance can reach demand.min
-4.3.2 ☐ Abort timeframe if impossible
+post - beta
+🧠 admin tools: Rule Tolerances / Calendar Settings
+🧠 Feedback bar / state panel fix
+🧠 Hint for weekday <-> shifts (pumping pipe)
 
-4.4 🧠 Role Status & Prioritization
-4.4.1 ✅ Compute deficit / surplus
-4.4.2 ✅ Sort by severity & rule priority
+🧠 Solver To-Do List (v0 – Working Backbone)
+1. Demand Object Builder
+1.1 ✔️ Initialize empty demand for all roles  { roleID: { min: 0, max: Infinity } }
+1.2 ✔️ Loop through total rules - Shrink demand ranges (min/max intersection)
+1.3 🟠 Loop through flexible rules - Compute derived min/max from current attendance - Shrink demand ranges again
+1.4 ☐ Result: one final demand object per timeframe
 
-4.5 🧠 Reassignment Engine
-4.5.1 ☐ Find candidate employees
-4.5.2 ☐ Validate safe moves
-4.5.3 ☐ Rank by disruption & preference
+2. Attendance Helpers
+2.5 ✔️ Function to compute total per role, total = main + secondary + trinary
+2.6 ✔️ Utility to clone attendance (for simulation) 
+2.7 🟠 Utility to apply / revert a reassignment
 
-4.6 🧠 Simulation Loop
-4.6.1 ☐ Simulate reassignment
-4.6.2 ☐ Recompute demand & attendance
-4.6.3 ☐ Commit only valid improvements
-4.6.4 ☐ Stop when stuck
+3. Feasibility Check (Hard Gate)
+3.8 ✔️ For each role: Check if attendance.total can reach demand.min - Include potential reassignable employees
+3.9 ☐ If any role fails → mark timeframe as impossible, stop solver
 
-4.7 🧠 Safety Nets
-4.7.1 ☐ Max moves per timeframe
-4.7.2 ☐ Max moves per employee
-4.7.3 ☐ Detect no-op loops
+4. Role Status Classification
+4.10 ☐ For each role: deficit = demand.min - total / surplus = total - demand.max
+4.11 ☐ Sort roles by: deficit first / larger absolute violation / rule priority (totals > ratios)
 
-4.8 🧠 Timeframe Strategy
-4.8.1 ☐ Shift-level solve
-4.8.2 ☐ Day-level solve (primary)
-4.8.3 ☐ Week-level warn-only
-4.8.4 ✅ No upward reassignment
+5. Reassignment Candidate Finder
+5.12 ☐ Given a target role: Find employees in this timeframe / Filter by allowed roles (main → secondary → trinary)
+5.13 ☐ Exclude moves that: Break any role below demand.min / Exceed demand.max
+5.14 ☐ Rank candidates by: preference level / moving from surplus role /minimal disruption
 
-4.9 🧠 Diagnostics
-4.9.1 ☐ Log demand before/after
-4.9.2 ☐ Log every move
-4.9.3 ☐ Clear solver stop reason
+6. Simulation Loop (Day / Shift)
+6.15 ☐ While deficits exist: Pick highest-priority role / Simulate best reassignment
+6.16 ☐ After simulation: Recompute attendance / Rebuild flexible demand / Validate all roles against demand ranges
+6.17 ☐ Commit move only if valid
+6.18 ☐ Stop when no improving move exists
 
-4.10 🧠 Beta Guardrails
-4.10.1 ✅ Ignore special rules
-4.10.2 ✅ Fixed role ranges
-4.10.3 ✅ No cross-day moves
+7. Stop Conditions & Safety Nets
+7.19 ☐ Max moves per timeframe
+7.20 ☐ Max moves per employee
+7.21 ☐ Detect no-op loops
 
-4B. Testing & QA (bridges solver → UI)
+8. Timeframe Strategy
+8.22 ☐ Shift-level → solve + reassign
+8.23 ☐ Day-level → solve + reassign (primary path)
+8.24 ☐ Week-level → aggregate + warn only
+8.25 ☐ No upward reassignment
 
-4.11 🚧 Test engine skeleton
-4.12 ❌  Migrate old calendar & rule tests
-4.13 ☐ Special-day & shift edge-case tests
-4.14 ✅ Internal QA: Monday/Tuesday + missing employee
-4.15 ☐ Basic self-healing for employee list issues
-4.16 🚧 Rule simplification pipeline
-4.17 ❌ Machine-readable → human text preview
+9. Diagnostics & Debugging
+9.26 ☐ Log demand before/after solving
+9.27 ☐ Log every committed reassignment
+9.28 ☐ Clear reason when solver stops (solved / stuck / impossible)
 
-5. Final Polish & Pre-Release
+10. Beta Scope Guardrails
+10.29 ☐ Ignore special rules
+10.30 ☐ Fixed role range (0–13)
+10.31 ☐ No cross-day employee moves
 
-5.1 🚧 Finish Help Page chapter polish
-5.2 ✅ Finish Glossary
+          +----------------+
+          |   Calendar     |
+          | (scheduled     |
+          | employees)     |
+          +-------+--------+
+                  |
+                  v
+          +----------------+
+          |  Attendance    |
+          |  Object        |
+          +-------+--------+
+                  |
+                  v
+          +----------------+
+          | Feasibility    |
+          |  Check         |
+          | (hardNeeded)   |
+          +-------+--------+
+                  |
+       +----------+-----------+
+       |                      |
+   Impossible               Possible
+       |                      |
+       v                      v
+   Generate warning        +----------------+
+                           |   Solver       |
+                           |  (simulate     |
+                           |   reassignments|
+                           |   shift-level) |
+                           +-------+--------+
+                                   |
+                                   v
+                           +----------------+
+                           | Validate       |
+                           | against needed |
+                           | objects        |
+                           +-------+--------+
+                                   |
+                      +------------+------------+
+                      |                         |
+                  Commit                     Skip
+                      |                         |
+                      v                         v
+                 Update Calendar            Leave shift as-is
+                      |
+                      v
+               Higher-Level Aggregation
+               (day/week totals)
+                      |
+                      v
+                  Checker Final
+                  Evaluation
 
-6. UX, Packaging & Release
+Detailed Summary of the Solver Approach
+1. Key Components
 
-6.1 ☐ Feedback bar & state panel
-6.2 🚧 Automatic machine translator skeleton
-6.3 ☐ Flow wizard final integration
-6.4 🧱 Build final Itch.io version
-6.5 🚧 Build final GitHub release
-6.6 ✅ Verify USB-stick installer
-6.7 🚧 Emoji customization (optional)
-6.8 🧱 Release, Marketing & Promo
-6.9 🧱 End-to-end packaged build tests
-6.10 ✅ Verify all critical fixes
-6.11 🧱 Client follow-up emails
-6.12 🧱 GitHub release notes / README
-6.13 🧱 Itch.io description & screenshots
-6.14 🧱 Backup + final tagged release
-6.15 🧱 Optional teaser GIF / screenshot
+Calendar
 
-1 ✅ state flag in calandar sheet not interactive
-2 ✅ length icons in legend
-3 ✅ gabs in Menu _ -> _ _ _ _Hilfe
-4 ☐ unten tipp abgeschuttet(?)
-5 ✅ Devider line drag and drob is not win-style
-6 ✅ calendar ( started in absence mode ) seams to be interactive
-7.1 ✅ date picker in Request isnt responsive after first pick anymore
-7.2 ✅ date picker in Employee isnt responsive after first pick anymore
-7.3 ✅ date picker in company holydays isnt responsive after first pick anymore
-8 ✅ to many chars "dauer: => =" keep only Completion
-9 ☐ no save btn in Rules
-10 ✅ tab flag in requests have multiple colors
-11 ✅ request list doesnt load/ render
-12 ✅ only one can be selected in select type and select requester 
-13 ✅ header "Mitarbeiter Auswahl" in center/middle
-14 ✅ font noto for icon in privacy warnings
-15 ✅ Employee ${} not replaced with actual name in employees
-16 ✅ "<span" in text without closing ">"
-17 ✅ delete btn in end of row instead of start for employee list
-18 ✅ noto font for icons in employee list
-19 ✅ ... extended menu instaed of buttons ( delete , edit , warn)
-10 ✅ ... extend menu instead of multi btns in rule list ( edit, delete )
-11 ✅ warn icon , triangle instead of pencil in employees
-12 ✅ a red dot on warning buttons if unsaved changes
-13 ✅ scrollbox to big ... lot of empty space... expected more to come at bottom
-14 ☐ warnings for assigned shift sometimes above sometime beneath shift
-15 ☐ wrong shift closed
-16 ✅ a gab is needed between dayname [gab] and select in shift asignment
-17 ✅ radio btn for samples, label next to help button, gab needed
-18 ✅ better/simpler trashcan icon needed
-19 ✅ simpler consitent edit/pencil icon 
-20 ✅ no cockwheel icon for tools , looks like setting not like tools
-21 ✅ no lifebelt icon for helppage
-22 ✅ no questionmark icon for missing data / unknown
-23 ✅ new table triggered by choosing exeception not selfexplonary
-23 ✅ content in employees is longer than container
-24 ✅ collapsibles hall header as button not chevron only
-25 ✅ tooltip text for "exesample?" btn
-26 ✅ exception change icon, looks like a refresh button
-27 ✅ color for/signal  sample mode 
-28 ✅ disable all save buttons in save mode
-29 ✅ tooltip text for change button in sample mode
-30 ✅ options for shift names in calendar sheet rendering
-31 ✅ sub menu for styling options in main menu / view
-32 ✅ current font size marked in zoom menu
-33 ✅ to many small sizes in zoom not enough big font sizes
-34 ✅ divider btn drag and drob , no nervous movement
-35 ✅ shrink enlarge window, in form more like standart win icons
-36 ✅ add a delete/reset button for birthdays
-37 ✅ no english filenames in Feedback popups
-38 ✅ "neuer Mitarbeiter" => "enter name" 
-39 ☐ use standart chevron in calandar setting list headers
-40 ✅ preview mode /edit ms unintuitive (?)
-41 ✅ company holidays should be sorted by date
-42 ✅ employees in calandar shift should be sorted by role
-43 ✅ in requests/ employees naming for pdo remaining unclear
-44 ✅ half day off option needed
-45 ✅ fix colors of eastern zodiac
-46 ☐ finish admin tools
-  46.1 ☐ color customizer calendar
-  46.2 ☐ color customizer app and buttons
-  46.3 ☐ auto save
-  46.4 ☐ tolerances setting for rules
-  46.5 ☐ callendar settings (?)
-  46.6 ✅ revive deleted employees
+Knows scheduled employees per shift.
+
+Builds the attendance object, which counts preferred, secondary, and emergency roles per shift.
+
+Checker
+
+Evaluates the attendance object against staffing requirements.
+
+Generates warnings for understaffed or overstaffed roles.
+
+Solver
+
+Receives attendance and warnings.
+
+Uses a needed roles object instead of individual rules:
+
+hardNeeded → absolute minimum per role (cannot be violated)
+
+softNeeded → target counts or ratios (preferred, but flexible)
+
+Determines if a reassignment is possible and safe before committing.
+
+2. Solver Strategy
+
+Feasibility Check
+
+Compare current attendance to hardNeeded.
+
+If any hard-needed role cannot be filled with available employees → skip solving for this shift.
+
+Priority-Based Reassignment
+
+Handle understaffed roles first.
+
+Use employee flexibility: preferred → secondary → emergency.
+
+Respect hard constraints (never break hardNeeded) and try to improve soft constraints (softNeeded).
+
+Iterative Shift-Level Solving
+
+Treat each shift as an independent unit.
+
+For each shift:
+
+Simulate potential reassignment(s).
+
+Recompute attendance and check against needed objects.
+
+Commit reassignment only if it respects hardNeeded.
+
+Stop once all roles are within tolerance or no further safe moves are possible.
+
+Propagation
+
+Higher levels (day/week) simply aggregate shift results.
+
+Avoid reassigning at day/week level to prevent circular dependencies.
+
+Ranking & Limits
+
+Rules ranked by priority: totals before ratios.
+
+Optional limits on employee moves per day to prevent ping-pong reassignments.
+
+can you sum up what we have done and what we still need to do?  please be honest and concider pros and cons ?
 
 
-
-🧭 Interaction & Behavior Bugs
-4 ☐ Wrong shift gets closed in employee asignment (?)
-    => needs a repair option
-5 ☐ Warnings for assigned shift appear sometimes above, sometimes below
-7 ☐ Content in Employees view overflows container
-🎛️ Controls, Drag & Window Behavior
-13 ☐ Calendar setting list headers should use standard chevron
-🧩 Menus, Layout & Spacing
-15 ☐ Extended menu preferred instead of multiple buttons: (Ellipsis) /Employees list (delete / edit / warn) 
-46 ☐ finish admin tools
-  46.1 ☐ color customizer calendar
-  46.2 ☐ color customizer app and buttons
-  46.3 ☐ auto save
-  46.4 ☐ tolerances setting for rules
-  46.5 ☐ callendar settings (?)
-  46.6 ☐ revive deleted employees
+STATIC DEMAND (never changes per shift)
+        |
+        v
+FEASIBILITY CHECK (hard gate, once)
+        |
+        v
+SOLVER LOOP:
+  recompute FLEX DEMAND
+  merge STATIC + FLEX => EFFECTIVE DEMAND
+  classify roles
+  simulate moves

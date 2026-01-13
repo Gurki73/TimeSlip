@@ -5,6 +5,8 @@
   background: var(--bg-soft-white);
   color: var(--text-color);
   height: 95%;
+  min-width: 96%;
+  background-color: aqua;
 }
 
 .calendar-controls-row {
@@ -39,16 +41,27 @@
   box-sizing: border-box;
 }
 
+#calendar-collapsibles {
+  min-width: 95%;
+  max-width: 95%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  
+}
+
 #left-column {
   flex: 0 1 auto; /* left column fits content naturally */
-  min-width: 300px; /* optional: prevents too small collapse */
-  max-width: 40%; /* optional: don’t dominate the layout */
-  min-height: 80vh;
+  max-width:fit-content;
+  min-height: 90%;
+  background-color: lime;
 }
 
 #right-column {
   flex: 1 1 auto; /* right column takes remaining space */
-  min-height: 100%; /* ensures it can shrink */
+  min-height: 90%; /* ensures it can shrink */
+  max-width:fit-content;
+  background-color: aquamarine;
 }
 
 /* STATE-YEAR-CONTAINER */
@@ -121,6 +134,7 @@
 .bridgeday-list-collapsed,
 .closed-list-collapsed,
 .school-list-collapsed {
+  min-width: 5rem;
   max-width: 5rem;
   background-color: var(--bg-inactive) !important;
 }
@@ -263,7 +277,7 @@
   font-family: "NotoEmoji", sans-serif;
 }
 
-.shift-button.active {
+.shift-button[aria-expanded="true"] {
   background-color: var(--button-active-color);
 }
 
@@ -409,14 +423,13 @@
 /* Layout for the rule-collapsible + list items */
 .rule-collapsible {
   display: flex;
-  border: 1px solid #ddd;
+  flex-direction: column;
+  border: 1px solid lightgray;
   border-radius: 8px;
-  padding: 0.5rem;
   margin: 0.5rem 0;
   min-height: 100%;
   overflow-x: hidden;
-  width: 95%;
-  /* background-color: purple; */
+  width: 95%; 
 }
 .rule-collapsible-legend {
   margin: 0;
@@ -427,11 +440,16 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  background: none;
+  background: color-mix(in srgb, var(--color-text-calendar) 20%, transparent);
   border: 0;
   font-weight: 600;
-  cursor: pointer;
   padding: 0.25rem 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.rule-collapsible-toggle:hover {
+  cursor:crosshair;
+  background: color-mix(in srgb, var(--color-text-calendar) 45%, transparent);
 }
 
 .row-middle {
@@ -440,7 +458,7 @@
   width: 2px;
 }
 
-.rule-collapsible.active {
+.rule-collapsible[aria-expanded="true"] {
   width: max-content; /* auto based on text */
   max-width: 15rem; /* prevent too wide */
   white-space: nowrap;
@@ -448,7 +466,7 @@
   text-overflow: ellipsis;
 }
 
-.rule-collapsible:not(.active) {
+.rule-collapsible[aria-expanded="false"] {
   width: clamp(4rem, 6rem, 6rem);
   white-space: nowrap;
   overflow: hidden;
@@ -490,6 +508,7 @@
   grid-template-columns: auto 1fr auto;
   gap: 0.5rem;
   align-items: center;
+  height: 2rem;
 }
 
 .list-mini {
@@ -513,7 +532,6 @@
   gap: 0.5rem;
   height: 1.8 rem;
   padding: 0.15rem 0.15rem;
-  border-radius: 6px;
   transition: background 0.15s, opacity 0.15s;
 }
 
@@ -579,7 +597,7 @@
 
 .shift-matrix {
   display: grid;
-  grid-template-columns: 4rem repeat(3, 3rem); /* weekday + 3 shifts */
+  grid-template-columns: 3rem repeat(3, 5rem); /* weekday + 3 shifts */
   gap: 0.5rem;
   align-items: center;
 }
@@ -604,7 +622,7 @@
 .shift-matrix,
 .shift-matrix-container {
   width: fit-content;
-  max-width: 15rem;
+  max-width: 20rem;
   min-width: 8rem; /* optional */
   white-space: nowrap;
   overflow: hidden;
@@ -665,7 +683,7 @@
   border-color: red;
   border-style: solid;
   border-width: 5px;
-  z-index: 9999999;
+  z-index: 20;
   pointer-events: none;
 }
 
@@ -703,8 +721,11 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 2rem;
-  border-radius: 6px;
+  vertical-align: middle;
+  min-height: 2.15rem;
+  min-width: 4.5rem;
+  border-radius: 4px;
+  margin: 3px;
   padding: 0.15rem;
   transition: background-color 0.2s, opacity 0.2s;
 }
@@ -731,13 +752,12 @@
 }
 
 /* When collapsed — hide the controls row completely */
-.rule-collapsible:not(.active) .list-controls,
-.rule-collapsible:not(.active) .btn-store {
+.rule-collapsible[aria-expanded="false"] .list-controls,
+.rule-collapsible[aria-expanded="false"] .btn-store {
   display: none;
 }
 
-/* (optional) subtle fade when active */
-.rule-collapsible.active .list-controls {
+.rule-collapsible[aria-expanded="false"] .list-controls {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
@@ -746,12 +766,12 @@
 }
 
 /* Hide delete & edit buttons in collapsed mode */
-.rule-collapsible:not(.active)
+.rule-collapsible[aria-expanded="false"]
   .list-body
   .data-row
   .label-text
   button.delete-btn,
-.rule-collapsible:not(.active)
+.rule-collapsible[aria-expanded="false"]
   .list-body
   .data-row
   .label-text
@@ -776,13 +796,15 @@
 }
 
 .shift-cell-mini {
-  height: 2.1rem;
+  min-height: 2.15rem;
+  max-height: 2.15rem;
   width: 1.8rem;
-  border-radius: 6px;
-  background-color: #2b8a3e;
-  margin: 2px;
+  margin: 3px;
   text-align: center;
   align-self: center;
+  vertical-align: middle;
+  border-radius: 4px;
+  background-color: #d93025;
 }
 
 .lock-icon-mini {
@@ -799,47 +821,62 @@
   content: "🔒";
 }
 
-#rule-collapsible-weekdays {
+
+#rule-collapsible-weekdays[aria-expanded="false"] {
   min-width: 3.5rem;
   max-width: 3.5rem;
 }
-#rule-collapsible-weekdays.active {
+#rule-collapsible-weekdays[aria-expanded="true"] {
   min-width: 10rem;
-  min-width: 10rem;
+  max-width: 10rem;
 }
-#rule-collapsible-shifts {
-  width: 12rem;
+
+
+#rule-collapsible-shifts[aria-expanded="false"] {
+  min-width: 6.5rem;
+  max-width: 6.5rem;
 }
-#rule-collapsible-shifts.active {
-  width: 12rem;
+#rule-collapsible-shifts[aria-expanded="true"] {
+  min-width: 21rem;
+  max-width: 21rem;
 }
-#rule-collapsible-holiday.active {
-  min-width: 4rem;
-  min-width: 4rem;
-}
-#rule-collapsible-holiday.active {
-  width: 2rem;
-  width: 2rem;
-}
-#rule-collapsible-bridgedays.active {
-  min-width: 9rem;
-  max-width: 9rem;
-}
-#rule-collapsible-bridgedays {
-  min-width: 2rem;
-  max-width: 2rem;
-}
-#rule-collapsible-companyHolidays.active {
-  min-width: 12rem;
-  max-width: 12rem;
-}
-#rule-collapsible-companyHolidays {
+
+
+#rule-collapsible-holiday[aria-expanded="true"] {
   min-width: 4rem;
   max-width: 4rem;
 }
-#rule-collapsible-schoolHolidays {
-  width: 9rem;
+#rule-collapsible-holiday[aria-expanded="false"] {
+  min-width: 2rem;
+  max-width: 2rem;
 }
-#rule-collapsible-schoolHolidays.active {
-  width: 1rem;
+
+
+#rule-collapsible-bridgedays[aria-expanded="true"] {
+  min-width: 19rem;
+  max-width: 19rem;
+}
+#rule-collapsible-bridgedays[aria-expanded="false"] {
+  min-width: 9rem;
+  max-width: 9rem;
+}
+
+
+#rule-collapsible-companyHolidays[aria-expanded="true"] {
+  min-width: 12rem;
+  max-width: 12rem;
+}
+#rule-collapsible-companyHolidays[aria-expanded="false"] {
+  min-width: 4rem;
+  max-width: 4rem;
+}
+
+
+#rule-collapsible-schoolHolidays[aria-expanded="true"] {
+  min-width: 9rem;
+  max-width: 9rem;
+}
+#rule-collapsible-schoolHolidays[aria-expanded="false"] {
+  min-width: 3rem;
+  max-width: 3rem;
 }

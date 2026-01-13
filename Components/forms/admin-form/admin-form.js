@@ -87,7 +87,7 @@ export async function initializeAdminForm(api) {
   }
 
   // Inject help divider
-  const divider = document.getElementById('horizontal-divider');
+  const divider = document.getElementById('horizontal-divider-box');
   if (divider) {
     divider.innerHTML = '';
     divider.className = 'bg-admin';

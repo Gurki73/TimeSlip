@@ -2,44 +2,49 @@
   <h1 id="calendar-form-title" class="visually-hidden">
     Kalender-Konfiguration
   </h1>
-  <div class="calendar-flex-row">
-    <!-- LEFT COLUMN -->
-    <div class="calendar-flex-column" id="left-column">
-      <!-- State + Year controls -->
-      <div id="state-year-container" class="calendar-controls-row"></div>
-      <!--
-      <fieldset>
-        <div class="flex-row">
-          <h3>reguläre Öffnungzeiten</h3>
-          <button id="btn-weekday-store" class="noto">💾</button>
-        </div>
-        -->
-      <!-- Weekdays and Shifts collapsibles will be dynamically inserted here -->
-      <div class="calendar-form" id="left-collapsibles"></div>
-      </fieldset>
-    </div>
+  <div class="flex-row">
+    <div class="calendar-flex-row" id="calendar-collapsibles">
+    </div class="flex-column">
+    <div class="hint">
+      <ul>
+        <span class="noto">💡</span> Legende: 🔑
+        <li>
+          <span class="noto">🔒 ⇨ </span> geschlossen
+        </li>
+        <li>
+          <span class="noto">🔑 ⇨ </span> geöffnet
+        </li>
+      </ul>
 
-    <!-- RIGHT COLUMN -->
-    <div class="calendar-flex-column" id="right-column">
-      <!-- Other collapsibles: holidays, bridge days, company, school -->
-      <div class="calendar-form" id="right-collapsibles"></div>
+      <div class="hint">
+        <ul>
+          <span class="noto"> 🎨</span> Legende: 🔑
+          <li>
+            <span class="noto">⬜⬜⬜</span> geschlossen
+          </li>
+          <li>
+            <span class="noto">⬜⬜⬜</span> geöffnet
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </section>
+
 
 <!-- ===========================
      TEMPLATES
      =========================== -->
 <template id="tpl-rule-collapsible">
-  <fieldset class="rule-collapsible">
+  <div class="rule-collapsible">
     <legend class="rule-collapsible-legend">
       <button class="rule-collapsible-toggle" aria-expanded="true" type="button">
-        <span class="title"></span>
-        <span class="chev" aria-hidden="true">▾</span>
+        <span class="chev-button resize-button" aria-hidden="true" aria-expanded="true"></span>
+        <span class="title"> ???</span>
       </button>
     </legend>
     <div class="rule-collapsible-content"></div>
-  </fieldset>
+  </div>
 </template>
 
 <template id="tpl-list">

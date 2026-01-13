@@ -110,8 +110,76 @@
 
       </div>
 
-      <div class="tab-content" id="tab-calendar">
-        <!-- Calendar mini-preview + color pickers go here -->
+      <div class="tab-content flex-row" id="tab-calendar">
+
+        <div class="calendar-preview">
+
+          <div class="calendar-grid">
+
+            <!-- Header -->
+            <div class="cell header"></div>
+            <div class="cell header">Mo</div>
+            <div class="cell header">Di</div>
+            <div class="cell header">Mi</div>
+            <div class="cell header">Do</div>
+            <div class="cell header">Fr</div>
+            <div class="cell header">Sa</div>
+            <div class="cell header">So</div>
+            <div class="cell header">Farbe</div>
+
+            <!-- Werktag -->
+            <div class="cell label">Werktag</div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell weekend"></div>
+            <div class="cell weekend"></div>
+            <div class="cell"><input type="color"></div>
+
+            <!-- Samstag -->
+            <div class="cell label">Samstag</div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell active"></div>
+            <div class="cell"></div>
+            <div class="cell"><input type="color"></div>
+
+            <!-- Sonntag & Feiertag -->
+            <div class="cell label">Sonn & Feiertag</div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell active"></div>
+            <div class="cell"><input type="color"></div>
+
+            <!-- Geschlossen -->
+            <div class="cell label">Geschlossen</div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell weekend"></div>
+            <div class="cell weekend"></div>
+            <div class="cell"><input type="color"></div>
+
+          </div>
+        </div>
+
+        <div class="preview-day-cell">
+          <span> header</span>
+          <span> earliy shift </span> <input type="color"> Frühschicht</input>
+          <span> earliy day </span> <input type="color"> Tagschicht</input>
+          <span> earliy late </span> <input type="color"> Spätschicht</input>
+        </div>
       </div>
 
       <div class="tab-content" id="tab-app">

@@ -607,7 +607,7 @@ export async function globalRefresh(mode = localStorage.getItem('dataMode') || '
 
 function loadWelcomePage() {
 
-  currentPage = 'welcome';
+  const currentPage = 'welcome';
 
   const formContainer = document.getElementById('form-container');
   if (!formContainer) return;
@@ -819,7 +819,7 @@ function domReady() {
 }
 
 function injectWindowButtonsIntoWelcomeHeader() {
-  const divider = document.getElementById('horizontal-divider');
+  const divider = document.getElementById('horizontal-divider-box');
   if (!divider || divider.classList.contains('bg-admin')) return;
 
   // Avoid double-injection
