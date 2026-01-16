@@ -14,25 +14,6 @@ import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js
 import { keyToBools } from './calendar-form-utils.js';
 import { createSaveButton } from '../../../js/Utils/saveButton.js';
 
-/**
- * 🎉 Special Days & Schützenfest (Future Enhancements)
- * 
- * Plan: Add playful, region-specific tooltips and optional calendar events 
- * to create a more delightful and culturally tuned user experience.
- * 
- * Tooltip Examples:
- * - Bavaria: "We love to celebrate twice here"
- * - Thuringia: "Witches on Walpurgis Night"
- * - Berlin: "Holiday vibes"
- * - Default: "Bridge days and special days"
- * 
- * Schützenfest:
- * - Applies to NRW & Lower Saxony (🎯 or 🥨 emoji)
- * - Tentative date: July 15
- * - Example tooltips:
- *    • NRW: "On target all summer – Schützenfest time!"
- *    • Lower Saxony: "Aim, celebrate, and connect – our Schützenfest."
- */
 window.debugChecklist = false;
 
 const states = [
@@ -116,12 +97,64 @@ let shiftsData = {
 };
 
 const calendarLists = [
-  { id: "weekdays", title: "Wochentage", type: "static", target: "calendar-collapsibles", data: weekdaysData },
-  { id: "shifts", title: "Schichten", type: "matrix", target: "calendar-collapsibles", data: shiftsData },
-  { id: "holidays", title: "Feiertage", type: "dynamic", target: "calendar-collapsibles", data: [] },
-  { id: "bridgedays", title: "Brückentage", type: "computed", target: "calendar-collapsibles", data: [] },
-  { id: "companyHolidays", title: "Betriebsferien", type: "manual", target: "calendar-collapsibles", data: [] },
-  { id: "schoolHolidays", title: "Schulferien", type: "dynamic", target: "calendar-collapsibles", data: [] },
+  {
+    id: "weekdays",
+    title: "Tage",
+    type: "static",
+    target: "calendar-collapsibles",
+    data: weekdaysData,
+    onSave: async () => {
+      await saveOfficeDays(cachedApi, calendarState);
+    }
+  },
+  {
+    id: "shifts",
+    title: "Schichten",
+    type: "matrix",
+    target: "calendar-collapsibles",
+    data: shiftsData,
+    onSave: async () => {
+      await saveOfficeDays(cachedApi, calendarState);
+    }
+  },
+  {
+    id: "holidays",
+    title: "Feiertage",
+    type: "dynamic",
+    target: "calendar-collapsibles",
+    data: [],
+    onSave: async () => {
+      await gatherHolidaysAndSave();
+    }
+  },
+  {
+    id: "bridgedays",
+    title: "Brückentage",
+    type: "computed",
+    target: "calendar-collapsibles",
+    data: [],
+    onSave: async () => {
+      await gatherBridgeDaysAndSave();
+    }
+  },
+  {
+    id: "companyHolidays",
+    title: "Betriebsferien",
+    type: "manual",
+    target: "calendar-collapsibles",
+    data: [],
+    onSave: async () => {
+      await saveCompanyHoliday();
+    }
+  },
+  {
+    id: "schoolHolidays",
+    title: "Schulferien",
+    type: "dynamic",
+    target: "calendar-collapsibles",
+    data: [],
+    onSave: null   // no save button will be active
+  }
 ];
 
 let collapsibleState = {
@@ -205,7 +238,7 @@ export async function initializeCalendarForm(passedApi) {
   shiftsData = updateShiftState(shiftsData, officeDays);
 
   loadCollapsibleState();
-  updateDivider("bg-calendar");
+  updateDivider("bg-calendar", ruleFormState);
   await buildCollapsableContainer();
   populateWeekdaysList();
 
@@ -349,110 +382,17 @@ async function handleYearUpdate(year) {
 
 }
 
-/*
-async function initializeYearAndState() {
-  const container = document.getElementById("state-year-container");
-  if (!container) return;
+function createYearAndStateSpan(ruleFormState) {
 
-  container.innerHTML = '';
+  console.log("update divider in calendarform, adding year input and federal state select ");
 
+  const yearAndStateInput = document.createElement("div");
+  yearAndStateInput.id = "state-year-ui";
+
+  /*
   publicHolidayState = await loadStateData(cachedApi);
-
-  const yearInput = document.createElement("input");
-  yearInput.id = "calendar-form-year";
-  yearInput.type = "number";
-  yearInput.addEventListener("change", async (e) => {
-    const selectedYear = parseInt(e.target.value, 10);
-    localStorage.setItem("calendarSettingYear", selectedYear);
-    currentYear = selectedYear;
-    await handleYearUpdate(selectedYear);
-  });
-
-  const cachedYear = parseInt(localStorage.getItem("calendarSettingYear"), 10);
-  currentYear = cachedYear || new Date().getFullYear();
-  yearInput.value = currentYear;
-
-
-  const flagDiv = document.createElement("div");
-  flagDiv.id = "state-flag";
-  flagDiv.classList.add("state-flag-icon");
-  container.appendChild(flagDiv);
-
-  const stateSelect = document.createElement("select");
-  stateSelect.id = "state-select";
-
-  const filtredStates = publicHolidayState !== "XX" ? states.filter(s => !s.hidden) : states;
-  filtredStates.forEach(s => {
-    const opt = document.createElement("option");
-    opt.value = s.code;
-    opt.textContent = s.name;
-    opt.selected = s.code === publicHolidayState;
-    stateSelect.appendChild(opt);
-  });
-
-  const saveBtn = document.createElement("button");
-  saveBtn.id = "save-state-btn";
-  saveBtn.textContent = "🛡️💾";
-  saveBtn.title = "Bundesland speichern";
-  saveBtn.setAttribute("aria-label", "Bundesland speichern");
-  saveBtn.classList.add("noto");
-  saveBtn.classList.add("hidden");
-  saveBtn.addEventListener('click', async () => {
-    await saveStateData(cachedApi, stateSelect.value);
-    saveBtn.classList.add("hidden");
-  });
-
-
-  container.appendChild(stateSelect);
-  container.appendChild(saveBtn);
-  container.appendChild(yearInput);
-
-  // Initialize flag
-  updateStateFlag(stateSelect.value, flagDiv);
-
-  // Update flag on change
-  stateSelect.addEventListener("change", async (e) => {
-
-    const selectedStateCode = e.target.value;
-    ruleFederalState = selectedStateCode;
-    publicHolidayState = selectedStateCode;
-
-    console.log(" state changed val: ", e.target.value);
-
-    const saveBtnLocal = document.getElementById('save-state-btn');
-    if (saveBtnLocal) saveBtnLocal.classList.remove("hidden");
-
-    updateStateFlag(selectedStateCode, flagDiv);
-
-    const topFlag = document.getElementById('state-image');
-    const bottomFlag = document.getElementById('state-flag');
-    const stateSelector = document.getElementById('state-select');
-
-    if (topFlag) {
-      updateStateFlag(selectedStateCode, topFlag);
-    }
-    if (bottomFlag) {
-      updateStateFlag(selectedStateCode, bottomFlag);
-    }
-    if (stateSelector) {
-      stateSelector.value = selectedStateCode;
-    }
-    console.log("[calendar-form] selected state code: ", selectedStateCode);
-    console.log("[calendar-form] current year: ", currentYear);
-    const publicHolidaysLocal = filterPublicHolidaysByYearAndState(currentYear, selectedStateCode);
-    console.log("[calendar-form] filtered public holidays : ", publicHolidaysLocal);
-    populatePublicHolidayList(publicHolidaysLocal);
-    const bridgedays = findBridgeDays(publicHolidaysLocal, weekdaysData);
-    populateBridgeDaysList(bridgedays);
-    populateSchoolHolidaysListUnified(cachedApi, selectedStateCode, currentYear);
-  });
-}
 */
-async function createYearAndStateSpan() {
-  const span = document.createElement("span");
-  span.id = "state-year-ui";
-
-  publicHolidayState = await loadStateData(cachedApi);
+  console.log("public holiday state ", ruleFormState);
 
   /* ======================
      YEAR INPUT
@@ -467,6 +407,7 @@ async function createYearAndStateSpan() {
   yearInput.value = currentYear;
 
   yearInput.addEventListener("change", async (e) => {
+    console.log("  ***  year input change  ***");
     const selectedYear = parseInt(e.target.value, 10);
     localStorage.setItem("calendarSettingYear", selectedYear);
     currentYear = selectedYear;
@@ -489,7 +430,7 @@ async function createYearAndStateSpan() {
   stateSelect.id = "state-select";
 
   const filteredStates =
-    publicHolidayState !== "XX"
+    ruleFormState !== "XX"
       ? states.filter(s => !s.hidden)
       : states;
 
@@ -497,7 +438,7 @@ async function createYearAndStateSpan() {
     const opt = document.createElement("option");
     opt.value = s.code;
     opt.textContent = s.name;
-    opt.selected = s.code === publicHolidayState;
+    opt.selected = s.code === ruleFormState;
     stateSelect.appendChild(opt);
   });
 
@@ -513,6 +454,7 @@ async function createYearAndStateSpan() {
   saveBtn.classList.add("noto", "hidden");
 
   saveBtn.addEventListener("click", async () => {
+    console.log("  ***  federal state select change  ***");
     await saveStateData(cachedApi, stateSelect.value);
     saveBtn.classList.add("hidden");
   });
@@ -524,10 +466,11 @@ async function createYearAndStateSpan() {
   updateStateFlag(stateSelect.value, flagDiv);
 
   stateSelect.addEventListener("change", async (e) => {
+    console.log("   state selected has changed ", e);
     const selectedStateCode = e.target.value;
 
     ruleFederalState = selectedStateCode;
-    publicHolidayState = selectedStateCode;
+    ruleFormState = selectedStateCode;
 
     saveBtn.classList.remove("hidden");
     updateStateFlag(selectedStateCode, flagDiv);
@@ -554,14 +497,14 @@ async function createYearAndStateSpan() {
      ASSEMBLE SPAN
   ====================== */
 
-  span.append(
+  yearAndStateInput.append(
     flagDiv,
     stateSelect,
     saveBtn,
     yearInput
   );
 
-  return span;
+  return yearAndStateInput;
 }
 
 async function clearAndLoadDOM() {
@@ -615,6 +558,10 @@ function createCollapsible(cfg) {
 
   const titleEl = clone.querySelector(".title");
   if (titleEl) titleEl.textContent = cfg.title;
+
+  const saveBtn = createSaveButton({ onSave: cfg.onSave });
+  const saveBtnPlaceholder = clone.querySelector('.rule-save-slot');
+  if (saveBtnPlaceholder) saveBtnPlaceholder.appendChild(saveBtn.el);
 
   const content = clone.querySelector(".rule-collapsible-content");
 
@@ -906,7 +853,7 @@ function populatePublicHolidayList(publicHolidays) {
   console.log(`✅ Populated ${publicHolidays.length} public holidays`);
 }
 
-async function saveCompanyHoliday(startInputId, endInputId) {
+async function saveCompanyHoliday(startInputId = 'preview-start', endInputId = 'preview-end') {
   const startEl = document.getElementById(startInputId);
   const endEl = document.getElementById(endInputId);
 
@@ -1119,8 +1066,8 @@ function populateCompanyHolidaysList(companyHolidays = []) {
   const endBtnId = `pick-end-${timestamp}`;
   const startInputId = `start-date-picker-${timestamp}`;
   const endInputId = `end-date-picker-${timestamp}`;
-  const previewStartId = `preview-start-${timestamp}`;
-  const previewEndId = `preview-end-${timestamp}`;
+  const previewStartId = `preview-start`;
+  const previewEndId = `preview-end`;
   const saveBtnId = `save-company-holiday-btn-${timestamp}`;
 
   inputContainer.innerHTML = `
@@ -1148,11 +1095,6 @@ function populateCompanyHolidaysList(companyHolidays = []) {
         <span id="company-holiday-duration">??</span>
         <span>Tage</span>
       </div>
-
-    </div>
-
-    <div class="flex-column">
-      <button id="${saveBtnId}" class="noto save-btn">💾</button>
     </div>
   </div>
   <br>
@@ -1164,11 +1106,6 @@ function populateCompanyHolidaysList(companyHolidays = []) {
   const content = collapsible.querySelector('.rule-collapsible-content');
   content.innerHTML = '';
   content.appendChild(listNode);
-
-  // --- Now all elements exist; wire up save button ---
-  const saveBtn = document.getElementById(saveBtnId);
-  saveBtn.addEventListener("click", () => saveCompanyHoliday(startInputId, endInputId));
-
 
   // --- Initialize the date picker AFTER DOM is ready ---
   activeCompanyHolidayPicker = createDateRangePicker({
@@ -1746,17 +1683,7 @@ function dayAbbr(dayId) {
   return map[dayId] || dayId;
 }
 
-
-//
-//            OLD                  old             oldold
-//         old   old               old             old    old
-//         old   old               old             old    old
-//         old   old               old             old    old
-//         old   old               oldoldold       old    old
-//            old                  oldoldold       oldold
-//
-
-async function updateDivider(className = "bg-calendar") {
+function updateDivider(className = "bg-calendar", ruleFormState) {
   const divider = document.getElementById('horizontal-divider-box');
   if (!divider) {
     console.error("❌ horizontal-divider not found");
@@ -1766,17 +1693,17 @@ async function updateDivider(className = "bg-calendar") {
   divider.className = className;
   divider.innerHTML = '';
 
-  const yearAndState = await createYearAndStateSpan();
+  const yearAndState = createYearAndStateSpan(ruleFormState);
 
   // Left gap
   const leftGap = document.createElement('div');
   leftGap.className = 'left-gap';
 
   // Header
-  const h2 = document.createElement('h2');
+  const h2 = document.createElement('div');
   h2.id = 'role-form-title';
   h2.className = 'sr-only';
-  h2.innerHTML = `< span class= "noto" >📋</span > Öffnungszeiten planen < span class= "noto" >✍🏻</span > `;
+  h2.innerHTML = `<span class="noto" >🕗</span > Öffnungszeiten planen <span class="noto" >🕟</span> `;
 
   // Container for form controls
   const buttonContainer = document.createElement('div');
@@ -1789,21 +1716,24 @@ async function updateDivider(className = "bg-calendar") {
     onChange: (val) => applyBranchPreset(val)
   });
 
-  saveButtonHeader = createSaveButton({ onSave: () => storeAllCalendarSettings(api) });
+  saveButtonHeader = createSaveButton({ onSave: () => storeAllCalendarSettings(cachedApi) });
 
   const windowBtns = createWindowButtons(); // your new min/max buttons
 
   buttonContainer.append(helpBtn, branchSelect, windowBtns);
+  leftGap.innerHTML = '';
+  leftGap.append(yearAndState);
+  divider.append(leftGap, h2, buttonContainer);
+  const test = document.getElementById('calendar-form-year') === yearAndState.querySelector('#calendar-form-year')
+  console.log("  test divider in calendar form: ", test);
+}
 
-  divider.append(yearAndState, h2, buttonContainer);
+function applyBranchPreset(val) {
+  console.log("BRANCH SELCET");
 }
 
 function storeAllCalendarSettings(api) {
   console.log(" store all calendar settings");
-}
-
-function saveAllChanges() {
-
 }
 
 function createYearSelect({ defaultYear = new Date().getFullYear(), minYear = 2025, onChange } = {}) {

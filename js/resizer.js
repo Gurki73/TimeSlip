@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   divider.addEventListener('mousedown', (e) => {
     e.preventDefault();
+
     isDragging = true;
     document.body.classList.add('resizing');
   });

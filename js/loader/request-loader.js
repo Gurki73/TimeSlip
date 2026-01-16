@@ -2,6 +2,41 @@
 import { loadFile, saveFile } from './loader.js';
 import { refundReservedDays } from '../../Components/forms/request-form/request-form.js';
 
+const datasets = {};
+const loadingPromises = {};
+const failedKeys = {};
+
+async function loadDataset(key, loaderFunc, fallbackData = []) {
+    if (datasets[key]) return datasets[key];       // return cached data
+    if (loadingPromises[key]) return loadingPromises[key];  // return in-progress promise
+
+    const p = (async () => {
+        try {
+            const data = await loaderFunc();
+            datasets[key] = data;
+            return data;
+        } catch (err) {
+            console.warn(`⚠ Dataset "${key}" failed:`, err);
+            failedKeys[key] = true;
+            datasets[key] = fallbackData;
+            return fallbackData;
+        } finally {
+            delete loadingPromises[key];
+        }
+    })();
+
+    loadingPromises[key] = p;
+    return p;
+}
+
+function getCached(key) {
+    return datasets[key] || null;
+}
+
+function hasFailed(key) {
+    return !!failedKeys[key];
+}
+
 /* ---------- Sanitize text input ---------- */
 function sanitizeTextField(str) {
     if (!str) return '';

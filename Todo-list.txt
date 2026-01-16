@@ -1,27 +1,18 @@
-1️⃣ Save Buttons
-Request Form
-✅ Save button disabled incorrectly
-✅ No way to save in list mode
-Rule Form
-🔥 Save button not marked dirty
-Employee Form
-✅in  New save button not showing state
-Calendar / Calendar Settings
-🔥 Save buttons / state handling
-Admin Tools
-🧩 Old style save button in wrong place
-🧩 Auto Save – Missing UI
-2️⃣ Ellipses Menus
-Rule Form
-🔥 Ellipses menu not rendering
-Employee Form
-🔥 Ellipses buttons dead
-
+Medium / Moderate Effort
+1 ✅ Privacy warning container not responsive (employee-form)
+2 ✅ Ellipses menu not rendering (rule-form)
+3 ☐ Forbidden combinations list incomplete (rule-form)
+4 ✅ Emoji JSON not loaded (admin-tools)
+5 ☐ Public holiday rendering (calendar setting)
+6 ☐ Flow wizard colors lying / enforcing wrong order (rule-form)
+7 ✅ Responsive state/year select (calendar setting) 
 
 Legend
 ✅ = finished;  ☐ = open;  🚧 = in work;  ❌ = cancelled
 🔥 = urgent;  🧩= nice to have ; 🧠 = postphoned after beta-release
 
+✅ app
+  ✅ add a prilimary , prototype banner
 Request-form
 🚨 Ship-Blockers (these can corrupt data or break trust)
   🔥 Infinite rerender loop on refresh
@@ -30,12 +21,12 @@ Request-form
   🔥 “No start date entered” while one exists
   ✅  Save button disabled incorrectly
   ✅ No way to save in list mode
-  🔥 Used days not calculated
+  ✅ Used days not calculated
   ✅ Sample mode showing disabled save instead of hatched sample mode
 rule-form
 🚨 Ship-Blockers (dangerous)
   🔥 Typing effect not updating after editing existing rule
-  🔥 Endless loop after refresh
+  ✅ Endless loop after refresh
   🔥 Save button not marked dirty
   🔥 Flow wizard enforcing wrong order
   🔥 Flow wizard colors lying (green = missing)
@@ -43,23 +34,22 @@ rule-form
   🔥 Forbidden combinations list incomplete
 calendar
   🔥 Warnings not shown in calendar
-
 employee-form
-  Privacy warning container not responsive
-  🔥 Employee select list: ellipses, icons, indentation, cluttered symbols
+  ✅ Privacy warning container not responsive
+  ✅ Employee select list: ellipses, icons, indentation, cluttered symbols
   🔥 Wrong shift assignments on closed days
   🔥 Ellipses buttons dead
-  🔥 New save button not showing state
+  ✅ New save button not showing state
 
 admin-tools
-  🔥 Tabs not working
-  🔥 emoji: JSON not loaded
+  ✅ Tabs not working
+  ✅ emoji: JSON not loaded
 
 calendar setting:
-  🔥 Background colors
+  ✅ Background colors
   🔥 Save buttons / state handling
-  🔥 Shift matrix colors
-  🔥 Responsive state/year select
+  🔥 ✅ Shift matrix colors
+  ✅ Responsive state/year select
   🔥 Public holiday rendering
   
 request-form
@@ -79,7 +69,7 @@ rule-form
   Categories for rules (shift/day/week/special)
   Test button placement
   Relation line animations
-  Count of rules
+  ✅ Count of rules
   Scroll to end on start
   Cursor blink, pumping effect
 calendar
@@ -126,6 +116,7 @@ misc:
 🧩 Restore cached themes / state
 🧩 Minimal form size calculation
 🧩 Radio / toggle defaults
+🧩 dragable resize of form header
 
 roles:
 🧩 Boundary fix last column

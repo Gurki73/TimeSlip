@@ -13,6 +13,31 @@
   overflow-y: auto;
   min-height: calc(4 * 1.5rem);
   line-height: 1.5rem;
+  min-width: 95%;
+}
+
+#rules-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.6rem;
+  list-style-position: inside;
+}
+
+#rules-scrollbox li:nth-child(odd) {
+  background-color: var(--color-layout-container-light);
+  margin-bottom: 1px;
+}
+
+#rules-scrollbox li:nth-child(even) {
+  background-color: var(--color-layout-container-medium);
+  margin-bottom: 1px;
+}
+
+#rules-list {
+  list-style-position: inside;
+  padding: 0;
+  margin: 0;
 }
 
 #rule-tables-container {
@@ -61,7 +86,6 @@
 }
 
 .tab-gab {
-
   width: 15rem;
   min-width: 15rem;
   max-width: 15rem;
@@ -78,7 +102,7 @@
 .rule-table td {
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
-  background-color:pink;
+  background-color: pink;
 }
 
 .rule-table th,
@@ -89,7 +113,6 @@
   min-height: 3rem;
   text-align: center;
   vertical-align: middle;
-  
 }
 
 .rule-table th {
@@ -101,14 +124,12 @@
 
 .rule-table tr {
   min-height: 150px;
- 
 }
 .rule-table th[data-highlight="true"] {
   min-width: 16rem;
-  background-color: seagreen;;
+  background-color: seagreen;
   animation: pulse 1.5s infinite;
 }
-
 
 .rule-table td[data-highlight="true"] {
   min-width: 16rem;
@@ -118,8 +139,13 @@
 }
 
 @keyframes pulse {
-  0%, 100% { box-shadow: 0 0 2px lime; }
-  50% { box-shadow: 0 0 10px lime; }
+  0%,
+  100% {
+    box-shadow: 0 0 2px lime;
+  }
+  50% {
+    box-shadow: 0 0 10px lime;
+  }
 }
 
 /* Typing animation */
@@ -128,8 +154,13 @@
 }
 
 @keyframes blink {
-  0%, 100% { color: transparent; }
-  50% { color: black; }
+  0%,
+  100% {
+    color: transparent;
+  }
+  50% {
+    color: black;
+  }
 }
 
 #typing-text {
@@ -160,7 +191,7 @@
   overflow: auto;
   margin-top: 1rem;
   border: 1px solid #444;
-  box-shadow: 0 0 4px rgba(0,0,0,0.3);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
 }
 
 #rule-first-condition {
@@ -243,6 +274,10 @@
 }
 
 @keyframes flow {
-  from { stroke-dashoffset: 0; }
-  to { stroke-dashoffset: -16; }
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -16;
+  }
 }

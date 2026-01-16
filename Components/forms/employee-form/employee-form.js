@@ -157,32 +157,29 @@ let privacyClickListener = null;
 let lastPrivacyState = true;
 
 export function initPrivacyWarningToggle() {
+
   const button = document.getElementById('privacy-warn-chev');
   const root = document.getElementById('privacy-warning-collapsible');
-  if (!button || !root) return;
-
-  const isOpen = lastPrivacyState ?? true;
-
+  if (!button || !root) {
+    console.error("no privacy warning found in dom ");
+    return;
+  }
+  // Initialize state
+  let isOpen = lastPrivacyState ?? true;
   setExpanded(isOpen);
 
-  button.onclick = () => {
-    const next = root.getAttribute('aria-expanded') !== 'true';
-    setExpanded(next);
-    lastPrivacyState = next;
-  };
+  // Single click handler
+  button.addEventListener('click', () => {
+    isOpen = !isOpen;
+    setExpanded(isOpen);
+    lastPrivacyState = isOpen;
+  });
 
   function setExpanded(value) {
     root.setAttribute('aria-expanded', value);
     button.setAttribute('aria-expanded', value);
+    root.classList.toggle('active', value);
   }
-  privacyClickListener = () => {
-    const isActive = fieldset.classList.toggle('active');
-    button.classList.toggle('active', isActive);
-    button.textContent = isActive ? '▼' : '▶';
-    lastPrivacyState = isActive; // update cache
-  };
-
-  button.addEventListener('click', privacyClickListener);
 }
 
 function renderNewEmployeeForm() {
@@ -245,6 +242,7 @@ function rebindEmployeeFormEvents(employee) {
   bindNameInputToEmployee(employee);
   bindEmojiClick(employee);
   bindEmployeeDateAndNumberInputs(employee);
+  bindEmployeeVacationInputs(employee);
 }
 
 function resetEmployeeForm(defaults = {}) {
@@ -421,7 +419,7 @@ function bindNameInputToEmployee(employee) {
   };
 
   nameInput.addEventListener('keydown', handler);
-  nameInput._keydownHandler = handler; // store reference for cleanup
+  nameInput._keydownHandler = handler;
 }
 
 function bindEmojiPickerToEmployee(employee) {
@@ -546,6 +544,7 @@ function isValidEmployeeMainRoleIndex(mainRoleIndex, mainRoleField) {
   if (mainRoleField) mainRoleField.classList.toggle('invalid-field', !isValid);
   return isValid;
 }
+
 function populateShiftOptions() {
   const dayIds = [
     "employee-form-shift-mon",
@@ -568,9 +567,8 @@ function populateShiftOptions() {
       saveButtonHeader.setState('dirty');
     }
 
-    // --- CASE: "never" => show label, hide dropdown --- 
     if (currentOfficeDays[dayIndex] === "never") {
-      select.style.display = "none"; // hide dropdown 
+      select.style.display = "none";
       let label = document.getElementById(id + "-closed-label");
       if (!label) {
         label = document.createElement("label");
@@ -580,20 +578,18 @@ function populateShiftOptions() {
         label.style.backgroundColor = getComputedStyle(document.body).getPropertyValue("--calendar-day-closed-bg"); // Insert label right after the select element 
         select.insertAdjacentElement("afterend", label);
       }
-      return; // skip the rest
+      return;
     }
 
-    // --- CASE: normal shifts => show dropdown, remove label --- 
     select.style.display = "inline-block";
     const oldLabel = document.getElementById(id + "-closed-label");
-    if (oldLabel) oldLabel.remove(); // never option 
+    if (oldLabel) oldLabel.remove();
     const neverOpt = document.createElement("option");
     neverOpt.value = "never";
     neverOpt.textContent = "nicht eingeplant";
     neverOpt.style.backgroundColor = getComputedStyle(document.body).getPropertyValue("--calendar-day-weekend-bg");
     select.appendChild(neverOpt);
 
-    // shift options 
     if (currentOfficeDays[dayIndex]) {
       const shiftKeys = keyToBools(currentOfficeDays[dayIndex]);
 
@@ -728,7 +724,7 @@ function selectEmployee(employee) {
     return;
   }
 
-  currentEmployeeId = employee.id; // SET THE CURRENT EMPLOYEE ID!
+  currentEmployeeId = employee.id;
   employee.mainRoleIndex = Number(employee.mainRoleIndex) || 0;
 
   updateBasicInfo(employee);
@@ -771,6 +767,14 @@ function updateBasicInfo(employee) {
 
   const bdayMonth = document.getElementById('employee-form-birthday-month');
   if (bdayMonth) bdayMonth.value = employee.birthMonth ?? '';
+
+  const vacationUsed = document.getElementById('employee-form-vacation-used');
+  if (vacationUsed) {
+    const total = Number(vacationTotal?.value) || 0;
+    const remaining = Number(vacationLeft?.value) || 0;
+    vacationUsed.value = total - remaining;
+  }
+
 }
 
 function initEventListenerRoleSelect() {
@@ -834,6 +838,59 @@ function bindEmployeeDateAndNumberInputs(employee) {
   });
 }
 
+function bindEmployeeVacationInputs(employee) {
+  const totalInput = document.getElementById('employee-form-vacation-total');
+  const leftInput = document.getElementById('employee-form-vacation-left');
+  const usedInput = document.getElementById('employee-form-vacation-used');
+
+  if (!totalInput || !leftInput || !usedInput) return;
+
+  // prevent double-binding
+  [totalInput, leftInput, usedInput].forEach(input => {
+    if (input._vacationHandler) {
+      input.removeEventListener('input', input._vacationHandler);
+      input.removeEventListener('change', input._vacationHandler);
+    }
+  });
+
+  const handler = (ev) => {
+    const source = ev.target.id;
+
+    let total = Number(totalInput.value) || 0;
+    let left = Number(leftInput.value) || 0;
+    let used = Number(usedInput.value) || 0;
+
+    if (source === 'employee-form-vacation-total') {
+      // total changed → keep used, recalc remaining
+      left = Math.max(0, total - used);
+      leftInput.value = left;
+
+    } else if (source === 'employee-form-vacation-left') {
+      // remaining changed → recalc used
+      used = Math.max(0, total - left);
+      usedInput.value = used;
+
+    } else if (source === 'employee-form-vacation-used') {
+      // used changed → recalc remaining
+      left = Math.max(0, total - used);
+      leftInput.value = left;
+    }
+
+    // update employee model (canonical fields only!)
+    employee.availableDaysOff = total;
+    employee.remainingDaysOff = left;
+
+    validateEmployeeFields(employee); // marks dirty + enables save
+  };
+
+  [totalInput, leftInput, usedInput].forEach(input => {
+    input.addEventListener('input', handler);
+    input.addEventListener('change', handler);
+    input._vacationHandler = handler;
+  });
+}
+
+
 function resetEmployeeBirthday() {
   const employee = getEmployeeById(currentEmployeeId);
   console.log("remove birthday");
@@ -841,14 +898,13 @@ function resetEmployeeBirthday() {
   const bdayDay = document.getElementById('employee-form-birthday-day');
   const bdayMonth = document.getElementById('employee-form-birthday-month');
 
-  if (bdayDay) bdayDay.value = ''; // or '0' if you prefer
-  if (bdayMonth) bdayMonth.value = ''; // or '0' if you prefer
+  if (bdayDay) bdayDay.value = '';
+  if (bdayMonth) bdayMonth.value = '';
 
-  // Update employee object
   employee.birthday = '';
   employee.birthMonth = '';
 
-  validateEmployeeFields(employee); // keep validation consistent
+  validateEmployeeFields(employee);
 }
 
 function validateEmployeeFields(employee) {
@@ -984,20 +1040,16 @@ function fillSecondaryRoleDropdown(employee) {
 
   if (!employee.secondaryRoleIndex) employee.secondaryRoleIndex = 0;
 
-  // Special apprentice handling
   if (employee.mainRoleIndex === 13) {
-    // For apprentice, secondary role is mandatory
     dropDown.classList.remove('invalid-field');
     emoji.classList.remove('invalid-field');
 
-    // Filter out invalid roles for apprentice secondary
     roleOptions = roleOptions.filter(r => r.colorIndex !== 0 && r.colorIndex !== 13);
 
     if (!employee.secondaryRoleIndex || employee.secondaryRoleIndex === 0) {
       employee.secondaryRoleIndex = roleOptions[0]?.colorIndex || 1;
     }
   } else {
-    // Normal case
     if (employee.mainRoleIndex === 13 && employee.secondaryRoleIndex === 0) {
       emoji.classList.add('invalid-field');
       dropDown.classList.add('invalid-field');
@@ -1052,29 +1104,24 @@ function handleRoleChange(roleType, newValue) {
 
   switch (roleType) {
     case 'main':
-      // Special case: Changing to/from apprentice role
       const wasApprentice = employee.mainRoleIndex === 13;
       const isNowApprentice = numericValue === 13;
 
       employee.mainRoleIndex = numericValue;
 
-      // If changing to apprentice, ensure secondary role exists
       if (isNowApprentice && employee.secondaryRoleIndex === 0) {
-        employee.secondaryRoleIndex = 1; // Default to first available role
+        employee.secondaryRoleIndex = 1;
       }
 
-      // If changing from apprentice, clear special rules
       if (wasApprentice && !isNowApprentice) {
-        // Reset to normal slider behavior
       }
       break;
 
     case 'secondary':
       employee.secondaryRoleIndex = numericValue;
 
-      // Special case: If main is apprentice and secondary is removed
       if (employee.mainRoleIndex === 13 && numericValue === 0) {
-        employee.secondaryRoleIndex = 1; // Force secondary role for apprentice
+        employee.secondaryRoleIndex = 1;
       }
       break;
 
@@ -1134,15 +1181,6 @@ function fillTrinaryRoleDropdown(employee) {
   });
 
   return employee;
-}
-
-function debounceDelete(fn, delay = 300) {
-  let timeout;
-  return (...args) => {
-    if (timeout) return;          // prevent double-tap
-    timeout = setTimeout(() => timeout = null, delay);
-    fn(...args);
-  };
 }
 
 function formatDateInput(date) {
@@ -1334,77 +1372,84 @@ function renderEmployeeList() {
     employee.warning = '';
     const valid = sanityCheckEmployee(employee);
 
-    const listItem = document.createElement('li');
-    listItem.classList.add('employee-item');
-    listItem.classList.remove('employee-role-select-warning');
-    if (!valid || employee.corrupt) {
-      listItem.classList.add('employee-role-select-warning');
-      const warningIcon = document.createElement('span');
-      warningIcon.classList.add('noto');
-      warningIcon.innerHTML = '❗';
-      warningIcon.title = employee.warning || 'Daten unvollständig oder fehlerhaft';
-      listItem.appendChild(warningIcon);
-    }
+    console.log("[employee-form] sanity check reults: ", valid);
 
+    const listItem = document.createElement('div');
+    listItem.classList.add('employee-item');
+    listItem.classList.remove('corrupt');
+
+    if (!valid || employee.corrupt) {
+      listItem.classList.add('corrupt');
+    }
 
     const emojiElement = document.createElement('span');
     emojiElement.classList.add('employee-emoji', 'noto');
     emojiElement.textContent = employee.personalEmoji;
-
     emojiElement.setAttribute('data-role', employee.mainRoleIndex);
     listItem.appendChild(emojiElement);
-    listItem.appendChild(document.createTextNode(` ⇨ ${employee.name}`));
+
+    listItem.appendChild(document.createTextNode(`${employee.name}`));
 
     listItem.addEventListener('click', (e) => {
       e.stopPropagation();
       selectExsitingEmployee(employee.id);
     });
-    listItem.classList.add('employee-item');
 
-    const content = document.createElement('div');
-    content.className = 'employee-content';
+    const ellipses = createEmployeeEllipsis(employee);
 
-    content.appendChild(emojiElement);
-    content.appendChild(document.createTextNode(` ⇨ ${employee.name}`));
-
-    listItem.appendChild(content);
-    listItem.appendChild(createEmployeeEllipsis(employee));
-
+    listItem.appendChild(ellipses);
 
     listContainer.appendChild(listItem);
   });
 }
 
-function getEmployeeEllipsisActions(employee) {
-  const actions = ['delete', 'copy'];
+function createEmployeeEllipsis(employee) {
+  console.log(employee);
 
-  if (employee.warning || employee.corrupt) {
-    actions.unshift('inspect', 'repair');
+  const context = {
+    delete: () => deleteEmployeeSafely(employee.id),
+    copy: () => copyEmployee(employee)
+  };
+
+  if (employee.warnings?.length > 0) {
+    context.inspect = () => showEmployeeWarnings(employee);
   }
 
-  return actions;
+  if (employee.warnings?.includes('Keine gültige Hauptaufgabe gewählt.') ||
+    employee.warnings?.includes('Ungültige oder fehlende Schichtauswahl.')) {
+    context.repair = () => autoRepair(employee);
+  }
+
+  const actions = Object.keys(context);
+
+  return createEllipsis(actions, context);
 }
 
-function createEmployeeEllipsis(employee) {
-  return createEllipsis(
-    getEmployeeEllipsisActions(employee),
-    {
-      delete: () => deleteEmployeeSafely(employee.id),
 
-      copy: () => {
-        const copyData = {
-          roles: employee.roles,
-          shifts: employee.shifts,
-          availability: employee.availability
-        };
-        navigator.clipboard.writeText(JSON.stringify(copyData, null, 2));
-      },
+function autoRepair(employee) {
+  if (employee.warnings.includes('Keine gültige Hauptaufgabe gewählt.')) {
+    autorepairEmployeeRole(employee);
+  }
+  if (employee.warnings.includes('Ungültige oder fehlende Schichtauswahl.')) {
+    autoRepairEmployeeShift(employee);
+  }
+}
 
-      repair: () => autoRepairEmployee(employee),
 
-      inspect: () => showEmployeeWarnings(employee)
-    }
-  );
+function copyEmployee(employee) {
+  console.log("copy exsiting employee");
+}
+
+function showEmployeeWarnings(employee) {
+  console.log(" show warning details ")
+}
+
+function autoRepairEmployeeShift(employee) {
+  console.log(" auto repair employee shift");
+}
+
+function autorepairEmployeeRole(employee) {
+  console.log(" auto repair employee role");
 }
 
 function deleteEmployeeSafely(employeeId) {

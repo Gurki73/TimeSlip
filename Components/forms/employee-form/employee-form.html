@@ -2,8 +2,6 @@
   <!-- Privacy and Warning Section -->
 
   <div class="privacy-collapsible" id="privacy-warning-collapsible" aria-expanded="true" data-collapse="warning">
-
-
     <legend class="legend-with-button">
       <button id="privacy-warn-chev" class="resize-button" aria-expanded="false"
         aria-controls="privacy-warning-content"></button>
@@ -23,7 +21,6 @@
           statt echte sensible Daten einzugeben, um Ihre Privatsphäre zu schützen.</p>
       </div>
     </div>
-
   </div>
 
   <!-- Employee Selection -->
@@ -33,13 +30,13 @@
       <span class="noto">➕</span>
       <span>neuer Mitarbeiter</span>
     </div>
-    <ul id="employee-list" class="employee-list"></ul>
+    <div id="employee-list" class="employee-list"></div>
   </div>
   <!-- Employee Details -->
   <div id="employee-form-details" class="employee-opaque">
     <!-- Left Section -->
     <div id="employee-details-left">
-      <h3>Persönlich:</h3>
+      <h4>Persönlich:</h4>
       <div class="employee-flex-row">
         <button id="employee-emoji-picker-btn" class="emoji-picker-btn noto" title="Emoji ändern">
           ⊖
@@ -49,40 +46,65 @@
       <br>
       <div>
         <div class="employee-flex-row">
-          <span>verfügbar :</span>
-          <input type="number" class="employee-details-number" id="employee-form-vacation-left" step="1" value="0" />
-          <span class="disabled-label">[Tage]</span>
-        </div>
-        <div class="employee-flex-row">
-          <span>Jahres-Urlaub: </span>
-          <input type="number" class="employee-details-number" id="employee-form-vacation-total" step="1" value="30" />
-          <span class="disabled-label">[Tage]</span>
-        </div>
-        <div class="employee-flex-row">
-          <span>genommen:</span>
-          <input type="number" class="employee-details-number" id="employee-form-vacation-used" step="0.5" value="0" />
-          <span class="disabled-label">[Tage]</span>
-        </div>
-        <div class="employee-flex-row">
-          <span>Überstunden</span>
-          <input type="number" class="employee-details-number" id="employee-form-overtime-input" value="0" step="0.5" />
-          <span class="disabled-label">[Tage]</span>
+          <div class="employee-pdo-grid">
+
+            <span class="pdo-label hint">Jahres-Urlaub:</span>
+            <div class="pdo-input">
+              <input type="number" class="employee-details-number" id="employee-form-vacation-total" step="1"
+                value="30" />
+              <span class="hint">Tage</span>
+            </div>
+
+            <span class="pdo-label hint">verfügbar:</span>
+            <div class="pdo-input">
+              <input type="number" class="employee-details-number" id="employee-form-vacation-left" step="1"
+                value="0" />
+              <span class="hint">Tage</span>
+            </div>
+
+            <span class="pdo-label hint">genommen:</span>
+            <div class="pdo-input">
+              <input type="number" class="employee-details-number" id="employee-form-vacation-used" step="0.5"
+                value="0" />
+              <span class="hint">Tage</span>
+            </div>
+
+            <span class="pdo-label hint">Überstunden:</span>
+            <div class="pdo-input">
+              <input type="number" class="employee-details-number" id="employee-form-overtime-input" value="0"
+                step="0.5" />
+              <span class="hint">Tage</span>
+            </div>
+
+          </div>
+
         </div>
 
         <div>
           <h4>Beschäftigungs-Zeitraum:</h4>
-          <div class="employee-flex-row">
-            <button id="pick-employee-start" class="noto employee-date-picker" title="Startdatum wählen">📅 von:
-            </button>
-            <input type="date" id="employee-form-start-work"
-              class="employee-details-date visually-hidden-date-picker" />
-            <span id="employee-preview-start">--.--.--</span>
+          <div class="employee-period-grid">
+
+            <div class="period-row">
+              <button id="pick-employee-start" class="noto employee-date-picker" title="Startdatum wählen">
+                📅 von:
+              </button>
+              <input type="date" id="employee-form-start-work" class="visually-hidden-date-picker" />
+              <span id="employee-preview-start">--.--.--</span>
+            </div>
+
+            <div class="period-row">
+              <button id="pick-employee-end" class="noto employee-date-picker" title="Enddatum wählen">
+                📅 bis:
+              </button>
+              <input type="date" id="employee-form-end-work" class="visually-hidden-date-picker" />
+              <span id="employee-preview-end">--.--.--</span>
+              <span>
+                <input type="number" id="employee-end-year" , value="2026">
+              </span>
+            </div>
+
           </div>
-          <div class="employee-flex-row">
-            <button id="pick-employee-end" class="noto employee-date-picker" title="Enddatum wählen">📅 bis:</button>
-            <input type="date" id="employee-form-end-work" class="employee-details-date visually-hidden-date-picker" />
-            <span id="employee-preview-end">--.--.--</span>
-          </div>
+
           <div class="employee-preview flex-row" id="employee-date-preview">
             <span id="employee-duration" class="hidden">?</span>
             <span class="hidden">Tage</span>

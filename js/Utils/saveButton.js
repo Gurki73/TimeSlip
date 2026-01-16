@@ -8,6 +8,11 @@ export function createSaveButton({ onSave }) {
 
     function setState(newState) {
 
+        if (state === 'hide') {
+            button.classList.add('hide');
+            return;
+        }
+
         state = localStorage.getItem('dataMode') === 'sample' ? 'readOnly' : newState;
 
         // remove all state classes
@@ -16,7 +21,8 @@ export function createSaveButton({ onSave }) {
             'is-dirty',
             'is-blocked',
             'is-readonly',
-            'is-saving'
+            'is-saving',
+            'hidden'
         );
 
         // add the current state class

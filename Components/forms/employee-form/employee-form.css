@@ -200,6 +200,25 @@ input[type="range"] {
 .employee-item:hover {
   background-color: var(--accent-hover); /* Highlight on hover */
 }
+.employee-item.warning {
+  background: #fff6d6;
+}
+
+.employee-item.corrupt {
+  background: lightgoldenrodyellow;
+  border-color: #dc3545;
+  border-width: 2px;
+}
+
+.employee-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.employee-left span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 #employee-details-column {
   background-color: #f3e5f5; /* Lavender for form */
@@ -359,14 +378,17 @@ input[type="range"] {
 .privacy-collapsible {
   display: flex;
   flex-direction: row;
-  flex-basis: 1rem;
-  align-items: stretch;
+  align-items: stretch; /* ensures all columns same height */
+  gap: 0.5rem;
   border: 2px double darkorange;
   border-radius: 0.5rem;
   background-color: #fff4e5;
   overflow: hidden;
+  width: fit-content; /* okay for desktop row layout */
+  height: 98%; /* fixed height */
+  min-height: 98%;
+  max-height: 98%;
   transition: flex-basis 0.3s ease, width 0.3s ease;
-  width: fit-content;
 }
 
 .privacy-collapsible .rule-collapsible-content {
@@ -397,6 +419,7 @@ input[type="range"] {
   overflow-wrap: break-word;
   word-break: break-word;
   padding: 0.5rem;
+  min-height: calc(98% - 1rem);
 }
 
 .privacy-warning-content p b {
@@ -424,10 +447,6 @@ input[type="range"] {
   height: 2rem;
   border-radius: 50%;
   margin-left: -0.5rem;
-}
-
-.privacy-collapsible {
-  overflow: hidden;
 }
 
 .privacy-collapsible[aria-expanded="false"] {
@@ -1090,4 +1109,54 @@ input[type="range"] {
 }
 .employee-delete-inline:hover {
   transform: scale(1.25);
+}
+
+.employee-pdo-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.75rem;
+  row-gap: 0.4rem;
+  align-items: center;
+}
+
+.employee-pdo-grid .pdo-label {
+  white-space: nowrap;
+  opacity: 0.85;
+}
+
+.employee-pdo-grid .pdo-input {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.employee-pdo-grid input.employee-details-number {
+  min-width: 5rem;
+  text-align: right;
+  opacity: 0.5;
+}
+
+.employee-period-grid {
+  display: grid;
+  row-gap: 0.5rem;
+}
+
+.period-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  column-gap: 0.5rem;
+  align-items: center;
+}
+
+.period-row button.employee-date-picker {
+  white-space: nowrap;
+}
+
+.period-row span {
+  text-align: left;
+}
+
+#employee-end-year {
+  min-width: 5rem;
+  max-width: 5rem;
 }

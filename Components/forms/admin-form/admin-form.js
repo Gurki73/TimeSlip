@@ -167,8 +167,19 @@ async function initRoleColorTabSafe(api) {
 // Emoji Customizer (NOW COMPLETELY SELF-INERT)
 // ---------------------------------------------------------
 export async function initEmojiCustomizer() {
+  console.group("🧩 Emoji Customizer Init");
+
   const loaded = await loadEmojiData(adminApi);
+  console.log("Loaded raw emoji data:", loaded);
+
   const { pool, employees, roles } = normalizeEmojiData(loaded);
+  console.log("Normalized emoji data:", {
+    poolCount: pool?.length,
+    employeeCount: employees?.length,
+    roleCount: roles?.length,
+    poolSample: pool?.slice(0, 10)
+  });
+
 
   let poolEmojis = [...pool];
   let employeeEmojis = [...employees];
@@ -183,6 +194,12 @@ export async function initEmojiCustomizer() {
   const saveBtn = document.querySelector('.header button[title="speichern"]');
   const helpOverlay = document.getElementById('emoji-help-overlay');
   const helpClose = document.getElementById('emoji-help-close');
+
+  console.log("DOM grids:", {
+    poolGrid,
+    employeeGrid,
+    roleGrid
+  });
 
   if (!employeeGrid || !poolGrid || !roleGrid) {
     console.error("Emoji grids missing in DOM");
@@ -199,10 +216,26 @@ export async function initEmojiCustomizer() {
 
   /* ------------------ Rendering ------------------ */
   function renderGrid(grid, data) {
+
+    console.group(`🎨 Rendering grid: #${grid.id}`);
+    console.log("Emoji count:", data.length);
+    console.log("Emojis:", data);
+
     grid.innerHTML = "";
 
     data.forEach((e, i) => {
+
+      if (typeof e !== "string") {
+        console.warn("⚠️ Non-string emoji:", e);
+        return;
+      }
+
       const div = document.createElement("div");
+
+      if (!div.textContent) {
+        console.warn("⚠️ Empty textContent for emoji:", e);
+      }
+
       div.className = "emoji-customizer-emoji noto";
       div.textContent = e;
       div.tabIndex = 0;
@@ -218,16 +251,33 @@ export async function initEmojiCustomizer() {
   }
 
   function renderAll() {
+
+    console.group("🔄 renderAll()");
+    console.log("Before dedupe:", {
+      pool: poolEmojis.length,
+      employees: employeeEmojis.length,
+      roles: roleEmojis.length
+    });
+
     dedupe();
     renderGrid(poolGrid, poolEmojis);
     renderGrid(employeeGrid, employeeEmojis);
     renderGrid(roleGrid, roleEmojis);
 
+    console.log("After dedupe:", {
+      pool: poolEmojis.length,
+      employees: employeeEmojis.length,
+      roles: roleEmojis.length
+    });
+
     // Restore focus
     if (lastFocusedEmoji) {
       const match = document.querySelector(`[data-emoji="${lastFocusedEmoji}"]`);
+      console.log("Restore focus:", lastFocusedEmoji, !!match);
       if (match) match.focus();
     }
+
+    console.groupEnd();
   }
 
   renderAll();
@@ -344,16 +394,18 @@ export async function initEmojiCustomizer() {
     alert("Emojis gespeichert!");
   });
 
-  /* ------------------ HELP OVERLAY ------------------ */
+  /* ------------------ HELP OVERLAY ------------------ 
   helpBtn.addEventListener("click", () => {
     helpOverlay.classList.add("active");
   });
-
+  */
   // helpClose.addEventListener("click", () => {
   //   helpOverlay.classList.remove("active");
   // });
-}
 
+  console.log("✅ Emoji Customizer initialized");
+  console.groupEnd();
+}
 
 /*
 

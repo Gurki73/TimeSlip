@@ -5,7 +5,7 @@ const ELLIPSIS_ACTIONS = {
     repair: { icon: '🔨', label: 'Reparieren' },
     save: { icon: '💾', label: 'Speichern' },
     inspect: { icon: '💡', label: 'Prüfen' },
-    copy: { icon: '📋', label: 'Kopieren' }
+    copy: { icon: '⿻', label: 'Kopieren' }
 };
 
 export function createEllipsis(actions = [], context = {}) {
@@ -19,24 +19,22 @@ export function createEllipsis(actions = [], context = {}) {
     button.setAttribute('aria-haspopup', 'menu');
     button.setAttribute('aria-expanded', 'false');
 
+    // Create menu but don't append to wrapper
     const menu = document.createElement('div');
     menu.className = 'ellipsis-menu hidden';
     menu.setAttribute('role', 'menu');
-
-    menu.addEventListener('focusout', (e) => {
-        // If focus moves outside the menu AND outside the button → close
-        if (
-            !menu.contains(e.relatedTarget) &&
-            !button.contains(e.relatedTarget)
-        ) {
-            closeMenu();
-        }
-    });
-
+    document.body.appendChild(menu); // move to body
 
     let closeTimeout;
 
     function openMenu() {
+        // Position menu relative to button
+        const rect = button.getBoundingClientRect();
+        menu.style.position = 'absolute';
+        menu.style.top = `${rect.bottom + window.scrollY}px`;
+        menu.style.left = `${rect.left + window.scrollX}px`;
+        menu.style.zIndex = 1000; // make sure it's above other content
+
         menu.classList.remove('hidden');
         button.setAttribute('aria-expanded', 'true');
         menu.querySelector('.ellipsis-item')?.focus();
@@ -51,14 +49,8 @@ export function createEllipsis(actions = [], context = {}) {
         menu.classList.contains('hidden') ? openMenu() : closeMenu();
     });
 
-    menu.addEventListener('mouseenter', () => {
-        clearTimeout(closeTimeout);
-    });
-
-    menu.addEventListener('mouseleave', () => {
-        closeTimeout = setTimeout(closeMenu, 80);
-    });
-
+    menu.addEventListener('mouseenter', () => clearTimeout(closeTimeout));
+    menu.addEventListener('mouseleave', () => closeTimeout = setTimeout(closeMenu, 80));
     menu.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeMenu();
@@ -66,6 +58,13 @@ export function createEllipsis(actions = [], context = {}) {
         }
     });
 
+    menu.addEventListener('focusout', (e) => {
+        if (!menu.contains(e.relatedTarget) && !button.contains(e.relatedTarget)) {
+            closeMenu();
+        }
+    });
+
+    // Build menu items
     actions.forEach(actionKey => {
         const def = ELLIPSIS_ACTIONS[actionKey];
         if (!def) return;
@@ -73,9 +72,9 @@ export function createEllipsis(actions = [], context = {}) {
         const item = document.createElement('button');
         item.className = 'ellipsis-item';
         item.innerHTML = `
-      <span class="noto ellipsis-icon">${def.icon}</span>
-      <span class="ellipsis-label">${def.label}</span>
-    `;
+            <span class="noto ellipsis-icon">${def.icon}</span>
+            <span class="ellipsis-label">${def.label}</span>
+        `;
 
         item.addEventListener('click', () => {
             closeMenu();
@@ -87,6 +86,7 @@ export function createEllipsis(actions = [], context = {}) {
         menu.appendChild(item);
     });
 
-    wrapper.append(button, menu);
+    wrapper.appendChild(button);
     return wrapper;
 }
+

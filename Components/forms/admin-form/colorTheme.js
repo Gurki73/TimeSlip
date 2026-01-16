@@ -91,7 +91,34 @@ export async function initRoleColorTab(api) {
         wrapper.append(label, preview, picker);
         cell.appendChild(wrapper);
     });
+
+    initTabs();
 }
+
+function initTabs() {
+    const tabButtons = document.querySelectorAll('.tab-header');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const targetTab = button.dataset.tab; // roles / calendar / app
+
+            // Remove "active" from all buttons
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+
+            // Add "active" to clicked button
+            button.classList.add('active');
+
+            // Hide all tab contents
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            // Show the clicked tab content
+            const activeContent = document.getElementById(`tab-${targetTab}`);
+            if (activeContent) activeContent.classList.add('active');
+        });
+    });
+}
+
 
 function normalizeHex(color) {
     if (color.startsWith('#')) return color;

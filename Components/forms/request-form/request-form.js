@@ -637,6 +637,7 @@ function resetRequestForm() {
   document.getElementById('multiline-input').value = "";
   document.getElementById('request-vacation-left').innerHTML = "XX";
   document.getElementById('request-vacation-total').innerHTML = "XX";
+  document.getElementById('request-vacation-used').innerHTML = "XX";
   document.getElementById('request-overtime').innerHTML = "X";
   document.getElementById('pick-request-start').value = "";
   document.getElementById('pick-request-end').value = "";
@@ -660,6 +661,7 @@ function switchRequester(ev) {
     document.getElementById('requester-emoji').innerHTML = '⊖';
     document.getElementById('request-vacation-left').innerHTML = 'xx';
     document.getElementById('request-vacation-total').innerHTML = 'xx';
+    document.getElementById('request-vacation-used').innerHTML = "xx";
     document.getElementById('request-overtime').innerHTML = 'xx';
 
     recalcWarnings(saveButtonHeader);
@@ -676,8 +678,14 @@ function switchRequester(ev) {
   requesterEmoji.style.backgroundColor = roleColor;
   requesterEmoji.classList.add("noto");
 
-  document.getElementById('request-vacation-left').innerHTML = newRequester.remainingDaysOff;
-  document.getElementById('request-vacation-total').innerHTML = newRequester.availableDaysOff;
+  const total = newRequester.availableDaysOff;
+  const remaining = newRequester.remainingDaysOff;
+  const used = total - remaining;
+
+  document.getElementById('request-vacation-total').innerHTML = total;
+  document.getElementById('request-vacation-left').innerHTML = remaining;
+  document.getElementById('request-vacation-used').innerHTML = used;
+
   document.getElementById('request-overtime').innerHTML = newRequester.overtime;
 
   newRequest.id = Date.now();

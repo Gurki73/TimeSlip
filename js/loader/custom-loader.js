@@ -21,12 +21,13 @@ export async function loadEmojiData(api) {
 }
 
 export function normalizeEmojiData(json) {
-    const categories = json.categories || {};
+    const data = typeof json === "string" ? JSON.parse(json) : json;
+    const categories = data.categories || {};
 
-    const pool = Object.values(categories).flat();
+    const pool = Object.values(categories).flatMap(cat => Array.isArray(cat) ? cat : []);
 
-    const employees = json.assignments?.employee || [];
-    const roles = json.assignments?.tasks || [];
+    const employees = data.assignments?.employee || [];
+    const roles = data.assignments?.tasks || [];
 
     return { categories, pool, employees, roles };
 }

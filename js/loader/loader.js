@@ -99,11 +99,25 @@ export async function loadFile(api, homeKey, relativePath, fallbackFunc = null, 
         effectiveKey = validHomeKeys.includes(homeKey) ? homeKey : 'auto';
     }
 
+    let fallbackDepth = 0;
+
     if (effectiveKey === 'sample') {
+        fallbackDepth++;
+
+        if (fallbackDepth > 3) {
+            console.error('🔥 Possible infinite fallback loop detected');
+            console.trace();
+            throw new Error('Infinite fallback loop');
+        }
+
         try {
             return await fallbackFunc();
-        } catch {
-            console.log(" error loading fall back stuff");
+        } catch (err) {
+            console.log("error loading fallback stuff");
+            console.trace();
+            throw err; // IMPORTANT
+        } finally {
+            fallbackDepth--;
         }
     }
 

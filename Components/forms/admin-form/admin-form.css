@@ -235,6 +235,17 @@
   outline: 2px solid #007acc;
 }
 
+.swap-icon-wrapper {
+  display: flex;
+  align-items: center; /* vertical center */
+  justify-content: center; /* optional horizontal */
+  height: 100%;
+  min-width: 4rem;
+}
+.swap-icon {
+  font-size: 3.5rem;
+}
+
 /* === FIXED HEIGHT LIMITS ============================================= */
 
 /* 9 rows × 28px (24px cell + 4px gap) = 252px visible */
@@ -406,6 +417,13 @@
 .color-table th:nth-child(3),
 .color-table td:nth-child(3) {
   width: 120px; /* optional */
+}
+
+.tab-content {
+  display: none;
+}
+.tab-content.active {
+  display: block;
 }
 
 .role-color-editor {

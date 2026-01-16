@@ -32,7 +32,7 @@ function serializePublicHolidaysCSV(data) {
 
 export async function loadPublicHolidaysSimple(api) {
     try {
-        const csvText = await loadFile(api, 'client', 'calendar/publicHolidays.csv', '');
+        const csvText = await loadFile(api, 'client', 'calendar/publicHolidays.csv', () => '');
         return csvText ? parsePublicHolidaysCSV(csvText) : [];
     } catch (err) {
         console.warn('Failed to load public holidays, using empty:', err);
@@ -117,7 +117,7 @@ function serializeBridgeDaysCSV(dataArray) {
 
 export async function loadBridgeDays(api) {
     try {
-        const csvText = await loadFile(api, 'client', 'calendar/bridgeDays.csv', '');
+        const csvText = await loadFile(api, 'client', 'calendar/bridgeDays.csv', () => '');
         const parsed = parseBridgeDaysCSV(csvText);
         bridgeDayState = Object.fromEntries(parsed.map(({ id, isOpen }) => [id, isOpen]));
         return parsed;

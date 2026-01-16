@@ -340,8 +340,8 @@ export function translateExistingRules(ruleSet = [], roles = []) {
 
         li.dataset.ruleId = rule.id || String(idx);
 
-        // 🔹 Add ellipsis instead of buttons
-        li.appendChild(createRuleEllipsis(rule));
+        const ellipsesContainer = fragment.querySelector('.rule-ellipses');
+        ellipsesContainer.appendChild(createRuleEllipsis(rule));
 
         rulesList.appendChild(fragment);
     });
