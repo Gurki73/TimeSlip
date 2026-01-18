@@ -278,7 +278,8 @@ function translateToHuman(rule = {}, roles = []) {
     const sentence = generateFullHumanSentence(rule, roles);
     if (!sentence) return false;
 
-    return true;
+    return sentence;
+    // return true;
 }
 
 /*

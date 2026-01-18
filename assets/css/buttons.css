@@ -91,6 +91,58 @@
   background-position: center;
 }
 
+.filter-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  white-space: nowrap; /* keep select + icons on one line */
+  gap: 0.25rem; /* spacing between elements instead of margin-left */
+}
+
+.filter-wrapper select {
+  flex-shrink: 0; /* prevent shrinking */
+  padding-right: 0.5rem; /* space for icons */
+  font-size: 0.875rem; /* 14px → 0.875rem */
+  white-space: nowrap; /* keep options inline */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filter-btn {
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 3px;
+  border: none;
+  padding: 0.1rem;
+  background-color: ghostwhite;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.filter-btn:hover {
+  filter: brightness(0.85);
+}
+
+.funnel {
+  background-image: url("assets/svg/funnel-svgrepo-com.svg");
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+}
+
+.clear-filter {
+  background-image: url("assets/svg/clear-filter.svg");
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+}
+
+.filter-btn img {
+  width: 1.3rem;
+  height: 1.3rem;
+  object-fit: contain; /* keeps aspect ratio */
+}
+
 .previous {
   background-image: url("assets/svg/previous-svgrepo-com.svg");
   background-repeat: no-repeat;

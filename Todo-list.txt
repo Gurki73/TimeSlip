@@ -1,11 +1,51 @@
-Medium / Moderate Effort
-1 ✅ Privacy warning container not responsive (employee-form)
-2 ✅ Ellipses menu not rendering (rule-form)
-3 ☐ Forbidden combinations list incomplete (rule-form)
-4 ✅ Emoji JSON not loaded (admin-tools)
-5 ☐ Public holiday rendering (calendar setting)
-6 ☐ Flow wizard colors lying / enforcing wrong order (rule-form)
-7 ✅ Responsive state/year select (calendar setting) 
+EASY (quick fixes, low complexity, mostly UI / text / cosmetic)
+1 ✅ Missing funnel icon (request-form)
+2 ❌ Blocky filter layout (request-form) => native browser, no option styling
+3 ✅ Header colors (request-form)
+4 ✅ Not enough contrast (request-form, employee-form hints)
+5 ✅ Misaligned date pickers (request-form)
+6 ✅ Cursor wrong on buttons (request-form)
+7 ☐ Old style save button in wrong place (Admin-tools)
+8 ☐ Add basic content per chapter (Help)
+9 ☐ Glossary icons update (Help)
+10 ☐ Iconography & nomenclature explanation (Help)
+11 ✅ Empty shift text: “nobody” → “nobody is working / missing” (calendar)
+12 ✅ Number inputs misaligned (employee-form)
+13 ✅ Detail pane inactive style missing (employee-form)
+14 ❌ Shift select font/inline issues (employee-form)  => native browser, no option styling
+15 ✅ Boundary fix last column (roles)
+16 ✅ Radio / toggle defaults (misc)
+
+MEDIUM (requires some logic, UX, or minor backend work)
+17 ☐ Scroll to end on start (rule-form)
+18 ☐ Cursor blink / ✅ pumping effect (rule-form)
+19 ☐ Test button placement (rule-form)
+20 ☐ Categories for rules (shift/day/week/special) (rule-form)
+21 ☐ Shift icon set cached but not updating (calendar)
+22 ☐ Western zodiac cached but not rendered (calendar)
+23 ☐ Birthday input UX (month select preferred) (employee-form)
+24 ☐ End date datepicker slow for long ranges → quick +/- 1, 10 year buttons (employee-form)
+25 ✅ Clean Cache - Needs translation (Admin-tools)
+26 ☐ Color Customization: missing color pickers, incomplete calendar previews, styling issues (Admin-tools)
+27 ☐ Emoji Select:✅  JSON not loaded, ☐ Add new emoji broken, ✅ Arrows missing (Admin-tools)
+28 ☐ Dragable resize of form header (misc)
+29 ☐ Fix drag & drop divider (misc)
+30 ☐ Restore cached themes / state (misc)
+31 ✅ Prevent autosave if team names unchanged (roles)
+32 ☐ Company holiday inputs / height / alignment (calendar-settings)
+
+HARD (complex UX, animation, logic, or backend dependencies)
+33 ☐ Warnings for conflicting request (request-form)
+34 ☐ Warnings vs rules in same container (rule-form)
+35 ☐ Warnings should be sticky & collapsible (rule-form)
+36 ☐ Relation line animations (rule-form)
+37 ☐ PTO calculations? (calendar)
+38 ☐ PDO calculation wrong (employee-form)
+39 ☐ Emoji Select: left/right click confusing, pooled/unpooled explanation unclear (Admin-tools)
+40 ☐ Team names not editable visually (Admin-tools)
+41 ☐ Revive Deleted Employees: missing save button, no “no deleted employees” message, missing meta info (Admin-tools)
+42 ☐ Story arc + protagonist idea (Help)
+43 ☐ Feedback on corrupted datasets (calendar-settings)
 
 Legend
 ✅ = finished;  ☐ = open;  🚧 = in work;  ❌ = cancelled
@@ -13,9 +53,11 @@ Legend
 
 ✅ app
   ✅ add a prilimary , prototype banner
+  🔥 fix dragable border (z-index?)
 Request-form
 🚨 Ship-Blockers (these can corrupt data or break trust)
   🔥 Infinite rerender loop on refresh
+      ==> maybe failed load -> refresh -> load (maybe year specific data?)
   🔥 Filter shows filtered list then jumps back
   🔥 Selecting one field clears another (order-dependent)
   🔥 “No start date entered” while one exists
@@ -88,6 +130,7 @@ employee-form
   🧩 Birthday input UX (month select preferred)
 
 Admin-tools
+🧩 add a home button to header
 🧩 old style save button in wrong place
 🧩 Color Customization
    Color pickers missing / not rendered

@@ -1724,8 +1724,6 @@ function updateDivider(className = "bg-calendar", ruleFormState) {
   leftGap.innerHTML = '';
   leftGap.append(yearAndState);
   divider.append(leftGap, h2, buttonContainer);
-  const test = document.getElementById('calendar-form-year') === yearAndState.querySelector('#calendar-form-year')
-  console.log("  test divider in calendar form: ", test);
 }
 
 function applyBranchPreset(val) {

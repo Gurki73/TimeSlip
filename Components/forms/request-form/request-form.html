@@ -16,7 +16,7 @@
         <span id="requester-emoji" class="noto">⊖</span>
         <div class="requester-select-wrapper">
           Antragsteller: <br />
-          <select id="requester-select" class="'noto"></select>
+          <select id="requester-select" class="noto"></select>
         </div>
       </div>
       <div class="layout-tabulator text-line-spacer"></div>
@@ -70,42 +70,36 @@
         </div>
       </div>
 
-      <div class="layout-tabulator text-line-spacer"></div>
+      <div class="date-grid">
 
-      <span class="step1">Zeitraum:</span>
+        <span class="step1 label">Zeitraum:</span>
 
-      <div class="request-date-picker flex-row">
-        von:
-        <button id="pick-request-start" class="noto" title="Startdatum wählen">
-          📅
-        </button>
-        <input type="date" id="request-start-picker" class="visually-hidden-date-picker" />
-        <span class="step1" id="request-preview-start">--.--</span>
+        <div class="request-date-picker">
+          <span>von:</span>
+          <button id="pick-request-start" class="noto" title="Startdatum wählen">📅</button>
+          <input type="date" id="request-start-picker" class="visually-hidden-date-picker" />
+          <span class="step1" id="request-preview-start">--.--</span>
+        </div>
+
+        <div class="request-date-picker">
+          <span>bis:</span>
+          <button id="pick-request-end" class="noto" title="Enddatum wählen">📅</button>
+          <input type="date" id="request-end-picker" class="visually-hidden-date-picker" />
+          <span class="step1" id="request-preview-end">--.--</span>
+        </div>
+
+        <div class="preview-label" id="requestPreview">
+          <span>Dauer:</span>
+          <span class="step1" id="request-durration">?</span>
+          <span id="request-duration-unit">Tage</span>
+        </div>
+
+        <div id="halfDayCheckbox">
+          <input type="checkbox" id="request-halfDay" title="halber Tag" disabled="true">
+          <span class="noto">½</span> halbtag
+        </div>
+
       </div>
-
-      <br />
-
-      <div class="request-date-picker flex-row">
-        bis
-        <button id="pick-request-end" class="noto" title="Enddatum wählen">
-          📅
-        </button>
-        <input type="date" id="request-end-picker" class="visually-hidden-date-picker" />
-        <span class="step1" id="request-preview-end">--.--</span>
-      </div>
-
-      <div class="layout-tabulator text-line-spacer"></div>
-
-      <div class="preview-label flex-row" id="requestPreview">
-        <span>Dauer: </span>
-        <span class="step1" id="request-durration">?</span>
-        <span id="request-duration-unit">Tage</span>
-      </div>
-      <div id="halfDayCheckbox">
-        <input type="checkbox" id="request-halfDay" title="halber Tag" disabled="true">
-        <span class="noto">½</span> halbtag
-      </div>
-
     </div>
 
     <div class="request-form-col">
@@ -132,73 +126,104 @@
         <thead>
           <tr>
             <th>
-              <select class="noto" id="status-filter">
-                <option value="all" data-tooltip="Alle">jeder Status</option>
-                <option class="noto" value="pending" data-tooltip="Ausstehend">
-                  ⏳ austehend
-                </option>
-                <option class="noto" value="rejected" data-tooltip="Abgelehnt">
-                  ❌ abgelehnt
-                </option>
-                <option class="noto" value="approved" data-tooltip="Genehmigt">
-                  ✅ genehmigt
-                </option>
-              </select>
+              <div class="filter-wrapper">
+                <select class="noto flex-row" id="status-filter">
+                  <option value="all" data-tooltip="Alle">jeder Status</option>
+                  <option class="noto" value="pending" data-tooltip="Ausstehend">
+                    ⏳ austehend
+                  </option>
+                  <option class="noto" value="rejected" data-tooltip="Abgelehnt">
+                    ❌ abgelehnt
+                  </option>
+                  <option class="noto" value="approved" data-tooltip="Genehmigt">
+                    ✅ genehmigt
+                  </option>
+                </select>
+                <button type="button" class="filter-btn funnel" aria-label="Filter anwenden">
+                  <img src="./assets/svg/funnel-svgrepo-com.svg" alt="" />
+                </button>
+                <button type="button" class="filter-btn clear-filter hidden" aria-label="Filter löschen">
+                  <img src="./assets/svg/clear-filter.svg" alt="" />
+                </button>
+              </div>
             </th>
             <th>
-              <select class="noto" id="requester-filter">
-                <option value="all">alle Mitarbeiter</option>
-                <option value="01">Dr. Bob</option>
-                <option value="02">Harald</option>
-                <option value="03">Jenny</option>
-              </select>
-            </th>
-
-            <th>
-              <select class="noto" id="decision-type-select">
-                <option value="all">alle Arten</option>
-                <option class="noto" value="vac">🏖️ Urlaub (frei)</option>
-                <option class="noto" value="spe">🎁 Sonderurlaub (frei)</option>
-                <option class="noto" value="otc">
-                  ⚖️ Ausgleichstag (frei)
-                </option>
-                <option class="noto" value="but">
-                  🚕 Geschäftreise (dienst)
-                </option>
-                <option class="noto" value="hom">
-                  🏠 Home Office (dienst)
-                </option>
-                <option class="noto" value="sho">
-                  📐 Berufsschule (dienst)
-                </option>
-                <option class="noto" value="sik">
-                  💉 Genesung (ungeplant)
-                </option>
-                <option class="noto" value="par">
-                  🧸 Elternzeit (ungeplant)
-                </option>
-                <option class="noto" value="unp">
-                  💸 unbezahlt (ungeplant)
-                </option>
-              </select>
+              <div class="filter-wrapper">
+                <select class="noto" id="requester-filter">
+                  <option value="all">alle Mitarbeiter</option>
+                  <option value="01">Dr. Bob</option>
+                  <option value="02">Harald</option>
+                  <option value="03">Jenny</option>
+                </select>
+                <button type="button" class="filter-btn funnel" aria-label="Filter anwenden">
+                  <img src="./assets/svg/funnel-svgrepo-com.svg" alt="" />
+                </button>
+                <button type="button" class="filter-btn clear-filter hidden" aria-label="Filter löschen">
+                  <img src="./assets/svg/clear-filter.svg" alt="" />
+                </button>
+              </div>
             </th>
 
             <th>
-              <select id="month-filter">
-                <option value="all">ganzes Jahr</option>
-                <option value="01">01 - Januar</option>
-                <option value="02">02 - Februar</option>
-                <option value="03">03 - März</option>
-                <option value="04">04 - April</option>
-                <option value="05">05 - Mai</option>
-                <option value="06">06 - Juni</option>
-                <option value="07">07 - Juli</option>
-                <option value="08">08 - August</option>
-                <option value="09">09 - September</option>
-                <option value="10">10 - Oktober</option>
-                <option value="11">11 - November</option>
-                <option value="12">12 - Dezember</option>
-              </select>
+              <div class="filter-wrapper">
+                <select class="noto" id="decision-type-select">
+                  <option value="all">alle Arten</option>
+                  <option class="noto" value="vac">🏖️ Urlaub</option>
+                  <option class="noto" value="spe">🎁 Sonderurlaub</option>
+                  <option value="otc">
+                    <span class="noto">⚖️</span> Ausgleichstag
+                  </option>
+                  <option value="but">
+                    <span class="noto">🚕</span> Geschäftreise
+                  </option>
+                  <option value="hom">
+                    <span class="noto">🏠</span> Home-Office
+                  </option>
+                  <option value="sho">
+                    <span class="noto">📐</span> Berufsschule
+                  </option>
+                  <option value="sik">
+                    <span class="noto">💉</span> Gesund-werden
+                  </option>
+                  <option value="par">
+                    <span class="noto">🧸</span> Elternzeit
+                  </option>
+                  <option value="unp">💸</span> unbezahlt
+                  </option>
+                </select>
+                <button type="button" class="filter-btn funnel" aria-label="Filter anwenden">
+                  <img src="./assets/svg/funnel-svgrepo-com.svg" alt="🏺" />
+                </button>
+                <button type="button" class="filter-btn clear-filter hidden" aria-label="Filter löschen">
+                  <img src="./assets/svg/clear-filter.svg" alt="❌" />
+                </button>
+              </div>
+            </th>
+
+            <th>
+              <div class="filter-wrapper">
+                <select id="month-filter">
+                  <option value="all">ganzes Jahr</option>
+                  <option value="01">01 - Januar</option>
+                  <option value="02">02 - Februar</option>
+                  <option value="03">03 - März</option>
+                  <option value="04">04 - April</option>
+                  <option value="05">05 - Mai</option>
+                  <option value="06">06 - Juni</option>
+                  <option value="07">07 - Juli</option>
+                  <option value="08">08 - August</option>
+                  <option value="09">09 - September</option>
+                  <option value="10">10 - Oktober</option>
+                  <option value="11">11 - November</option>
+                  <option value="12">12 - Dezember</option>
+                </select>
+                <button type="button" class="filter-btn funnel" aria-label="Filter anwenden">
+                  <img src="./assets/svg/funnel-svgrepo-com.svg" alt="" />
+                </button>
+                <button type="button" class="filter-btn clear-filter hidden" aria-label="Filter löschen">
+                  <img src="./assets/svg/clear-filter.svg" alt="" />
+                </button>
+              </div>
             </th>
 
             <th>

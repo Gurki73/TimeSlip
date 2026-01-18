@@ -1,12 +1,20 @@
 #request-form-container {
-  max-height: 45%;
+  max-width: 95%;
+  max-height: 98%;
 }
 #request-enter-container {
-  min-width: 90%;
+  min-width: 100%;
   display: flex;
   flex-direction: row;
   justify-content: space-evenly;
   height: 45vh;
+  white-space: nowrap;
+}
+
+.request-date-picker button {
+  width: 2rem;
+  height: 2rem;
+  cursor: pointer;
 }
 
 #year-filter {
@@ -126,7 +134,9 @@
   border-bottom: none;
   position: relative;
   cursor: pointer;
-  transition: background-color 0.3s, transform 0.2s;
+  transition:
+    background-color 0.3s,
+    transform 0.2s;
 }
 
 .request-button::after {
@@ -160,6 +170,7 @@
   padding: 12px;
   min-height: 90%;
   flex-grow: 1;
+  max-width: 300px;
 }
 .request-form-dates {
   min-width: 20%;
@@ -227,6 +238,7 @@
   border: 1px solid #ccc;
   border-radius: 4px;
   box-sizing: border-box;
+  cursor: pointer;
 }
 
 #decision-table-container {
@@ -290,10 +302,11 @@
 }
 
 #decision-table th select {
-  width: 100%;
+  width: 80%;
   padding: 4px;
   border-radius: 4px;
   border: none;
+  cursor: pointer;
 }
 
 #decision-table tbody tr:hover {
@@ -529,4 +542,51 @@
 .pdo-value {
   text-align: right;
   font-weight: 500;
+}
+
+.date-grid {
+  max-width: 15%;
+  display: grid;
+  grid-template-columns: 5rem 2.5rem minmax(0, 1fr);
+  row-gap: 0.5rem;
+  column-gap: 0.75rem;
+  align-items: center;
+}
+
+/* Each date row becomes a 3-column mini-row */
+.request-date-picker {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 5rem 2.5rem minmax(0, 1fr);
+  align-items: center;
+  column-gap: 0.75rem;
+}
+
+/* Labels (von / bis) */
+.request-date-picker span:first-child {
+  text-align: right;
+  opacity: 0.8;
+}
+
+/* Preview date text */
+#request-preview-start,
+#request-preview-end {
+  font-weight: 600;
+}
+
+/* Duration row */
+.preview-label {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+/* Half day row */
+#halfDayCheckbox {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }

@@ -254,13 +254,13 @@ function resetRequestWarnings() {
 function updateDivider(className) {
   const divider = document.getElementById('horizontal-divider-box');
   divider.innerHTML = '';
+  divider.className = className;  // <== assign background color for banner
 
   const leftGap = document.createElement('div');
   leftGap.className = 'left-gap';
 
   const h2 = document.createElement('h2');
   h2.id = 'role-form-title';
-  h2.className = 'sr-only';
   h2.innerHTML = `<span class="noto">📋</span> Urlaubsanträge stellen & genehmigen <span class="noto">✍🏻</span>`;
 
   const buttonContainer = document.createElement('div');
@@ -278,7 +278,6 @@ function updateDivider(className) {
   saveButtonHeader = createSaveButton({ onSave: () => storeAllRequests(api) });
   saveButtonHeader.el.id = 'new-request-save-btn';
   const windowBtns = createWindowButtons(); // your new min/max buttons
-
 
   const refreshBtn = document.createElement('button');
   refreshBtn.id = "refresh-request-form";
@@ -797,13 +796,18 @@ function initDecisionEventListener() {
             otherSelect.value = "all";
           }
         });
-        loadAndRenderRequests();
+        // loadAndRenderRequests();
       }
     });
   });
 }
 
 function renderRequestsTable(requests) {
+
+  console.group("🔄 renderRequestsTable called");
+  console.trace("Trace: renderRequestsTable triggered");
+  console.log("Requests length:", requests.length);
+
   const tbody = getTableBody();
   if (!tbody) return;
 
@@ -952,7 +956,7 @@ function ensureEffectiveDays(request) {
     calculateDaysOff(start, end, employee.workdays)
   );
 
-  updateRequest(api, request.id, request, start.getFullYear());
+  // updateRequest(api, request.id, request, start.getFullYear());
 }
 
 function renderStatusCell(request) {

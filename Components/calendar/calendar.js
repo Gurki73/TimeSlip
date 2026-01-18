@@ -245,7 +245,7 @@ export function setOfficeStatus(isInOffice) {
 export function createPresenceSelector({
   id = 'presence-selector',
   defaultValue = true, // true = present
-  mode = 'toggle',     // 'toggle' or 'radio'
+  mode = 'radio',     // 'toggle' or 'radio'
   onChange
 } = {}) {
   const container = document.createElement('div');
@@ -373,7 +373,7 @@ function initPresence() {
 
   const presenceSelector = createPresenceSelector({
     defaultValue: true, // default in-office
-    mode: 'toggle',     // or 'radio'
+    mode: 'radio',     // or 'radio'
     onChange: (isInOffice) => {
       setOfficeStatus(isInOffice);
     }
@@ -848,9 +848,16 @@ function populateShift(type, shift, day, index, monthRequests) {
   if (employeesPerShiftCount < 1) {
     const noOne = document.createElement('span');
     noOne.classList.add('hint');
-    noOne.textContent = '  Niemand';
+
+    if (isInOffice) {
+      noOne.textContent = ' Niemand arbeitet';
+    } else {
+      noOne.textContent = ' Niemand fehlt';
+    }
+
     shift.appendChild(noOne);
   }
+
 
   return attendance;
 }

@@ -107,7 +107,6 @@ function serializeRequestsCSV(requests) {
     return [header, ...lines].join('\n');
 }
 
-
 export async function loadRequests(api, year) {
 
     let availableFiles = [];
@@ -150,6 +149,30 @@ export async function loadRequests(api, year) {
         ];
     }
 }
+
+/*
+export async function loadRequests(api, year) {
+    const key = `requests_${year}`;
+
+    return loadDataset(key, async () => {
+        const availableFiles = await getAvailableRequestFiles(api);
+        const requestedFile = availableFiles.find(f => f.year === year);
+
+        if (!requestedFile) {
+            // No file for this year → return structured empty fallback
+            return [
+                { info: `Noch keine Anträge für ${year} gestellt` }
+            ];
+        }
+
+        const fileData = await loadFile(api, 'client', `requests/${requestedFile.year}_requests.csv`);
+        if (!fileData) return [];  // gracefully handle missing/corrupt CSV
+
+        return parseRequestsCSV(fileData);
+    }, []); // fallback for onboarding / missing file
+}
+*/
+
 
 /* ---------- Load fallback sample ---------- */
 async function loadSampleRequests() {

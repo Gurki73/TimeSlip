@@ -49,15 +49,26 @@ export async function initTeamnames(passedApi) {
     if (el) el.textContent = value;
   }
 
-  // 3️⃣ Attach listeners to save on blur or Enter/Tab
+  // 3️⃣ Attach listeners with change detection
   const editableTeamNames = document.querySelectorAll('.teamname-editable');
 
   editableTeamNames.forEach(el => {
 
+    let originalValue = '';
+
+    // remember value when user starts editing
+    el.addEventListener('focus', () => {
+      originalValue = el.textContent.trim();
+    });
+
     const saveTeamName = async () => {
       const team = el.dataset.team;
       const newName = el.textContent.trim();
-      if (!newName || team === 'azubi') return; // skip empty or Azubi
+
+      if (!newName || team === 'azubi') return;
+
+      // 🔑 only save if something really changed
+      if (newName === originalValue) return;
 
       teamnames[team] = newName;
 

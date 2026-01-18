@@ -2,18 +2,23 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  align-items: center;
   padding: 1rem;
-  min-width: 95%;
 }
 
 #rules-scrollbox {
-  background-color: var(--bg-soft-white);
-  flex: 1;
+  flex: 1 1 auto;
   overflow-y: auto;
-  min-height: calc(4 * 1.5rem);
-  line-height: 1.5rem;
-  min-width: 95%;
+  min-height: 0;
+  width: 100%;
+}
+
+#rules-scrollbox h3 {
+  position: sticky;
+  top: 0;
+  background: var(--bg-soft-white);
+  z-index: 2;
+  margin: 0;
+  padding: 0.5rem;
 }
 
 #rules-list li {
@@ -41,17 +46,10 @@
 }
 
 #rule-tables-container {
+  position: sticky;
+  bottom: 0;
+  background: var(--bg-soft-white);
   min-width: 100%;
-}
-
-#table-container {
-  min-width: 95%;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-.sticky-bottom {
-  flex-shrink: 0;
 }
 
 #newRule {
@@ -93,7 +91,7 @@
 
 /* Rule tables */
 .rule-table {
-  width: 90%;
+  width: 100%;
   table-layout: fixed;
   border-collapse: separate;
   border-spacing: 4rem 0;
@@ -209,7 +207,9 @@
   opacity: 0.25;
   filter: grayscale(0.6);
   pointer-events: none;
-  transition: opacity 300ms ease, filter 300ms ease;
+  transition:
+    opacity 300ms ease,
+    filter 300ms ease;
 }
 
 #rule-second-condition.active {
@@ -239,8 +239,8 @@
 }
 
 #rule-lines path {
-  stroke: #007bff;
-  stroke-width: 3;
+  stroke: cornflowerblue;
+  stroke-width: 4;
   opacity: 0.25;
   transition: opacity 300ms ease;
 }
@@ -250,27 +250,27 @@
 }
 
 #rule-line-flow {
-  stroke: #007bff;
-  stroke-width: 3;
+  stroke: red;
+  stroke-width: 5;
   fill: none;
-  stroke-dasharray: 2 14;
-  animation: flow 1.2s linear infinite;
+  stroke-dasharray: 6 12;
   opacity: 0;
 }
 
 #rule-lines.active #rule-line-flow {
   opacity: 1;
-}
-
-#rule-line-base {
-  stroke: #007bff;
-  stroke-width: 3;
-  opacity: 0.25;
-  fill: none;
+  animation: flow 1.2s linear infinite;
 }
 
 #rule-lines.active #rule-line-base {
-  opacity: 1;
+  opacity: 0.8;
+}
+
+#rule-line-base {
+  stroke: green;
+  stroke-width: 3;
+  opacity: 0.25;
+  fill: none;
 }
 
 @keyframes flow {

@@ -75,18 +75,17 @@ export async function initializeAdminForm(api) {
     });
   }
 
-  // Clear cache
   const clearBtn = document.getElementById('clear-cache');
   if (clearBtn) {
     clearBtn.addEventListener('click', () => {
-      if (confirm("Clear stored data folder path? This cannot be undone.")) {
+      if (confirm("Gespeicherte Einstellungen (z.B. Zoom, Farben) wirklich zurücksetzen?\nDies kann nicht rückgängig gemacht werden.")) {
         localStorage.removeItem('clientDefinedDataFolder');
-        alert('Cache cleared. Restart app to reload defaults.');
+        alert("Die Einstellungen wurden gelöscht.\nBitte starten Sie die Anwendung neu.");
       }
     });
   }
 
-  // Inject help divider
+
   const divider = document.getElementById('horizontal-divider-box');
   if (divider) {
     divider.innerHTML = '';
@@ -633,7 +632,6 @@ function attachControls() {
           // eslint-disable-next-line no-await-in-loop
           await storeEmployeeChange(apiRef, updated, 'update');
         }
-        // refresh local cache & UI
         await refreshList();
         alert(`${toRestore.length} Mitarbeiter erfolgreich wiederhergestellt.`);
       } catch (err) {

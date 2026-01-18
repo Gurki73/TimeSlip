@@ -4,6 +4,11 @@
 }
 /* Global styles for the layout */
 
+#role-form-title {
+  color: ghostwhite;
+  height: 2rem;
+}
+
 #calendar::before {
   content: "PROTOTYPE";
   position: fixed;
@@ -19,7 +24,7 @@
   color: darkred;
   opacity: 0.25;
 
-  z-index: 101;
+  z-index: 1010;
   pointer-events: none;
   user-select: none;
   white-space: nowrap;
@@ -161,7 +166,9 @@ body[data-mode="sandbox"] {
   border-radius: 50%;
   background-color: lightblue;
   transform: rotate(0deg);
-  transition: background-color 0.3s ease, transform 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    transform 0.3s ease;
 }
 
 .resize-button:hover {
@@ -806,7 +813,9 @@ select:focus-visible {
   height: 64px;
   border-radius: 50%; /* circular image */
   object-fit: cover; /* ensures full image stays inside circle */
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
   cursor: zoom-in;
 }
 
@@ -874,7 +883,9 @@ select:focus-visible {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   background-color: var(--button-hover-color);
   outline: none;
-  transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition:
+    transform 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
 }
 
 /* Drag handle / edge feedback */
