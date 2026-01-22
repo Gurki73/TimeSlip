@@ -146,9 +146,13 @@
   }
 }
 
-/* Typing animation */
 .blinking-cursor {
   animation: blink 1s step-end infinite;
+}
+
+.blinking-cursor.cursor-stop {
+  animation: none;
+  color: transparent;
 }
 
 @keyframes blink {
@@ -157,7 +161,7 @@
     color: transparent;
   }
   50% {
-    color: black;
+    color: var(--color-text);
   }
 }
 

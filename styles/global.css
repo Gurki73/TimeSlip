@@ -188,7 +188,7 @@ body[data-mode="sandbox"] {
 }
 
 #horizontal-divider:hover {
-  cursor: crosshair;
+  background-color: #1e90ff;
 }
 
 body.resizing {
@@ -199,9 +199,9 @@ body.resizing {
   height: 6px;
   width: 100%;
   z-index: 50;
-  margin-bottom: 3rem;
-  background-color: purple;
-  transform: translateY(-2rem);
+  background-color: hotpink;
+  transform: translateY(-1px);
+  cursor: ns-resize;
 }
 
 #horizontal-divider-box {
@@ -217,7 +217,6 @@ body.resizing {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1rem;
   pointer-events: none;
 }
 

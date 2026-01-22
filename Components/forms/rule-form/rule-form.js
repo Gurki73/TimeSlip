@@ -5,6 +5,7 @@ import { toggleExceptionTable, updateWizard, clearHighlights } from './ruleFlowW
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
 import { createBranchSelect } from '../../../js/Utils/branch-select.js';
+import { getShiftSymbol } from '../../../js/Utils/globalIcons.js';
 import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js';
 import { blocks, createRuleFromBlueprint } from "./buildingBlocks.js";
 import { translateCurrentRule, translateExistingRules } from "./translatorHuman.js";
@@ -38,6 +39,8 @@ const defaultRules = [
     `Wenn jemand „Stopp“ sagt, schlaff wird oder aufgibt, ist der Kampf vorbei.`
 ];
 
+let rulesScrollbox;
+
 let cachedRoles = [];
 let ruleOfficeDays;
 let api;
@@ -46,6 +49,7 @@ let ruleForEdeting = {};
 let ruleSet = [];
 let testPassed = false;
 let saveButtonHeader;
+let userScrolledUp = false;
 
 export async function initializeRuleForm(passedApi) {
     api = passedApi;
@@ -95,6 +99,19 @@ export async function initializeRuleForm(passedApi) {
         await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
     }
 
+
+    rulesScrollbox = document.getElementById("rules-scrollbox");
+
+    if (rulesScrollbox) {
+        rulesScrollbox.addEventListener("scroll", () => {
+            const threshold = 40; // px from bottom to consider "at bottom"
+            const atBottom =
+                rulesScrollbox.scrollHeight - rulesScrollbox.scrollTop - rulesScrollbox.clientHeight < threshold;
+
+            userScrolledUp = !atBottom;
+        });
+    }
+
     ruleForEdeting = createRuleFromBlueprint(defaultBlueprint);
     console.log("rule for edeting:", ruleForEdeting);
     translateCurrentRule(ruleForEdeting, cachedRoles);
@@ -103,7 +120,13 @@ export async function initializeRuleForm(passedApi) {
 
     initSaveButtons();
 
+    document.getElementById("expand-rules-btn")?.addEventListener("click", () => {
+        scrollRulesToBottomIfAllowed(true);
+    });
+
+
     translateExistingRules(ruleSet, cachedRoles);
+    scrollRulesToBottomIfAllowed();
 
     initializeInputFunctions();
     handleTopCellRoles('G0');
@@ -117,17 +140,14 @@ export async function initializeRuleForm(passedApi) {
 
 function initSaveButtons() {
     const testBtn = document.getElementById("test-rule");
-    const saveBtn = document.getElementById("save-rule");
 
-    if (!testBtn || !saveBtn) return;
+    if (!testBtn) return;
 
     // Remove existing listeners (safe even if none exist)
     testBtn.removeEventListener("click", onTestRuleClick);
-    saveBtn.removeEventListener("click", onSaveRuleClick);
 
     // Attach fresh listeners
     testBtn.addEventListener("click", onTestRuleClick);
-    saveBtn.addEventListener("click", onSaveRuleClick);
 
     // Initial UX state
     testPassed = false;
@@ -198,6 +218,16 @@ function onSaveRuleClick(event) {
 }
 
 
+function scrollRulesToBottomIfAllowed(force = false) {
+    const box = document.getElementById("rules-scrollbox");
+    if (!box) return;
+
+    if (force || !userScrolledUp) {
+        box.scrollTop = box.scrollHeight;
+    }
+}
+
+
 function updateDivider(className) {
     const divider = document.getElementById('horizontal-divider-box');
     divider.innerHTML = '';
@@ -221,16 +251,14 @@ function updateDivider(className) {
             console.log('Branch changed to:', val);
         }
     });
-    saveButtonHeader = createSaveButton({ onSave: () => storeAllRules(api) });
+
+    saveButtonHeader = createSaveButton({ onSave: () => onSaveRuleClick });
 
     const windowBtns = createWindowButtons(); // your new min/max buttons
 
     buttonContainer.append(saveButtonHeader.el, helpBtn, branchSelect, windowBtns);
 
     divider.append(leftGap, h2, buttonContainer);
-}
-function storeAllRules(api) {
-    console.log(" store all rules ");
 }
 
 function validateRule(ruleObject) {
@@ -276,9 +304,10 @@ async function saveRuleButtonHandler() {
         const ret = await saveRuleData(api, ruleObj);
         if (ret && ret.success) {
             showSuccess('Regel gespeichert');
-            // reload rules and repopulate list
             ruleSet = await loadRuleData(api);
             translateExistingRules(ruleSet, cachedRoles);
+            scrollRulesToBottomIfAllowed();
+
         } else {
             showFailure('Speichern fehlgeschlagen');
             console.error('saveRuleData returned', ret);
@@ -367,6 +396,8 @@ export function populateFormFromRule(rule) {
     // keep editor state
     ruleForEdeting = { ...rule };
     translateCurrentRule(ruleForEdeting, cachedRoles);
+    scrollRulesToBottomIfAllowed();
+
     console.log(" new rule");
 }
 
@@ -623,24 +654,24 @@ function handleTopCellTimeFrame(id) {
             break;
         case 't1': { // shift
             const existingShifts = ['day', 'early', 'late'];
-
+            const cachedZodiacStyle = localStorage.getItem('zodiacStyle') || 'none';
             const shiftSelection = document.createElement('select');
             shiftSelection.classList.add('role-select', 'noto');
 
             existingShifts.forEach((shift, index) => {
                 const shiftOption = document.createElement('option');
 
-                let emoji = '🍴';
+                let emoji = `${getShiftSymbol('day', cachedShiftSymbols)}`
                 let name = 'Tag';
                 let val = 'day';
 
                 if (shift === 'early') {
-                    emoji = '🐓';
+                    emoji = `${getShiftSymbol('early', cachedShiftSymbols)}`
                     name = 'Früh/';
                     val = 'early';
                 }
                 if (shift === 'late') {
-                    emoji = '🌜';
+                    emoji = `${getShiftSymbol('late', cachedShiftSymbols)}`
                     name = 'Spät';
                     val = 'late';
                 }

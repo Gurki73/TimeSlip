@@ -133,23 +133,87 @@ function getEmployeeById(employeeId) {
 }
 
 function initEmployeeDatePickers() {
-  createDateRangePicker({
+  let periodDriver = "end"; // UI-only flag
+
+  // ───────────────────────────
+  // DOM references
+  // ───────────────────────────
+
+  const durationInput = document.getElementById("employee-duration");
+  if (!durationInput) return;
+
+  // ───────────────────────────
+  // Picker init
+  // ───────────────────────────
+
+  const picker = createDateRangePicker({
     startButton: "#pick-employee-start",
     endButton: "#pick-employee-end",
     startInput: "#employee-form-start-work",
     endInput: "#employee-form-end-work",
     previewStart: "#employee-preview-start",
     previewEnd: "#employee-preview-end",
-    previewDuration: "#employee-duration",
-    onChange: (startVal, endVal) => {
-      const employee = {
-        startDate: startVal || "",
-        endDate: endVal || ""
-      };
-      validateEmployeeFields(employee);
-      saveButtonHeader.setState('dirty');
+    previewDuration: "#employee-preview-days",
+    onChange: (start, end) => {
+      // manual end-date change → sync duration
+      if (periodDriver === "end") {
+        syncDurationFromDates(start, end, durationInput);
+      }
+
+      validateEmployeeFields({
+        startDate: start || "",
+        endDate: end || ""
+      });
+
+      saveButtonHeader.setState("dirty");
     }
   });
+
+  // ───────────────────────────
+  // Duration → End date
+  // ───────────────────────────
+
+  durationInput.addEventListener("input", () => {
+    const start = picker.getStart();
+    const duration = parseFloat(durationInput.value);
+
+    if (!start || !duration) return;
+
+    periodDriver = "duration";
+
+    const end = addYears(start, duration);
+    picker.setEnd(end);
+  });
+}
+
+function addYears(startDateStr, years) {
+  const d = new Date(startDateStr);
+  const whole = Math.floor(years);
+  const months = Math.round((years - whole) * 12);
+
+  d.setFullYear(d.getFullYear() + whole);
+  d.setMonth(d.getMonth() + months);
+
+  return d.toISOString().slice(0, 10);
+}
+
+function syncDurationFromDates(start, end, durationInput) {
+  if (!start || !end) return;
+
+  const years = diffYears(start, end);
+  durationInput.value = roundToHalf(years);
+}
+
+function roundToHalf(years) {
+  return Math.ceil(years * 2) / 2;
+}
+
+function diffYears(start, end) {
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+
+  const msPerYear = 1000 * 60 * 60 * 24 * 365.25;
+  return (endDate - startDate) / msPerYear;
 }
 
 
@@ -832,8 +896,13 @@ function bindEmployeeDateAndNumberInputs(employee) {
       employee.birthMonth = document.getElementById('employee-form-birthday-month')?.value || '';
       validateEmployeeFields(employee);
     };
-    input.addEventListener('input', handler);
-    input.addEventListener('change', handler);
+    const isSelect = input.tagName === "SELECT";
+    if (isSelect) {
+      input.addEventListener('change', handler);
+    } else {
+      input.addEventListener('input', handler);
+      input.addEventListener('change', handler);
+    }
     input._validateHandler = handler;
   });
 }

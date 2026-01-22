@@ -295,31 +295,22 @@ export function translateExistingRules(ruleSet = [], roles = []) {
         const fragment = template.content.cloneNode(true);
         const li = fragment.querySelector('li');
         const ruleTextEl = fragment.querySelector('.rule-text');
-        const editBtn = fragment.querySelector('.edit-rule');
-        const deleteBtn = fragment.querySelector('.delete-rule');
 
-        ruleTextEl.textContent = generateFullHumanSentence(rule, roles) || `Regel ${rule.id || idx}`;
+        li.classList.add('rule-item');
+
+        ruleTextEl.textContent =
+            generateFullHumanSentence(rule, roles) ||
+            `Regel ${rule.id || idx}`;
+
         li.dataset.ruleId = rule.id || String(idx);
 
-        // Edit button
-        editBtn.addEventListener('click', () => {
-            populateFormFromRule(rule);
-            document.getElementById('rule-form-container')?.scrollIntoView({ behavior: 'smooth' });
-        });
-
-        // Delete button (requires external deleteRule function)
-        deleteBtn.addEventListener('click', async () => {
-            if (confirm('Regel löschen?')) {
-                // This requires external deleteRule function to be available
-                console.log('Delete rule:', rule.id);
-            }
-        });
+        const ellipsesContainer = fragment.querySelector('.rule-ellipses');
+        ellipsesContainer.appendChild(createRuleEllipsis(rule));
 
         rulesList.appendChild(fragment);
     });
 }
 */
-
 export function translateExistingRules(ruleSet = [], roles = []) {
     const rulesList = document.getElementById('rules-list');
     const template = document.getElementById('rule-item-template');
@@ -346,20 +337,21 @@ export function translateExistingRules(ruleSet = [], roles = []) {
 
         rulesList.appendChild(fragment);
     });
+
 }
 
 function applyTypingEffectWithCursor(container, text) {
-    if (!container) return;
-    if (typeof text !== "string") return;
+    if (!container || typeof text !== "string") return;
 
     container.textContent = "";
+
     const cursor = document.createElement("span");
     cursor.className = "blinking-cursor";
     cursor.textContent = "▮";
+    container.appendChild(cursor);
 
     let index = 0;
     const speed = 18;
-    container.appendChild(cursor);
 
     const interval = setInterval(() => {
         container.textContent = text.slice(0, index);
@@ -368,7 +360,10 @@ function applyTypingEffectWithCursor(container, text) {
 
         if (index > text.length) {
             clearInterval(interval);
-            container.textContent = text;
+
+            setTimeout(() => {
+                cursor.classList.add("cursor-stop");
+            }, 2500);
         }
     }, speed);
 }

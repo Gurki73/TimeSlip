@@ -4,6 +4,7 @@ import { loadStateData, loadCompanyHolidayData, loadOfficeDaysData, loadBridgeDa
 import { getHolidayDetails, nonOfficialHolidays, monthNames, getAllHolidaysForYear } from '../../js/Utils/holidayUtils.js';
 import { updateStateFlag } from '../../js/Utils/flagUtils.js';
 import { getZodiac } from '../../js/Utils/zodiacs.js';
+import { getShiftSymbol } from '../../js/Utils/globalIcons.js';
 import { loadRequests } from '../../js/loader/request-loader.js';
 import { keyToBools } from '../forms/calendar-form/calendar-form-utils.js';
 import { checkOnboardingState } from '../../js/Utils/onboarding.js';
@@ -31,6 +32,7 @@ let cachedApi = null;
 let rulesetMonth = [], rulesetWeek = [], rulesetDay = [], rulesetShift = [];
 let machineRuleSet = [];
 let cachedZodiacStyle = "none";
+let cachedShiftSymbols = "letters";
 
 export async function initializeCalendar(api) {
   if (!api) {
@@ -64,11 +66,13 @@ export async function initializeCalendar(api) {
     bridgeDays = normalizeBridgedays(_bridgeDays);
     machineRuleSet = updateRuleset(_ruleset) || [];
 
-    console.log(machineRuleSet);
-
     setupCalendarEnvironment();
 
-    cachedZodiacStyle = localStorage.getItem('zodiacTyle') || 'none';
+    cachedZodiacStyle = localStorage.getItem('zodiacStyle') || 'none';
+    cachedShiftSymbols = localStorage.getItem('shiftSymbols') || 'letters';
+
+    console.log(cachedShiftSymbols, cachedZodiacStyle);
+
     isInOffice = localStorage.getItem('presenceState') || true;
     const colorTheme = localStorage.getItem('colorTheme');
     const zoomFactor = localStorage.getItem('zoomFactor');
@@ -672,7 +676,7 @@ function createMorningShift(day, index, monthRequests, isOpen) {
   }
 
   shift.classList.add('morning-shift');
-  shift.innerHTML = '🐓 ';
+  shift.innerHTML = `${getShiftSymbol('early', cachedShiftSymbols)}`;
   const attendance = populateShift('early', shift, day, index, monthRequests);
   return { shiftElement: shift, attendance };
 }
@@ -691,7 +695,7 @@ function createAfternoonShift(day, index, monthRequests, isOpen) {
     return { shiftElement: afternoonShift, attendance };
   }
   afternoonShift.classList.add('afternoon-shift');
-  afternoonShift.innerHTML = '🌜 ';
+  afternoonShift.innerHTML = `${getShiftSymbol('late', cachedShiftSymbols)}`;;
   const attendance = populateShift('late', afternoonShift, day, index, monthRequests);
   return { shiftElement: afternoonShift, attendance };
 }
@@ -699,7 +703,7 @@ function createAfternoonShift(day, index, monthRequests, isOpen) {
 function createDayShift(day, index, monthRequests, isOpen) {
 
   const dayShift = document.createElement('span');
-  dayShift.innerHTML = "🍴 ";
+  dayShift.innerHTML = `${getShiftSymbol('day', cachedShiftSymbols)}`;;
   dayShift.title = 'ganztags';
   dayShift.classList.add('shift', 'noto');
   if (!isOpen) {
@@ -1081,8 +1085,8 @@ function getDayType(fullDate, weekdayIndex, { publicHolidays, publicHolidayState
 
 function renderDayCell(day, index, shiftStatusForDay, usedShifts, monthRequests) {
 
-  const fullDate = `${currentYear} - ${String(currentMonthIndex + 1).padStart(2, '0')
-    } -${String(day).padStart(2, '0')} `;
+  const fullDate = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')
+    }-${String(day).padStart(2, '0')}`;
   const attendance = createEmptyAttendance();
   const dayCell = document.createElement('div');
 

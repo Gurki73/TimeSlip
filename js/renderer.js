@@ -297,16 +297,24 @@ function setupFormLoader() {
 // ----------- Theme Handling -----------
 
 function setTheme(themeName) {
-  console.log("theme name :", themeName);
+  console.log("theme-NAME =>", themeName);
   document.body.classList.remove("theme-dark", "theme-default", "theme-pastel", "theme-greyscale");
   document.body.classList.add(`theme-${themeName}`);
+  localStorage.setItem('colorTheme', themeName);
   window.api.send('update-cache', { colorTheme: themeName });
 }
 
+function setZoom(factor) {
+  document.body.style.fontSize = `${factor}rem`;
+  localStorage.setItem('zoomFactor', factor);
+  window.api.send('update-cache', { zoomFactor: factor });
+}
+
+
 
 function initTheme() {
-  const savedTheme = localStorage.getItem("theme") || "default";
-  setTheme(savedTheme);
+  setTheme(localStorage.getItem('colorTheme') || 'default');
+  setZoom(localStorage.getItem('zoomFactor') || 1.0);
 }
 
 function showFnKeyHintIfLaptop() {
@@ -371,14 +379,19 @@ function setupIPCListeners() {
   });
 
   window.api.receive('set-shift-symbols', async (presetKey) => {
+    console.log("[renderer] receive shift style", presetKey);
     await window.cacheAPI.setCacheValue('shiftSymbols', presetKey);
+    localStorage.setItem('shiftSymbols', presetKey); // optional
     window.api.send('refresh-calendar');
   });
 
   window.api.receive('set-zodiac-style', async (style) => {
+    console.log("[renderer] receive zodiac style", style);
     await window.cacheAPI.setCacheValue('zodiacStyle', style);
+    localStorage.setItem('zodiacStyle', style); // optional
     window.api.send('refresh-calendar');
   });
+
 
   window.api.receive('mode-changed', (mode) => {
     document.body.setAttribute('data-mode', mode);
@@ -551,11 +564,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   initTheme();
   showFnKeyHintIfLaptop();
-
-  (async () => {
-    const savedTheme = await window.cacheAPI.getCacheValue('colorTheme') || 'default';
-    setTheme(savedTheme);
-  })();
 
   // --- Restore zoom factor ---
   (async () => {
@@ -839,3 +847,16 @@ function injectWindowButtonsIntoWelcomeHeader() {
   rightGap.appendChild(windowBtns);
 }
 
+function applySettings() {
+  const colorTheme = localStorage.getItem('colorTheme') || 'default';
+  setTheme(colorTheme);
+
+  const zoomFactor = localStorage.getItem('zoomFactor') || 1.0;
+  setZoom(zoomFactor);
+
+  const shiftSymbols = localStorage.getItem('shiftSymbols') || 'letters';
+  setShiftSymbols(shiftSymbols);
+
+  const zodiacStyle = localStorage.getItem('zodiacStyle') || 'none';
+  setZodiacStyle(zodiacStyle);
+}

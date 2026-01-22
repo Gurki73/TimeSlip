@@ -755,6 +755,20 @@ export async function loadCSV(homeKey, relativePath) {
         return null;
     }
 }
+// TO:DO
+function repairCSV(content, check) {
+    console.log(" repair csv file was triggered");
+}
+
+// TO:DO
+function notifyFileCorrupt(fullPath, corruptBak, reason, details) {
+    console.log(" corrupt csv file detacted ");
+}
+
+// TO:DO
+function validateCSVReadOnly(content) {
+    return { status: 'ok' };
+}
 
 function sendChecklistUpdate(event, step, status) {
     event?.sender?.send('download-checklist-update', step, status);

@@ -123,17 +123,6 @@ export function getMainWindow() {
     return mainWindow;
 }
 
-async function setZodiacStyle(style) {
-    await window.cacheAPI.setCacheValue('zodiacStyle', style);
-    window.api.send('refresh-calendar');
-}
-
-async function setShiftSymbols(presetKey) {
-    await window.cacheAPI.setCacheValue('shiftSymbols', presetKey);
-    window.api.send('refresh-calendar');
-}
-
-
 function sendPresenceUIMode(mode) {
     mainWindow.webContents.send('set-presence-ui-mode', mode);
 }
@@ -436,19 +425,20 @@ function buildMenuTemplate() {
                         {
                             label: 'Schicht-Symbole',
                             submenu: [
-                                { label: 'Leer', type: 'radio', checked: true, click: () => setShiftSymbols('empty') },
-                                { label: 'Buchstaben', type: 'radio', click: () => setShiftSymbols('letters') },
-                                { label: 'Emoji / Icons', type: 'radio', click: () => setShiftSymbols('emoji') }
+                                { label: 'Leer', type: 'radio', checked: true, click: () => mainWindow.webContents.send('set-shift-symbols', 'empty') },
+                                { label: 'Buchstaben', type: 'radio', click: () => mainWindow.webContents.send('set-shift-symbols', 'letters') },
+                                { label: 'Emoji / Icons', type: 'radio', click: () => mainWindow.webContents.send('set-shift-symbols', 'emoji') }
                             ]
                         },
                         {
                             label: 'Sternzeichen',
                             submenu: [
-                                { label: 'Versteckt', type: 'radio', checked: true, click: () => setZodiacStyle('none') },
-                                { label: 'Astronomisch', type: 'radio', click: () => setZodiacStyle('symbol') },
-                                { label: 'Bildlich', type: 'radio', click: () => setZodiacStyle('icon') }
+                                { label: 'Versteckt', type: 'radio', checked: true, click: () => mainWindow.webContents.send('set-zodiac-style', 'none') },
+                                { label: 'Astronomisch', type: 'radio', click: () => mainWindow.webContents.send('set-zodiac-style', 'symbol') },
+                                { label: 'Bildlich', type: 'radio', click: () => mainWindow.webContents.send('set-zodiac-style', 'icon') }
                             ]
-                        },
+                        }
+
                     ]
                 }
             ]

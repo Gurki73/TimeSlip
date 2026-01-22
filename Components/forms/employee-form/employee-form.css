@@ -55,6 +55,11 @@
   overflow: auto;
 }
 
+#employee-form-birthday-month {
+  min-width: 4rem;
+  min-height: 2rem;
+}
+
 .slider-container {
   display: flex;
   flex-direction: column;
@@ -388,7 +393,9 @@ input[type="range"] {
   height: 98%; /* fixed height */
   min-height: 98%;
   max-height: 98%;
-  transition: flex-basis 0.3s ease, width 0.3s ease;
+  transition:
+    flex-basis 0.3s ease,
+    width 0.3s ease;
 }
 
 .privacy-collapsible .rule-collapsible-content {
@@ -907,6 +914,11 @@ input[type="range"] {
 
 .employee-flex-row > * {
   white-space: nowrap;
+}
+
+.employee-durration-input {
+  max-height: 0.95rem;
+  max-width: 5.25rem;
 }
 
 .employee-date-picker {

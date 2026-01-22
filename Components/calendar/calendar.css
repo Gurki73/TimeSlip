@@ -201,6 +201,12 @@
   background-color: var(--calendar-day-closed-bg);
 }
 
+.zodiac-span {
+  opacity: 0.75;
+  font-size: 0.9rem;
+  margin-right: 2rem;
+}
+
 .shift {
   border-radius: 3px;
   display: flex;
