@@ -1,6 +1,15 @@
 // colorSchema.js
 import { loadTeamnames, saveTeamnames } from "../../../js/loader/role-loader.js";
 
+const TEAM_COLOR_RULES = {
+    blue: { hue: [200, 220], sat: [30, 80], light: [30, 70] },
+    green: { hue: [100, 140], sat: [30, 80], light: [30, 70] },
+    red: { hue: [350, 10], sat: [30, 80], light: [30, 70] },
+    black: { hue: [190, 240], sat: [5, 20], light: [5, 25] },
+    trainee: { hue: [25, 45], sat: [40, 90], light: [40, 80] }
+};
+
+
 const colorCustomTheme = {
     roles: {
         label: "Aufgaben / Teams",
@@ -48,7 +57,29 @@ const colorCustomTheme = {
     }
 };
 
+const ROLE_OFFSETS = {
+    1: -12,
+    2: 0,
+    3: +12
+};
+
 let teamnames = { blue: "Team Blau", green: "Team Grün", red: "Team Rot", black: "Team Schwarz" }
+
+function deriveRoleColor(baseColor, roleOffset) {
+    const { h, s, l } = toHSL(baseColor);
+    return `hsl(${h}, ${s}%, ${clamp(l + roleOffset, 5, 90)}%)`;
+}
+
+function clampToTeam(color, team) {
+    const rules = TEAM_COLOR_RULES[team];
+    let { h, s, l } = toHSL(color);
+
+    h = clampHue(h, rules.hue);
+    s = clamp(s, rules.sat[0], rules.sat[1]);
+    l = clamp(l, rules.light[0], rules.light[1]);
+
+    return `hsl(${h}, ${s}%, ${l}%)`;
+}
 
 export async function initRoleColorTab(api) {
     // team names reuse your existing logic

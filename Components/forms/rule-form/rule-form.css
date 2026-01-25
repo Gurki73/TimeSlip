@@ -285,3 +285,27 @@
     stroke-dashoffset: -16;
   }
 }
+
+.rule-new-warnings-list,
+#rule-new-warnings-list {
+  background-color: var(--bg-inactive);
+  color: orangered;
+  padding-bottom: 1rem;
+  padding-left: 5rem;
+}
+
+.rule-role-marker {
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.rule-dot.primary {
+  font-size: 1.1em;
+}
+
+.rule-plus,
+.rule-count {
+  color: #777;
+  font-size: 0.85em;
+}

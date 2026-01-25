@@ -2,11 +2,13 @@
 import { loadEmojiData, normalizeEmojiData, saveEmojiData } from '../../../js/loader/custom-loader.js';
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
-import { loadEmployeeData, storeEmployeeChange } from '../../../js/loader/employee-loader.js';
+import { createSaveButton } from '../../../js/Utils/saveButton.js';
+import { createBranchSelect } from '../../../js/Utils/branch-select.js';
+import { loadEmployeeData, loadDeletedEmployeeData, storeEmployeeChange } from '../../../js/loader/employee-loader.js';
 import { initRoleColorTab } from './colorTheme.js';
 
 export const adminTools = [
-  { id: 'color-customization', name: 'Eigene Farben', icon: 'cog-wheel-settings-svgrepo-com.svg', enabled: true },
+  { id: 'color-customization', name: 'Eigene Farben', icon: 'paint-palette-art-svgrepo-com.svg', enabled: true },
   { id: 'emoji-customization', name: 'Symbol Auswahl', icon: 'smiley-happy-svgrepo-com.svg', enabled: true },
   { id: 'auto-save-toggle', name: 'Automatisch Speichern', icon: 'rocket-svgrepo-com.svg', enabled: true },
   { id: 'clear-cache', name: 'Puffer leeren', icon: 'safe-svgrepo-com.svg', enabled: true },
@@ -17,6 +19,8 @@ export const adminTools = [
 ];
 
 let adminApi;
+let deletedEmployees = [];
+let saveButtonHeader;
 
 export async function initializeAdminForm(api) {
   const toolGrid = document.getElementById('tool-grid');
@@ -49,7 +53,6 @@ export async function initializeAdminForm(api) {
         }
       });
     }
-
     toolGrid.appendChild(btn);
   });
 
@@ -84,35 +87,73 @@ export async function initializeAdminForm(api) {
       }
     });
   }
-
-
-  const divider = document.getElementById('horizontal-divider-box');
-  if (divider) {
-    divider.innerHTML = '';
-    divider.className = 'bg-admin';
-
-    const leftGap = document.createElement('div');
-    leftGap.className = 'left-gap';
-
-    const h2 = document.createElement('h2');
-    h2.id = 'role-form-title';
-    h2.className = 'sr-only';
-    h2.innerHTML = `<span class="noto">💻️</span> Admin Tools <span class="noto">🔨</span>`;
-
-    const btnContainer = document.createElement('div');
-    btnContainer.id = 'form-buttons';
-
-    const helpBtn = createHelpButton('chapter-admin');
-
-    // --- New global window buttons ---
-    const windowBtns = createWindowButtons();
-
-    btnContainer.append(helpBtn, windowBtns);
-
-    divider.append(leftGap, h2, btnContainer);
-  }
+  updateDivider("bg-admin",); // or chapter ref ? <a href="#chapter-admin">
 }
 
+function updateDivider(className = 'bg-admin') {
+  const divider = document.getElementById('horizontal-divider-box');
+  divider.innerHTML = '';
+  divider.className = className;
+
+  const leftGap = document.createElement('div');
+  leftGap.className = 'left-gap';
+
+  const h2 = document.createElement('h2');
+  h2.className = 'sr-only';
+  h2.innerHTML = `<span class="noto">💻</span> Administrator-Werkzeuge <span class="noto">🛠️</span>`;
+
+  const buttonContainer = document.createElement('div');
+  buttonContainer.id = 'form-buttons';
+
+  saveButtonHeader = createSaveButton({
+    canLeave: () => save?.getState?.() !== 'dirty',
+    onSave: () => save?.save?.()
+  });
+
+  const helpBtn = createHelpButton('chapter-admin');
+
+  const branchSelect = createBranchSelect({
+    onChange: (val) => {
+      console.log('Branch changed to:', val);
+    }
+  });
+
+  const windowBtns = createWindowButtons();
+  const homeBtn = createHomeButton({
+    canLeave: () => save?.getState?.() !== 'dirty'
+  });
+
+  buttonContainer.append(homeBtn);
+
+  buttonContainer.append(
+    saveButtonHeader.el,
+    helpBtn,
+    branchSelect,
+    windowBtns
+  );
+
+  divider.append(leftGap, h2, buttonContainer);
+}
+
+function createHomeButton({ canLeave }) {
+  const btn = document.createElement('button');
+  btn.className = 'home-button noto';
+  btn.textContent = '🏠';
+  btn.title = 'Zur Werkzeug-Auswahl';
+
+  btn.addEventListener('click', e => {
+    e.preventDefault();
+
+    if (canLeave?.() === false) {
+      const ok = confirm('Ungespeicherte Änderungen verwerfen?');
+      if (!ok) return;
+    }
+
+    loadToolPage("Components\forms\admin-form\admin-form.html");
+  });
+
+  return btn;
+}
 
 // ---------------------------------------------------------
 // Load sub-tool pages
@@ -134,6 +175,9 @@ async function loadToolPage(htmlFile) {
     }
     if (htmlFile === 'color-customization.html') {
       initRoleColorTabSafe(adminApi);
+    }
+    if (htmlFile === 'deleted-employees.html') {
+      initDeletedEmployees(adminApi);
     }
 
 
@@ -407,40 +451,39 @@ export async function initEmojiCustomizer() {
 }
 
 /*
-
+ 
   R E V I V I N G   -  E M P L O Y E E
-
+ 
 */
 
 let apiRef = null;
-let deletedEmployees = []; // local cache (only deleted ones)
-let emojiPool = []; // source emojis to pick from
+let emojiPool = [];
 
 export async function initDeletedEmployees(api) {
   apiRef = api;
   // load emoji pool & employees concurrently
+  console.log("reveive deleted employees");
   try {
-    const [loadedEmoji, loadedEmps] = await Promise.all([
+    const [loadedEmoji, _deletedEmployees] = await Promise.all([
       loadEmojiData(apiRef).catch(err => {
         console.warn('Failed to load emoji data, fallback to basic set', err);
         return { categories: {}, pool: [] };
       }),
-      loadEmployeeData(apiRef)
+      loadDeletedEmployeeData(apiRef)
     ]);
 
     const normalized = normalizeEmojiData ? normalizeEmojiData(loadedEmoji) : { pool: (loadedEmoji.pool || []), employees: [], roles: [] };
     emojiPool = normalized.pool || [];
 
-    // filter deleted employees (emoji === '🗑️')
-    deletedEmployees = (loadedEmps || []).filter(e => e.personalEmoji === '🗑️');
+    deletedEmployees = _deletedEmployees;
 
-    // Sort by nearest endDate to oldest (null/invalid dates go to end)
     deletedEmployees.sort((a, b) => {
       const aDate = a.endDate ? new Date(a.endDate) : new Date(8640000000000000);
       const bDate = b.endDate ? new Date(b.endDate) : new Date(8640000000000000000);
       return aDate - bDate;
     });
 
+    console.log("[admin tools] deleted employees: ", deletedEmployees);
     renderDeletedList();
     attachControls();
   } catch (err) {
@@ -476,7 +519,7 @@ function renderDeletedList() {
     emojiBtn.className = 'emoji-btn';
     emojiBtn.type = 'button';
     emojiBtn.title = 'Click to pick emoji';
-    emojiBtn.innerHTML = `<span class="preview-emoji noto">${emp.personalEmoji}</span>`;
+    emojiBtn.innerHTML = `<span class="preview-emoji noto">❓</span>`;
 
     // name + optional info
     const nameSpan = document.createElement('div');
@@ -602,7 +645,8 @@ function attachControls() {
     const boxes = Array.from(document.querySelectorAll('#deleted-list .select-cb'));
     const anyUnchecked = boxes.some(b => !b.checked);
     boxes.forEach(b => b.checked = anyUnchecked);
-    selectAllBtn.textContent = anyUnchecked ? 'Unselect all' : 'Select all';
+    // emojies.forEach (e => e.innerHTML = '🐦‍🔥');
+    selectAllBtn.textContent = anyUnchecked ? 'Alle abwählen' : 'Alle auswählen';
   });
 
   restoreSelectedBtn?.addEventListener('click', async () => {
@@ -647,8 +691,7 @@ function attachControls() {
 
 async function refreshList() {
   try {
-    const all = await loadEmployeeData(apiRef) || [];
-    deletedEmployees = all.filter(e => e.personalEmoji === '🗑️');
+    const all = await loadDeletedEmployeeData(apiRef) || [];
     deletedEmployees.sort((a, b) => {
       const aDate = a.endDate ? new Date(a.endDate) : new Date(8640000000000000);
       const bDate = b.endDate ? new Date(b.endDate) : new Date(8640000000000000);

@@ -9,7 +9,7 @@ const RETRY_DELAY_MS = 1500;
 export async function loadEmployeeData(api, attempt = 1) {
     if (!api) {
         console.error('[employee-loader.js] window.api not available');
-        return;
+        return [];
     }
 
     let homeKey = localStorage.getItem('dataMode') || 'auto';
@@ -22,12 +22,12 @@ export async function loadEmployeeData(api, attempt = 1) {
         const fileData = await loadFile(api, homeKey, `${folderPath}/${fileName}`, loadSampleEmployeeData, true);
 
         const loadedEmployeeData = typeof fileData === 'string'
-            ? parseCSV(fileData)
+            ? parseCSV(fileData,)
             : Array.isArray(fileData)
                 ? fileData
                 : [];
 
-        return loadedEmployeeData;
+        return filterActiveEmployees(loadedEmployeeData);
     } catch (error) {
         console.warn(`❌ Failed to load employee data (attempt ${attempt}):`, error);
 
@@ -42,7 +42,41 @@ export async function loadEmployeeData(api, attempt = 1) {
     }
 }
 
+export async function loadDeletedEmployeeData(api, attempt = 1) {
+    if (!api) {
+        console.error('[employee-loader.js] window.api not available');
+        return [];
+    }
 
+    let homeKey = localStorage.getItem('dataMode') || 'auto';
+    const fileName = 'employee.csv';
+    const clientDataFolder = localStorage.getItem('clientDefinedDataFolder');
+
+    if (clientDataFolder) homeKey = 'client';
+
+    try {
+        const fileData = await loadFile(api, homeKey, `${folderPath}/${fileName}`, loadSampleEmployeeData, true);
+
+        const loadedEmployeeData = typeof fileData === 'string'
+            ? parseCSV(fileData,)
+            : Array.isArray(fileData)
+                ? fileData
+                : [];
+
+        return filterDeletedEmployees(loadedEmployeeData);
+    } catch (error) {
+        console.warn(`❌ Failed to load employee data (attempt ${attempt}):`, error);
+
+        if (attempt < MAX_RETRIES) {
+            console.warn(`⏳ Retrying in ${RETRY_DELAY_MS / 1000}s...`);
+            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+            await loadEmployeeData(api, attempt + 1);
+        } else {
+            console.error('⚠️ Max retries reached. return empty array');
+            return [];
+        }
+    }
+}
 
 async function loadSampleEmployeeData() {
     try {
@@ -58,19 +92,22 @@ async function loadSampleEmployeeData() {
                     ? data
                     : [];
 
-        return parsedData;
+        return filterActiveEmployees(parsedData);
     } catch (error) {
         console.error('❌ Error loading sample employee data:', error);
         return []; // safe empty array fallback
     }
 }
 
-// ----------------- Parse CSV -----------------
 function parseCSV(data) {
     if (!data) return [];
-    const rows = data.split('\n').map(row => row.trim()).filter(Boolean);
 
-    const employees = rows.slice(1).map(row => {
+    const rows = data
+        .split('\n')
+        .map(row => row.trim())
+        .filter(Boolean);
+
+    return rows.slice(1).map(row => {
         const [
             id, name, personalEmoji, mainRoleIndex, secondaryRoleIndex, tertiaryRoleIndex,
             availableDaysOff, remainingDaysOff, overtime,
@@ -89,7 +126,7 @@ function parseCSV(data) {
             availableDaysOff: parseFloat(availableDaysOff) || 0,
             remainingDaysOff: parseFloat(remainingDaysOff) || 0,
             overtime: parseFloat(overtime) || 0,
-            workDays: [mon, tue, wed, thu, fri, sat, sun].map(day => day || 'never'),
+            workDays: [mon, tue, wed, thu, fri, sat, sun].map(d => d || 'never'),
             roleSplitMain: parseFloat(roleSplitMain) || 0,
             roleSplitSecondary: parseFloat(roleSplitSecondary) || 0,
             roleSplitTertiary: parseFloat(roleSplitTertiary) || 0,
@@ -99,15 +136,17 @@ function parseCSV(data) {
             birthMonth: birthMonth || '',
             shifts: { mon, tue, wed, thu, fri, sat, sun }
         };
-    }).filter(emp => emp.personalEmoji !== '🗑️');
-
-    return employees;
+    });
 }
 
+export function filterActiveEmployees(employees) {
+    return employees.filter(e => e.personalEmoji !== '🗑️');
+}
 
-export function getDeletedEmployees() {
+export function filterDeletedEmployees(employees) {
     return employees.filter(e => e.personalEmoji === '🗑️');
 }
+
 
 export async function saveEmployeeData(api, csvContent) {
     const fileName = 'employee.csv';

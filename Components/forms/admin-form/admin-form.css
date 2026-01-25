@@ -38,7 +38,10 @@
   padding: 1rem;
   cursor: pointer;
   position: relative;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    opacity 0.2s ease;
   min-height: 100px;
   text-align: center;
 }
@@ -328,6 +331,7 @@
 /*  */
 
 .deleted-employees-tool {
+  overflow: hidden;
   padding: 12px;
 }
 .deleted-header {
@@ -351,20 +355,24 @@
   border-color: #1f5fcc;
 }
 .deleted-list-wrap {
-  max-height: 54vh;
+  background-color: hotpink;
+  max-height: 95%;
   overflow: auto;
+  scrollbar-width: thin;
   border: 1px dashed var(--admin-border, #ddd);
   padding: 8px;
   border-radius: 8px;
   background: #fafafa;
 }
 .deleted-list {
+  background-color: #28a745;
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  max-height: 70%;
 }
 .deleted-item {
   display: flex;
@@ -696,7 +704,8 @@ input[type="color"] {
 }
 
 .color-role-table {
-  border-collapse: collapse;
+  border-collapse: separate;       /* allows spacing */
+  border-spacing: 1.5rem 0;       /* horizontal 1.5rem, vertical 0 */
   width: 100%;
   max-width: 900px;
 }
@@ -706,7 +715,15 @@ input[type="color"] {
   border: 1px solid var(--accent-muted);
   padding: 8px;
   text-align: center;
+  background-color: var(--role-0-color); /* default role bg */
 }
+
+/* Optional: active role highlight */
+.role-active {
+  outline: 2px solid var(--accent-color);
+  animation: pulse 2s infinite;
+}
+
 
 .role-color-editor {
   display: flex;
@@ -732,3 +749,94 @@ input[type="color"] {
   background: transparent;
   cursor: pointer;
 }
+
+#limited-color-picker{
+  min-width: 8rem;
+  min-width: 8rem;
+  background-color: gradient blue;
+  cursor: crosshair;
+}
+
+#tab-roles {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  padding: 1rem;
+}
+
+/* Table styling */
+.color-role-table {
+  border-collapse: collapse;
+}
+.color-role-table th,
+.color-role-table td {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  text-align: center;
+  min-width: 4rem;
+  cursor: pointer;
+}
+
+/* Active cell highlight */
+.role-active {
+  outline: 2px solid #333;
+  animation: pulse 2s infinite;
+}
+
+/* Pulse effect for active role */
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(0,0,0,0.2); }
+  50%  { box-shadow: 0 0 8px 4px rgba(0,0,0,0.2); }
+  100% { box-shadow: 0 0 0 0 rgba(0,0,0,0.2); }
+}
+
+/* Color disc container */
+#limited-color-picker-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#limited-color-picker-teamname,
+#limited-color-picker-rolename {
+  margin: 0.2rem 0;
+}
+
+#limited-color-picker {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  cursor: crosshair;
+  background: conic-gradient(
+    var(--role-1-color) 0deg,
+    var(--role-2-color) 60deg,
+    var(--role-3-color) 120deg,
+    var(--role-4-color) 180deg,
+    var(--role-5-color) 240deg,
+    var(--role-6-color) 300deg,
+    var(--role-7-color) 360deg
+  );
+}
+
+.role-cell {
+  min-width: 4rem;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  text-align: center;
+  cursor: pointer;
+  background-color: var(--role-0-color); /* default fallback */
+}
+.role-cell[data-role="1"] { background-color: var(--role-1-color); }
+.role-cell[data-role="2"] { background-color: var(--role-2-color); }
+.role-cell[data-role="3"] { background-color: var(--role-3-color); }
+.role-cell[data-role="4"] { background-color: var(--role-4-color); }
+.role-cell[data-role="5"] { background-color: var(--role-5-color); }
+.role-cell[data-role="6"] { background-color: var(--role-6-color); }
+.role-cell[data-role="7"] { background-color: var(--role-7-color); }
+.role-cell[data-role="8"] { background-color: var(--role-8-color); }
+.role-cell[data-role="9"] { background-color: var(--role-9-color); }
+.role-cell[data-role="10"] { background-color: var(--role-10-color); }
+.role-cell[data-role="11"] { background-color: var(--role-11-color); }
+.role-cell[data-role="12"] { background-color: var(--role-12-color); }
+.role-cell[data-role="13"] { background-color: var(--role-13-color); }
+

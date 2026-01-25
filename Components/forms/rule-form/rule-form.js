@@ -1,4 +1,4 @@
-import { loadRoleData } from '../../../js/loader/role-loader.js';
+import { loadRoleData, loadTeamnames } from '../../../js/loader/role-loader.js';
 import { loadOfficeDaysData } from '../../../js/loader/calendar-loader.js';
 // import { resetRule, initVisibilityChecker } from './ruleChecker.js';
 import { toggleExceptionTable, updateWizard, clearHighlights } from './ruleFlowWizzard.js';
@@ -40,7 +40,7 @@ const defaultRules = [
 ];
 
 let rulesScrollbox;
-
+let teamnames = ["Blau", "Grün", "Rot", "Schwarz", "Azubi"];
 let cachedRoles = [];
 let ruleOfficeDays;
 let api;
@@ -59,7 +59,7 @@ export async function initializeRuleForm(passedApi) {
         ruleOfficeDays = await loadOfficeDaysData(api);
         cachedRoles = await loadRoleData(api);
         ruleSet = await loadRuleData(api);
-
+        teamnames = await loadTeamnames(api);
         if (!Array.isArray(cachedRoles)) {
             console.warn("Roles is not an array, initializing empty array");
             cachedRoles = [];
@@ -125,7 +125,7 @@ export async function initializeRuleForm(passedApi) {
     });
 
 
-    translateExistingRules(ruleSet, cachedRoles);
+    translateExistingRules(ruleSet, cachedRoles, teamnames);
     scrollRulesToBottomIfAllowed();
 
     initializeInputFunctions();

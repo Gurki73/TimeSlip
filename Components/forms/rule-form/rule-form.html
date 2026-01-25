@@ -8,10 +8,6 @@
       <!-- dynamically filled using rule-item-template -->
     </ol>
 
-    <h3>Alle Warnungen</h3>
-    <ul id="warnings-list" role="status" aria-live="polite">
-      <!-- dynamically filled using warning-item-template -->
-    </ul>
   </section>
 
   <div id="rule-tables-container" class="sticky-bottom">
@@ -27,7 +23,10 @@
     </div>
 
     <div id="debug-output" class="hidden"></div>
-
+    <h3 class="rule-new-warnings-list"> neue Regel => alle Warnungen:</h3>
+    <ul id="rule-new-warnings-list" role="status" aria-live="polite">
+      <!-- dynamically filled using warning-item-template -->
+    </ul>
     <!-- #region Main Tables -->
     <div id="table-container">
       <!-- Main Table -->
@@ -162,10 +161,8 @@
                     <select id="ex-request-type-select-dependency" class="noto">
                       <option value="d">...</option>
                       <option value="d0">anwesend</option>
-                      <option value="d1">abwesend</option>
                       <option value="d2">braucht</option>
                       <option value="d3">hilft</option>
-                      <option value="d4">im Verhältnis</option>
                     </select>
                   </th>
                 </tr>
@@ -186,13 +183,35 @@
     </div>
   </div>
 
-  <template id="rule-item-template">
-    <li>
-      <span class="rule-text"></span>
-      <span class="rule-ellipses"></span>
+  <template id="rule-category">
+    <li class="rule-category">
+      <div class="rule-category-header">
+        <span class="rule-dot">⚪️</span>
+        <button class="chevron" aria-expanded="false"></button>
+        <span class="rule-category-title"></span>
+      </div>
+      <ul class="rule-category-list"></ul>
     </li>
   </template>
 
-  <template id="warning-item-template">
-    <li><span class="noto" aria-hidden="true">🚨</span><span class="warning-text"></span></li>
+  <template id="rule-item-template" class="rule-item-template">
+    <li>
+      <span class="rule-list-gab"></span>
+      <span class="rule-role-marker flex-row">
+        <span class="rule-dot rule-blue-dot">🔵</span>
+        <span class="rule-dot rule-green-dot">🟢</span>
+        <span class="rule-dot rule-red-dot">🔴</span>
+        <span class="rule-dot rule-black-dot">⚫</span>
+        <span class="rule-dot rule-yellow-dot">🟠</span>
+      </span>
+      <span class="rule-text"></span>
+      <span class="rule-ellipses" aria-label="Rule actions"></span>
+    </li>
+  </template>
+
+  <template class="warning-item-template">
+    <li data-rule-id="">
+      <span class="noto" aria-hidden="true">🚨</span>
+      <span class="warning-text"></span>
+    </li>
   </template>
