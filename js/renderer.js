@@ -8,7 +8,7 @@ import { checkOnboardingState } from './Utils/onboarding.js';
 import { initializeLegend } from '../Components/legend/legend.js';
 import { createPresenceSelector, setOfficeStatus } from '../Components/calendar/calendar.js';
 import { createWindowButtons } from './Utils/minMaxFormComponent.js';
-import { resizeFormContainer, resizeByPreferredForm } from './resizer.js';
+import { resizeFormContainer, resizeByPreferredForm, startDrag, handleDrag, stopDrag } from './resizer.js';
 // resizerLookup.js
 
 const SHIFT_SYMBOL_PRESETS = {
@@ -89,8 +89,6 @@ window.addEventListener('api-ready', async () => {
 });
 
 let formInitializers = {};
-let isDragging = false;
-let currentResizer = null;
 
 // ----------- Module Loading -----------
 
@@ -126,78 +124,6 @@ async function loadFormModules() {
     console.error('✗ Error loading form modules:', err);
   }
 }
-
-// ----------- Drag & Resize Handlers -----------
-
-function startDrag(e) {
-  isDragging = true;
-  currentResizer = e.target;
-  const cursorClass = currentResizer.classList.contains('vertical-resizer') ? 'resize-ew' : 'resize-ns';
-  document.body.classList.add(cursorClass);
-}
-
-function handleDrag(e) {
-  if (!isDragging || !currentResizer) return;
-
-  if (currentResizer.classList.contains('vertical-resizer')) {
-    const leftPanel = document.getElementById('left-panel');
-    const rightPanel = document.getElementById('right-panel');
-
-    const newWidthPercent = (e.clientX / window.innerWidth) * 100;
-    leftPanel.style.setProperty('--left-panel-width', `${newWidthPercent}%`);
-    rightPanel.style.width = `${100 - newWidthPercent}%`;
-  } else if (currentResizer.classList.contains('horizontal-resizer')) {
-    const parent = currentResizer.parentElement;
-    const topSection = parent.children[0];
-    const bottomSection = parent.children[2];
-
-    const totalHeight = parent.offsetHeight;
-    const newHeight = e.clientY - parent.offsetTop;
-    const percentage = (newHeight / totalHeight) * 100;
-
-    topSection.style.height = `${percentage}%`;
-    bottomSection.style.height = `${100 - percentage}%`;
-  }
-}
-
-function stopDrag() {
-  if (!isDragging || !currentResizer) return;
-
-  isDragging = false;
-  document.body.style.cursor = 'default';
-
-  if (currentResizer.classList.contains('vertical-resizer')) {
-    const leftPanel = document.getElementById('left-panel');
-    const leftWidth = leftPanel.style.getPropertyValue('--left-panel-width');
-    if (leftWidth) localStorage.setItem('ui-left-panel-width', leftWidth);
-  } else if (currentResizer.classList.contains('horizontal-resizer')) {
-    const parent = currentResizer.parentElement;
-    const topSection = parent.children[0];
-    const topHeight = topSection.style.height;
-    if (topHeight) localStorage.setItem('ui-top-section-height', topHeight);
-  }
-
-  currentResizer.classList.contains('vertical-resizer')
-    ? document.body.classList.remove('resize-ew')
-    : document.body.classList.remove('resize-ns');
-
-  currentResizer = null;
-
-  requestAnimationFrame(() => {
-    const container = document.getElementById('form-container') || document.getElementById('calendar');
-    if (container) {
-      void container.offsetHeight;
-
-      container.style.transform = 'translateZ(0)';
-      setTimeout(() => (container.style.transform = ''), 100);
-    }
-
-    if (window.api?.send) {
-      window.api.send('invalidate-renderer');
-    }
-  });
-}
-
 
 export async function loadCalendarIntoContainer(container) {
   try {
@@ -290,7 +216,7 @@ function setupFormLoader() {
       console.warn(`⚠ No initializer found for form: ${formName}`);
     }
     resizeByPreferredForm(formName);
-    resizeFormContainer();
+
   });
 }
 
@@ -449,8 +375,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     console.error('❌ Calendar container not found.');
   }
 
-  document.addEventListener('mousemove', handleDrag);
-  document.addEventListener('mouseup', stopDrag);
+  // document.addEventListener('mousemove', handleDrag);
+  // document.addEventListener('mouseup', stopDrag);
 
   // ----------- F-Key Handling -----------
 

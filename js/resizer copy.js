@@ -1,5 +1,27 @@
 // js\resizer.js
 
+
+
+
+
+
+
+
+
+//    C O P Y
+
+
+
+
+
+
+
+
+
+
+
+
+//
 const formHeightLookup = {
   'welcome-page': { bottomRem: 8 },
   'role-form': { bottomRem: 17 },
@@ -9,8 +31,6 @@ const formHeightLookup = {
   'admin-form': { bottomRem: 1 },
   'request-form': { bottomRem: 50 },
 };
-
-const MIN_BOTTOM_PX = Math.max(150, window.innerHeight * 0.15);
 
 let isDragging = false;
 let currentResizer = null;
@@ -40,12 +60,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!isDragging) return;
 
     const panelRect = rightPanel.getBoundingClientRect();
+    const offsetY = e.clientY - panelRect.top;
+
     const dividerHeight = divider.offsetHeight;
 
-    const offsetY = e.clientY - panelRect.top;
-    const requestedBottom = panelRect.height - offsetY - dividerHeight;
+    const minTopHeight = 100;
+    const maxTopHeight = panelRect.height - minTopHeight - dividerHeight;
 
-    applyBottomHeight(requestedBottom);
+    const newTopHeight = Math.min(Math.max(offsetY, minTopHeight), maxTopHeight);
+    const newBottomHeight = panelRect.height - newTopHeight - dividerHeight;
+
+    const prefs = formHeightLookup[currentFormKey];
+    const maxBottomPx = prefs ? remToPx(prefs.bottomRem) : newBottomHeight;
+
+    const clampedBottomHeight = Math.min(newBottomHeight, maxBottomPx);
+
+    const finalTopHeight = panelRect.height - clampedBottomHeight - dividerHeight;
+
+    topPanel.style.height = `${finalTopHeight}px`;
+    bottomPanel.style.height = `${clampedBottomHeight}px`;
   });
 
   document.addEventListener('mouseup', () => {
@@ -54,62 +87,64 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 })
 
-function getMaxBottomPx() {
-  const prefs = formHeightLookup[currentFormKey];
-  return prefs ? remToPx(prefs.bottomRem) : Infinity;
-}
+export function toggleResize(panelTop, panelBottom, action) {
 
-function applyBottomHeight(requestedBottomPx) {
-  const rightPanel = document.getElementById('right-panel');
-  const topPanel = rightPanel.querySelector('.top-row');
-  const bottomPanel = rightPanel.querySelector('.bottom-row');
-  const divider = document.getElementById('horizontal-divider');
+  console.log('[resize button] clicked');
 
-  if (!rightPanel || !topPanel || !bottomPanel) return;
+  if (!panelTop || !panelBottom) return;
 
-  const containerHeight = rightPanel.getBoundingClientRect().height;
-  const dividerHeight = divider?.offsetHeight || 0;
+  const container = panelTop.parentElement; // Assuming both panels share the same parent
+  const containerHeight = container.getBoundingClientRect().height;
+  const dividerHeight = container.querySelector('#horizontal-divider').offsetHeight;
 
-  const minBottom = MIN_BOTTOM_PX;
-  const maxBottom = getMaxBottomPx();
+  let newTopHeight;
 
-  const bottomHeight = Math.min(
-    Math.max(requestedBottomPx, minBottom),
-    maxBottom,
-    containerHeight - dividerHeight - 100 // safety top min
-  );
-
-  const topHeight = containerHeight - bottomHeight - dividerHeight;
-
-  bottomPanel.style.height = `${bottomHeight}px`;
-  topPanel.style.height = `${topHeight}px`;
-
-  if (divider) {
-    divider.style.top = `${topHeight}px`;
-  }
-}
-
-export function toggleResize(action) {
-
-  if (!['minimize', 'maximize'].includes(action)) {
-    console.warn('toggleResize called with invalid action:', action);
+  if (action === 'maximize') {
+    newTopHeight = containerHeight * 0.7; // 70% of container
+  } else if (action === 'minimize') {
+    newTopHeight = containerHeight * 0.15; // 15% of container
+  } else {
     return;
   }
 
+  console.log(" new to height ==> ", newTopHeight);
+
+
+  panelTop.style.height = `${newTopHeight}px`;
+  panelBottom.style.height = `${containerHeight - newTopHeight - dividerHeight}px`;
+
+
+  // resizeFormContainer();
+  // Force a repaint if needed
+  panelTop.offsetHeight;
+  panelBottom.offsetHeight;
+
+}
+
+function getAvailableHeight() {
+  const banner = document.getElementById('banner'); // optional
+  const bannerHeight = banner ? banner.offsetHeight : 0;
+
   const rightPanel = document.getElementById('right-panel');
-  if (!rightPanel) return;
+  const panelRect = rightPanel.getBoundingClientRect();
 
-  const containerHeight = rightPanel.getBoundingClientRect().height;
+  const divider = document.getElementById('horizontal-divider');
+  const dividerHeight = divider ? divider.offsetHeight : 0;
 
-  if (action === 'maximize') {
-    applyBottomHeight(getMaxBottomPx());
-  } else if (action === 'minimize') {
-    applyBottomHeight(MIN_BOTTOM_PX);
-  }
+  const topHeight = document.querySelector('#right-panel .top-row').offsetHeight;
+
+  return panelRect.height - topHeight - dividerHeight - bannerHeight;
 }
 
 export function resizeFormContainer() {
+  /* intentionally empty – scroll handled by CSS
+  const bottomPanel = document.querySelector('.bottom-row');
+  if (!formContainer) return;
 
+  const availableHeight = getAvailableHeight();
+  formContainer.style.height = `${availableHeight}px`;
+  formContainer.style.overflowY = 'auto';
+  */
 }
 
 function remToPx(rem) {
@@ -117,15 +152,45 @@ function remToPx(rem) {
 }
 
 export function resizeByPreferredForm(formKey, fraction = 0.75) {
-  currentFormKey = formKey;
-
+  const bottomPanel = document.querySelector('.bottom-row');
+  const topPanel = document.querySelector('.top-row'); // calendar
   const rightPanel = document.getElementById('right-panel');
-  if (!rightPanel) return;
+  const dividerHeight = document.getElementById('horizontal-divider')?.offsetHeight || 0;
+
+  console.log("Form key ====>", formKey);
+  currentFormKey = formKey;
+  if (!bottomPanel || !topPanel || !rightPanel) return;
+  const prefs = formHeightLookup[formKey];
+  console.log(" Formkey and Prefs =====>", formKey, prefs.bottomRem);
+  if (!prefs) return;
 
   const containerHeight = rightPanel.getBoundingClientRect().height;
-  applyBottomHeight(containerHeight * fraction);
-}
+  const maxBottomPx = remToPx(prefs.bottomRem); // clamp by form type
+  console.log("mAX BOTTOM PX =====> ", maxBottomPx);
+  console.log("mmax mall fracction ====>", (fraction * containerHeight));
+  const initialBottomHeight = Math.min(containerHeight * fraction, maxBottomPx);
 
+  console.log("initialBottomHeight ====>", initialBottomHeight);
+
+  bottomPanel.style.height = `${initialBottomHeight}px`;
+  bottomPanel.style.maxHeight = `${maxBottomPx}px`;
+
+  topPanel.style.height = `${containerHeight - initialBottomHeight - dividerHeight}px`;
+
+  const formContainer = document.getElementById('form-container');
+  if (formContainer) {
+    formContainer.style.height = `${initialBottomHeight}px`;
+    formContainer.style.overflowY = 'auto';
+  }
+
+  const divider = document.getElementById('horizontal-divider');
+
+  const dividerTop = containerHeight - initialBottomHeight - dividerHeight;
+  console.log("divider top ", dividerTop);
+  console.log("conmtainer height", containerHeight);
+
+  divider.style.top = `${dividerTop}px`;
+}
 
 // ----------- Drag & Resize Handlers -----------
 

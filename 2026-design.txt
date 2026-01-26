@@ -1,0 +1,29 @@
+Design Notes
+
+────────────────
+Request-form
+- Native browser select styling limits acknowledged
+- Funnel icon switched from Unicode to SVG (no Unicode funnel exists)
+- Table sorting behavior aligned with spreadsheet mental model
+
+────────────────
+Rule-form
+- Categories introduced (shift / day / week / special)
+- Animations used to clarify relationships, not decoration
+- Wizard color semantics must never lie (green == complete only)
+
+────────────────
+Calendar
+- Empty shift text standardized: “nobody is working / missing”
+- Warnings must be visible at calendar level (explainability)
+
+────────────────
+Admin-tools
+- Emoji select confusion caused by pooled/unpooled mental model
+- Left/right click distinction unclear → must be explicit or removed
+
+────────────────
+General UX Principles
+- Save buttons must reflect dirty state truthfully
+- Autosave must never trigger without visible intent
+- Visual polish is used to increase trust, not aesthetics

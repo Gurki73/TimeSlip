@@ -4,7 +4,8 @@ import { toggleResize } from '../resizer.js';
 
 export function createWindowButtons() {
     const fromContainerID = "form-container";
-    const formConatinerBottom = document.getElementById(fromContainerID);
+    // const formConatinerBottom = document.getElementById(fromContainerID);
+    const formConatinerBottom = document.querySelector(".bottom-row");
     const formConatinerTop = document.getElementById("calendar");
     if (!formConatinerBottom || !formConatinerTop) console.error("no calendar and/or form container found");
 
@@ -21,7 +22,7 @@ export function createWindowButtons() {
     btnMin.setAttribute('aria-label', 'Formular minimieren');
 
     btnMin = resetAndBind(btnMin, 'click', () => {
-        toggleResize(formConatinerBottom, formConatinerTop, "minimize"); // Will toggle maximize/restore
+        toggleResize("minimize");
     });
 
     // --- Maximize / Restore button ---
@@ -33,7 +34,7 @@ export function createWindowButtons() {
     btnMax.setAttribute('aria-label', 'Formular maximieren');
 
     btnMax = resetAndBind(btnMax, 'click', () => {
-        toggleResize(formConatinerBottom, formConatinerTop, "maximize"); // Will toggle maximize/restore
+        toggleResize("maximize");
     });
 
     // Append buttons to container

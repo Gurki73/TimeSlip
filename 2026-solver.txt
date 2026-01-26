@@ -1,0 +1,185 @@
+Solver Architecture (Beta Scope)
+
+────────────────
+Core Concepts
+
+STATIC DEMAND
+- Never changes per shift
+- Absolute minimums (hardNeeded)
+
+FLEX DEMAND
+- Derived from flexible rules
+- Recomputed after each simulation step
+
+EFFECTIVE DEMAND
+- Merge of STATIC + FLEX
+- Used for classification and decisions
+
+────────────────
+High-Level Flow
+
+STATIC DEMAND
+        ↓
+FEASIBILITY CHECK (hard gate, once)
+        ↓
+SOLVER LOOP:
+  - recompute FLEX demand
+  - merge STATIC + FLEX → EFFECTIVE demand
+  - classify roles (deficit / surplus)
+  - simulate best reassignment
+  - validate against hardNeeded
+  - commit or reject move
+
+────────────────
+Beta Guardrails
+- Ignore special rules
+- Fixed role range (0–13)
+- No cross-day employee moves
+- Shift-level solving only
+- Day/week aggregation is read-only
+
+────────────────
+Diagnostics (required)
+- Log demand before/after solving
+- Log every committed reassignment
+- Explicit solver stop reason:
+  - solved
+  - stuck
+  - impossible
+
+      +----------------+
+          |   Calendar     |
+          | (scheduled     |
+          | employees)     |
+          +-------+--------+
+                  |
+                  v
+          +----------------+
+          |  Attendance    |
+          |  Object        |
+          +-------+--------+
+                  |
+                  v
+          +----------------+
+          | Feasibility    |
+          |  Check         |
+          | (hardNeeded)   |
+          +-------+--------+
+                  |
+       +----------+-----------+
+       |                      |
+   Impossible               Possible
+       |                      |
+       v                      v
+   Generate warning        +----------------+
+                           |   Solver       |
+                           |  (simulate     |
+                           |   reassignments|
+                           |   shift-level) |
+                           +-------+--------+
+                                   |
+                                   v
+                           +----------------+
+                           | Validate       |
+                           | against needed |
+                           | objects        |
+                           +-------+--------+
+                                   |
+                      +------------+------------+
+                      |                         |
+                  Commit                     Skip
+                      |                         |
+                      v                         v
+                 Update Calendar            Leave shift as-is
+                      |
+                      v
+               Higher-Level Aggregation
+               (day/week totals)
+                      |
+                      v
+                  Checker Final
+                  Evaluation
+
+Detailed Summary of the Solver Approach
+1. Key Components
+
+Calendar
+
+Knows scheduled employees per shift.
+
+Builds the attendance object, which counts preferred, secondary, and emergency roles per shift.
+
+Checker
+
+Evaluates the attendance object against staffing requirements.
+
+Generates warnings for understaffed or overstaffed roles.
+
+Solver
+
+Receives attendance and warnings.
+
+Uses a needed roles object instead of individual rules:
+
+hardNeeded → absolute minimum per role (cannot be violated)
+
+softNeeded → target counts or ratios (preferred, but flexible)
+
+Determines if a reassignment is possible and safe before committing.
+
+2. Solver Strategy
+
+Feasibility Check
+
+Compare current attendance to hardNeeded.
+
+If any hard-needed role cannot be filled with available employees → skip solving for this shift.
+
+Priority-Based Reassignment
+
+Handle understaffed roles first.
+
+Use employee flexibility: preferred → secondary → emergency.
+
+Respect hard constraints (never break hardNeeded) and try to improve soft constraints (softNeeded).
+
+Iterative Shift-Level Solving
+
+Treat each shift as an independent unit.
+
+For each shift:
+
+Simulate potential reassignment(s).
+
+Recompute attendance and check against needed objects.
+
+Commit reassignment only if it respects hardNeeded.
+
+Stop once all roles are within tolerance or no further safe moves are possible.
+
+Propagation
+
+Higher levels (day/week) simply aggregate shift results.
+
+Avoid reassigning at day/week level to prevent circular dependencies.
+
+Ranking & Limits
+
+Rules ranked by priority: totals before ratios.
+
+Optional limits on employee moves per day to prevent ping-pong reassignments.
+
+can you sum up what we have done and what we still need to do?  please be honest and concider pros and cons ?
+
+
+STATIC DEMAND (never changes per shift)
+        |
+        v
+FEASIBILITY CHECK (hard gate, once)
+        |
+        v
+SOLVER LOOP:
+  recompute FLEX DEMAND
+  merge STATIC + FLEX => EFFECTIVE DEMAND
+  classify roles
+  simulate moves

@@ -1,0 +1,76 @@
+Legend:
+☐  open           🚧 in work      ✅ finished
+🔥 ship-blocker   🧩 beta-value   🧠 post-beta
+
+────────────────
+🔥 Ship-Blockers
+
+Request-form
+1 ☐ Infinite rerender loop on refresh
+2 ☐ Filter shows filtered list then jumps back
+3 ☐ Selecting one field clears another (order-dependent)
+4 ☐ “No start date entered” while one exists
+
+Rule-form
+5  ☐ Typing effect not updating after editing rule
+6  ☐ Save button not marked dirty
+7  ☐ Flow wizard enforcing wrong order
+8  ☐ Flow wizard colors lying (green = missing)
+9  ☐ Ellipses menu not rendering
+10 ☐ Forbidden combinations list incomplete
+
+Calendar
+11 ☐ Warnings not shown in calendar
+
+Employee-form
+12 ☐ Wrong shift assignments on closed days
+13 ☐ Ellipses buttons dead
+
+Calendar-settings
+14 ☐ Save buttons / state handling
+15 ☐ Public holiday rendering
+
+────────────────
+🧩 Beta-Value (fix before polish)
+
+Request-form
+16 ☐ Warnings for conflicting request
+
+Rule-form
+17 ☐ Warnings should be sticky & collapsible
+
+Calendar
+18 ☐ PTO calculations
+
+Employee-form
+19 ☐ PDO calculation wrong
+
+Admin-tools
+20 🚧 Old style save button in wrong place
+21 ☐ Color customization
+22   ☐ Missing color pickers
+23   ☐ Incomplete calendar previews
+24   ☐ Styling issues
+25 ☐ Emoji select UX clarity (pooled / click behavior)
+26 ☐ Team names not editable visually
+27 🚧 Revive deleted employees
+
+Help
+28 🚧 Add basic content per chapter
+29 🚧 Glossary icons update
+30 ☐ Iconography & nomenclature explanation
+31 🚧 Story arc + protagonist idea
+
+✅Misc
+32 ✅ Minimal form size calculation
+
+Calendar-settings
+33 ☐ Company holiday inputs / height / alignment
+34 ☐ Feedback on corrupted datasets
+
+────────────────
+🧠 Post-Beta (frozen)
+
+35 🧠 Admin-tools: Rule tolerances / advanced calendar settings
+36 🧠 Feedback bar / state panel fix
+37 🧠 Hint for weekday <-> shifts
