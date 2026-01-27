@@ -3,7 +3,7 @@
 const formHeightLookup = {
   'welcome-page': { bottomRem: 8 },
   'role-form': { bottomRem: 17 },
-  'rule-form': { bottomRem: 28 },
+  'rule-form': { bottomRem: 75 },
   'calendar-form': { bottomRem: 30 },
   'employee-form': { bottomRem: 43 },
   'admin-form': { bottomRem: 1 },

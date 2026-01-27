@@ -3,7 +3,7 @@
 const formHeightLookup = {
   'welcome-page': { bottomRem: 8 },
   'role-form': { bottomRem: 17 },
-  'rule-form': { bottomRem: 28 },
+  'rule-form': { bottomRem: 50 },
   'calendar-form': { bottomRem: 30 },
   'employee-form': { bottomRem: 43 },
   'admin-form': { bottomRem: 1 },
@@ -56,6 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function getMaxBottomPx() {
   const prefs = formHeightLookup[currentFormKey];
+
+  console.log(" from look up table =", prefs);
   return prefs ? remToPx(prefs.bottomRem) : Infinity;
 }
 
@@ -91,14 +93,18 @@ function applyBottomHeight(requestedBottomPx) {
 
 export function toggleResize(action) {
 
+  console.log(" resize actuion", action);
+
   if (!['minimize', 'maximize'].includes(action)) {
     console.warn('toggleResize called with invalid action:', action);
     return;
   }
 
   const rightPanel = document.getElementById('right-panel');
-  if (!rightPanel) return;
-
+  if (!rightPanel) {
+    console.error(" no right panel found ==>", rightPanel)
+    return;
+  }
   const containerHeight = rightPanel.getBoundingClientRect().height;
 
   if (action === 'maximize') {

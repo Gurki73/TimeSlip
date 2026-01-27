@@ -1,3 +1,11 @@
+today's list:
+#9 🚧 Ellipses menu not rendering – quick UI fix / easy win
+#16 ☐ Warnings for conflicting request – pain warning, but important
+#27 🚧 Revive deleted employees – fun “resurrection” task
+#1 ☐ Infinite rerender loop on refresh – classic boss fight
+#21 ☐ Color customization – small UI polish
+
+──────────────── 
 Legend:
 ☐  open           🚧 in work      ✅ finished
 🔥 ship-blocker   🧩 beta-value   🧠 post-beta
@@ -7,16 +15,16 @@ Legend:
 
 Request-form
 1 ☐ Infinite rerender loop on refresh
-2 ☐ Filter shows filtered list then jumps back
+2 🚧 Filter shows filtered list then jumps back
 3 ☐ Selecting one field clears another (order-dependent)
 4 ☐ “No start date entered” while one exists
 
 Rule-form
-5  ☐ Typing effect not updating after editing rule
+5  🚧 Typing effect not updating after editing rule
 6  ☐ Save button not marked dirty
 7  ☐ Flow wizard enforcing wrong order
 8  ☐ Flow wizard colors lying (green = missing)
-9  ☐ Ellipses menu not rendering
+9  🚧 Ellipses menu not rendering
 10 ☐ Forbidden combinations list incomplete
 
 Calendar
@@ -40,10 +48,10 @@ Rule-form
 17 ☐ Warnings should be sticky & collapsible
 
 Calendar
-18 ☐ PTO calculations
+18 ☐ PTO calculations  <=== this doesnt belong into calendar ! PTO = requests
 
 Employee-form
-19 ☐ PDO calculation wrong
+19 🚧 PDO calculation wrong
 
 Admin-tools
 20 🚧 Old style save button in wrong place
@@ -61,8 +69,8 @@ Help
 30 ☐ Iconography & nomenclature explanation
 31 🚧 Story arc + protagonist idea
 
-✅Misc
-32 ✅ Minimal form size calculation
+Misc
+32 🚧 Minimal form size calculation
 
 Calendar-settings
 33 ☐ Company holiday inputs / height / alignment

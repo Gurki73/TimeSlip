@@ -109,14 +109,15 @@
 }
 
 .filter-btn {
-  width: 1.3rem;
-  height: 1.3rem;
-  border-radius: 3px;
-  border: none;
-  padding: 0.1rem;
-  background-color: ghostwhite;
-  cursor: pointer;
-  flex-shrink: 0;
+  padding: 3px; /* instead of image */
+  display: flex;
+  border-radius: 4px;
+  justify-content: center;
+  align-items: center;
+}
+.filter-btn img {
+  width: 50%;
+  height: 65%;
 }
 
 .filter-btn:hover {
@@ -135,12 +136,6 @@
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center;
-}
-
-.filter-btn img {
-  width: 1.3rem;
-  height: 1.3rem;
-  object-fit: contain; /* keeps aspect ratio */
 }
 
 .previous {

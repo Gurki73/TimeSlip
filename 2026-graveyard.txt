@@ -244,5 +244,3 @@ post - beta
 10.29 ☐ Ignore special rules
 10.30 ☐ Fixed role range (0–13)
 10.31 ☐ No cross-day employee moves
-
-    

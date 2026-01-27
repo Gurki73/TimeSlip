@@ -22,7 +22,7 @@ export async function loadRuleData(api, attempt = 1) {
   try {
     // Attempt to load an index file first (optional). If not present, fallback to sample list.
     const listPath = `${RULE_FOLDER}/index.json`;
-    const indexContent = await loadFile(api, 'ruleset', listPath, loadSampleRuleList);
+    const indexContent = await loadFile(api, 'ruleset', listPath, async () => { });
     const files = parseIndexOrSampleList(indexContent);
 
     const loaded = [];

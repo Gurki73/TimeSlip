@@ -180,6 +180,24 @@ function tryCreateClientDataFolderFallback() {
     return null;
 }
 
+export async function getFilesFromClientSubfolder(subfolder, regex) {
+    try {
+        const clientFolder = dataLoader.getClientDataFolder('client');
+        if (!clientFolder) return [];
+
+        const targetFolder = path.join(clientFolder, subfolder);
+        if (!fs.existsSync(targetFolder)) return [];
+
+        const files = await fs.promises.readdir(targetFolder);
+
+        return files
+            .filter(file => regex.test(file))
+            .map(file => path.join(targetFolder, file));
+    } catch (err) {
+        console.warn(`⚠️ Error reading ${subfolder} files:`, err);
+        return [];
+    }
+}
 
 function showFatalFolderCreationError() {
     dialog.showErrorBox(
