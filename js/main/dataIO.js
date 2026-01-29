@@ -182,7 +182,7 @@ function tryCreateClientDataFolderFallback() {
 
 export async function getFilesFromClientSubfolder(subfolder, regex) {
     try {
-        const clientFolder = dataLoader.getClientDataFolder('client');
+        const clientFolder = getClientDataFolder('client');
         if (!clientFolder) return [];
 
         const targetFolder = path.join(clientFolder, subfolder);
@@ -192,7 +192,7 @@ export async function getFilesFromClientSubfolder(subfolder, regex) {
 
         return files
             .filter(file => regex.test(file))
-            .map(file => path.join(targetFolder, file));
+            .map(file => path.join(subfolder, file));
     } catch (err) {
         console.warn(`⚠️ Error reading ${subfolder} files:`, err);
         return [];

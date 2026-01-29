@@ -5,14 +5,43 @@
 import { populateFormFromRule } from './rule-form.js';
 import { createEllipsis } from '../../../js/Utils/ellipsisButton.js';
 
+
+const TEAM = Object.freeze({
+    NONE: 0,
+    BLUE: 1,
+    GREEN: 2,
+    RED: 3,
+    BLACK: 4,
+    AZUBI: 5
+});
+
+// constants/teams.js
+const ROLE_TO_TEAM = Object.freeze({
+    0: TEAM.NONE,
+    1: TEAM.BLUE,
+    2: TEAM.BLUE,
+    3: TEAM.BLUE,
+    4: TEAM.GREEN,
+    5: TEAM.GREEN,
+    6: TEAM.GREEN,
+    7: TEAM.RED,
+    8: TEAM.RED,
+    9: TEAM.RED,
+    10: TEAM.BLACK,
+    11: TEAM.BLACK,
+    12: TEAM.BLACK,
+    13: TEAM.AZUBI
+});
+
 const TEAM_REGISTRY = {
-    1: { dot: '🔵' },
-    2: { dot: '🟢' },
-    3: { dot: '🔴' },
-    4: { dot: '⚫' },
-    5: { dot: '🟠' },
-    white: { dot: '⚪️' }
+    [TEAM.NONE]: { dot: '⚪️' },
+    [TEAM.BLUE]: { dot: '🔵' },
+    [TEAM.GREEN]: { dot: '🟢' },
+    [TEAM.RED]: { dot: '🔴' },
+    [TEAM.BLACK]: { dot: '⚫' },
+    [TEAM.AZUBI]: { dot: '🟠' }
 };
+
 
 const RULE_ELLIPSIS_ACTIONS = ['copy', 'edit', 'delete'];
 
@@ -330,7 +359,7 @@ function prepareRulesForDisplay(enrichedRules) {
     return explodeByTeam(enrichedRules).map(r => ({
         ...r,
         minRoleForTeam:
-            r.categoryTeam === 'white'
+            r.categoryTeam === '0'
                 ? Infinity
                 : getMinRoleForTeam(r.roles, r.categoryTeam)
     }));
@@ -371,7 +400,7 @@ function identifyTeams(rule) {
     return teams;
 }
 
-function enrichRule(rule, idx) {
+function enrichRule(rule, idx, roles) {
     const errors = [];
     const teams = identifyTeams(rule);
 
@@ -401,8 +430,6 @@ function enrichRule(rule, idx) {
         }
     }
 
-    // --- roles (best-effort, never fatal)
-    let roles = [];
     try {
         roles = extractRolesSorted(rule);
     } catch {
@@ -436,7 +463,7 @@ function explodeByTeam(enrichedRules) {
 
     enrichedRules.forEach(r => {
         if (r.teams.length === 0) {
-            result.push({ ...r, categoryTeam: 'white' });
+            result.push({ ...r, categoryTeam: '0' });
         } else {
             r.teams.forEach(team => {
                 result.push({ ...r, categoryTeam: team });
@@ -452,58 +479,6 @@ function getMinRoleForTeam(roles, team) {
     return teamRoles.length ? Math.min(...teamRoles) : Infinity;
 }
 
-/*
-export function translateExistingRules(ruleSet = [], roles = [], teamnames = ["Blau", "Grün", "Rot", "Schwarz", "Azubi", "Falsch"]) {
-
-    console.log("exsiting rules", ruleSet.length);
-    const rulesList = document.getElementById('rules-list');
-    const template = document.getElementById('rule-item-template');
-
-    if (!rulesList || !template) return;
-
-    rulesList.innerHTML = '';
-
-    ruleSet.forEach((rule, idx) => {
-
-        const teams = identifyTeams(rule);
-        const isComplex = rule.main.exception.id !== "E0";
-        const isRatio = rule.main.dependeny.id !== "D0" || rule.condition.dependency.id !== "d0";
-
-        const fragment = template.content.cloneNode(true);
-        const li = fragment.querySelector('li');
-        const ruleTextEl = fragment.querySelector('.rule-text');
-
-        li.classList.add('rule-item');
-
-        ruleTextEl.textContent =
-            generateFullHumanSentence(rule, roles) ||
-            `Regel ${rule.id || idx}`;
-
-        li.dataset.ruleId = rule.id || String(idx);
-
-        const ellipsesContainer = fragment.querySelector('.rule-ellipses');
-        ellipsesContainer.appendChild(createRuleEllipsis(rule));
-
-        rulesList.appendChild(fragment);
-    });
-
-}
-*/
-function renderCategories(grouped, container) {
-    for (const team of [1, 2, 3, 4, 5, 'white']) {
-        const rules = grouped.get(team);
-        if (!rules || rules.length === 0) continue;
-
-        renderCategory({
-            team,
-            teamName: team === 'white' ? 'Falsch' : teamnames[team - 1],
-            rules,
-            container: rulesList,
-            roles
-        });
-    }
-}
-
 function renderCategory({ team, teamName, rules, container }) {
     const tpl = document.getElementById('rule-category');
     const fragment = tpl.content.cloneNode(true);
@@ -513,7 +488,7 @@ function renderCategory({ team, teamName, rules, container }) {
     const dot = fragment.querySelector('.rule-dot');
     const list = fragment.querySelector('.rule-category-list');
 
-    title.textContent = teamName;
+    title.textContent = teamName || " INJEXT TEAM-NAME HERE";
     dot.textContent = TEAM_REGISTRY[team]?.dot ?? '⚪️';
 
     rules.forEach(rule => renderRule(rule, list));
@@ -521,8 +496,8 @@ function renderCategory({ team, teamName, rules, container }) {
     container.appendChild(fragment);
 }
 
-function enrichRules(ruleSet) {
-    return ruleSet.map((rule, idx) => enrichRule(rule, idx));
+function enrichRules(ruleSet, roles) {
+    return ruleSet.map((rule, idx) => enrichRule(rule, idx, roles));
 }
 
 export function translateExistingRules(
@@ -535,17 +510,25 @@ export function translateExistingRules(
 
     rulesList.innerHTML = '';
 
-    const enriched = enrichRules(ruleSet);
+    const enriched = enrichRules(ruleSet, roles);
     const prepared = prepareRulesForDisplay(enriched);
     const grouped = groupAndSortByCategory(prepared);
 
-    for (const team of [1, 2, 3, 4, 5, 'white']) {
+    for (const team of [
+        TEAM.BLUE,
+        TEAM.GREEN,
+        TEAM.RED,
+        TEAM.BLACK,
+        TEAM.AZUBI,
+        TEAM.NONE
+    ]) {
+
         const rules = grouped.get(team);
         if (!rules || rules.length === 0) continue;
 
         renderCategory({
             team,
-            teamName: team === 'white' ? 'Falsch' : teamnames[team - 1],
+            teamName: teamnames[team],
             rules,
             container: rulesList,
             roles
@@ -556,10 +539,9 @@ export function translateExistingRules(
 function renderRule(ruleView, container) {
     const tpl = document.getElementById('rule-item-template');
     const fragment = tpl.content.cloneNode(true);
-
     const li = fragment.querySelector('li');
+    li.classList.add('existing-rule-item');
     const text = fragment.querySelector('.rule-text');
-
     li.dataset.ruleId = ruleView.id;
     text.textContent = generateFullHumanSentence(ruleView.rule) ?? '—';
 
@@ -600,7 +582,7 @@ function renderCompactDots(ruleView, marker) {
 function addDot(container, team, isPrimary = false) {
     const span = document.createElement('span');
     span.className = 'rule-dot';
-    if (isPrimary) span.classList.add('primary');
+    if (isPrimary) span.classList.add('primary', 'noto');
 
     span.textContent = TEAM_REGISTRY[team]?.dot ?? '❓';
     container.appendChild(span);
@@ -636,9 +618,8 @@ function renderWarnings(ruleView, ruleLi) {
     ul.className = 'rule-warnings';
 
     ruleView.errors.forEach((err, i) => {
-        const tpl = document.querySelector('.warning-item-template');
+        const tpl = document.getElementById('warning-item-template');
         const fragment = tpl.content.cloneNode(true);
-
         const li = fragment.querySelector('li');
         const text = fragment.querySelector('.warning-text');
 

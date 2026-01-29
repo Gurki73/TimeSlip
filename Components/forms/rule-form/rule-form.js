@@ -742,10 +742,10 @@ function handleTopCellTimeFrame(id) {
         case 't5': {
             const outOfOfficeElement = document.createElement('div');
             const outOfOfficeReasons = [
-                '🚕🏠 dienstlich',
-                '🏖️⚖️🎁 frei',
-                '⛄🌱🌺☀️🎃 Schulferien',
-                '💉🧸💸 verhindert'
+                'dienstlich',
+                'frei',
+                'Schulferien',
+                'unvorhergesehen'
             ];
 
             const checkboxes = [];
@@ -768,7 +768,7 @@ function handleTopCellTimeFrame(id) {
                 reasonRow.appendChild(checkbox);
                 reasonRow.appendChild(label);
                 outOfOfficeElement.appendChild(reasonRow);
-
+                outOfOfficeElement.classList.add('checkbox-grid');
                 checkboxes.push(checkbox);
 
                 const handler = handleCheckboxChangeWithNeighbors(outOfOfficeElement, 't5');
@@ -886,7 +886,8 @@ function createCheckboxGroup(type, items, parent, onChange, options = {}) {
 
         const label = document.createElement('label');
         label.htmlFor = checkbox.id;
-        label.style.marginLeft = '5px';
+        label.style.marginLeft = '0.05rem';
+        label.style.paddingRight = '0.1rem';
         label.textContent = item.name;
 
         wrapper.appendChild(checkbox);

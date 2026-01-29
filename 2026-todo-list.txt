@@ -1,3 +1,26 @@
+Phase 1 – Stabilize
+- Deterministic rule loading (JSON issue containment)
+- Fix & rebaseline sanity check
+- Restore save button state machine
+
+Phase 2 – Integrity
+4. Refactor editing call chain
+5. Warnings + collapse + bubble-up
+
+Phase 3 – UX
+6. Wizard & validation feedback
+7. Headers & titles
+8. Color coding consistency
+
+Phase 4 – Features
+9. Rule enable/disable
+10. Rule preview / simulation
+
+Phase 5 – Quality
+11. Replace mock data
+12. UI polish leftovers
+
+
 today's list:
 #9 🚧 Ellipses menu not rendering – quick UI fix / easy win
 #16 ☐ Warnings for conflicting request – pain warning, but important

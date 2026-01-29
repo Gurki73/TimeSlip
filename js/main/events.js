@@ -166,32 +166,17 @@ export function registerEventHandlers(mainWindow) {
     });
 
     ipcMain.handle("get-request-files", async () => {
-        try {
-            const clientFolder = dataLoader.getClientDataFolder('client');
-            if (!clientFolder) {
-                console.warn('⚠️ Client data folder not found, returning empty array.');
-                return [];
-            }
+        return dataLoader.getFilesFromClientSubfolder(
+            'requests',
+            /^\d{4}_requests\.csv$/
+        );
+    });
 
-            const requestsFolder = path.join(clientFolder, 'requests');
-            if (!fs.existsSync(requestsFolder)) {
-                console.warn(`⚠️ Requests folder does not exist: ${requestsFolder}`);
-                return [];
-            }
-            console.log("requested folder:", requestsFolder);
-            const files = await fs.promises.readdir(requestsFolder);
-            console.log("files in dir", files);
-            const validFiles = files
-                .filter(file => /^\d{4}_requests\.csv$/.test(file)) // match year_requests.csv
-                .map(file => path.join(requestsFolder, file));
-
-            console.log("[ events ]  valid request files:", validFiles);
-            return validFiles;
-
-        } catch (error) {
-            console.warn('⚠️ Error reading request files:', error);
-            return [];
-        }
+    ipcMain.handle("get-rule-files", async () => {
+        return dataLoader.getFilesFromClientSubfolder(
+            'rules',
+            /^rule_.*\.json$/   // adapt to your naming scheme
+        );
     });
 
 

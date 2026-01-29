@@ -15,45 +15,59 @@ export async function loadRuleData(api, attempt = 1) {
     return [];
   }
 
-  let homeKey = localStorage.getItem('dataMode') || 'auto';
+  const homeKey = localStorage.getItem('dataMode') || 'auto';
 
-  if (homeKey === 'sample') return loadSampleRuleData();
+  if (homeKey === 'sample') {
+    console.log('[rule-loader] sample mode enabled');
+    return await loadSampleRuleData();
+  }
 
   try {
-    // Attempt to load an index file first (optional). If not present, fallback to sample list.
-    const listPath = `${RULE_FOLDER}/index.json`;
-    const indexContent = await loadFile(api, 'ruleset', listPath, async () => { });
-    const files = parseIndexOrSampleList(indexContent);
+    const ruleFiles = await api.getRuleFiles();
+    console.log('[rule-loader] rule files found:', ruleFiles);
 
-    const loaded = [];
-    for (const rel of files) {
-      const data = await loadFile(api, 'ruleset', rel, null);
-      if (!data) {
-        console.warn('[rule-loader] missing rule file', rel);
-        continue;
-      }
-      const parsed = parseRuleJSON(data);
-      const fixed = sanitizeRule(parsed);
-      loaded.push(fixed);
+    if (!ruleFiles || ruleFiles.length === 0) {
+      console.warn('[rule-loader] no rule JSON files found');
+      return [];
     }
 
-    allRules = loaded.map(r => ({ ...r })); // raw list
-    rules = allRules.filter(r => r && r.main); // quick filter
+    const loaded = [];
+
+    for (const filePath of ruleFiles) {
+      try {
+        const data = await loadFile(api, 'ruleset', filePath, null);
+        if (!data) {
+          console.warn('[rule-loader] missing rule file', filePath);
+          continue;
+        }
+
+        const parsed = parseRuleJSON(data);
+        const fixed = sanitizeRule(parsed);
+        loaded.push(fixed);
+      } catch (e) {
+        console.warn('[rule-loader] failed to load rule', filePath, e);
+      }
+    }
+
+    allRules = loaded.map(r => ({ ...r }));
+    rules = allRules.filter(r => r && r.main);
+
     console.log(`✅ Loaded ${rules.length} rules`);
     return [...allRules];
 
   } catch (err) {
     console.warn(`❌ Failed to load rules (attempt ${attempt})`, err);
+
     if (attempt < MAX_RETRIES) {
       await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
-      return await loadRuleData(api, attempt + 1);
-    } else {
-      console.error('⚠️ Max retries reached. Loading sample rules.');
-      const sample = await loadSampleRuleData();
-      allRules = sample;
-      rules = allRules.filter(r => r && r.main);
-      return [...allRules];
+      return loadRuleData(api, attempt + 1);
     }
+
+    console.error('⚠️ Max retries reached. Loading sample rules.');
+    const sample = await loadSampleRuleData();
+    allRules = sample;
+    rules = allRules.filter(r => r && r.main);
+    return [...allRules];
   }
 }
 
@@ -113,7 +127,7 @@ export async function loadSampleRuleData() {
   }
 }
 
-// ----------------- Parse / Sanitize / Validate -----------------
+/*
 export function parseRuleJSON(input) {
   if (!input) return null;
 
@@ -132,6 +146,8 @@ export function parseRuleJSON(input) {
     return null;
   }
 }
+*/
+
 
 export function sanitizeRule(raw) {
   if (!raw || typeof raw !== 'object') return null;
@@ -248,7 +264,9 @@ export async function saveRuleData(api, ruleObj) {
 export async function deleteRule(api, id) {
   // We assume saveFile has a delete helper in main; if not, add IPC handler in preload/main
   try {
-    const full = `${RULE_FOLDER}/${id}.json`;
+    // deleteRule: normalize id to match saveRuleData
+    const safeId = id => String(id).replace(/[^a-zA-Z0-9_\-]/g, '_').replace(/_+/g, '_');
+    const full = `${RULE_FOLDER}/${safeId(id)}.json`;
     if (!api) throw new Error('no api');
     // send delete request through a channel 'rules:delete' implemented in preload/main
     if (typeof api.invoke === 'function') {

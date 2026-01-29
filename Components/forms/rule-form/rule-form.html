@@ -1,9 +1,9 @@
 <div id="rule-form-container">
   <!-- ================= Rules & Warnings Scrollbox ================= -->
+  <div class="center strong">Alle bestehenden Regeln</div>
   <section id="rules-scrollbox" aria-labelledby="rules-scrollbox-title">
     <h2 id="rules-scrollbox-title" class="visually-hidden">Regeln und Warnungen</h2>
 
-    <h3>Alle Regeln</h3>
     <ol id="rules-list">
       <!-- dynamically filled using rule-item-template -->
     </ol>
@@ -12,16 +12,12 @@
 
   <div id="rule-tables-container" class="sticky-bottom">
     <!-- ================= current rule preview ================= -->
-    <button id="test-rule" class="noto chevron" aria-label="Neue Regel testen">🔎</button>
-    <!--
-    <button id="save-rule" class="noto" aria-label="Neue Regel speichern">💾</button>
-    -->
     <div id="newRule" role="region" aria-labelledby="newRule-title">
       <h2 id="newRule-title" class="visually-hidden">Aktuelle Regel-Vorschau</h2>
       <span id="typing-text" aria-live="polite">&gt; Regel wird erstellt …</span>
       <span class="blinking-cursor noto cursor-stop" aria-hidden="true">▮</span>
     </div>
-
+    <button id="test-rule" class="noto chevron" aria-label="Neue Regel testen">🔎</button>
     <div id="debug-output" class="hidden"></div>
     <h3 class="rule-new-warnings-list"> neue Regel => alle Warnungen:</h3>
     <ul id="rule-new-warnings-list" role="status" aria-live="polite">
@@ -36,7 +32,7 @@
           <path id="rule-line-flow" />
         </svg>
 
-        <div id="rule-first-condition" class="table-wrapper left-table">
+        <div id="rule-first-condition" class="left-table">
           <table class="rule-table">
             <thead>
               <tr>
@@ -113,7 +109,7 @@
           <div class="tab-gab"></div>
           <div id="space-between-tables"></div>
           <!-- Second Table -->
-          <div id="rule-second-condition" class="table-wrapper right-table">
+          <div id="rule-second-condition" class="right-table">
             <table class="rule-table">
               <thead>
                 <tr>
@@ -170,7 +166,7 @@
               <tbody>
                 <tr id="secondTableSecondSteps">
                   <td id="ex-repeat-cell" data-highlight="false"></td>
-                  <td id="ex-time-cell" data-highlight="false"></td>
+                  <td id="ex-time-cell checkbox-grid" data-highlight="false"></td>
                   <td id="ex-amount-cell" data-highlight="false"></td>
                   <td id="ex-task-cell" data-highlight="false"></td>
                   <td id="ex-dependency-cell" data-highlight="false"></td>
@@ -182,36 +178,42 @@
       <!-- #endregion -->
     </div>
   </div>
+</div>
 
-  <template id="rule-category">
-    <li class="rule-category">
-      <div class="rule-category-header">
-        <span class="rule-dot">⚪️</span>
-        <button class="chevron" aria-expanded="false"></button>
-        <span class="rule-category-title"></span>
-      </div>
-      <ul class="rule-category-list"></ul>
-    </li>
-  </template>
+<template id="rule-category">
+  <li class="rule-category flex-column">
+    <div class="rule-category-header">
+      <span class="rule-dot noto">⚪️</span>
+      <button class="rule-chevron resize-button" aria-expanded="false"></button>
+      <span class="warning-counter-category" active="false">⚠️ 0</span>
+      <span class="rule-category-title"></span>
+    </div>
+    <ul class="rule-category-list"></ul>
+  </li>
+</template>
 
-  <template id="rule-item-template" class="rule-item-template">
-    <li>
+<template id="rule-item-template" class="rule-item-template">
+  <li class="flex-column">
+    <div class="flex-row  rule-container-row">
       <span class="rule-list-gab"></span>
       <span class="rule-role-marker flex-row">
-        <span class="rule-dot rule-blue-dot">🔵</span>
-        <span class="rule-dot rule-green-dot">🟢</span>
-        <span class="rule-dot rule-red-dot">🔴</span>
-        <span class="rule-dot rule-black-dot">⚫</span>
-        <span class="rule-dot rule-yellow-dot">🟠</span>
+        <span class="rule-dot noto rule-blue-dot">🔵</span>
+        <span class="rule-dot noto rule-green-dot">🟢</span>
+        <span class="rule-dot noto rule-red-dot">🔴</span>
+        <span class="rule-dot noto rule-black-dot">⚫</span>
+        <span class="rule-dot noto rule-yellow-dot">🟠</span>
       </span>
+      <span class="rule-chevron resize-button noto" aria-expanded="false"></span>
+      <span class="warning-counter-team" active="false">⚠️ 0</span>
       <span class="rule-text"></span>
       <span class="rule-ellipses" aria-label="Rule actions"></span>
-    </li>
-  </template>
+    </div>
+  </li>
+</template>
 
-  <template class="warning-item-template">
-    <li data-rule-id="">
-      <span class="noto" aria-hidden="true">🚨</span>
-      <span class="warning-text"></span>
-    </li>
-  </template>
+<template id="warning-item-template">
+  <li data-rule-id="">
+    <span class="noto" aria-hidden="true">⚠️</span>
+    <span class="warning-text"></span>
+  </li>
+</template>
