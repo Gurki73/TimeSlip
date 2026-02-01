@@ -1,13 +1,13 @@
 // js\resizer.js
 
 const formHeightLookup = {
-  'welcome-page': { bottomRem: 8 },
-  'role-form': { bottomRem: 17 },
-  'rule-form': { bottomRem: 50 },
-  'calendar-form': { bottomRem: 30 },
-  'employee-form': { bottomRem: 43 },
-  'admin-form': { bottomRem: 1 },
-  'request-form': { bottomRem: 50 },
+  'welcome-page': { bottomRem: 16 },
+  'role-form': { bottomRem: 24.5 },
+  'rule-form': { bottomRem: 52 },
+  'calendar-form': { bottomRem: 44 },
+  'employee-form': { bottomRem: 58 },
+  'admin-form': { bottomRem: 27.5 },
+  'request-form': { bottomRem: 46 },
 };
 
 const MIN_BOTTOM_PX = Math.max(150, window.innerHeight * 0.15);
@@ -164,8 +164,7 @@ export function handleDrag(e) {
 
     // Safety limits
     const minTopHeight = 100; // px
-    const maxTopHeight = parent.offsetHeight * 0.85; // 85% of container
-
+    const maxTopHeight = parent.offsetHeight - 100;
     const newTopHeight = Math.min(Math.max(offsetY, minTopHeight), maxTopHeight);
     const newBottomHeight = parent.offsetHeight - newTopHeight - dividerHeight;
 

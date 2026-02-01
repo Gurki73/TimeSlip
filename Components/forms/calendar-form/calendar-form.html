@@ -2,32 +2,7 @@
   <h1 id="calendar-form-title" class="visually-hidden">
     Kalender-Konfiguration
   </h1>
-  <div class="flex-row">
-    <div class="calendar-flex-row" id="calendar-collapsibles">
-    </div class="flex-column">
-    <div class="hint">
-      <ul>
-        <span class="noto">💡</span> Legende: 🔑
-        <li>
-          <span class="noto">🔒 ⇨ </span> geschlossen
-        </li>
-        <li>
-          <span class="noto">🔑 ⇨ </span> geöffnet
-        </li>
-      </ul>
-
-      <div class="hint">
-        <ul>
-          <span class="noto"> 🎨</span> Legende: 🔑
-          <li>
-            <span class="noto">⬜⬜⬜</span> geschlossen
-          </li>
-          <li>
-            <span class="noto">⬜⬜⬜</span> geöffnet
-          </li>
-        </ul>
-      </div>
-    </div>
+  <div class="calendar-flex-row" id="calendar-collapsibles">
   </div>
 </section>
 
@@ -71,5 +46,30 @@
       <span class="status-icon lock-icon" aria-hidden="true"></span>
       <span class="extra-icon" aria-hidden="true"></span>
     </div>
+  </div>
+</template>
+
+<template id="date-range-template">
+  <div class="date-grid date-range">
+
+    <!-- von -->
+    <span class="date-label">von:</span>
+    <button class="date-trigger noto start-btn" title="Startdatum wählen">📅</button>
+    <span class="date-preview start-preview">--.--.----</span>
+
+    <!-- bis -->
+    <span class="date-label">bis:</span>
+    <button class="date-trigger noto end-btn" title="Enddatum wählen">📅</button>
+    <span class="date-preview end-preview">--.--.----</span>
+
+    <!-- dauer -->
+    <span class="date-label">Dauer:</span>
+    <span class="duration-value">??</span>
+    <span class="duration-unit">Tage</span>
+
+    <!-- hidden inputs (can live anywhere inside grid) -->
+    <input type="date" class="visually-hidden-date-picker start-input" />
+    <input type="date" class="visually-hidden-date-picker end-input" />
+
   </div>
 </template>

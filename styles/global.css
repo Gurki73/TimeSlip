@@ -211,7 +211,7 @@ body.resizing {
   max-height: 3rem;
   border-color: var(--bg-soft-white);
   border-style: double;
-  width: 98%;
+  min-width: 100%;
   position: relative;
   z-index: 10;
 
@@ -545,7 +545,7 @@ body.resizing {
   border-radius: 12px;
   border: 1px solid #dcdcdc; /* softer border */
   width: 250px;
-  min-height: 300px; /* consistent height */
+  min-height: 8rem; /* consistent height */
   background-color: var(--bg-white);
   cursor: default; /* clearly not clickable */
   box-shadow: none; /* remove "button" effect */
@@ -570,8 +570,9 @@ body.resizing {
 
 /* Full-width card variant */
 .layout-full-size {
-  width: 100%;
+  min-width: 100%;
   height: 100%;
+  justify-content: space-evenly;
 }
 
 /* Color-coded variants */
@@ -748,10 +749,14 @@ select:focus-visible {
 }
 
 .hint {
+  display: inline-block;
+  font-family: system-ui, sans-serif;
   font-size: 0.85rem;
   color: var(--accent-inactive);
   margin-top: 0.3rem;
   font-style: italic;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
 }
 
 .fn-hint p {
@@ -966,12 +971,28 @@ body.mode-sample #main-container {
 .save-button.is-dirty::after {
   content: "";
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 8px;
-  height: 8px;
-  background: red;
+  top: 0.25rem;
+  right: 0.25rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  background: var(--accent-active); 
   border-radius: 50%;
+  animation: dirtyPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes dirtyPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
 }
 
 .save-button.is-discouraged {
@@ -980,14 +1001,14 @@ body.mode-sample #main-container {
 
 .save-button.is-blocked {
   opacity: 0.25;
-  cursor: not-allowed;
+  cursor: not-allowed !important;
 }
 
-.save-button.is-readonly {
+.save-button.is-readOnly {
   opacity: 0.85;
-  cursor: not-allowed;
+  cursor: not-allowed !important;
   color: #2a001f;
-
+  
   background: repeating-linear-gradient(
     -45deg,
     rgba(255, 0, 150, 0.25),
@@ -995,8 +1016,7 @@ body.mode-sample #main-container {
     rgba(255, 0, 150, 0.4) 10px,
     rgba(255, 0, 150, 0.4) 20px
   );
-
-  border: 1px solid rgba(255, 0, 150, 0.6);
+  border: 3px solid rgba(255, 0, 150, 0.4) !important;
 }
 
 @keyframes shake {

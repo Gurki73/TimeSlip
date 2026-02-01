@@ -13,6 +13,7 @@ async function loadDataset(key, loaderFunc, fallbackData = []) {
     const p = (async () => {
         try {
             const data = await loaderFunc();
+
             datasets[key] = data;
             return data;
         } catch (err) {

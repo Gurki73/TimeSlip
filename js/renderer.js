@@ -489,6 +489,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   })();
 
   initTheme();
+  syncInitialSettingsToMain();
+  formInitializers.welcome();
   showFnKeyHintIfLaptop();
 
   // --- Restore zoom factor ---
@@ -540,205 +542,25 @@ export async function globalRefresh(mode = localStorage.getItem('dataMode') || '
 }
 
 function loadWelcomePage() {
-
   const currentPage = 'welcome';
 
   const formContainer = document.getElementById('form-container');
   if (!formContainer) return;
 
-  // Clear dynamic content inside container
   formContainer.innerHTML = '';
 
-  // Rebuild the welcome page
-  const welcome = document.createElement('section');
-  welcome.classList.add('welcome-page');
-  welcome.setAttribute('aria-label', 'Willkommensseite');
+  const template = document.getElementById('tmp-welcome-page');
+  if (!template) return;
 
-  welcome.innerHTML = `
-    <!-- MAIN CONTENT AREA -->
-        <section
-          id="form-container"
-          class="bottom-row"
-          aria-labelledby="greetingID"
-        >
-          <section
-            class="welcome-page text-arial"
-            role="region"
-            aria-label="Willkommensseite"
-          >
-            <p class="text-header-4">
-              Ihr Werkzeug zur einfachen Belegschaftsplanung. Rufe die Anleitung
-              <span class="noto">❓</span> mit [F1] oder unter Menü
-              <span class="noto">⇨ </span> Hilfe auf.
-            </p>
+  const clone = template.content.cloneNode(true);
 
-            <!-- Fn key hint (hidden by default) -->
-            <div
-              id="fn-key-hint"
-              class="fn-hint visually-hidden"
-              role="note"
-              aria-label="Fn-Tastentipp"
-            >
-              <img
-                src="./assets/png/Fn-key.png"
-                alt="Fn-Taste auf einer Laptop-Tastatur"
-                class="fn-hint-img"
-              />
-              <p>
-                💡 Tipp: Auf vielen Laptops müssen Sie <kbd>Fn</kbd> +
-                <kbd>F1</kbd> oder <kbd>F12</kbd> drücken, um
-                Tastenkombinationen zu nutzen.
-              </p>
-            </div>
+  formContainer.appendChild(clone);
 
-            <div class="layout-full-size flex-row">
-              <!-- CARD TEMPLATE -->
-              <article
-                class="layout-card layout-card.request"
-                aria-labelledby="heading-request"
-              >
-                <h4 class="card-title text-request" id="heading-request">
-                  <img
-                    src="./assets/svg/file-document-svgrepo-com.svg"
-                    alt=""
-                    class="nav-icon"
-                    aria-hidden="true"
-                  />
-                  <span class="card-title-text">Urlaubsanträge</span>
-                  <img
-                    src="./assets/svg/file-document-svgrepo-com.svg"
-                    alt=""
-                    class="nav-icon"
-                    aria-hidden="true"
-                  />
-                </h4>
-                  <p class="text-header-5">
-                    <strong>Wieso</strong> ist jemand nicht da?
-                  </p>
-                  <p class="text-small">
-                    Urlaube, Abwesenheiten und deren Status übersichtlich verwalten.
-                  </p>
-              </article>
-
-              <article
-                class="layout-card layout-card.employee"
-                aria-labelledby="heading-employee"
-              >
-                <h4 class="card-title text-employee" id="heading-employee">
-                  <img
-                    src="./assets/svg/person-team-svgrepo-com.svg"
-                    alt=""
-                    class="nav-icon"
-                    aria-hidden="true"
-                  />
-                  <span class="card-title-text">Mitarbeiter</span>
-                  <img
-                    src="./assets/svg/person-team-svgrepo-com.svg"
-                    alt=""
-                    class="nav-icon"
-                    aria-hidden="true"
-                  />
-                </h4>
-                  <p class="text-header-5">
-                    <strong>Wer</strong> kann <strong>was</strong> – und <strong>wann</strong>?
-                  </p>
-                  <p class="text-small">
-                    Mitarbeiter definieren und Aufgaben und individuelle Arbeitszeiten zuweisen.
-                  </p>
-              </article>
-
-              <article
-                class="layout-card layout-card.tasks"
-                aria-labelledby="heading-tasks"
-              >
-                <h4 class="card-title text-tasks" id="heading-tasks">
-                  <img
-                    src="./assets/svg/puzzle-piece-svgrepo-com.svg"
-                    alt=""
-                    class="nav-icon"
-                    aria-hidden="true"
-                  />
-                  <span class="card-title-text">Aufgaben</span>
-                  <img
-                    src="./assets/svg/puzzle-piece-svgrepo-com.svg"
-                    alt=""
-                    class="nav-icon"
-                    aria-hidden="true"
-                  />
-                </h4>
-                  <p class="text-header-5">
-                    <strong>Was</strong> wird überhaupt gemacht?
-                  </p>
-                  <p class="text-small">
-                    Aufgaben anlegen, benennen und visuell gruppieren.
-                  </p>
-              </article>
-
-              <article
-                class="layout-card layout-card.rules"
-                aria-labelledby="heading-rules"
-              >
-                <h4 class="card-title text-rules" id="heading-rules">
-                  <img
-                    src="./assets/svg/knowledge-graph-svgrepo-com.svg"
-                    alt=""
-                    class="nav-icon"
-                    aria-hidden="true"
-                  />
-                  <span class="card-title-text">Regeln</span>
-                  <img
-                    src="./assets/svg/knowledge-graph-svgrepo-com.svg"
-                    alt=""
-                    class="nav-icon"
-                    aria-hidden="true"
-                  />
-                </h4>
-                  <p class="text-header-5">
-                    <strong>Wie</strong> sieht ein ideales Team aus?
-                  </p>
-                  <p class="text-small">
-                    Regeln festlegen, die eib optimales Zusamenspiel vorgibt.
-                  </p>
-              </article>
-
-              <article
-                class="layout-card layout-card.calendar"
-                aria-labelledby="heading-calendar"
-              >
-                <h4 class="card-title text-calendar" id="heading-calendar">
-                  <img
-                    src="./assets/svg/calendar-svgrepo-com.svg"
-                    alt=""
-                    class="nav-icon"
-                    aria-hidden="true"
-                  />
-                  <span class="card-title-text">Kalender</span>
-                  <img
-                    src="./assets/svg/calendar-svgrepo-com.svg"
-                    alt=""
-                    class="nav-icon"
-                    aria-hidden="true"
-                  />
-                </h4>
-                  <p class="text-header-5">
-                    <strong>Wann</strong> wird gearbeitet?
-                  </p>
-                  <p class="text-small">
-                    Öffnungszeiten, Feiertage, Schichten und besondere Tage festlegen.
-                  </p>
-              </article>
-            </div>
-          </section>
-        </section>
-  `;
-
-  formContainer.appendChild(welcome);
-
-  // Re-run FN laptop logic
   if (typeof showFnKeyHintIfLaptop === "function") {
     showFnKeyHintIfLaptop();
   }
 }
+
 
 function domReady() {
   if (document.readyState === 'loading') {
@@ -785,4 +607,18 @@ function applySettings() {
 
   const zodiacStyle = localStorage.getItem('zodiacStyle') || 'none';
   setZodiacStyle(zodiacStyle);
+}
+
+
+function syncInitialSettingsToMain() {
+  const payload = {
+    colorTheme: localStorage.getItem('colorTheme') || 'default',
+    zoomFactor: Number(localStorage.getItem('zoomFactor') || 1),
+    presenceUIMode: localStorage.getItem('presenceUIMode') || 'toggle',
+    shiftSymbols: localStorage.getItem('shiftSymbols') || 'letters',
+    zodiacStyle: localStorage.getItem('zodiacStyle') || 'none',
+    autoSave: localStorage.getItem('autoSave') === 'true'
+  };
+
+  window.api.send('update-cache', payload);
 }

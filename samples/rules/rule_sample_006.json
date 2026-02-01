@@ -2,6 +2,8 @@
     "id": "rule_sample_005",
     "created": 1700000000005,
     "updated": 1700000000005,
+    "isAsleep": false,
+   
     "main": {
       "repeat": { "type": "repeat", "id": "W3", "details": { "bottom": 0, "top": 0 } },
       "timeframe": { "type": "timeframe", "id": "T5", "details": { "days": ["business"] } },

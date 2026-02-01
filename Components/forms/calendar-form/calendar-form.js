@@ -451,7 +451,7 @@ function createYearAndStateSpan(ruleFormState) {
   saveBtn.textContent = "🛡️💾";
   saveBtn.title = "Bundesland speichern";
   saveBtn.setAttribute("aria-label", "Bundesland speichern");
-  saveBtn.classList.add("noto", "hidden");
+  saveBtn.classList.add("noto", "hidden", "save-button", "button");
 
   saveBtn.addEventListener("click", async () => {
     console.log("  ***  federal state select change  ***");
@@ -561,8 +561,10 @@ function createCollapsible(cfg) {
 
   const saveBtn = createSaveButton({ onSave: cfg.onSave });
   const saveBtnPlaceholder = clone.querySelector('.rule-save-slot');
-  if (saveBtnPlaceholder) saveBtnPlaceholder.appendChild(saveBtn.el);
-
+  if (saveBtnPlaceholder) {
+    saveBtnPlaceholder.appendChild(saveBtn.el);
+    saveBtnPlaceholder.classList.add("form-buttons")
+  }
   const content = clone.querySelector(".rule-collapsible-content");
 
   let innerNode;
@@ -1070,36 +1072,25 @@ function populateCompanyHolidaysList(companyHolidays = []) {
   const previewEndId = `preview-end`;
   const saveBtnId = `save-company-holiday-btn-${timestamp}`;
 
-  inputContainer.innerHTML = `
-  <div class="flex-row">
-    <div class="flex-column">
+  const tpl = document.getElementById('date-range-template');
+  const node = tpl.content.cloneNode(true);
 
-      <div class="custom-date-wrapper">
-        <button id="${startBtnId}" class="date-trigger noto">
-          🔜 Anfang:
-        </button>
-        <span id="${previewStartId}" class="date-preview">–</span>
-        <input type="date" id="${startInputId}" class="visually-hidden-date-picker" />
-      </div>
+  const startBtn = node.querySelector('.start-btn');
+  const endBtn = node.querySelector('.end-btn');
+  const startInput = node.querySelector('.start-input');
+  const endInput = node.querySelector('.end-input');
+  const startPreview = node.querySelector('.start-preview');
+  const endPreview = node.querySelector('.end-preview');
 
-      <div class="custom-date-wrapper">
-        <button id="${endBtnId}" class="date-trigger noto">
-          🔚 Ende:
-        </button>
-        <span id="${previewEndId}" class="date-preview">–</span>
-        <input type="date" id="${endInputId}" class="visually-hidden-date-picker" />
-      </div>
+  // assign dynamic IDs if you really need them
+  startBtn.id = startBtnId;
+  endBtn.id = endBtnId;
+  startInput.id = startInputId;
+  endInput.id = endInputId;
+  startPreview.id = previewStartId;
+  endPreview.id = previewEndId;
 
-      <div class="flex-row duration-row">
-        <span>Dauer:</span>
-        <span id="company-holiday-duration">??</span>
-        <span>Tage</span>
-      </div>
-    </div>
-  </div>
-  <br>
-`;
-
+  inputContainer.appendChild(node);
   listControls.appendChild(inputContainer);
 
   // --- Append fragment to DOM first ---

@@ -5,7 +5,9 @@ const ELLIPSIS_ACTIONS = {
     repair: { icon: '🔨', label: 'Reparieren' },
     save: { icon: '💾', label: 'Speichern' },
     inspect: { icon: '💡', label: 'Prüfen' },
-    copy: { icon: '⿻', label: 'Kopieren' }
+    copy: { icon: '🗳️', label: 'Kopieren' },
+    disable: { icon: '💤', label: 'Pausieren' },
+    enable: { icon: '⏰', label: 'Aktivieren' },
 };
 
 export function createEllipsis(actions = [], context = {}) {

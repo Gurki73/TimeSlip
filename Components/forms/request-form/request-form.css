@@ -107,6 +107,8 @@
 #create-request-mode-btn,
 #approve-request-mode-btn {
   height: 3.1rem;
+  min-height: 3.1rem;
+  max-height: 3.1rem;
 }
 
 #request-enter-container,
@@ -125,7 +127,8 @@
 }
 
 .request-button {
-  padding: 10px 20px;
+  padding-left: 10px; 
+  padding-right: 20px;
   margin: 5px 5px -2px 5px;
   border-top-left-radius: 15px;
   border-top-right-radius: 15px;

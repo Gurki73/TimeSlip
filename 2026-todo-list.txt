@@ -1,5 +1,44 @@
+🟢 Easy / Quick wins (mostly CSS, small tweaks, low coupling)
+1  ✅ add margin left to chinese zodiac
+2  ✅ fix tabulator flag height in requests
+3  ✅ remove debugging colors left in calendar settings
+4  ✅ fix active color in grayscale for radio btns
+5  ✅ fix white-space for "noone is working" inline-block?
+6  ✅ style calendar picker buttons in calendar setting
+7  ✅ make story-modus in help page less prominent
+8  ✅ set story-modus in help default as off
+9  ✅ use full height for lists in calendar setting
+10 ✅ add size or scrollbar for welcome page on load (or size and spacing of cards)
+
+🟡 Medium (UI + state, but still localized)
+11 🚧 fix radio button lay out for menu optic on load
+12 🚧 fix min max btn on welcome page
+13 ✅ enter values for default hight for all 6 forms
+14 ☐ legend seam unresponsive, like it wants doubleclicks
+15 ✅ add a light pumping animation to save btn when dirty
+16 ✅ signal sample state for save button in calendar settings
+17 ✅ use state save buttons in calendar settings (similar size and style)
+18 ✅ remove or fix calendar setting legend
+
+🟠 Medium–Hard (event wiring, interactions, shared logic)
+19 ☐ filter icon buttons in requests doesn’t have any event listeners
+20 ☐ repair sample mode for all save buttons in form headers
+21 ☐ add sample modus for ellipses in ruleset
+22 ☐ fix year filter in requests
+
+🔴 Hard / Risky (business logic, combined state, edge cases)
+23 ☐ only show available filter options in requests
+24 ☐ allow combined filters in requests
+25 ☐ requester and vacation type cancel each other
+
+new todays to do list = 
+21.1 = Use the existing <input type="color"> per role.
+21.2 = Enforce limited color range per team (optional)
+21.3 = Add team + role name in the picker container (#limited-color-picker-teamname / #limited-color-picker-rolename) dynamically on cell focus.
+
+ruleset tasks =
 Phase 1 – Stabilize
-- Deterministic rule loading (JSON issue containment)
+✅ Deterministic rule loading (JSON issue containment)
 - Fix & rebaseline sanity check
 - Restore save button state machine
 
@@ -20,14 +59,6 @@ Phase 5 – Quality
 11. Replace mock data
 12. UI polish leftovers
 
-
-today's list:
-#9 🚧 Ellipses menu not rendering – quick UI fix / easy win
-#16 ☐ Warnings for conflicting request – pain warning, but important
-#27 🚧 Revive deleted employees – fun “resurrection” task
-#1 ☐ Infinite rerender loop on refresh – classic boss fight
-#21 ☐ Color customization – small UI polish
-
 ──────────────── 
 Legend:
 ☐  open           🚧 in work      ✅ finished
@@ -37,7 +68,7 @@ Legend:
 🔥 Ship-Blockers
 
 Request-form
-1 ☐ Infinite rerender loop on refresh
+1 ✅ Infinite rerender loop on refresh
 2 🚧 Filter shows filtered list then jumps back
 3 ☐ Selecting one field clears another (order-dependent)
 4 ☐ “No start date entered” while one exists
@@ -47,7 +78,7 @@ Rule-form
 6  ☐ Save button not marked dirty
 7  ☐ Flow wizard enforcing wrong order
 8  ☐ Flow wizard colors lying (green = missing)
-9  🚧 Ellipses menu not rendering
+9  ✅ Ellipses menu not rendering
 10 ☐ Forbidden combinations list incomplete
 
 Calendar
@@ -55,7 +86,7 @@ Calendar
 
 Employee-form
 12 ☐ Wrong shift assignments on closed days
-13 ☐ Ellipses buttons dead
+13 🚧 Ellipses buttons dead
 
 Calendar-settings
 14 ☐ Save buttons / state handling

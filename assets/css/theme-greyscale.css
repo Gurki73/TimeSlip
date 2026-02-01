@@ -25,7 +25,7 @@
   --bg-soft-white: ghostwhite;
   --bg-inactive: whitesmoke;
 
-  --accent-active: whitesmoke;
+  --accent-active: rgb(150, 189, 248);
   --accent-hover: ghostwhite;
   --accent-inactive: lightgray;
   --accent-muted: gray;

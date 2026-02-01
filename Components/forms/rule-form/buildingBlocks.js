@@ -231,3 +231,47 @@ function amountFactory(id) { return { ...blocks[id] }; }
 function groupFactory(id) { return { ...blocks[id] }; }
 function dependencyFactory(id) { return { ...blocks[id] }; }
 function exceptionFactory(id) { return { ...blocks[id] }; }
+
+/*
+function ruleToBlueprint(rule, { keepId }) {
+    return {
+        id: keepId ? rule.id : undefined,
+        main: {
+            repeat: { type: rule.main.repeat?.type },
+            timeframe: { type: rule.main.timeframe?.type },
+            amount: { type: rule.main.amount?.type },
+            group: { type: rule.main.group?.type },
+            dependency: { type: rule.main.dependency?.type },
+            exception: { type: rule.main.exception?.type }
+        },
+        secondary: {
+            repeat: { type: rule.condition?.repeat?.type },
+            timeframe: { type: rule.condition?.timeframe?.type },
+            amount: { type: rule.condition?.amount?.type },
+            group: { type: rule.condition?.group?.type },
+            dependency: { type: rule.condition?.dependency?.type }
+        }
+    };
+}
+*/
+
+export function ruleToBlueprint(rule, { keepId }) {
+    return {
+        id: keepId ? rule.id : undefined,
+        main: {
+            repeat: { type: rule.main.repeat?.type },
+            timeframe: { type: rule.main.timeframe?.type },
+            amount: { type: rule.main.amount?.type },
+            group: { type: rule.main.group?.type },
+            dependency: { type: rule.main.dependency?.type },
+            exception: { type: rule.main.exception?.type }
+        },
+        secondary: {
+            repeat: { type: rule.condition?.repeat?.type },
+            timeframe: { type: rule.condition?.timeframe?.type },
+            amount: { type: rule.condition?.amount?.type },
+            group: { type: rule.condition?.group?.type },
+            dependency: { type: rule.condition?.dependency?.type }
+        }
+    };
+}

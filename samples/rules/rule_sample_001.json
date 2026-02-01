@@ -2,6 +2,7 @@
   "id": "rule_sample_001",
   "created": 1699990000001,
   "updated": 1699990000001,
+  "isAsleep": false,
 
   "main": {
     "repeat": { 

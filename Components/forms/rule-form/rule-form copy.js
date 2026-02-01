@@ -15,7 +15,7 @@ let cachedRoles = [];
 let ruleOfficeDays;
 let api;
 let eventDelegationInitialized = false;
-let ruleForEdeting = {};
+let ruleForEditing = {};
 let ruleSet = [];
 
 const map = {
@@ -89,9 +89,9 @@ export async function initializeRuleForm(passedApi) {
         await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
     }
 
-    ruleForEdeting = createRuleFromBlueprint(defaultBlueprint);
-    console.log("rule for edeting:", ruleForEdeting);
-    translateToHuman(ruleForEdeting, cachedRoles);
+    ruleForEditing = createRuleFromBlueprint(defaultBlueprint);
+    console.log("rule for edeting:", ruleForEditing);
+    translateToHuman(ruleForEditing, cachedRoles);
 
     resetRule();
     updateDivider("bg-rules");
@@ -281,9 +281,9 @@ export function populateFormFromRule(rule) {
     }
 
     // keep editor state
-    ruleForEdeting = { ...rule };
-    translateToHuman(ruleForEdeting, cachedRoles);
-    translateToMachine(ruleForEdeting);
+    ruleForEditing = { ...rule };
+    translateToHuman(ruleForEditing, cachedRoles);
+    translateToMachine(ruleForEditing);
 }
 
 // robust delegated handler (replace existing)
@@ -1117,8 +1117,8 @@ function collectRuleFromForm() {
 
     // wrap as a rule object
     const ruleObj = {
-        id: ruleForEdeting.id || `rule_${Date.now()}`,
-        created: ruleForEdeting.created || Date.now(),
+        id: ruleForEditing.id || `rule_${Date.now()}`,
+        created: ruleForEditing.created || Date.now(),
         updated: Date.now(),
         main,
         condition: condition
@@ -1149,34 +1149,34 @@ export function handleInput(inputObj) {
 
     const block = blocks[id];
     if (block) {
-        ruleForEdeting[key] = block;
+        ruleForEditing[key] = block;
     } else {
         console.warn("Block not found for id:", id);
     }
 
     switch (key) {
         case "repeat":
-            if (!ruleForEdeting.repeat.details) ruleForEdeting.repeat.details = {};
-            if (inputObj.number1 != null) ruleForEdeting.repeat.details.bottom = inputObj.number1;
-            if (inputObj.number2 != null) ruleForEdeting.repeat.details.top = inputObj.number2;
+            if (!ruleForEditing.repeat.details) ruleForEditing.repeat.details = {};
+            if (inputObj.number1 != null) ruleForEditing.repeat.details.bottom = inputObj.number1;
+            if (inputObj.number2 != null) ruleForEditing.repeat.details.top = inputObj.number2;
             break;
         case "timeframe":
-            if (!ruleForEdeting.timeframe.details) ruleForEdeting.timeframe.details = {};
-            if (inputObj.words) ruleForEdeting.timeframe.details.days = inputObj.words;
+            if (!ruleForEditing.timeframe.details) ruleForEditing.timeframe.details = {};
+            if (inputObj.words) ruleForEditing.timeframe.details.days = inputObj.words;
         case "amount":
-            if (!ruleForEdeting.amount.details) ruleForEdeting.amount.details = {};
-            if (inputObj.number1 != null) ruleForEdeting.amount.details.bottom = inputObj.number1;
-            if (inputObj.number2 != null) ruleForEdeting.amount.details.top = inputObj.number2;
+            if (!ruleForEditing.amount.details) ruleForEditing.amount.details = {};
+            if (inputObj.number1 != null) ruleForEditing.amount.details.bottom = inputObj.number1;
+            if (inputObj.number2 != null) ruleForEditing.amount.details.top = inputObj.number2;
             break;
         case "group":
-            if (!ruleForEdeting.group.details) ruleForEdeting.group.details = {};
-            if (inputObj.value && inputObj.value.length > 0) ruleForEdeting.group.details.roles = inputObj.value;
+            if (!ruleForEditing.group.details) ruleForEditing.group.details = {};
+            if (inputObj.value && inputObj.value.length > 0) ruleForEditing.group.details.roles = inputObj.value;
             break;
         case "dependency":
-            if (!ruleForEdeting.dependency.details) ruleForEdeting.dependency.details = {};
-            if (inputObj.details && inputObj.details.roles > 0) ruleForEdeting.dependency.details.roles = inputObj.details.roles;
-            if (inputObj.words) ruleForEdeting.dependency.details.roles = inputObj.words;
-            if (inputObj.bottom) ruleForEdeting.details.bottom = inputObj.details.bottom;
+            if (!ruleForEditing.dependency.details) ruleForEditing.dependency.details = {};
+            if (inputObj.details && inputObj.details.roles > 0) ruleForEditing.dependency.details.roles = inputObj.details.roles;
+            if (inputObj.words) ruleForEditing.dependency.details.roles = inputObj.words;
+            if (inputObj.bottom) ruleForEditing.details.bottom = inputObj.details.bottom;
             break;
     }
     // --- dynamic wizard update ---
@@ -1184,8 +1184,8 @@ export function handleInput(inputObj) {
     updateWizard(id);        // apply forbidden pairs & highlight
 
     // --- translations remain as-is ---
-    const humanOK = translateToHuman(ruleForEdeting, cachedRoles);
-    const machine = translateToMachine(ruleForEdeting);
+    const humanOK = translateToHuman(ruleForEditing, cachedRoles);
+    const machine = translateToMachine(ruleForEditing);
 
     const debug = document.getElementById("debug-output");
     if (debug) {
@@ -1194,7 +1194,7 @@ export function handleInput(inputObj) {
             `Machine:\n${JSON.stringify(machine, null, 2)}`;
     }
 
-    console.trace("Trace for Updated ruleForEdeting");
+    console.trace("Trace for Updated ruleForEditing");
     console.groupEnd();
 }
 

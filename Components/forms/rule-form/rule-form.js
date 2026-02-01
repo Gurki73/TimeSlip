@@ -7,11 +7,12 @@ import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
 import { createBranchSelect } from '../../../js/Utils/branch-select.js';
 import { getShiftSymbol } from '../../../js/Utils/globalIcons.js';
 import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js';
-import { blocks, createRuleFromBlueprint } from "./buildingBlocks.js";
+import { blocks, createRuleFromBlueprint, ruleToBlueprint } from "./buildingBlocks.js";
 import { translateCurrentRule, translateExistingRules } from "./translatorHuman.js";
 import { updateRulesPreview } from "./translatorMachine.js";
-import { loadRuleData, saveRuleData } from '../../../js/loader/rule-loader.js';
+import { loadRuleData, saveRuleData, deleteRule as deleteRuleFromDisk, getAllRules } from '../../../js/loader/rule-loader.js';
 import { createSaveButton } from '../../../js/Utils/saveButton.js';
+import { confirmAction } from '../../../js/Utils/conformation-dialog.js'
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const map = {
@@ -45,7 +46,7 @@ let cachedRoles = [];
 let ruleOfficeDays;
 let api;
 let eventDelegationInitialized = false;
-let ruleForEdeting = {};
+let ruleForEditing = {};
 let ruleSet = [];
 let testPassed = false;
 let saveButtonHeader;
@@ -71,9 +72,6 @@ export async function initializeRuleForm(passedApi) {
         console.error('Error during initialization:', error);
         return; // Stop execution if loading fails
     }
-
-    console.log("-cached roles ", cachedRoles);
-    console.log("-cached rules", ruleSet);
 
     const formContainer = document.getElementById('form-container');
     if (!formContainer) {
@@ -112,9 +110,9 @@ export async function initializeRuleForm(passedApi) {
         });
     }
 
-    ruleForEdeting = createRuleFromBlueprint(defaultBlueprint);
-    console.log("rule for edeting:", ruleForEdeting);
-    translateCurrentRule(ruleForEdeting, cachedRoles);
+    ruleForEditing = createRuleFromBlueprint(defaultBlueprint);
+    console.log("rule for edeting:", ruleForEditing);
+    translateCurrentRule(ruleForEditing, cachedRoles);
 
     updateDivider("bg-rules");
 
@@ -168,7 +166,7 @@ function updateSaveButtonState() {
 
 function runRuleTest() {
 
-    const newMachineRule = updateRulesPreview([ruleForEdeting]);
+    const newMachineRule = updateRulesPreview([ruleForEditing]);
     console.log("new machine rule:", newMachineRule);
 
     return new Promise((resolve, reject) => {
@@ -394,8 +392,8 @@ export function populateFormFromRule(rule) {
     }
 
     // keep editor state
-    ruleForEdeting = { ...rule };
-    translateCurrentRule(ruleForEdeting, cachedRoles);
+    ruleForEditing = { ...rule };
+    translateCurrentRule(ruleForEditing, cachedRoles);
     scrollRulesToBottomIfAllowed();
 
     console.log(" new rule");
@@ -1278,8 +1276,8 @@ function collectRuleFromForm() {
 
     // wrap as a rule object
     const ruleObj = {
-        id: ruleForEdeting.id || `rule_${Date.now()}`,
-        created: ruleForEdeting.created || Date.now(),
+        id: ruleForEditing.id || `rule_${Date.now()}`,
+        created: ruleForEditing.created || Date.now(),
         updated: Date.now(),
         main,
         condition: condition
@@ -1313,9 +1311,9 @@ export function handleInput(inputObj) {
     }
 
     // --- initialize rule skeleton ---
-    if (!ruleForEdeting.id) ruleForEdeting.id = "ui-rule";
-    if (!ruleForEdeting.main) ruleForEdeting.main = {};
-    if (!ruleForEdeting.secondary) ruleForEdeting.secondary = {};
+    if (!ruleForEditing.id) ruleForEditing.id = "ui-rule";
+    if (!ruleForEditing.main) ruleForEditing.main = {};
+    if (!ruleForEditing.secondary) ruleForEditing.secondary = {};
 
     // --- exceptions only allowed on MAIN ---
     if (key === "exception" && scope === "secondary") {
@@ -1326,9 +1324,9 @@ export function handleInput(inputObj) {
 
     // --- attach block to correct branch ---
     const block = blocks[id];
-    ruleForEdeting[scope][key] = block;
+    ruleForEditing[scope][key] = block;
 
-    const target = ruleForEdeting[scope][key];
+    const target = ruleForEditing[scope][key];
     if (!target) {
         console.warn("Failed to attach block:", scope, key);
         console.groupEnd();
@@ -1382,11 +1380,11 @@ export function handleInput(inputObj) {
     clearHighlights();
     updateWizard(id);
 
-    console.trace("Trace for Updated ruleForEdeting", ruleForEdeting);
+    console.trace("Trace for Updated ruleForEditing", ruleForEditing);
     console.groupEnd();
 
     // --- translations remain as-is ---
-    const humanOK = translateCurrentRule(ruleForEdeting, cachedRoles);
+    const humanOK = translateCurrentRule(ruleForEditing, cachedRoles);
 
     const debug = document.getElementById("debug-output");
     if (debug) {
@@ -1434,4 +1432,86 @@ function fillRules(rulesArray) {
         deleteBtn.dataset.ruleId = index;
         rulesList.appendChild(clone);
     });
+}
+
+export function copyRule(ruleView) {
+    console.info('Copy rule into editor:', ruleView.id);
+
+    const blueprint = ruleToBlueprint(ruleView.rule, { keepId: false });
+    const editorRule = createRuleFromBlueprint(blueprint);
+
+    populateFormFromRule(ruleView.rule);
+
+    ruleForEditing = editorRule;
+
+    console.info('New rule id:', editorRule.id);
+}
+
+export function editRule(ruleView) {
+    console.info('Edit rule:', ruleView.id);
+
+    const blueprint = ruleToBlueprint(ruleView.rule, { keepId: true });
+    const editorRule = createRuleFromBlueprint(blueprint);
+
+    populateFormFromRule(ruleView.rule);
+
+    ruleForEditing = editorRule;
+}
+
+
+export async function deleteRule(ruleView) {
+    const ok = await confirmAction('Delete this rule?');
+    if (!ok) return;
+
+    if (isClientMode()) {
+        const res = await deleteRuleFromDisk(api, ruleView.id);
+        console.warn('Rule deleted from disk:', res);
+        return res;
+    }
+
+    // sample mode → blacklist (memory only)
+    ruleView.rule._deleted = true;
+    console.warn('Rule blacklisted in sample mode:', ruleView.id);
+}
+
+export async function awakeRule(ruleView) {
+    const rule = { ...ruleView.rule, isAsleep: false, updated: Date.now() };
+
+    if (isClientMode()) {
+        return await saveRuleData(window.api, rule);
+    }
+
+    updateRuleInMemory(rule);
+    console.info('Rule awakened (sample mode)');
+}
+
+
+export async function goAsleep(ruleView) {
+    const rule = { ...ruleView.rule, isAsleep: true, updated: Date.now() };
+
+    if (isClientMode()) {
+        return await saveRuleData(window.api, rule);
+    }
+
+    updateRuleInMemory(rule);
+    console.info('Rule put to sleep (sample mode)');
+}
+
+
+export function getDataMode() {
+    const mode = localStorage.getItem('dataMode');
+    return mode === 'client' ? 'client' : 'sample';
+}
+
+export function isClientMode() {
+    return getDataMode() === 'client';
+}
+
+
+function updateRuleInMemory(updatedRule) {
+    const all = getAllRules();
+    const idx = all.findIndex(r => r.id === updatedRule.id);
+    if (idx !== -1) {
+        all[idx] = { ...updatedRule, updated: Date.now() };
+    }
 }

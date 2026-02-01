@@ -7,6 +7,7 @@ const RETRY_DELAY_MS = 1200;
 
 let rules = [];       // evaluated (usable) rules
 let allRules = [];    // raw rule objects loaded
+let rulesMode = null;
 
 // ----------------- Public API -----------------
 export async function loadRuleData(api, attempt = 1) {
@@ -18,57 +19,91 @@ export async function loadRuleData(api, attempt = 1) {
   const homeKey = localStorage.getItem('dataMode') || 'auto';
 
   if (homeKey === 'sample') {
-    console.log('[rule-loader] sample mode enabled');
-    return await loadSampleRuleData();
+    if (rulesMode === 'sample' && rules.length > 0) {
+      console.log('[rule-loader] sample rules already loaded');
+      return [...allRules];
+    }
+
+    console.log('[rule-loader] loading sample rules');
+    const sample = await loadSampleRuleData();
+    allRules = sample;
+    rules = allRules.filter(r => r && r.main);
+    rulesMode = 'sample';
+    return [...allRules];
   }
 
+
+  // ---------- Infrastructure layer (retry allowed) ----------
+  let ruleFiles;
   try {
-    const ruleFiles = await api.getRuleFiles();
-    console.log('[rule-loader] rule files found:', ruleFiles);
-
-    if (!ruleFiles || ruleFiles.length === 0) {
-      console.warn('[rule-loader] no rule JSON files found');
-      return [];
-    }
-
-    const loaded = [];
-
-    for (const filePath of ruleFiles) {
-      try {
-        const data = await loadFile(api, 'ruleset', filePath, null);
-        if (!data) {
-          console.warn('[rule-loader] missing rule file', filePath);
-          continue;
-        }
-
-        const parsed = parseRuleJSON(data);
-        const fixed = sanitizeRule(parsed);
-        loaded.push(fixed);
-      } catch (e) {
-        console.warn('[rule-loader] failed to load rule', filePath, e);
-      }
-    }
-
-    allRules = loaded.map(r => ({ ...r }));
-    rules = allRules.filter(r => r && r.main);
-
-    console.log(`✅ Loaded ${rules.length} rules`);
-    return [...allRules];
-
+    ruleFiles = await api.getRuleFiles();
   } catch (err) {
-    console.warn(`❌ Failed to load rules (attempt ${attempt})`, err);
+    console.warn('[rule-loader] getRuleFiles failed', err);
 
     if (attempt < MAX_RETRIES) {
       await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
       return loadRuleData(api, attempt + 1);
     }
 
-    console.error('⚠️ Max retries reached. Loading sample rules.');
+    console.error('⚠️ Cannot access rules folder. Falling back to samples.');
     const sample = await loadSampleRuleData();
     allRules = sample;
     rules = allRules.filter(r => r && r.main);
     return [...allRules];
   }
+
+  console.log('[rule-loader] rule files found:', ruleFiles);
+
+  if (!Array.isArray(ruleFiles) || ruleFiles.length === 0) {
+    console.warn('[rule-loader] no rule JSON files found');
+    allRules = [];
+    rules = [];
+    return [];
+  }
+
+  // ---------- File-level processing (NO retry) ----------
+  const loaded = [];
+
+  for (const filePath of ruleFiles) {
+    try {
+      const data = await loadFile(api, 'ruleset', filePath, null);
+      if (!data) {
+        console.warn('[rule-loader] missing rule file', filePath);
+        continue;
+      }
+
+      // TEMP forensic logging – remove later
+      console.debug(
+        '[rule-loader] raw file head:',
+        typeof data === 'string'
+          ? data.slice(0, 120)
+          : JSON.stringify(data).slice(0, 120)
+      );
+
+      const result = parseRuleJSON(data);
+      if (!result || !result.ok) {
+        console.warn('[rule-loader] parse rejected', filePath, result?.error);
+        continue;
+      }
+
+      const fixed = sanitizeRule(result.value);
+      if (!fixed || !fixed.main) {
+        console.warn('[rule-loader] sanitize rejected', filePath);
+        continue;
+      }
+
+      loaded.push(fixed);
+    } catch (err) {
+      console.warn('[rule-loader] failed to process rule file', filePath, err);
+    }
+  }
+
+  allRules = loaded.map(r => ({ ...r }));
+  rules = allRules.filter(r => r && r.main);
+  rulesMode = 'client';
+
+  console.log(`✅ Loaded ${rules.length} rules`);
+  return [...allRules];
 }
 
 export async function loadSampleRuleList() {
@@ -94,7 +129,6 @@ function parseIndexOrSampleList(raw) {
     const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
     if (Array.isArray(parsed)) return parsed;
   } catch (e) {
-    // if it's a string with newlines, map to array
     return raw.split('\n').map(l => l.trim()).filter(Boolean);
   }
   return [];
@@ -115,6 +149,12 @@ export async function loadSampleRuleData() {
         if (!resp.ok) throw new Error('sample fetch failed');
         const text = await resp.text();
         const parsed = parseRuleJSON(text);
+        if (!parsed.ok) {
+          console.warn('⚠️ sample parse failed', rel, parsed.error);
+          continue;
+        }
+        sampleRules.push(sanitizeRule(parsed.value));
+
         sampleRules.push(sanitizeRule(parsed));
       } catch (e) {
         console.warn('⚠️ sample rule missing', rel, e);
@@ -127,39 +167,51 @@ export async function loadSampleRuleData() {
   }
 }
 
-/*
 export function parseRuleJSON(input) {
-  if (!input) return null;
+  if (!input) {
+    return { ok: false, error: 'empty input' };
+  }
 
   if (typeof input === 'object') {
-    return deepClone(input);
+    return { ok: true, value: deepClone(input) };
   }
 
   try {
     const parsed = JSON.parse(input);
-
-    // sanity: must be plain object
-    if (!parsed || Array.isArray(parsed)) return null;
-
-    return parsed;
-  } catch {
-    return null;
+    if (!parsed || Array.isArray(parsed)) {
+      return { ok: false, error: 'rule must be an object' };
+    }
+    return { ok: true, value: parsed };
+  } catch (e) {
+    return { ok: false, error: `JSON parse failed: ${e.message}` };
   }
 }
-*/
 
+function hash(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = (h << 5) - h + str.charCodeAt(i);
+    h |= 0;
+  }
+  return h;
+}
 
 export function sanitizeRule(raw) {
   if (!raw || typeof raw !== 'object') return null;
 
   const now = Date.now();
-  const id = raw.id ?? (`rule_${now}`);
+  const id =
+    raw.id ??
+    raw.__sampleId ??
+    `sample_${Math.abs(hash(JSON.stringify(raw)))}`;
+
 
   // shallow clone and defaults
   const r = {
     id: String(id),
     created: raw.created || now,
     updated: raw.updated || now,
+    isAsleep: Boolean(raw.isAsleep ?? false),
     main: raw.main || {},
     condition: raw.condition || {}
   };

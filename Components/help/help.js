@@ -370,8 +370,8 @@ function initHelpToggles() {
             storyCheckbox.checked = enabled;
             helpRoot.classList.toggle('no-storymode', !enabled);
         } else {
-            storyCheckbox.checked = true; // default: aktiviert
-            helpRoot.classList.remove('no-storymode'); // Storymode aktiv
+            storyCheckbox.checked = false; // default: off
+            helpRoot.classList.add('no-storymode'); // Storymode off
         }
 
         storyCheckbox.addEventListener('change', () => {

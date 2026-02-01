@@ -2,7 +2,7 @@
 // Build human-readable German sentences for rules.
 // Uses client role names exactly as provided (no pluralization).
 // Exports: translateToHuman(rule, roles), generateHumanSentence(rule, roles), populateExistingRules(ruleSet, roles)
-import { populateFormFromRule } from './rule-form.js';
+import { populateFormFromRule, copyRule, deleteRule, editRule, awakeRule, goAsleep } from './rule-form.js';
 import { createEllipsis } from '../../../js/Utils/ellipsisButton.js';
 
 
@@ -15,7 +15,15 @@ const TEAM = Object.freeze({
     AZUBI: 5
 });
 
-// constants/teams.js
+const TEAM_PRIMARY_ROLE = {
+    [TEAM.NONE]: 0,
+    [TEAM.BLUE]: 1,
+    [TEAM.GREEN]: 4,
+    [TEAM.RED]: 7,
+    [TEAM.BLACK]: 10,
+    [TEAM.AZUBI]: 13
+};
+
 const ROLE_TO_TEAM = Object.freeze({
     0: TEAM.NONE,
     1: TEAM.BLUE,
@@ -42,6 +50,14 @@ const TEAM_REGISTRY = {
     [TEAM.AZUBI]: { dot: '🟠' }
 };
 
+const TEAM_KEY = {
+    [TEAM.BLUE]: 'blue',
+    [TEAM.GREEN]: 'green',
+    [TEAM.RED]: 'red',
+    [TEAM.BLACK]: 'black',
+    [TEAM.AZUBI]: 'azubi',
+    [TEAM.NONE]: 'none'
+};
 
 const RULE_ELLIPSIS_ACTIONS = ['copy', 'edit', 'delete'];
 
@@ -62,6 +78,19 @@ const SHIFT_CONFIG = {
     day: { name: "Tag", adv: "tagsüber" },
     late: { name: "Spät", adv: "spät" }
 };
+
+function resolveTeamName(team, teamnames) {
+    if (!teamnames) return '';
+
+    // array fallback (old behavior)
+    if (Array.isArray(teamnames)) {
+        return teamnames[team] ?? '';
+    }
+
+    // object-based (new behavior)
+    const key = TEAM_KEY[team];
+    return key ? teamnames[key] ?? '' : '';
+}
 
 // ========== HELPER FUNCTIONS ==========
 function joinGermanList(items = [], connector = "und") {
@@ -399,25 +428,17 @@ function identifyTeams(rule) {
 
     return teams;
 }
-
 function enrichRule(rule, idx, roles) {
     const errors = [];
     const teams = identifyTeams(rule);
 
-    // --- mandatory: main.exception.id
-    const hasMainException =
-        has(rule, ['main', 'exception', 'id']);
-
-    if (!hasMainException) {
-        errors.push('mandatory exception missing');
-    }
+    const hasMainException = has(rule, ['main', 'exception', 'id']);
+    if (!hasMainException) errors.push('mandatory exception missing');
 
     const isComplex =
         hasMainException && rule.main.exception.id !== 'E0';
 
-    // --- conditional: condition.dependency.id
     let isRatio = false;
-
     if (isComplex) {
         const hasConditionDependency =
             has(rule, ['condition', 'dependency', 'id']);
@@ -425,8 +446,9 @@ function enrichRule(rule, idx, roles) {
         if (!hasConditionDependency) {
             errors.push('mandatory dependency missing (complex rule)');
         } else {
-            isRatio = rule.main?.dependeny?.id !== 'D0'
-                || rule.condition.dependency.id !== 'd0';
+            isRatio =
+                rule.main?.dependency?.id !== 'D0' ||
+                rule.condition.dependency.id !== 'd0';
         }
     }
 
@@ -437,18 +459,14 @@ function enrichRule(rule, idx, roles) {
     }
 
     return {
-        id: rule?.id || String(idx),
-        rule,
-
+        ...rule,               // 🔑 keeps isAsleep, created, updated
+        _idx: idx,              // metadata (namespaced)
         teams,
         teamCount: teams.length,
-
         isWarning: rule?.type === 'warning',
         isComplex,
         isRatio,
-
         roles,
-
         isCorrupt: errors.length > 0 || teams.length === 0,
         errors
     };
@@ -478,6 +496,24 @@ function getMinRoleForTeam(roles, team) {
     const teamRoles = roles.filter(r => ROLE_TO_TEAM[r] === team);
     return teamRoles.length ? Math.min(...teamRoles) : Infinity;
 }
+/*
+function renderCategory({ team, teamName, rules, container }) {
+    const tpl = document.getElementById('rule-category');
+    const fragment = tpl.content.cloneNode(true);
+
+    const li = fragment.querySelector('.rule-category');
+    const title = fragment.querySelector('.rule-category-title');
+    const dot = fragment.querySelector('.rule-dot');
+    const list = fragment.querySelector('.rule-category-list');
+
+    title.textContent = "Regeln füt Team: " + teamName || " INJEXT TEAM-NAME HERE";
+    dot.textContent = TEAM_REGISTRY[team]?.dot ?? '⚪️';
+
+    rules.forEach(rule => renderRule(rule, list));
+
+    container.appendChild(fragment);
+}
+*/
 
 function renderCategory({ team, teamName, rules, container }) {
     const tpl = document.getElementById('rule-category');
@@ -488,11 +524,14 @@ function renderCategory({ team, teamName, rules, container }) {
     const dot = fragment.querySelector('.rule-dot');
     const list = fragment.querySelector('.rule-category-list');
 
-    title.textContent = teamName || " INJEXT TEAM-NAME HERE";
+    title.textContent = "Regeln für Team: " + teamName || " INJEXT TEAM-NAME HERE";
     dot.textContent = TEAM_REGISTRY[team]?.dot ?? '⚪️';
 
-    rules.forEach(rule => renderRule(rule, list));
+    // 🔑 inject team + role info
+    li.dataset.team = team;
+    li.dataset.primaryRole = TEAM_PRIMARY_ROLE[team];
 
+    rules.forEach(rule => renderRule(rule, list));
     container.appendChild(fragment);
 }
 
@@ -505,11 +544,15 @@ export function translateExistingRules(
     roles = [],
     teamnames = ["Blau", "Grün", "Rot", "Schwarz", "Azubi", "Falsch"]
 ) {
+    const header = document.getElementById("exsiting-ruleh-header");
+    if (!header) return;
+
+    header.textContent = `Alle ${ruleSet.length} bestehenden Regeln`;
+
     const rulesList = document.getElementById('rules-list');
     if (!rulesList) return;
 
     rulesList.innerHTML = '';
-
     const enriched = enrichRules(ruleSet, roles);
     const prepared = prepareRulesForDisplay(enriched);
     const grouped = groupAndSortByCategory(prepared);
@@ -528,15 +571,22 @@ export function translateExistingRules(
 
         renderCategory({
             team,
-            teamName: teamnames[team],
+            teamName: resolveTeamName(team, teamnames),
             rules,
             container: rulesList,
             roles
         });
     }
+    initializeCollapsedState();
+    updateAllWarningCounters();
+    autoExpandCategoriesWithWarnings();
+    initRuleChevronHandlers();
 }
 
 function renderRule(ruleView, container) {
+
+    if (ruleView._deleted) return;
+
     const tpl = document.getElementById('rule-item-template');
     const fragment = tpl.content.cloneNode(true);
     const li = fragment.querySelector('li');
@@ -684,36 +734,157 @@ function createRuleEllipsis(rule) {
         }
     );
 }
-
 function renderEllipsis(li, ruleView) {
     const host = li.querySelector('.rule-ellipses');
     if (!host) return;
 
     host.innerHTML = '';
 
-    const ellipsis = createEllipsis(
-        RULE_ELLIPSIS_ACTIONS,
-        {
-            copy: () => copyRule(ruleView),
-            edit: () => editRule(ruleView),
-            delete: () => deleteRule(ruleView)
-        }
-    );
+    const isAsleep = !!ruleView.isAsleep;
 
+    const actions = [
+        ...RULE_ELLIPSIS_ACTIONS,
+        isAsleep ? 'enable' : 'disable'
+    ];
+
+    const handlers = {
+        copy: () => copyRule(ruleView),
+        edit: () => editRule(ruleView),
+        delete: () => deleteRule(ruleView),
+        enable: () => awakeRule(ruleView),
+        disable: () => goAsleep(ruleView)
+    };
+
+    const ellipsis = createEllipsis(actions, handlers, ruleView);
     host.appendChild(ellipsis);
 }
 
-function copyRule(ruleView) {
-    navigator.clipboard.writeText(JSON.stringify(ruleView.rule, null, 2));
-    console.info('Rule copied:', ruleView.id);
+export function initRuleChevronHandlers() {
+    const rulesList = document.getElementById('rules-list');
+    if (!rulesList) return;
+
+    rulesList.addEventListener('click', (e) => {
+        const chevron = e.target.closest('.rule-chevron');
+        if (!chevron) return;
+
+        // CATEGORY CHEVRON
+        const category = chevron.closest('.rule-category');
+        if (category && chevron.tagName === 'BUTTON') {
+            toggleCategory(category, chevron);
+            return;
+        }
+
+        // RULE CHEVRON
+        const ruleItem = chevron.closest('.existing-rule-item');
+        if (ruleItem) {
+            toggleRule(ruleItem, chevron);
+        }
+    });
 }
 
-function editRule(ruleView) {
-    console.info('Edit rule:', ruleView.id);
-    // open editor modal later
+function toggleCategory(category, chevron) {
+    const list = category.querySelector('.rule-category-list');
+    if (!list) return;
+
+    const expanded = chevron.getAttribute('aria-expanded') === 'true';
+
+    chevron.setAttribute('aria-expanded', String(!expanded));
+    list.setAttribute('aria-hidden', String(expanded));
 }
 
-function deleteRule(ruleView) {
-    console.warn('Delete rule:', ruleView.id);
-    // confirm + remove later
+function toggleRule(ruleItem, chevron) {
+    const warnings = ruleItem.querySelector('.rule-warnings');
+    if (!warnings) return;
+
+    const expanded = chevron.getAttribute('aria-expanded') === 'true';
+
+    chevron.setAttribute('aria-expanded', String(!expanded));
+    warnings.setAttribute('aria-hidden', String(expanded));
+}
+
+function initializeCollapsedState() {
+    document
+        .querySelectorAll('.rule-category-list, .rule-warnings')
+        .forEach(el => el.setAttribute('aria-hidden', 'true'));
+
+    document
+        .querySelectorAll('.rule-chevron')
+        .forEach(ch => ch.setAttribute('aria-expanded', 'false'));
+}
+
+function autoExpandCategoriesWithWarnings() {
+    document
+        .querySelectorAll('.rule-warnings')
+        .forEach(warnings => {
+            const rule = warnings.closest('.existing-rule-item');
+            const category = warnings.closest('.rule-category');
+
+            if (!rule || !category) return;
+
+            const ruleChevron = rule.querySelector('.rule-chevron');
+            const categoryChevron = category.querySelector('.rule-category-header .rule-chevron');
+
+            if (ruleChevron) toggleRule(rule, ruleChevron);
+            if (categoryChevron) toggleCategory(category, categoryChevron);
+        });
+}
+
+function updateWarningCounter(counterEl, count) {
+    if (!counterEl) return;
+
+    counterEl.textContent = `⚠️ ${count}`;
+
+    if (count > 0) {
+        counterEl.setAttribute('active', 'true');
+    } else {
+        counterEl.setAttribute('active', 'false');
+    }
+}
+
+function countRuleWarnings(ruleItem) {
+    return ruleItem.querySelectorAll('.rule-warnings > li').length;
+}
+
+function updateRuleWarningCounters() {
+    document
+        .querySelectorAll('.existing-rule-item')
+        .forEach(rule => {
+            const count = countRuleWarnings(rule);
+            const counter = rule.querySelector('.warning-counter-team');
+
+            updateWarningCounter(counter, count);
+
+            // Optional UX: auto-expand rule if it has warnings
+            if (count > 0) {
+                const chevron = rule.querySelector('.rule-chevron');
+                if (chevron) toggleRule(rule, chevron);
+            }
+        });
+}
+
+function updateCategoryWarningCounters() {
+    document
+        .querySelectorAll('.rule-category')
+        .forEach(category => {
+            const rules = category.querySelectorAll('.existing-rule-item');
+
+            let total = 0;
+            rules.forEach(rule => {
+                total += countRuleWarnings(rule);
+            });
+
+            const counter = category.querySelector('.warning-counter-category');
+            updateWarningCounter(counter, total);
+
+            // Optional UX: auto-expand category if it has warnings
+            if (total > 0) {
+                const chevron = category.querySelector('.rule-category-header .rule-chevron');
+                if (chevron) toggleCategory(category, chevron);
+            }
+        });
+}
+
+function updateAllWarningCounters() {
+    updateRuleWarningCounters();
+    updateCategoryWarningCounters();
 }

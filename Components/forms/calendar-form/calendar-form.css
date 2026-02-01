@@ -43,6 +43,7 @@
 #calendar-collapsibles {
   min-width: 95%;
   max-width: 95%;
+  min-height: 100%;
   display: flex;
   flex-direction: row;
   justify-content: space-evenly;
@@ -52,14 +53,12 @@
   flex: 0 1 auto; /* left column fits content naturally */
   max-width: fit-content;
   min-height: 90%;
-  background-color: lime;
 }
 
 #right-column {
   flex: 1 1 auto; /* right column takes remaining space */
   min-height: 90%; /* ensures it can shrink */
   max-width: fit-content;
-  background-color: aquamarine;
 }
 
 /* STATE-YEAR-CONTAINER */
@@ -78,7 +77,6 @@
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  border: 1px solid #ccc;
   margin-right: 10px;
 }
 
@@ -440,7 +438,6 @@
   flex-direction: row;
   min-height: 1rem;
   max-height: 1rem;
-  background-color: ghostwhite;
   position: relative;
   z-index: 22;
 }
@@ -463,18 +460,14 @@
   flex-shrink: 0;
 }
 
-#state-year-ui:hover {
-  background-color: darkblue;
-}
-
 #state-year-ui select:hover {
-  background-color: tomato;
+  background-color: var(--accent-hover);
   z-index: 50;
 }
 
 #state-year-ui input:hover {
-  background-color: aquamarine;
-  z-index: 9999999999999999;
+  background-color: var(--accent-hover);
+  z-index: 99;
 }
 
 #state-year-ui input,
@@ -539,6 +532,7 @@
   overflow-x: hidden; /* prevent horizontal scroll */
   max-height: 70vh; /* or whatever fits layout */
   width: 100%;
+  min-height: 95%;
   padding-right: 0.25rem; /* space for scrollbar */
   box-sizing: border-box;
 }
@@ -551,6 +545,7 @@
   display: flex; /* stack items vertically */
   flex-direction: column; /* vertical stacking */
   width: 100%; /* fill container width */
+  min-height: 95%;
   gap: 0.5rem; /* spacing between rows */
   box-sizing: border-box;
 }
@@ -722,12 +717,10 @@
 
 #calendar-form-year {
   max-height: 0.85rem;
-  background-color: yellow;
 }
 
 #state-select {
   max-height: 1.6rem;
-  background-color: #2b8a3e;
 }
 
 .year-select-group,
@@ -886,6 +879,9 @@
   max-width: 21rem;
 }
 
+#rule-collapsible-holiday {
+  min-height: 100%;
+}
 #rule-collapsible-holiday[aria-expanded="true"] {
   min-width: 4rem;
   max-width: 4rem;
@@ -893,6 +889,10 @@
 #rule-collapsible-holiday[aria-expanded="false"] {
   min-width: 2rem;
   max-width: 2rem;
+}
+
+#rule-collapsible-bridgedays {
+  min-height: 100%;
 }
 
 #rule-collapsible-bridgedays[aria-expanded="true"] {
@@ -904,13 +904,21 @@
   max-width: 9rem;
 }
 
+#rule-collapsible-companyHolidays {
+  min-height: 100%;
+}
+
 #rule-collapsible-companyHolidays[aria-expanded="true"] {
-  min-width: 12rem;
-  max-width: 12rem;
+  min-width: 14rem;
+  max-width: 14rem;
 }
 #rule-collapsible-companyHolidays[aria-expanded="false"] {
-  min-width: 4rem;
-  max-width: 4rem;
+  min-width: 6rem;
+  max-width: 6rem;
+}
+
+#rule-collapsible-schoolHolidays {
+  min-height: 100%;
 }
 
 #rule-collapsible-schoolHolidays[aria-expanded="true"] {
@@ -920,4 +928,83 @@
 #rule-collapsible-schoolHolidays[aria-expanded="false"] {
   min-width: 3rem;
   max-width: 3rem;
+}
+
+.date-grid.compact {
+  grid-template-columns: auto 1fr;
+  row-gap: 0.4rem;
+}
+
+.date-grid.compact .request-date-picker,
+.date-grid.compact .preview-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.date-trigger {
+  background: none;
+  border: none;
+  padding: 0.15rem;
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.date-trigger:hover {
+  opacity: 1;
+}
+
+.date-trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  border-radius: 4px;
+}
+
+.step1 {
+  min-width: 6ch;
+}
+
+.preview-label {
+  opacity: 0.9;
+}
+
+.date-grid.date-range {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  column-gap: 0.4rem;
+  row-gap: 0.35rem;
+  align-items: center;
+  max-width: 100%;
+}
+
+.date-label {
+  white-space: nowrap;
+  opacity: 0.8;
+}
+
+.date-preview,
+.duration-value {
+  min-width: 3rem;
+  max-width: 3rem;
+}
+
+.date-trigger {
+  font-size: 1.5rem;
+  max-width: 1.8rem;
+  min-width: 1.8rem;
+  min-height: 1.8rem;
+  max-height: 1.8rem;
+  padding: 0.1rem 0.25rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.date-trigger:hover {
+  opacity: 1;
+}
+
+.date-trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  border-radius: 4px;
 }

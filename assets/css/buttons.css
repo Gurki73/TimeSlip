@@ -5,14 +5,19 @@
   justify-content: center;
   padding: 2px;
   margin: 2px;
-  width: 2.5rem;
+  width: 3.5rem;
   font-size: 1rem;
   border-radius: 5px;
   border: 1px solid var(--btn-border-color);
   background-color: var(--button-active-color);
   cursor: pointer;
   transition: background-color 0.3s ease;
+
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis
 }
+
 .mybutton {
   display: inline-flex;
   align-items: center;
@@ -219,7 +224,7 @@
   margin-bottom: 8px;
 }
 
-/* Header button container */
+.form-buttons,
 #form-buttons {
   display: flex;
   gap: 0.5rem; /* spacing between buttons */
@@ -227,10 +232,10 @@
   padding-right: 25px;
 }
 
-/* General button styling */
+.form-buttons button,
 #form-buttons button,
 #form-buttons select {
-  background-color: var(--bg-soft-white, antiquewhite);
+  /* background-color: var(--bg-soft-white, antiquewhite); */
   color: var(--text-color, slategray);
   border: none;
   border-radius: 0.5rem;
@@ -240,7 +245,7 @@
   transition: background-color 0.2s ease;
 }
 
-/* Hover / focus state */
+/* Hover / focus state 
 #form-buttons button:hover,
 #form-buttons select:hover,
 #form-buttons button:focus,
@@ -248,15 +253,12 @@
   background-color: var(--primary-bg-hover, #357abd);
   outline: none;
 }
-
-/* SaveAll / Store button special color */
+*/
+/* SaveAll / Store button special color 
 #form-buttons .save-btn {
   background-color: var(--success-bg, #28a745);
 }
-
-#form-buttons .save-btn:hover {
-  background-color: var(--success-bg-hover, #218838);
-}
+*/
 
 /* Help button icon spacing */
 #form-buttons .help-btn {
