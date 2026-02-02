@@ -1,12 +1,12 @@
+// Components\forms\rule-form\rule-form.js
 import { loadRoleData, loadTeamnames } from '../../../js/loader/role-loader.js';
 import { loadOfficeDaysData } from '../../../js/loader/calendar-loader.js';
-// import { resetRule, initVisibilityChecker } from './ruleChecker.js';
-import { toggleExceptionTable, updateWizard, clearHighlights } from './ruleFlowWizzard.js';
+import { resetRule, runLiveSanity } from './ruleChecker.js';
+import { toggleExceptionTable, clearHighlights, updateWizard } from './ruleFlowWizzard.js';
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
 import { createBranchSelect } from '../../../js/Utils/branch-select.js';
 import { getShiftSymbol } from '../../../js/Utils/globalIcons.js';
-import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js';
 import { blocks, createRuleFromBlueprint, ruleToBlueprint } from "./buildingBlocks.js";
 import { translateCurrentRule, translateExistingRules } from "./translatorHuman.js";
 import { updateRulesPreview } from "./translatorMachine.js";
@@ -345,7 +345,6 @@ export function populateFormFromRule(rule) {
     document.getElementById('request-type-select-dependency').value = rule.main.dependency?.type || 'D0';
     document.getElementById('request-type-select-exception').value = rule.main.exception?.type || 'E0';
 
-    // trigger handlers to construct the dynamic inputs (they will call handleInput)
     handleTopCellNumberInput(document.getElementById('request-type-select-amount').value);
     handleTopCellTimeFrame(document.getElementById('request-type-select-time').value);
     handleTopCellRoles(document.getElementById('request-type-select-group').value);
@@ -1378,7 +1377,9 @@ export function handleInput(inputObj) {
 
     // --- dynamic wizard update ---
     clearHighlights();
-    updateWizard(id);
+    // updateWizard(id);
+    const liveSanityResult = runLiveSanity(ruleForEditing);
+    updateWizard(liveSanityResult);
 
     console.trace("Trace for Updated ruleForEditing", ruleForEditing);
     console.groupEnd();

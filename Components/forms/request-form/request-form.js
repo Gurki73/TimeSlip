@@ -126,6 +126,13 @@ export async function initializeRequestForm(passedApi) {
       await initializeRequestForm(api);
     });
   }
+  const clearBtn = document.getElementById("clear-filters-btn");
+  if (clearBtn) {
+    clearBtn.replaceWith(clearBtn.cloneNode(true));
+    document
+      .getElementById("clear-filters-btn")
+      .addEventListener("click", clearAllFilters);
+  }
 
   const createRequestBtn = document.getElementById("create-request-mode-btn");
   const approveRequestBtn = document.getElementById("approve-request-mode-btn");
@@ -177,6 +184,7 @@ export async function initializeRequestForm(passedApi) {
   // 7️⃣ Finish
   updateDivider("bg-request");
   resetRequestWarnings();
+  updateFilterButtons();
 }
 
 function getRequestMonth(request) {
@@ -193,9 +201,12 @@ function getRequestMonth(request) {
 }
 
 
-function handleFilterChange() {
+function handleFilterChange(e) {
+  console.log("handle change filter event: ", e);
   const filteredRequests = filterRequests(allRequests);
   renderRequestsTable(filteredRequests);
+  updateFilterButtons();
+
 }
 
 function initFilterListener() {
@@ -207,7 +218,7 @@ function initFilterListener() {
   [statusFilter, employeeFilter, typeFilter, monthFilter].forEach(select => {
     if (!select) return;
     select.removeEventListener("change", handleFilterChange);
-    select.addEventListener("change", handleFilterChange);
+    select.addEventListener("change", (e) => handleFilterChange(e));
   });
 }
 
@@ -470,7 +481,7 @@ function renderRequesterList() {
   const requesterSelect = document.getElementById('requester-select');
   requesterSelect.classList.add("noto");
 
-  requesterSelect.innerHTML = ''; // clear old options
+  requesterSelect.innerHTML = '';
 
   // 1️⃣ Placeholder option
   const placeholderOption = document.createElement('option');
@@ -786,6 +797,49 @@ function filterRequests(requests) {
   });
 }
 
+function initSingleClearFilterButtons() {
+  document.querySelectorAll(".clear-filter").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.dataset.target;
+      if (!targetId) return;
+
+      const filterEl = document.getElementById(targetId);
+      if (!filterEl) return;
+
+      filterEl.value = "all";
+      btn.classList.add("hidden");
+
+      handleFilterChange();
+    });
+  });
+}
+
+function updateFilterButtons() {
+  document.querySelectorAll(".filter-wrapper").forEach(wrapper => {
+    const select = wrapper.querySelector("select");
+    const funnelBtn = wrapper.querySelector(".filter-btn.funnel");
+    const clearBtn = wrapper.querySelector(".filter-btn.clear-filter");
+
+    if (!select || !funnelBtn || !clearBtn) return;
+
+    const isDefault = select.value === "all";
+
+    funnelBtn.classList.toggle("hidden", !isDefault);
+    clearBtn.classList.toggle("hidden", isDefault);
+  });
+}
+
+
+function clearAllFilters() {
+  ["status-filter", "requester-filter", "decision-type-select", "month-filter"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = 'all';
+  });
+
+  handleFilterChange();
+  updateFilterButtons();
+}
+
 function initDecisionEventListener() {
 
   document.querySelectorAll("select").forEach(select => {
@@ -793,7 +847,7 @@ function initDecisionEventListener() {
       if (e.target.value !== "all") {
         document.querySelectorAll("select").forEach(otherSelect => {
           if (otherSelect !== e.target) {
-            otherSelect.value = "all";
+            //  otherSelect.value = "all";
           }
         });
         // loadAndRenderRequests();
@@ -829,6 +883,7 @@ function renderRequestsTable(requests) {
   });
 
   setupTableEvents();
+  initSingleClearFilterButtons()
 }
 
 function getTableBody() {
@@ -895,6 +950,19 @@ function collectAvailableFilters(requests) {
 
   return filters;
 }
+
+function updateSingleClearButtons() {
+  document.querySelectorAll(".clear-filter").forEach(btn => {
+    const targetId = btn.dataset.target;
+    const filterEl = document.getElementById(targetId);
+
+    if (!filterEl) return;
+
+    const isDefault = filterEl.value === "all";
+    btn.classList.toggle("hidden", isDefault);
+  });
+}
+
 
 function initFiltersOnce(filters) {
   populateEmployeeFilter([...filters.employees]);
@@ -1064,7 +1132,7 @@ function populateEmployeeFilter(availableEmployeeIDs) {
   const filterSelect = document.getElementById("requester-filter");
   if (!filterSelect) return;
 
-  filterSelect.innerHTML = ""; // clear old options
+  filterSelect.innerHTML = "";
 
   const defaultOption = document.createElement('option');
   defaultOption.value = 'all';
@@ -1087,20 +1155,6 @@ function populateEmployeeFilter(availableEmployeeIDs) {
   });
 }
 
-function disableAllOptions() {
-
-  const selects = document.querySelectorAll("select");
-  selects.forEach(select => {
-    const options = select.querySelectorAll("option");
-    options.forEach(option => {
-      if (option.value !== "all") {
-        // option.disabled = true;
-        option.style.color = "lightgray";
-        option.style.fontStyle = "italic";
-      }
-    });
-  });
-}
 
 function toggleFilterOptions(filterId, availableValues) {
   const selectElement = document.getElementById(filterId);

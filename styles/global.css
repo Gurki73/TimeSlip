@@ -514,6 +514,8 @@ body.resizing {
 .layout-bo-scroll {
   scroll-behavior: auto;
   overflow: hidden;
+  scrollbar-width: thin;
+  min-width: 100%;
 }
 
 .layout-column-tiny {

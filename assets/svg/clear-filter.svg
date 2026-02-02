@@ -28,8 +28,31 @@
   </g>
 
   <!-- Red X overlay for clear -->
-  <g>
-    <line x1="100" y1="40" x2="390" y2="260" stroke="#000000" stroke-width="45" stroke-linecap="round"/>
-    <line x1="390" y1="40" x2="130" y2="260" stroke="#000000" stroke-width="45" stroke-linecap="round"/>
-  </g>
+  <g fill="none" stroke-linecap="round">
+  <!-- white border -->
+  <path
+    d="M80 30 L420 350"
+    stroke="#000000"
+    stroke-width="65"
+  />
+  <path
+    d="M420 30 L80 350"
+    stroke="#000000"
+    stroke-width="65"
+  />
+
+  <!-- main X -->
+  <path
+    d="M80 30 L420 350"
+    stroke="#ffffff"
+    stroke-width="40"
+  />
+  <path
+    d="M420 30 L80 350"
+    stroke="#ffffff"
+    stroke-width="40"
+  />
+</g>
 </svg>
+
+

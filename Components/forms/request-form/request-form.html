@@ -1,13 +1,25 @@
 <div id="request-form-container">
   <div class="flex-row">
-    <div id="create-request-mode-btn" class="active noto request-button request-button-wrapper flex-row">
+
+    <button id="create-request-mode-btn" class="active noto request-button request-button-wrapper flex-row"
+      type="button">
       📝 Urlaubsantrag stellen
-    </div>
-    <button id="approve-request-mode-btn" class="inactive noto request-button flex-row">
-      ✅❌ Urlaubsantrag genehmigen
-      <label for="request-year">Jahr:</label>
-      <input type="number" id="request-year" value="2025" min="2000" max="2099" />
     </button>
+
+    <div class="approve-tab-wrapper flex-row">
+
+      <button id="approve-request-mode-btn" class="inactive noto request-button flex-row" type="button">
+        ✅❌ Urlaubsantrag genehmigen
+        <div class="approve-controls flex-row">
+          <input type="number" id="request-year" value="2025" min="2000" max="2099" />
+
+          <span id="clear-filters-btn" type="button" class="filter-btn clear-filter" aria-label="Alle Filter löschen"
+            title="Alle Filter löschen">
+            <img src="./assets/svg/clear-filter.svg" alt="❌" />
+          </span>
+        </div>
+      </button>
+    </div>
   </div>
 
   <div id="request-enter-container" class="active">
@@ -142,7 +154,8 @@
                 <button type="button" class="filter-btn funnel" aria-label="Filter anwenden">
                   <img src="./assets/svg/funnel-svgrepo-com.svg" alt="" />
                 </button>
-                <button type="button" class="filter-btn clear-filter hidden" aria-label="Filter löschen">
+                <button type="button" class="filter-btn clear-filter hidden" aria-label="Filter löschen"
+                  data-target="status-filter">
                   <img src="./assets/svg/clear-filter.svg" alt="" />
                 </button>
               </div>
@@ -158,7 +171,8 @@
                 <button type="button" class="filter-btn funnel" aria-label="Filter anwenden">
                   <img src="./assets/svg/funnel-svgrepo-com.svg" alt="" />
                 </button>
-                <button type="button" class="filter-btn clear-filter hidden" aria-label="Filter löschen">
+                <button type="button" class="filter-btn clear-filter hidden" aria-label="Filter löschen"
+                  data-target="employee-filter">
                   <img src="./assets/svg/clear-filter.svg" alt="" />
                 </button>
               </div>
@@ -194,7 +208,8 @@
                 <button type="button" class="filter-btn funnel" aria-label="Filter anwenden">
                   <img src="./assets/svg/funnel-svgrepo-com.svg" alt="🏺" />
                 </button>
-                <button type="button" class="filter-btn clear-filter hidden" aria-label="Filter löschen">
+                <button type="button" class="filter-btn clear-filter hidden" aria-label="Filter löschen"
+                  data-target="type-filter">
                   <img src="./assets/svg/clear-filter.svg" alt="❌" />
                 </button>
               </div>
@@ -220,7 +235,8 @@
                 <button type="button" class="filter-btn funnel" aria-label="Filter anwenden">
                   <img src="./assets/svg/funnel-svgrepo-com.svg" alt="" />
                 </button>
-                <button type="button" class="filter-btn clear-filter hidden" aria-label="Filter löschen">
+                <button type="button" class="filter-btn clear-filter hidden" aria-label="Filter löschen"
+                  data-target="month-filter">
                   <img src="./assets/svg/clear-filter.svg" alt="" />
                 </button>
               </div>

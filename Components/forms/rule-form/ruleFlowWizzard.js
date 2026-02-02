@@ -1,7 +1,6 @@
 // Components/forms/rule-form/ruleFlowWizard.js
-// Phase 1 - Refactored Flow Wizard
-// Author: ChatGPT
-// Supports dynamic forbidden pair handling, highlighting, soft-disable, tooltips
+
+// “Wizard renders live sanity feedback for current rule only. It does not decide validity.”
 
 // ==========================
 // 1. Block & Selector Mapping
@@ -36,7 +35,12 @@ const forbiddenPairs = {
 // ==========================
 // 3. Dynamic Wizard Update
 // ==========================
-export function updateWizard(lastChangedBlockID) {
+export function updateWizard(liveResult) {
+    clearHighlights();
+
+    liveResult.forbidden.forEach(selector =>
+        highlightBlock(selector, "Forbidden combination")
+    );
     // Loop through all forbidden pairs relevant to the changed block
     Object.keys(forbiddenPairs).forEach(pairKey => {
         const pairs = forbiddenPairs[pairKey];

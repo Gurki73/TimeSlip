@@ -245,8 +245,8 @@
 }
 
 #decision-table-container {
-  max-height: 40vh; /* Set a max-height for the table container */
-  overflow-y: auto; /* Enable vertical scrolling */
+  max-height: 85%;
+  overflow: hidden;
 }
 
 #decision {
@@ -264,6 +264,7 @@
   height: 100%;
   border-collapse: collapse;
   border: 1px solid brown;
+  overflow: hidden;
 }
 
 #decision-table thead {
@@ -280,6 +281,7 @@
   max-height: 35vh; /* Prevent tbody from growing */
   overflow-y: auto; /* Enable scrolling inside tbody */
   width: 100%;
+  min-height: 100%;
 }
 
 #decision-table thead,

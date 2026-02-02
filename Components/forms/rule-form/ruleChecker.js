@@ -1,31 +1,15 @@
+// Components\forms\rule-form\ruleChecker.js
+
 const SHIFTS_PER_DAY = 3;
 
-/*
-const ruleTestContext = {
-    from: Date,
-    to: Date,
-
-    roleCount: 14,
-
-    officeDaysByDate: {
-        '2025-01-15': {
-            isOfficeOpen: true,
-            openShifts: { early: true, day: true, late: false }
-        }
-    },
-
-    requestsByDate: {
-        '2025-01-15': [
-            { roleIndex: 3, shift: 'early' },
-            { roleIndex: 7, shift: 'day' }
-        ]
-    },
-
-    meta: {
-        completeness: 0.82 // optional, future
-    }
-};
-*/
+export function runLiveSanity(ruleDraft) {
+    // TEMP: stub until logic is implemented
+    return {
+        blocking: false,
+        missingMandatory: [],
+        forbidden: []
+    };
+}
 
 function createEmptyWeekCube(roleCount) {
     return Array.from({ length: 7 }, () =>

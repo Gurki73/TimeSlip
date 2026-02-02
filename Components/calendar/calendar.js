@@ -71,8 +71,6 @@ export async function initializeCalendar(api) {
     cachedZodiacStyle = localStorage.getItem('zodiacStyle') || 'none';
     cachedShiftSymbols = localStorage.getItem('shiftSymbols') || 'letters';
 
-    console.log(cachedShiftSymbols, cachedZodiacStyle);
-
     isInOffice = localStorage.getItem('presenceState') || true;
     const colorTheme = localStorage.getItem('colorTheme');
     const zoomFactor = localStorage.getItem('zoomFactor');
@@ -80,14 +78,6 @@ export async function initializeCalendar(api) {
     const autoSaveEnabled = localStorage.getItem('autoSaveEnabled') === 'true';
 
     window.dispatchEvent(new CustomEvent('autoSaveChanged', { detail: { enabled: autoSaveEnabled } }));
-
-    const cacheDump = {
-      colorTheme: colorTheme ?? 'default (light)',
-      zoomFactor: zoomFactor ?? 'default (1.0)',
-      clientDefinedDataFolder: clientDefinedDataFolder ?? 'Not set',
-      autoSave: autoSaveEnabled,
-    };
-    api.send('update-cache', cacheDump);
   } catch (error) {
     console.warn('❌ Error loading initial calendar data:', error);
   }
@@ -196,15 +186,25 @@ export function updateCalendarDisplay() {
   setTimeout(() => {
     feedback.classList.remove('active');
   }, 1700); // fade out after 700ms
+
 }
 
 
 function generateAndRenderCalendar(newMonthIndex, newYear) {
-
   applyCalendarStyles();
   weeks = generateCalendar(newMonthIndex, newYear);
   renderCalendarMonth(weeks);
+
+  requestAnimationFrame(() => {
+    console.log(" DISPATCH CALENDAR UPDATE EVENT ");
+    document.dispatchEvent(
+      new CustomEvent('calendar-ready', {
+        detail: { month: newMonthIndex, year: newYear }
+      })
+    );
+  });
 }
+
 
 function generateCalendar(month, year) {
   const firstDay = new Date(year, month, 1);
@@ -330,11 +330,8 @@ export function createPresenceSelector({
     return wrapper;
   }
 
-  // Build initial UI depending on mode
   const widget = (mode === 'radio') ? buildRadioGroup() : buildToggle();
   container.appendChild(widget);
-
-  // expose an API to change mode or state externally
   container.setPresenceMode = (newMode) => {
     // rebuild
     container.innerHTML = '';

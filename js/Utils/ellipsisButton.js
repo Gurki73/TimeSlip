@@ -1,18 +1,22 @@
 
 const ELLIPSIS_ACTIONS = {
     edit: { icon: '✏️', label: 'Bearbeiten' },
-    delete: { icon: '🗑️', label: 'Löschen', danger: true },
+    delete: { icon: '🗑️', label: 'Löschen', danger: true, sampleDisabled: true },
+    disable: { icon: '💤', label: 'Pausieren', sampleDisabled: true },
+    enable: { icon: '⏰', label: 'Aktivieren', sampleDisabled: true },
     repair: { icon: '🔨', label: 'Reparieren' },
     save: { icon: '💾', label: 'Speichern' },
     inspect: { icon: '💡', label: 'Prüfen' },
     copy: { icon: '🗳️', label: 'Kopieren' },
-    disable: { icon: '💤', label: 'Pausieren' },
-    enable: { icon: '⏰', label: 'Aktivieren' },
 };
 
 export function createEllipsis(actions = [], context = {}) {
     const wrapper = document.createElement('div');
     wrapper.className = 'ellipsis';
+
+    const isSampleMode =
+        document.body.classList.contains('mode-sample') ||
+        localStorage.getItem('dataMode') === 'sample';
 
     const button = document.createElement('button');
     button.className = 'ellipsis-button noto';
@@ -66,7 +70,6 @@ export function createEllipsis(actions = [], context = {}) {
         }
     });
 
-    // Build menu items
     actions.forEach(actionKey => {
         const def = ELLIPSIS_ACTIONS[actionKey];
         if (!def) return;
@@ -74,11 +77,19 @@ export function createEllipsis(actions = [], context = {}) {
         const item = document.createElement('button');
         item.className = 'ellipsis-item';
         item.innerHTML = `
-            <span class="noto ellipsis-icon">${def.icon}</span>
-            <span class="ellipsis-label">${def.label}</span>
-        `;
+        <span class="noto ellipsis-icon">${def.icon}</span>
+        <span class="ellipsis-label">${def.label}</span>
+    `;
+
+        // 🔒 sample mode handling (AFTER item exists)
+        if (isSampleMode && def.sampleDisabled) {
+            item.disabled = true;
+            item.classList.add('is-readonly');
+            item.title = 'Beispielmodus – Aktion deaktiviert';
+        }
 
         item.addEventListener('click', () => {
+            if (item.disabled) return;
             closeMenu();
             context[actionKey]?.();
         });
@@ -87,7 +98,6 @@ export function createEllipsis(actions = [], context = {}) {
 
         menu.appendChild(item);
     });
-
     wrapper.appendChild(button);
     return wrapper;
 }

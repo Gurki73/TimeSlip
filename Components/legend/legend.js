@@ -5,6 +5,9 @@ import { loadEmployeeData, getTotalEmployeesByRole } from '../../js/loader/emplo
 import { getHolidayGreetingForToday } from '../../js/Utils/holidayUtils.js';
 import { updateFeedback } from '../../js/Utils/statusbar.js';
 
+const employeeEmojiCache = new Map(); // employee.id => NodeList
+const roleEmojiCache = new Map();     // role.colorIndex => NodeList
+
 let legendEmployees = [];
 let lengendRoles = [];
 
@@ -43,8 +46,57 @@ export async function initializeLegend(api) {
     const roleContent = document.getElementById('legend-roles');
     const employeeContent = document.getElementById('legend-employees');
 
+    document.addEventListener('calendar-ready', (event) => {
+        console.log('Calendar finished rendering:', event.detail);
+        rebuildEmojiCaches(); // update caches & refresh legend items
+    });
+
     renderRoles(roleContent);
     renderEmployees(employeeContent);
+}
+
+function rebuildEmojiCaches() {
+    const calendarContainer = document.getElementById('calendar-month-sheet');
+    if (!calendarContainer) return;
+
+    employeeEmojiCache.clear();
+    roleEmojiCache.clear();
+
+    legendEmployees.forEach(emp => {
+        const nodes = calendarContainer.querySelectorAll(`.emp-${emp.id}`);
+        employeeEmojiCache.set(emp.id, nodes);
+    });
+
+    lengendRoles.forEach(role => {
+        const nodes = calendarContainer.querySelectorAll(`.role-${role.colorIndex}`);
+        roleEmojiCache.set(role.colorIndex, nodes);
+    });
+
+    refreshLegendItemStates();
+}
+
+function refreshLegendItemStates() {
+    // Update opacity/pointer-events based on current cache
+    document.querySelectorAll('#legend .legend-item').forEach(li => {
+        const empId = li.dataset.empId;
+        const roleIndex = li.dataset.roleIndex;
+        let hasNodes = false;
+
+        if (empId) hasNodes = employeeEmojiCache.get(empId)?.length > 0;
+        if (roleIndex) hasNodes = roleEmojiCache.get(roleIndex)?.length > 0;
+
+        if (hasNodes) {
+            li.style.opacity = '1';
+            li.style.pointerEvents = 'auto';
+            li.style.cursor = 'pointer';
+            li.title = li.dataset.title;
+        } else {
+            li.style.opacity = '0.35';
+            li.style.pointerEvents = 'none';
+            li.style.cursor = 'not-allowed';
+            li.title = 'Keine Zuweisungen';
+        }
+    });
 }
 
 function renderCollapsibleSection(container, title, renderContentFunction, loadingText = '') {
@@ -64,49 +116,52 @@ function renderCollapsibleSection(container, title, renderContentFunction, loadi
     const collapsibleContent = document.createElement('div');
     collapsibleContent.classList.add('collapsible-content');
 
-    // ✅ Add unique ID for easy selection later
     if (title.includes('Mitarbeiter')) {
         collapsibleContent.id = 'legend-employees';
     } else {
         collapsibleContent.id = 'legend-roles';
     }
 
-    // 🔹 Generate a safe localStorage key based on title
     const key = `legend_${title.includes('Mitarbeiter') ? 'employees' : 'roles'}_expanded`;
-
-    // 🔹 Restore last state
     const lastState = localStorage.getItem(key);
     const isExpanded = lastState === 'true'; // stored as string
     collapsibleContent.style.display = isExpanded ? 'block' : 'none';
     collapsibleButton.classList.toggle('active', isExpanded);
 
-    // 🌀 Show spinner / loading placeholder
     if (loadingText) {
         collapsibleContent.innerHTML = `<div class="spinner">${loadingText}</div>`;
     } else {
         renderContentFunction(collapsibleContent);
     }
 
-    // Attach to container
     container.appendChild(collapsibleButton);
     container.appendChild(collapsibleContent);
 
-    // 🔹 Handle click toggle
     collapsibleButton.addEventListener('click', () => {
         const nowVisible = collapsibleContent.style.display !== 'block';
         collapsibleContent.style.display = nowVisible ? 'block' : 'none';
         collapsibleButton.classList.toggle('active', nowVisible);
         localStorage.setItem(key, String(nowVisible)); // persist
 
-        // Re-render content when expanded (optional)
         if (nowVisible && renderContentFunction) {
             renderContentFunction(collapsibleContent);
         }
     });
 }
 
+function highlightItems(nodeList, highlightClass = 'big', duration = 4000) {
+    if (!nodeList || !nodeList.length) return;
+
+    nodeList.forEach(el => el.classList.add(highlightClass, 'highlight-pulse'));
+
+    setTimeout(() => {
+        nodeList.forEach(el => el.classList.remove(highlightClass, 'highlight-pulse'));
+    }, duration);
+}
+
 export function renderEmployees(container, employeesToRender = legendEmployees) {
     if (!container) return;
+    container.innerHTML = '';
 
     if (!employeesToRender || employeesToRender.length === 0) {
         container.innerHTML = '<div class="spinner">lade Mitarbeiter...</div>';
@@ -117,22 +172,17 @@ export function renderEmployees(container, employeesToRender = legendEmployees) 
     list.classList.add('legend-list');
 
     const calendarContainer = document.getElementById('calendar-month-sheet');
-    let highlightTimeout;
-    let lastClick = 0;
+    if (!calendarContainer) return;
 
     employeesToRender.forEach(employee => {
-        if (!employee.name ||
-            employee.name === '?' ||
-            employee.name === 'name' ||
-            employee.personalEmoji === '🗑️'
-        ) return;
+        if (!employee.name || employee.name === '?' || employee.name === 'name' || employee.personalEmoji === '🗑️') return;
 
         const listItem = document.createElement('li');
         listItem.classList.add('legend-item');
+        listItem.dataset.empId = employee.id;
+        listItem.dataset.title = employee.name;
 
-        const roleColor = getComputedStyle(document.body)
-            .getPropertyValue(`--role-${employee.mainRoleIndex}-color`);
-
+        const roleColor = getComputedStyle(document.body).getPropertyValue(`--role-${employee.mainRoleIndex}-color`);
         listItem.style.backgroundColor = roleColor;
 
         const emoji = document.createElement('span');
@@ -152,60 +202,56 @@ export function renderEmployees(container, employeesToRender = legendEmployees) 
         listItem.appendChild(arrow);
         listItem.appendChild(employeeName);
 
+        // --- Cache emojis for this employee ---
+        let emojisInCalendar = employeeEmojiCache.get(employee.id);
+        if (!emojisInCalendar) {
+            emojisInCalendar = calendarContainer.querySelectorAll(`.emp-${employee.id}`);
+            employeeEmojiCache.set(employee.id, emojisInCalendar);
+        }
+
+        // --- Disable unassigned items ---
+        if (!emojisInCalendar.length) {
+            listItem.style.opacity = '0.2';
+            listItem.style.pointerEvents = 'none';
+            listItem.style.cursor = 'not-allowed';
+            listItem.title = 'Keine Zuweisungen';
+        }
+
+        // --- Click handler with reusable highlight ---
+        let lastClick = 0;
         listItem.addEventListener('click', () => {
             const now = Date.now();
-            if (now - lastClick < 4000) return; // debounce 4s
+            if (now - lastClick < 300) return; // debounce 300ms
             lastClick = now;
 
-            if (!calendarContainer) return; // help page open etc.
-
-            clearTimeout(highlightTimeout);
-            document.querySelectorAll('.calendar-emoji.big').forEach(el => {
-                el.classList.remove('big');
-                el.classList.add('small');
-            });
-
-            const emojis = calendarContainer.querySelectorAll(`.emp-${employee.id}`);
-            emojis.forEach(el => {
-                el.classList.remove('small');
-                el.classList.add('big');
-                el.classList.add('highlight-pulse'); // optional blink effect
-            });
-
-            highlightTimeout = setTimeout(() => {
-                emojis.forEach(el => {
-                    el.classList.remove('big', 'highlight-pulse');
-                    el.classList.add('small');
-                });
-            }, 4000);
+            highlightItems(emojisInCalendar, 'big', 4000);
         });
 
         list.appendChild(listItem);
     });
 
-    container.innerHTML = '';
     container.appendChild(list);
 }
 
-function renderRoles(container) {
+export function renderRoles(container) {
     if (!container) return;
+    container.innerHTML = '';
 
     const list = document.createElement('ul');
     list.classList.add('legend-list');
 
     const calendarContainer = document.getElementById('calendar-month-sheet');
-    let highlightTimeout;
-    let lastClick = 0;
+    if (!calendarContainer) return;
 
-    lengendRoles.forEach((role, index) => {
+    lengendRoles.forEach(role => {
         if (role.emoji === "⊖" || ['keine', '?', 'name'].includes(role.name)) return;
 
         const listItem = document.createElement('li');
         listItem.classList.add('legend-item');
+        listItem.dataset.roleIndex = role.colorIndex;
+        listItem.dataset.title = role.name;
 
-        const roleColor = getComputedStyle(document.body)
-            .getPropertyValue(`--role-${role.colorIndex}-color`);
-
+        const roleColor = getComputedStyle(document.body).getPropertyValue(`--role-${role.colorIndex}-color`);
         listItem.style.backgroundColor = roleColor;
 
         const emoji = document.createElement('span');
@@ -224,40 +270,36 @@ function renderRoles(container) {
         listItem.appendChild(arrow);
         listItem.appendChild(roleName);
 
-        // 🧠 Click handler — highlight all calendar spans for this role
+        // --- Cache emojis for this role ---
+        let emojisInCalendar = roleEmojiCache.get(role.colorIndex);
+        if (!emojisInCalendar) {
+            emojisInCalendar = calendarContainer.querySelectorAll(`.role-${role.colorIndex}`);
+            roleEmojiCache.set(role.colorIndex, emojisInCalendar);
+        }
+
+        // --- Disable unassigned items ---
+        if (!emojisInCalendar.length) {
+            listItem.style.opacity = '0.35';
+            listItem.style.pointerEvents = 'none';
+            listItem.style.cursor = 'not-allowed';
+            listItem.title = 'Keine Zuweisungen';
+        }
+
+        // --- Click handler with reusable highlight ---
+        let lastClick = 0;
         listItem.addEventListener('click', () => {
             const now = Date.now();
-            if (now - lastClick < 4000) return; // debounce 4s
+            if (now - lastClick < 300) return; // debounce 300ms
             lastClick = now;
 
-            if (!calendarContainer) return;
-
-            clearTimeout(highlightTimeout);
-            // Reset any previous highlights
-            calendarContainer.querySelectorAll('.calendar-emoji.role-big').forEach(el => {
-                el.classList.remove('role-big', 'highlight-pulse');
-            });
-
-            // Highlight all emojis that share this role
-            const roleIndex = role.colorIndex;
-            const emojis = calendarContainer.querySelectorAll(`.role-${roleIndex}`);
-            emojis.forEach(el => {
-                el.classList.add('role-big', 'highlight-pulse',);
-            });
-
-            // Auto-reset after 4s
-            highlightTimeout = setTimeout(() => {
-                emojis.forEach(el => el.classList.remove('role-big', 'highlight-pulse'));
-            }, 4000);
+            highlightItems(emojisInCalendar, 'role-big', 4000);
         });
 
         list.appendChild(listItem);
     });
 
-    container.innerHTML = '';
     container.appendChild(list);
 }
-
 
 function updateWelcomeGreeting() {
     const header = document.getElementById('greetingID');

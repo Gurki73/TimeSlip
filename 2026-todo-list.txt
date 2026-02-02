@@ -1,69 +1,62 @@
-🟢 Easy / Quick wins (mostly CSS, small tweaks, low coupling)
-1  ✅ add margin left to chinese zodiac
-2  ✅ fix tabulator flag height in requests
-3  ✅ remove debugging colors left in calendar settings
-4  ✅ fix active color in grayscale for radio btns
-5  ✅ fix white-space for "noone is working" inline-block?
-6  ✅ style calendar picker buttons in calendar setting
-7  ✅ make story-modus in help page less prominent
-8  ✅ set story-modus in help default as off
-9  ✅ use full height for lists in calendar setting
-10 ✅ add size or scrollbar for welcome page on load (or size and spacing of cards)
+User Input
+   ↓
+UI state update
+   ↓
+Sanity (live / scoped)
+   ↓
+Derived feedback
+   ↓
+Wizard renders feedback
 
-🟡 Medium (UI + state, but still localized)
-11 🚧 fix radio button lay out for menu optic on load
-12 🚧 fix min max btn on welcome page
-13 ✅ enter values for default hight for all 6 forms
-14 ☐ legend seam unresponsive, like it wants doubleclicks
-15 ✅ add a light pumping animation to save btn when dirty
-16 ✅ signal sample state for save button in calendar settings
-17 ✅ use state save buttons in calendar settings (similar size and style)
-18 ✅ remove or fix calendar setting legend
+🔗 Phase 1 — Fix the callchain
+☐ Remove any wizard logic triggered before sanity runs
+☐ Ensure every UI input change triggers:
+☐ Wizard no longer reads raw UI state to decide colors
 
-🟠 Medium–Hard (event wiring, interactions, shared logic)
-19 ☐ filter icon buttons in requests doesn’t have any event listeners
-20 ☐ repair sample mode for all save buttons in form headers
-21 ☐ add sample modus for ellipses in ruleset
-22 ☐ fix year filter in requests
+🧪 Phase 2 — Define live sanity result (minimal)
+☐ Define a single object returned by sanity:
+☐ No severity
+☐ No cross-rule logic
+☐ No “smart” conclusions
 
-🔴 Hard / Risky (business logic, combined state, edge cases)
-23 ☐ only show available filter options in requests
-24 ☐ allow combined filters in requests
-25 ☐ requester and vacation type cancel each other
+🎨 Phase 3 — Make wizard a pure renderer
+☐ Wizard accepts only liveCheckResult
+☐ Wizard coloring rules:
+  forbidden → red
+  missingMandatory → warning / neutral
+  otherwise → no color
+☐ Remove any logic that:
+  marks green by default
+  infers “ok” from defaults
+  disables save without sanity signal
 
-new todays to do list = 
-21.1 = Use the existing <input type="color"> per role.
-21.2 = Enforce limited color range per team (optional)
-21.3 = Add team + role name in the picker container (#limited-color-picker-teamname / #limited-color-picker-rolename) dynamically on cell focus.
+🟥 Phase 4 — Kill lying green (temporarily)
+☐ Disable green highlights entirely OR
+☐ Re-label green internally as “complete”, not “valid”
+☐ No green unless:
+   missingMandatory.length === 0
+   forbidden.length === 0
 
-ruleset tasks =
-Phase 1 – Stabilize
-✅ Deterministic rule loading (JSON issue containment)
-- Fix & rebaseline sanity check
-- Restore save button state machine
+💾 Phase 5 — Rewire save button
+☐ Save button state depends only on:
+☐ Wizard alarms may exist visually, but do not gate save directly
 
-Phase 2 – Integrity
-4. Refactor editing call chain
-5. Warnings + collapse + bubble-up
+🧹 Phase 6 — Remove zombie wizard logic
+☐ Audit ruleFlowWizard.js and mark:
+  legacy logic
+  UX-only helpers
+  candidates for deletion post-beta
+☐ Add // legacy – UI assist only comments where needed
 
-Phase 3 – UX
-6. Wizard & validation feedback
-7. Headers & titles
-8. Color coding consistency
+✅ Phase 7 — Truth test (manual, fast)
+☐ Create an obviously broken rule → wizard must show red
+☐ Create an incomplete rule → wizard must stay neutral
+☐ Create a complete-but-wrong rule → wizard must not show green
 
-Phase 4 – Features
-9. Rule enable/disable
-10. Rule preview / simulation
-
-Phase 5 – Quality
-11. Replace mock data
-12. UI polish leftovers
-
-──────────────── 
+────────────────
 Legend:
 ☐  open           🚧 in work      ✅ finished
 🔥 ship-blocker   🧩 beta-value   🧠 post-beta
-
 ────────────────
 🔥 Ship-Blockers
 
@@ -72,67 +65,89 @@ Request-form
 2 🚧 Filter shows filtered list then jumps back
 3 ☐ Selecting one field clears another (order-dependent)
 4 ☐ “No start date entered” while one exists
+5 🚧 filter icon buttons in requests doesn’t have any event listeners
+6 ☐ fix year filter in requests
+7 ☐ only show available filter options in requests
+8 🚧 allow combined filters in requests
+9 🚧 requester and vacation type cancel each other
+10 ☐ fix the start and end date picking
+11 ☐Fix & rebaseline sanity check
+12 ☐ Restore save button state machine
 
 Rule-form
-5  🚧 Typing effect not updating after editing rule
-6  ☐ Save button not marked dirty
-7  ☐ Flow wizard enforcing wrong order
-8  ☐ Flow wizard colors lying (green = missing)
-9  ✅ Ellipses menu not rendering
-10 ☐ Forbidden combinations list incomplete
+13 🚧 Typing effect not updating after editing rule
+14 ☐ Save button not marked dirty
+15 ☐ Flow wizard enforcing wrong order
+16 ☐ Flow wizard colors lying (green = missing)
+17 ✅ Ellipses menu not rendering
+18 ☐ Forbidden combinations list incomplete
+19 Fix & rebaseline sanity check
+20 Restore save button state machine
+21 Refactor editing call chain
+22 Wizard & validation feedback
+23 Headers & titles
+24 Color coding consistency
+25 Rule enable/disable
+26 Rule preview / simulation
+27 Replace mock data
 
 Calendar
-11 ☐ Warnings not shown in calendar
+28 ☐ Warnings not shown in calendar
 
 Employee-form
-12 ☐ Wrong shift assignments on closed days
-13 🚧 Ellipses buttons dead
+29 ☐ Wrong shift assignments on closed days
+30 🚧 Ellipses buttons dead
+31 ☐ Restore save button state machine
 
 Calendar-settings
-14 ☐ Save buttons / state handling
-15 ☐ Public holiday rendering
+32 ☐ Save buttons / state handling
+33 ☐ Public holiday rendering
+34 ☐ Restore save button state machine
 
 ────────────────
 🧩 Beta-Value (fix before polish)
 
 Request-form
-16 ☐ Warnings for conflicting request
+35 ☐ Warnings for conflicting request
+36 ☐ PTO calculations  
 
 Rule-form
-17 ☐ Warnings should be sticky & collapsible
-
-Calendar
-18 ☐ PTO calculations  <=== this doesnt belong into calendar ! PTO = requests
+37 ☐ Warnings should be sticky & collapsible
 
 Employee-form
-19 🚧 PDO calculation wrong
+38 🚧 PDO calculation wrong
 
 Admin-tools
-20 🚧 Old style save button in wrong place
-21 ☐ Color customization
-22   ☐ Missing color pickers
-23   ☐ Incomplete calendar previews
-24   ☐ Styling issues
-25 ☐ Emoji select UX clarity (pooled / click behavior)
-26 ☐ Team names not editable visually
-27 🚧 Revive deleted employees
+39 🚧 Old style save button in wrong place
+40 ☐ Color customization
+41 ☐ Missing color pickers
+42 ☐ Incomplete calendar previews
+43 ☐ Styling issues
+44 ☐ Emoji select UX clarity (pooled / click behavior)
+45 ☐ Team names not editable visually
+46 🚧 Revive deleted employees
+47 ☐ Enforce limited color range per team (optional)
+48 ☐ Add team + role name in the picker container (#limited-color-picker-teamname / #limited-color-picker-rolename) dynamically on cell focus.
+
 
 Help
-28 🚧 Add basic content per chapter
-29 🚧 Glossary icons update
-30 ☐ Iconography & nomenclature explanation
-31 🚧 Story arc + protagonist idea
+49 🚧 Add basic content per chapter
+50 🚧 Glossary icons update
+51 ☐ Iconography & nomenclature explanation
+52 🚧 Story arc + protagonist idea
 
 Misc
-32 🚧 Minimal form size calculation
+53 🚧 fix min max btn on welcome page
+54 🚧 fix radio button lay out for menu optic on load
+
 
 Calendar-settings
-33 ☐ Company holiday inputs / height / alignment
-34 ☐ Feedback on corrupted datasets
+55 ☐ Company holiday inputs / height / alignment
+56 ☐ Feedback on corrupted datasets
 
 ────────────────
 🧠 Post-Beta (frozen)
 
-35 🧠 Admin-tools: Rule tolerances / advanced calendar settings
-36 🧠 Feedback bar / state panel fix
-37 🧠 Hint for weekday <-> shifts
+57 🧠 Admin-tools: Rule tolerances / advanced calendar settings
+58 🧠 Feedback bar / state panel fix
+59 🧠 Hint for weekday <-> shifts
