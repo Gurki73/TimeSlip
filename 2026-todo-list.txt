@@ -8,54 +8,9 @@ Derived feedback
    ↓
 Wizard renders feedback
 
-🔗 Phase 1 — Fix the callchain
-☐ Remove any wizard logic triggered before sanity runs
-☐ Ensure every UI input change triggers:
-☐ Wizard no longer reads raw UI state to decide colors
-
-🧪 Phase 2 — Define live sanity result (minimal)
-☐ Define a single object returned by sanity:
-☐ No severity
-☐ No cross-rule logic
-☐ No “smart” conclusions
-
-🎨 Phase 3 — Make wizard a pure renderer
-☐ Wizard accepts only liveCheckResult
-☐ Wizard coloring rules:
-  forbidden → red
-  missingMandatory → warning / neutral
-  otherwise → no color
-☐ Remove any logic that:
-  marks green by default
-  infers “ok” from defaults
-  disables save without sanity signal
-
-🟥 Phase 4 — Kill lying green (temporarily)
-☐ Disable green highlights entirely OR
-☐ Re-label green internally as “complete”, not “valid”
-☐ No green unless:
-   missingMandatory.length === 0
-   forbidden.length === 0
-
-💾 Phase 5 — Rewire save button
-☐ Save button state depends only on:
-☐ Wizard alarms may exist visually, but do not gate save directly
-
-🧹 Phase 6 — Remove zombie wizard logic
-☐ Audit ruleFlowWizard.js and mark:
-  legacy logic
-  UX-only helpers
-  candidates for deletion post-beta
-☐ Add // legacy – UI assist only comments where needed
-
-✅ Phase 7 — Truth test (manual, fast)
-☐ Create an obviously broken rule → wizard must show red
-☐ Create an incomplete rule → wizard must stay neutral
-☐ Create a complete-but-wrong rule → wizard must not show green
-
 ────────────────
 Legend:
-☐  open           🚧 in work      ✅ finished
+☐  open           🚧 in work      ✅ finished ❌ cannceld
 🔥 ship-blocker   🧩 beta-value   🧠 post-beta
 ────────────────
 🔥 Ship-Blockers
@@ -75,22 +30,94 @@ Request-form
 12 ☐ Restore save button state machine
 
 Rule-form
-13 🚧 Typing effect not updating after editing rule
-14 ☐ Save button not marked dirty
-15 ☐ Flow wizard enforcing wrong order
-16 ☐ Flow wizard colors lying (green = missing)
-17 ✅ Ellipses menu not rendering
-18 ☐ Forbidden combinations list incomplete
-19 Fix & rebaseline sanity check
-20 Restore save button state machine
-21 Refactor editing call chain
-22 Wizard & validation feedback
-23 Headers & titles
-24 Color coding consistency
-25 Rule enable/disable
-26 Rule preview / simulation
-27 Replace mock data
-
+13 ☐ Fix & rebaseline sanity check
+ 13.1 ☐ List all mandatory blocks per rule type
+ 13.2 ☐ List all forbidden block combinations (static first)
+ ✅ 13.3 ☐ Make sanity check pure (input → output, no DOM)
+ 13.4 ☐ Apply results to UI:
+  13.4.1 neutral
+  13.4.2 forbidden (red)
+  13.4.3 missing mandatory (green)
+ 13.5 ☐ Disable invalid <select> options based on context
+14 ☐ Refactor editing call chain
+ 14.1 ☐ onInputChange
+   → updateRuleModel
+   → updatePreview
+   → runDynamicSanityCheck
+   → updateWizardUI
+   → updateSaveButtonState
+  14.2 ☐ onManualCheck OR onSave
+   → runExtendedSanityCheck
+   → renderValidationReport
+   → if clean → allow save
+  14.3 ✅ Single onRuleChanged(reason) entry point
+  14.4 ☐ Remove ad-hoc calls to sanity/preview elsewhere
+  14.5 ☐ Make preview + wizard read-only consumers
+15 ☐ Restore save button state machine
+  15.1 ☐ Central setSaveState(state)
+  15.2 ☐ Sanity check drives valid / invalid
+  15.3 ☐ Editing drives dirty
+  15.4 ☐ Successful save → clean
+  15.5 ☐ Sleeping rule change counts as dirty
+16 ☐ Save button not marked dirty
+  16.1 ❌ Hash / snapshot last-saved rule model:
+      no redo/undo , last saved version of rules already exsist in list all rules
+  16.2 ☐ Compare on each change
+  16.3 ☐ Dynamic warnings ≠ dirty
+  16.4 ☐ Structural changes = dirty
+17 ☐ Flow wizard enforcing wrong order
+  17.1 ☐ Define allowed block order per rule type
+  17.2 ☐ Identify which constraints are:
+  17.3 ☐ hard (forbidden)
+  17.4 ☐ soft (recommended)
+  17.5 ☐ Wizard enforces only hard constraints
+  17.6 ☐ ☐ Sanity check enforces completeness, not sequence
+18 🚧 Flow wizard colors lying (green = missing)
+  18.1 ✅ Single source of truth: blockId
+  18.2 ✅ No DOM queries by CSS structure
+  18.3 ☐ applyValidationState(✅ blockId, state)
+  18.4 ✅ Always clear previous state before applying new one
+19 🚧 Wizard & validation feedback
+  19.1 ☐ Extended sanity returns structured report
+  19.2 ☐ Render list:
+  19.3 ☐ errors
+  19.4 ☐ warnings
+  19.5 ☐ affected blocks
+  19.6 ☐ Clicking report item focuses block
+  19.7 ☐ Save only allowed if report empty
+20 ☐ Forbidden combinations list incomplete
+  20.1 ☐ Move combos into declarative config
+  20.2 ☐ Add unit-style test cases (even manual)
+  20.3 ☐ Expand once logic proven stable
+21 ☐ Rule enable/disable
+  21.1 ☐ Add state: active | sleeping to rule model
+  21.2 ☐ Visual marker in existing rules list
+  21.3 ☐ Loader filters sleeping rules
+  21.4 ☐ Execution engine skips sleeping rules
+  21.5 ☐ Sleep/awake marks app dirty
+22 🚧 Typing effect not updating after editing rule
+  22.1 ☐ Identify blocks not triggering preview update
+  22.2 ☐ Ensure preview is rebuilt from model, not DOM
+  ✅ 22.3 ☐ Restart typing effect on any preview text change
+23 ☐ Color coding consistency
+  23.1 ☐ Central color resolver (role/day/shift → color)
+  23.2 ☐ Apply everywhere (preview + builder)
+  23.4 ☐ No inline color logic
+24 ☐ Headers & titles
+  24.1 ✅ Normalize chevron size
+  24.2 ☐ Decide auto-expand rules
+  24.3 ✅ Test role markers
+  24.4 ☐ Align typography hierarchy
+25 ☐ Rule preview / simulation
+  25.1 ☐ Compare new rule vs existing rules
+  25.2 ☐ Simulate against real data
+  25.3 ☐ Present diff-style output
+26 ☐ Replace mock data
+  26.1 ☐ Freeze data shape
+  26.2 ☐ Replace noise with edge-case fixtures
+  26.3 ☐ Keep some “ugly” cases on purpose
+27 ✅ Ellipses menu not rendering
+  
 Calendar
 28 ☐ Warnings not shown in calendar
 

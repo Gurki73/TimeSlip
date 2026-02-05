@@ -17,7 +17,7 @@
       <span id="typing-text" aria-live="polite">&gt; Regel wird erstellt …</span>
       <span class="blinking-cursor noto cursor-stop" aria-hidden="true">▮</span>
     </div>
-    <button id="test-rule" class="noto chevron" aria-label="Neue Regel testen">🔎</button>
+    <button id="test-rule" class="noto chevron" aria-label="Neue Regel analysieren" aria-expaended="false">📊</button>
     <div id="debug-output" class="hidden"></div>
     <h3 class="rule-new-warnings-list"> neue Regel => alle Warnungen:</h3>
     <ul id="rule-new-warnings-list" role="status" aria-live="polite">
@@ -32,13 +32,13 @@
           <path id="rule-line-flow" />
         </svg>
 
-        <div id="rule-first-condition" class="left-table">
+        <div id="rule-first-condition" class="left-table" data-scope="main">
           <table class="rule-table">
             <thead>
               <tr>
-                <th id="repeat-header" class="noto" data-highlight="false">
+                <th id="rule-main-W-th" class="noto">
                   Wiederholungen:
-                  <select id="request-type-select-repeats" class="noto">
+                  <select id="rule-main-W-select" data-forbidden="true" class="noto">
                     <option value="W0">...</option>
                     <option value="W1">jeden</option>
                     <option value="W2">entweder</option>
@@ -46,9 +46,9 @@
                     <option value="W4">x-mal</option>
                   </select>
                 </th>
-                <th id="time-header" class="noto" data-highlight="false">
+                <th id="rule-main-T-th" class="noto">
                   Zeitraum:
-                  <select id="request-type-select-time">
+                  <select id="rule-main-T-select">
                     <option value="T0">Immer</option>
                     <option value="T1">Schicht</option>
                     <option value="T2">Tag</option>
@@ -56,9 +56,9 @@
                     <option value="T5">Abwesentheit</option>
                   </select>
                 </th>
-                <th id="amount-header" class="noto" data-highlight="false">
+                <th id="rule-main-A-th" class="noto">
                   Anzahl
-                  <select id="request-type-select-amount" class="noto">
+                  <select id="rule-main-A-select" class="noto">
                     <option value="A1">ungefär</option>
                     <option value="A3">zwischen</option>
                     <option value="A4">maximal</option>
@@ -66,25 +66,25 @@
                     <option value="A8">genau</option>
                   </select>
                 </th>
-                <th id="task-header" class="noto" data-highlight="true">
+                <th id="rule-main-G-th" class="noto">
                   Aufgaben:
-                  <select id="request-type-select-group">
+                  <select id="rule-main-G-select">
                     <option value="G0">Aufgabe</option>
                     <option value="G1">Gruppe</option>
                     <option value="G2">Alternative</option>
                   </select>
                 </th>
-                <th id="dependency-header" class="noto" data-highlight="false">
+                <th id="rule-main-D-th" class="noto">
                   Abhängigkeiten:
-                  <select id="request-type-select-dependency" class="noto">
+                  <select id="rule-main-D-select" class="noto">
                     <option value="D0">anwesend</option>
                     <option value="D2">braucht</option>
                     <option value="D3">hilft</option>
                   </select>
                 </th>
-                <th id="exception-header" class="noto" data-highlight="false">
+                <th id="rule-main-E-th" class="noto">
                   Ausnahmen:
-                  <select id="request-type-select-exception">
+                  <select id="rule-main-E-select">
                     <option value="E0">...</option>
                     <option value="E2">oder</option>
                     <option value="E3">aber</option>
@@ -96,26 +96,26 @@
               </tr>
             </thead>
             <tbody>
-              <tr id="firstTableSecondSteps">
-                <td id="repeat-cell" data-highlight="false"></td>
-                <td id="time-cell" data-highlight="false"></td>
-                <td id="amount-cell" data-highlight="false"></td>
-                <td id="task-cell" data-highlight="true"></td>
-                <td id="dependency-cell" data-highlight="false"></td>
-                <td id="exception-cell" data-highlight="false"></td>
+              <tr id="rule-main-row-0">
+                <td id="rule-main-W-td"></td>
+                <td id="rule-main-T-td"></td>
+                <td id="rule-main-A-td"></td>
+                <td id="rule-main-G-td"></td>
+                <td id="rule-main-D-td"></td>
+                <td id="rule-main-E-td"></td>
               </tr>
             </tbody>
           </table>
           <div class="tab-gab"></div>
           <div id="space-between-tables"></div>
           <!-- Second Table -->
-          <div id="rule-second-condition" class="right-table">
+          <div id="rule-second-condition" class="right-table" data-scope="ex">
             <table class="rule-table">
               <thead>
                 <tr>
-                  <th id="ex-repeat-header" class="noto" data-highlight="false">
+                  <th id="rule-ex-w-th" class="noto">
                     Wiederholungen:
-                    <select id="ex-request-type-select-repeats" class="noto">
+                    <select id="rule-ex-w-select" class="noto">
                       <option value="w0">...</option>
                       <option value="w1">jeden</option>
                       <option value="w2">entweder</option>
@@ -123,9 +123,9 @@
                       <option value="w4">x-mal</option>
                     </select>
                   </th>
-                  <th id="ex-time-header" class="noto" data-highlight="false">
+                  <th id="rule-ex-t-th" class="noto">
                     Zeitraum:
-                    <select id="ex-request-type-select-time">
+                    <select id="rule-ex-t-select">
                       <option value="t0">...</option>
                       <option value="t1">Schicht</option>
                       <option value="t2">Tag</option>
@@ -133,9 +133,9 @@
                       <option value="t5">Abwesentheit</option>
                     </select>
                   </th>
-                  <th id="ex-amount-header" class="noto" data-highlight="false">
+                  <th id="rule-ex-a-th" class="noto">
                     Anzahl:
-                    <select id="ex-request-type-select-amount" class="noto">
+                    <select id="rule-ex-a-select" class="noto">
                       <option value="a1">ungefär</option>
                       <option value="a3">zwischen</option>
                       <option value="a4">maximal</option>
@@ -143,18 +143,18 @@
                       <option value="a8">genau</option>
                     </select>
                   </th>
-                  <th id="ex-task-header" class="noto" data-highlight="false">
+                  <th id="rule-ex-g-th" class="noto">
                     Aufgaben:
-                    <select id="ex-request-type-select-group">
+                    <select id="rule-ex-g-select">
                       <option value="g">...</option>
                       <option value="g0">Aufgabe</option>
                       <option value="g1">Gruppe</option>
                       <option value="g2">Alternative</option>
                     </select>
                   </th>
-                  <th id="ex-dependency-header" class="noto" data-highlight="false">
+                  <th id="rule-ex-d-th" class="noto">
                     Abhängigkeiten:
-                    <select id="ex-request-type-select-dependency" class="noto">
+                    <select id="rule-ex-d-select" class="noto">
                       <option value="d">...</option>
                       <option value="d0">anwesend</option>
                       <option value="d2">braucht</option>
@@ -164,14 +164,15 @@
                 </tr>
               </thead>
               <tbody>
-                <tr id="secondTableSecondSteps">
-                  <td id="ex-repeat-cell" data-highlight="false"></td>
-                  <td id="ex-time-cell checkbox-grid" data-highlight="false"></td>
-                  <td id="ex-amount-cell" data-highlight="false"></td>
-                  <td id="ex-task-cell" data-highlight="false"></td>
-                  <td id="ex-dependency-cell" data-highlight="false"></td>
+                <tr id="rule-ex-row-0">
+                  <td id="rule-ex-w-td"></td>
+                  <td id="rule-ex-t-td"></td>
+                  <td id="rule-ex-a-td"></td>
+                  <td id="rule-ex-g-td"></td>
+                  <td id="rule-ex-d-td"></td>
                 </tr>
               </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -184,7 +185,7 @@
   <li class="rule-category flex-column">
     <div class="rule-category-header">
       <span class="rule-dot noto">⚪️</span>
-      <button class="rule-chevron resize-button" aria-expanded="false"></button>
+      <button class="rule-chevron resize-button noto" aria-expanded="false"></button>
       <span class="warning-counter-category" active="false">⚠️ 0</span>
       <span class="rule-category-title"></span>
     </div>

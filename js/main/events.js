@@ -69,7 +69,6 @@ export function registerEventHandlers(mainWindow) {
         }
     });
 
-
     ipcMain.on('app-close', async () => {
         if (!mainWindow) return;
 

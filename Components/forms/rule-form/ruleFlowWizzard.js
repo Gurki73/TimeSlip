@@ -1,200 +1,174 @@
 // Components/forms/rule-form/ruleFlowWizard.js
 
+import { getSelect, getCell, resetOptions, applyValidationState } from './ruleDomAdapter.js';
+
 // “Wizard renders live sanity feedback for current rule only. It does not decide validity.”
 
-// ==========================
-// 1. Block & Selector Mapping
-// ==========================
-const blocks = {
-    W: { selector: 'request-type-select-repeats', mandatory: false },
-    T: { selector: 'request-type-select-time', mandatory: false },
-    A: { selector: 'request-type-select-amount', mandatory: false },
-    G: { selector: 'request-type-select-group', mandatory: true },
-    D: { selector: 'request-type-select-dependency', mandatory: true },
-    E: { selector: 'request-type-select-exception', mandatory: false },
-    // Secondary blocks
-    w: { selector: 'ex-request-type-select-repeats', mandatory: false },
-    t: { selector: 'ex-request-type-select-time', mandatory: false },
-    a: { selector: 'ex-request-type-select-amount', mandatory: false },
-    g: { selector: 'ex-request-type-select-group', mandatory: false },
-    d: { selector: 'ex-request-type-select-dependency', mandatory: false },
+const BLOCKS = {
+    W: { scope: 'main' },
+    T: { scope: 'main' },
+    A: { scope: 'main' },
+    G: { scope: 'main' },
+    D: { scope: 'main' },
+    E: { scope: 'main' },
+
+    w: { scope: 'ex' },
+    t: { scope: 'ex' },
+    a: { scope: 'ex' },
+    g: { scope: 'ex' },
+    d: { scope: 'ex' },
 };
 
-// ==========================
-// 2. Forbidden Pair / Blacklist
-// ==========================
-const forbiddenPairs = {
-    // T0 = empty; T1 = shift;  T2 = Day;  T3 = week; T5 = absence
-    // W0 = empty; W1 = always, W2 = Xor;  W3 = only; W4 = per 
-    T_W: [['T1', 'W2'], ['T3', 'W2'], ['T5', 'W2'], ['T3', 'W3'], ['T5', 'W3'],
-    ['T1', 'W4'], ['T2', 'W4'], ['T5', 'W4']],
-    W_T: [['W2', 'T1'], ['W2', 'T3'], ['W2', 'T5'], ['W3', 'T3'], ['W3', 'T5'],
-    ['W4', 'T1'], ['W4', 'T2'], ['W4', 'T5']],
-};
+function idsFor(key) {
+    const cfg = BLOCKS[key];
+    if (!cfg) return null;
 
-// ==========================
-// 3. Dynamic Wizard Update
-// ==========================
-export function updateWizard(liveResult) {
-    clearHighlights();
-
-    liveResult.forbidden.forEach(selector =>
-        highlightBlock(selector, "Forbidden combination")
-    );
-    // Loop through all forbidden pairs relevant to the changed block
-    Object.keys(forbiddenPairs).forEach(pairKey => {
-        const pairs = forbiddenPairs[pairKey];
-        pairs.forEach(([blockAValue, blockBValue]) => {
-            const [blockAType, blockBType] = pairKey.split('_');
-            const lastValue = getSelectedValue(lastChangedBlockID);
-            // console.log(blockAType, blockBType, lastChangedBlockID);
-            if (lastChangedBlockID.startsWith(blockAType) && lastValue === blockAValue) {
-                setBlockForbidden(blocks[blockBType].selector, blockBValue);
-            } else if (lastChangedBlockID.startsWith(blockBType) && lastValue === blockBValue) {
-                setBlockForbidden(blocks[blockAType].selector, blockAValue);
-            }
-        });
-    });
-    updateSaveButtonState();
+    const prefix = `rule-${cfg.scope}-${key}`;
+    return {
+        th: `${prefix}-th`,
+        select: `${prefix}-select`,
+        td: `${prefix}-td`,
+    };
 }
 
-// ==========================
-// 4. Highlight / Warning System
-// ==========================
-export function highlightBlock(selectorID, message = '') {
-    const element = document.getElementById(selectorID);
-    if (!element) return;
+/* ============================
+   Public API
+============================ */
 
-    element.classList.add('forbidden'); // CSS class: red outline
-    if (message) attachTooltip(element, `📎 ${message}`);
+export function updateWizard(liveResult, lastUpdatedID) {
+    clearHighlights();
+
+    console.groupCollapsed("🧙 Wizard update");
+    console.log("Live sanity result:", liveResult);
+
+    const exValue = getSelectedValue('E');
+
+    console.log("[wizzard] is ex table active", exValue, exValue !== 'E0');
+
+    resetOptions('main', true);
+    resetOptions('ex', exValue !== 'E0');
+
+    applyValidationState(liveResult, lastUpdatedID);
+
+    // 🔴 Forbidden blocks
+    liveResult.forbidden.forEach(key => {
+        const ids = idsFor(key);
+        if (!ids) {
+            console.warn(`Unknown forbidden block "${key}"`);
+            return;
+        }
+        setForbidden(ids, "Forbidden combination");
+    });
+
+    // 🟡 Missing mandatory blocks
+    liveResult.missingMandatory.forEach(key => {
+        const ids = idsFor(key);
+        if (!ids) {
+            console.warn(`No block mapping for mandatory key "${key}"`);
+            return;
+        }
+
+        highlight(ids.th);
+        highlight(ids.td);
+
+        console.log(`Highlighted mandatory block "${key}"`);
+    });
+
+    updateSaveButtonState();
+    console.groupEnd();
 }
 
 export function clearHighlights() {
-    Object.values(blocks).forEach(block => {
-        const element = document.getElementById(block.selector);
-        if (!element) return;
-        element.classList.remove('forbidden');
-        clearTooltip(element);
-        // Also re-enable all options
-        Array.from(element.options).forEach(opt => opt.disabled = false);
+    Object.keys(BLOCKS).forEach(key => {
+        const ids = idsFor(key);
+        if (!ids) return;
+
+        [ids.th, ids.td].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.removeAttribute("data-highlight");
+            el.removeAttribute("data-forbidden");
+            el.classList.remove("forbidden");
+            clearTooltip(el);
+        });
     });
 }
 
-// ==========================
-// 5. Selector Option Management
-// ==========================
-export function setBlockForbidden(selectorID, optionValue) {
-    const element = document.getElementById(selectorID);
-    if (!element) return;
+export function setBlockForbidden(key, optionValue) {
+    const select = getSelect(key);
+    if (!select) return;
 
-    // Keep current selection intact
-    Array.from(element.options).forEach(opt => {
-        if (opt.value === optionValue) {
-            opt.disabled = true;
-        }
+    Array.from(select.options).forEach(opt => {
+        if (opt.value === optionValue) opt.disabled = true;
     });
 
-    highlightBlock(selectorID, `Option "${optionValue}" conflicts with another selection`);
+    const td = getCell(key);
+    setForbidden(td, `Option "${optionValue}" conflicts with another selection`);
 }
 
-// ==========================
-// 6. Default Values / Prefill
-// ==========================
-// Optional at this stage, can be extended later
-export function prefillDefaults() {
-    Object.values(blocks).forEach(block => {
-        const el = document.getElementById(block.selector);
+
+export function getSelectedValue(key) {
+    const ids = idsFor(key);
+    if (!ids) return null;
+
+    const el = document.getElementById(ids.select);
+    return el?.value ?? null;
+}
+
+export function hasRedAlarms() {
+    return Object.keys(BLOCKS).some(key => {
+        const ids = idsFor(key);
+        const el = document.getElementById(ids?.select);
+        return el && el.classList.contains("forbidden");
+    });
+}
+
+export function updateSaveButtonState() {
+    const saveBtn = document.getElementById("save-rule-btn");
+    if (!saveBtn) return;
+
+    if (hasRedAlarms()) {
+        saveBtn.disabled = true;
+        saveBtn.classList.add("disabled");
+    } else {
+        saveBtn.disabled = false;
+        saveBtn.classList.remove("disabled");
+    }
+}
+
+export function toggleExceptionTable(isActive) {
+    document
+        .getElementById("rule-second-condition")
+        ?.classList.toggle("active", isActive);
+
+    document
+        .getElementById("rule-lines")
+        ?.classList.toggle("active", isActive);
+}
+
+/* ============================
+   Internal helpers
+============================ */
+
+function highlight(key) {
+    const el = getCell(key);
+    if (el) el.setAttribute("data-highlight", "true");
+}
+
+function setForbidden(ids, message) {
+    [ids.th, ids.td].forEach(id => {
+        const el = document.getElementById(id);
         if (!el) return;
-        if (!el.value || el.value === '') {
-            // Pick first non-forbidden option as default
-            const opt = Array.from(el.options).find(o => !o.disabled);
-            if (opt) el.value = opt.value;
-        }
+        el.setAttribute("data-forbidden", "true");
+        el.classList.add("forbidden");
+        if (message) attachTooltip(el, `📎 ${message}`);
     });
-}
-
-// ==========================
-// 7. Save-Time Placeholder
-// ==========================
-export function validateBeforeSave() {
-    // Placeholder for future save-time sanity checks
-    // e.g., compare main vs secondary, mandatory checks, etc.
-    console.warn('Save-time validation not yet implemented.');
-}
-
-// ==========================
-// 9. Utility Functions
-// ==========================
-
-export function getSelectedValue(blockID) {
-    if (!blockID) return null;
-
-    const key = blockID[0];   // First character, e.g. "T" from "T1"
-    const index = blockID.slice(1); // Remaining characters, e.g. "1"
-
-    const block = blocks[key];
-    if (!block) return null; // Unknown block type
-
-    const domID = `${block.selector}`; // e.g. "request-type-select-time1"
-
-    const el = document.getElementById(domID);
-    if (!el) return null;
-
-    return el.value;
 }
 
 export function attachTooltip(element, text) {
-    element.dataset.tooltip = text; // Simple tooltip, could integrate Tippy.js or similar
+    element.dataset.tooltip = text;
 }
 
 export function clearTooltip(element) {
     delete element.dataset.tooltip;
 }
-
-// ==========================
-// 10. Optional UX Enhancements
-// ==========================
-// CSS classes expected:
-// .forbidden { border: 1px solid red; }
-// Tooltips shown via CSS or JS on hover using data-tooltip
-
-export function hasRedAlarms() {
-    return Object.values(blocks).some(block => {
-        const el = document.getElementById(block.selector);
-        return el && el.classList.contains('forbidden');
-    });
-}
-
-export function updateSaveButtonState() {
-    const saveBtn = document.getElementById('save-rule-btn'); // your save button ID
-    if (!saveBtn) return;
-
-    if (hasRedAlarms()) {
-        saveBtn.disabled = true;       // disable save
-        saveBtn.classList.add('disabled'); // optional styling
-    } else {
-        saveBtn.disabled = false;
-        saveBtn.classList.remove('disabled');
-    }
-}
-
-export function toggleExceptionTable(isActive) {
-    const table = document.getElementById("rule-second-condition");
-    const svg = document.getElementById("rule-lines");
-
-    table?.classList.toggle("active", isActive);
-    svg?.classList.toggle("active", isActive);
-}
-
-
-function activateExceptionUI(active) {
-    const diagram = document.getElementById("rule-diagram");
-    diagram.classList.toggle("active", active);
-
-    if (active) {
-        diagram.classList.add("flow-once");
-        setTimeout(() => diagram.classList.remove("flow-once"), 1500);
-    }
-}
-
-

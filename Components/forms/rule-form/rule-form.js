@@ -1,18 +1,39 @@
 // Components\forms\rule-form\rule-form.js
 import { loadRoleData, loadTeamnames } from '../../../js/loader/role-loader.js';
 import { loadOfficeDaysData } from '../../../js/loader/calendar-loader.js';
-import { resetRule, runLiveSanity } from './ruleChecker.js';
-import { toggleExceptionTable, clearHighlights, updateWizard } from './ruleFlowWizzard.js';
+import { runLiveSanity, runRuleTest } from './ruleChecker.js';
+import { toggleExceptionTable, updateWizard } from './ruleFlowWizzard.js';
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
 import { createBranchSelect } from '../../../js/Utils/branch-select.js';
 import { getShiftSymbol } from '../../../js/Utils/globalIcons.js';
 import { blocks, createRuleFromBlueprint, ruleToBlueprint } from "./buildingBlocks.js";
-import { translateCurrentRule, translateExistingRules } from "./translatorHuman.js";
+import { translateCurrentRule, translateExistingRules, renderRoleSpan } from "./translatorHuman.js";
 import { updateRulesPreview } from "./translatorMachine.js";
 import { loadRuleData, saveRuleData, deleteRule as deleteRuleFromDisk, getAllRules } from '../../../js/loader/rule-loader.js';
 import { createSaveButton } from '../../../js/Utils/saveButton.js';
 import { confirmAction } from '../../../js/Utils/conformation-dialog.js'
+// temporary
+import { getCell, getSelect } from './ruleDomAdapter.js';
+const _getElementById = document.getElementById.bind(document);
+// en temporary
+
+const INPUT_BINDINGS = [
+    // main table
+    { key: 'W', handler: handleTopCellNumberInput },
+    { key: 'T', handler: handleTopCellTimeFrame },
+    { key: 'A', handler: handleTopCellNumberInput },
+    { key: 'G', handler: handleTopCellRoles },
+    { key: 'D', handler: handleTopCellDependency },
+    { key: 'E', handler: handleTopCellException },
+
+    // exception table
+    { key: 'w', handler: handleTopCellNumberInput },
+    { key: 't', handler: handleTopCellTimeFrame },
+    { key: 'a', handler: handleTopCellNumberInput },
+    { key: 'g', handler: handleTopCellRoles },
+    { key: 'd', handler: handleTopCellDependency },
+];
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const map = {
@@ -51,6 +72,8 @@ let ruleSet = [];
 let testPassed = false;
 let saveButtonHeader;
 let userScrolledUp = false;
+let cachedShiftSymbols = 'none';
+let lastTestReport = null;
 
 export async function initializeRuleForm(passedApi) {
     api = passedApi;
@@ -110,6 +133,8 @@ export async function initializeRuleForm(passedApi) {
         });
     }
 
+    cachedShiftSymbols = localStorage.getItem('shiftSymbols');
+
     ruleForEditing = createRuleFromBlueprint(defaultBlueprint);
     console.log("rule for edeting:", ruleForEditing);
     translateCurrentRule(ruleForEditing, cachedRoles);
@@ -117,6 +142,7 @@ export async function initializeRuleForm(passedApi) {
     updateDivider("bg-rules");
 
     initSaveButtons();
+    initTestButton();
 
     document.getElementById("expand-rules-btn")?.addEventListener("click", () => {
         scrollRulesToBottomIfAllowed(true);
@@ -134,21 +160,43 @@ export async function initializeRuleForm(passedApi) {
     initEventDelegation();
     //initVisibilityChecker();
     drawRuleLine();
+
+
+    // temporary 
+    const tableContainer = document.getElementById('table-container');
+
+    function getScopedElementById(id) {
+        if (!tableContainer) {
+            console.warn('Table container not found');
+            return null;
+        }
+
+        // Use querySelector with ID, scoped to container
+        const el = tableContainer.querySelector(`#${id}`);
+
+        if (!el) console.warn('[MISSING RULE DOM]', id);
+        return el;
+    }
+    // end temporary
+
+}
+
+function initTestButton() {
+    const testBtn = document.getElementById("test-rule");
+
+    if (!testBtn) {
+        console.warn(" test and analize btn not foun in dom ");
+        return;
+    }
+
+    testBtn.removeEventListener("click", onTestRuleClick);
+    testBtn.addEventListener("click", onTestRuleClick);
+
+    testPassed = false;
+
 }
 
 function initSaveButtons() {
-    const testBtn = document.getElementById("test-rule");
-
-    if (!testBtn) return;
-
-    // Remove existing listeners (safe even if none exist)
-    testBtn.removeEventListener("click", onTestRuleClick);
-
-    // Attach fresh listeners
-    testBtn.addEventListener("click", onTestRuleClick);
-
-    // Initial UX state
-    testPassed = false;
     updateSaveButtonState();
 }
 
@@ -164,17 +212,6 @@ function updateSaveButtonState() {
     );
 }
 
-function runRuleTest() {
-
-    const newMachineRule = updateRulesPreview([ruleForEditing]);
-    console.log("new machine rule:", newMachineRule);
-
-    return new Promise((resolve, reject) => {
-        // async validation logic here
-        Math.random() > 0.3 ? resolve() : reject();
-    });
-}
-
 function saveRule() {
     console.log("Saving rule…");
 }
@@ -184,23 +221,22 @@ function announceStatus(message) {
     if (live) live.textContent = `> ${message}`;
 }
 
-function onTestRuleClick(event) {
-    event.preventDefault();
+function onTestRuleClick(e) {
+    e.preventDefault();
 
-    testPassed = false;
+    lastTestReport = null;
     updateSaveButtonState();
 
-    runRuleTest()
-        .then(() => {
-            testPassed = true;
-            updateSaveButtonState();
-            announceStatus("Regeltest erfolgreich.");
-        })
-        .catch(() => {
-            testPassed = false;
-            updateSaveButtonState();
-            announceStatus("Regeltest fehlgeschlagen.");
-        });
+    runRuleTest().then(report => {
+        lastTestReport = report;
+        updateSaveButtonState();
+
+        announceStatus(
+            report.errors.length === 0
+                ? "Regeltest erfolgreich."
+                : "Regeltest fehlgeschlagen."
+        );
+    });
 }
 
 function onSaveRuleClick(event) {
@@ -353,7 +389,7 @@ export function populateFormFromRule(rule) {
 
     // now fill cell values for numbers / days / roles
     // amount bottom/top
-    const amountCell = document.getElementById('amount-cell');
+    const amountCell = document.getElementById('rule-main-A-td');
     if (rule.main.amount) {
         const bottoms = rule.main.amount.bottom ?? rule.main.amount.number ?? null;
         const tops = rule.main.amount.top ?? null;
@@ -369,7 +405,7 @@ export function populateFormFromRule(rule) {
     // timeframe T2 days checkbox selection
     if (rule.main.timeframe?.type === 'T2') {
         const days = rule.main.timeframe.days || [];
-        const checkboxContainer = document.getElementById('time-cell');
+        const checkboxContainer = document.getElementById('rule-main-T-td');
         Array.from(checkboxContainer.querySelectorAll('input[type="checkbox"]')).forEach(cb => {
             const idx = Number(cb.dataset.index);
             cb.checked = days.includes(idx);
@@ -378,7 +414,7 @@ export function populateFormFromRule(rule) {
     }
 
     // group roles: select the role option that corresponds to rule.main.group.roles[0]
-    const groupCell = document.getElementById('task-cell');
+    const groupCell = document.getElementById('rule-main-G-td');
     const roleSel = groupCell?.querySelector('select');
     if (roleSel && Array.isArray(rule.main.group?.roles) && rule.main.group.roles.length) {
         // match by cachedRoles colorIndex or fallback to index
@@ -468,6 +504,7 @@ function resetInput() {
     });
 }
 
+/*
 function initializeInputFunctions() {
 
     const mainRepeatSelect = document.getElementById('request-type-select-repeats');
@@ -504,6 +541,23 @@ function initializeInputFunctions() {
     exDependencySelect.addEventListener('change', (event) => handleTopCellDependency(event.target.value));
 
 }
+*/
+
+function initializeInputFunctions() {
+    INPUT_BINDINGS.forEach(({ key, handler }) => {
+        const select = getSelect(key);
+
+        if (!select) {
+            console.warn(`[rule-form] Select not found for key "${key}"`);
+            return;
+        }
+
+        select.addEventListener('change', event => {
+            handler(event.target.value);
+        });
+    });
+}
+
 
 function handleTopCellDependency(id) {
 
@@ -624,11 +678,16 @@ function handleTopCellDependency(id) {
             console.warn("no match for dependency rule " + id);
             return;
     }
-    let dependencyCell;
-    if (id[0] === id[0].toLowerCase()) {
-        dependencyCell = document.getElementById('ex-dependency-cell');
-    } else {
-        dependencyCell = document.getElementById('dependency-cell');
+    const firstChar = id[0];
+    const keyMap = { 'D': 'D', 'd': 'd' };
+    const key = keyMap[firstChar];
+
+    if (!key) return console.error(`Unknown dependency key for id ${id}`);
+
+    const dependencyCell = getCell(key);
+    if (!dependencyCell) {
+        console.warn(`Cell not found for dependency key "${key}"`);
+        return;
     }
 
     dependencyCell.innerHTML = '';
@@ -657,18 +716,21 @@ function handleTopCellTimeFrame(id) {
 
             existingShifts.forEach((shift, index) => {
                 const shiftOption = document.createElement('option');
-
-                let emoji = `${getShiftSymbol('day', cachedShiftSymbols)}`
+                if (!cachedShiftSymbols) cachedShiftSymbols = 'none';
+                const shiftSymbolDay = getShiftSymbol('day', cachedShiftSymbols);
+                const shiftSymbolEarly = getShiftSymbol('early', cachedShiftSymbols);
+                const shiftSymbolLate = getShiftSymbol('late', cachedShiftSymbols);
+                let emoji = `${shiftSymbolDay}`
                 let name = 'Tag';
                 let val = 'day';
 
                 if (shift === 'early') {
-                    emoji = `${getShiftSymbol('early', cachedShiftSymbols)}`
+                    emoji = `${shiftSymbolEarly}`
                     name = 'Früh/';
                     val = 'early';
                 }
                 if (shift === 'late') {
-                    emoji = `${getShiftSymbol('late', cachedShiftSymbols)}`
+                    emoji = `${shiftSymbolLate}`
                     name = 'Spät';
                     val = 'late';
                 }
@@ -792,11 +854,19 @@ function handleTopCellTimeFrame(id) {
             console.error(" time frame identifyer " + id + " not identified");
             return;
     }
-    let timeCell;
-    if (id[0] === id[0].toLowerCase()) {
-        timeCell = document.getElementById('ex-time-cell');
-    } else {
-        timeCell = document.getElementById('time-cell');
+    const keyMap = {
+        'T': 'T',
+        't': 't',
+    };
+    const firstChar = id[0];
+    const key = keyMap[firstChar];
+
+    if (!key) return console.error(id + " unknown time frame selector");
+
+    const timeCell = getCell(key); // getCell handles main vs ex table
+    if (!timeCell) {
+        console.warn(`Cell not found for key "${key}"`);
+        return;
     }
 
     timeCell.innerHTML = '';
@@ -822,12 +892,14 @@ function updateShiftSelectColor(select) {
 }
 
 function drawRuleLine() {
+
+    console.log("[drawRuleLine]");
     const svg = document.getElementById("rule-lines");
     svg.innerHTML = "";
 
-    const a = document.getElementById("exception-cell")?.getBoundingClientRect();
+    const a = document.getElementById("rule-main-E-th")?.getBoundingClientRect();
     const b = document.getElementById("space-between-tables")?.getBoundingClientRect();
-    const c = document.getElementById("ex-repeat-header")?.getBoundingClientRect();
+    const c = document.getElementById("rule-ex-w-th")?.getBoundingClientRect();
     const container = document.getElementById("rule-diagram")?.getBoundingClientRect();
 
     if (!a || !b || !c || !container) return;
@@ -985,12 +1057,13 @@ function handleTopCellRoles(id) {
         roleElement.appendChild(singleRoleSelection);
     }
 
-    let roleCell;
-    if (id[0] === id[0].toLowerCase()) {
-        roleCell = document.getElementById('ex-task-cell');
-    } else {
-        roleCell = document.getElementById('task-cell');
-    }
+    const isException = id[0] === id[0].toLowerCase();
+
+    const roleCellId = isException
+        ? 'rule-ex-g-td'
+        : 'rule-main-G-td';
+
+    const roleCell = document.getElementById(roleCellId);
 
     if (roleCell) {
         roleCell.innerHTML = '';
@@ -1013,7 +1086,17 @@ function handleTopCellException(id) {
         E6: 'aber nicht weniger als',
     };
 
-    const exceptionCell = document.getElementById('exception-cell');
+    const keyMap = { 'E': 'E' };
+    const firstChar = id[0];
+    const key = keyMap[firstChar];
+
+    if (!key) return console.error(id + " unknown exception selector");
+
+    const exceptionCell = getCell(key); // DOM adapter handles main vs ex table
+    if (!exceptionCell) {
+        console.warn(`Cell not found for key "${key}"`);
+        return;
+    }
     exceptionCell.innerHTML = ''; // clear previous
     const exceptionLabel = document.createElement('div');
     exceptionLabel.classList.add('noto');
@@ -1127,25 +1210,24 @@ function handleTopCellNumberInput(id) {
             break;
     }
 
+    const keyMap = {
+        'A': 'A',
+        'a': 'a',
+        'W': 'W',
+        'w': 'w',
+    };
+
     const firstChar = id[0];
-    let numberCell;
-    switch (firstChar) {
-        case 'A':
-            numberCell = document.getElementById('amount-cell');
-            break;
-        case 'a':
-            numberCell = document.getElementById('ex-amount-cell');
-            break;
-        case 'W':
-            numberCell = document.getElementById('repeat-cell');
-            break;
-        case 'w':
-            numberCell = document.getElementById('ex-repeat-cell');
-            break;
-        default:
-            console.error(id + " unkown number selector");
-            return;
+    const key = keyMap[firstChar];
+
+    if (!key) return console.error(id + " unknown number selector");
+
+    const numberCell = getCell(key);
+    if (!numberCell) {
+        console.warn(`Cell not found for key "${key}"`);
+        return;
     }
+
     numberCell.innerHTML = '';
     numberCell.appendChild(container);
     handleInput(inputObject);
@@ -1173,16 +1255,16 @@ function handleCheckboxChangeWithNeighbors(container, blockId) {
 
 function collectRuleFromForm() {
     // Collect the top-level selects
-    const repeatSelect = document.getElementById('request-type-select-repeats');
-    const timeSelect = document.getElementById('request-type-select-time');
-    const amountSelect = document.getElementById('request-type-select-amount');
-    const groupSelect = document.getElementById('request-type-select-group');
-    const depSelect = document.getElementById('request-type-select-dependency');
-    const exSelect = document.getElementById('request-type-select-exception');
+    const repeatSelect = getSelect('W');
+    const timeSelect = getSelect('T');
+    const amountSelect = getSelect('A');
+    const groupSelect = getSelect('G');
+    const depSelect = getSelect('D');
+    const exSelect = getSelect('E');
 
     // Helper to read the "cell" contents we create dynamically
-    const readCell = (cellId) => {
-        const cell = document.getElementById(cellId);
+    const readCell = (key) => {
+        const cell = getCell(key);
         if (!cell) return null;
         // Try to find known inputs inside
         const select = cell.querySelector('select');
@@ -1215,17 +1297,17 @@ function collectRuleFromForm() {
     // Now attach details read from cell content
     // Example: timeframe T2 -> days array
     if (main.timeframe.type === 'T2') {
-        const days = readCell('time-cell') || [];
+        const days = readCell('T') || [];
         main.timeframe.days = Array.isArray(days) ? days.map(Number) : [];
     } else if (main.timeframe.type === 'T1') {
         // shift selection: stored as dataset.name or option value
-        const cell = document.getElementById('time-cell');
+        const cell = readCell('T') || [];
         const sel = cell?.querySelector('select');
         if (sel) main.timeframe.shifts = [sel.value];
     }
 
     // amount details
-    const amtCell = document.getElementById('amount-cell');
+    const amtCell = readCell('A');
     const numInputs = amtCell?.querySelectorAll('input[type="number"]') || [];
     if (numInputs.length === 1) {
         main.amount.bottom = Number(numInputs[0].value) || 0;
@@ -1240,7 +1322,7 @@ function collectRuleFromForm() {
     }
 
     // group roles -> convert option index to role index stored in cachedRoles
-    const groupCell = document.getElementById('task-cell');
+    const groupCell = readCell('G');
     const roleSelect = groupCell?.querySelector('select');
     if (roleSelect) {
         const selIdx = Number(roleSelect.value);
@@ -1254,7 +1336,7 @@ function collectRuleFromForm() {
     }
 
     // dependency detail read (numbers and selected role)
-    const depCell = document.getElementById('dependency-cell');
+    const depCell = readCell('D');
     if (depCell) {
         const depNum1 = depCell.querySelector('input[type="number"]#D0-number1') || depCell.querySelector('input[type="number"]');
         const depNum2 = depCell.querySelector('input[type="number"]#D0-number2');
@@ -1286,15 +1368,15 @@ function collectRuleFromForm() {
 }
 
 export function handleInput(inputObj) {
-    console.groupCollapsed("handle input object");
     console.log(inputObj);
 
     const id = inputObj.id;
     if (!id || !blocks[id]) {
         console.warn("Invalid block id:", id, inputObj);
-        console.groupEnd();
         return;
     }
+
+    console.log("[handle input] input Object::", inputObj);
 
     // --- determine scope (MAIN vs SECONDARY) ---
     const firstChar = id.charAt(0);
@@ -1305,7 +1387,6 @@ export function handleInput(inputObj) {
     const key = map[firstChar.toUpperCase()];
     if (!key) {
         console.warn("Unknown prefix:", firstChar, id);
-        console.groupEnd();
         return;
     }
 
@@ -1317,7 +1398,6 @@ export function handleInput(inputObj) {
     // --- exceptions only allowed on MAIN ---
     if (key === "exception" && scope === "secondary") {
         console.warn("Secondary exceptions are not allowed:", id);
-        console.groupEnd();
         return;
     }
 
@@ -1328,7 +1408,6 @@ export function handleInput(inputObj) {
     const target = ruleForEditing[scope][key];
     if (!target) {
         console.warn("Failed to attach block:", scope, key);
-        console.groupEnd();
         return;
     }
 
@@ -1374,15 +1453,8 @@ export function handleInput(inputObj) {
         default:
             console.warn("Unhandled rule key:", key);
     }
-
-    // --- dynamic wizard update ---
-    clearHighlights();
-    // updateWizard(id);
     const liveSanityResult = runLiveSanity(ruleForEditing);
-    updateWizard(liveSanityResult);
-
-    console.trace("Trace for Updated ruleForEditing", ruleForEditing);
-    console.groupEnd();
+    updateWizard(liveSanityResult, inputObj.id);
 
     // --- translations remain as-is ---
     const humanOK = translateCurrentRule(ruleForEditing, cachedRoles);
@@ -1392,6 +1464,8 @@ export function handleInput(inputObj) {
         debug.textContent =
             `Human: ${humanOK ? "✅ OK" : "⚠️ Error"}\n\n`;
     }
+
+    drawRuleLine();
 }
 
 function debounce(fn, wait = 150) {

@@ -94,7 +94,7 @@ function resolveTeamName(team, teamnames) {
 
 // ========== HELPER FUNCTIONS ==========
 function joinGermanList(items = [], connector = "und") {
-    if (!items?.length) return "";
+    if (!items?.length) return "<Aufgaben fehlen>";;
     if (items.length === 1) return items[0];
     if (items.length === 2) return `${items[0]} ${connector} ${items[1]}`;
 
@@ -126,10 +126,16 @@ function getRoleNames(roleIds = [], roles = []) {
     return roleIds
         .map(id => {
             const role = findRoleByIdOrIndex(id, roles);
-            return role?.name || `Rolle ${String(id)}`;
+            if (!role) return null;
+
+            return roleHTML(
+                `${role.emoji} ${role.name}`,
+                role.colorIndex
+            );
         })
         .filter(Boolean);
 }
+
 
 // ========== BLOCK FORMATTERS ==========
 const REPEAT_CONFIG = {
@@ -174,7 +180,7 @@ function formatSentenceStart(repeatBlock = {}, timeFrameBlock = {}) {
     const config = REPEAT_CONFIG[repeatId];
     if (!config || !config[timeFrameId]) {
         console.warn(`Unsupported combination: ${repeatId}/${timeFrameId}`);
-        return "";
+        return "<Fehler 3: unbekannte Kombination>";
     }
 
     return config[timeFrameId](timeFrameBlock, repeatBlock);
@@ -217,11 +223,9 @@ function buildCorePhrase(groupBlock, dependencyBlock, roles) {
     const details = groupBlock.details || { roles: [] };
     const roleIds = details.roles || [];
 
-    if (roleIds.length === 0) {
-        roleIds.push("<Fehl-Rolle>");
-    }
+    const safeRoleIds = roleIds.length ? [...roleIds] : ["<Aufgabe fehlt>"];
 
-    const roleNames = getRoleNames(roleIds, roles);
+    const roleNames = getRoleNames(safeRoleIds, roles);
 
     // Dependency: Present (D0)
     if (dependencyId === "D0") {
@@ -252,7 +256,7 @@ function buildCorePhrase(groupBlock, dependencyBlock, roles) {
         return `${roleText} ${verb} ${neederCount} ${neederName}`;
     }
 
-    return "";
+    return "<Fehler 4: unbekannte Kombination>";
 }
 
 // ========== UTILITY FUNCTIONS ==========
@@ -261,7 +265,7 @@ function getShiftName(shiftCode) {
 }
 
 function formatDaysList(days = [], usePrefix = false, connector = "und") {
-    if (!days?.length) return "<Fehl-Tag>";
+    if (!days?.length) return "<Tag fehlt>";
 
     const dayNames = days.map(day =>
         WEEKDAY_CONFIG.find(w => w.abbr === day)?.name || day
@@ -273,6 +277,7 @@ function formatDaysList(days = [], usePrefix = false, connector = "und") {
 
 function generateHumanSentence(rulePart = {}, roles = []) {
     if (!rulePart) return "ungenügende Auswahl zum Erstellen einer neuen Regel!";
+    if (!rulePart.group || !rulePart.dependency) return "<unvollständige Regel>";
 
     const sentenceStart = formatSentenceStart(rulePart.repeat || {}, rulePart.timeframe || {});
     const amountText = formatAmount(rulePart.amount || {});
@@ -285,7 +290,7 @@ function generateHumanSentence(rulePart = {}, roles = []) {
 function generateFullHumanSentence(rule = {}, roles = []) {
     if (!rule || typeof rule !== "object") {
         console.warn("Invalid rule object");
-        return "";
+        return "<Fehler 1: unbekannte Kombination>";
     }
 
     const mainPart = rule.main || rule;
@@ -331,9 +336,12 @@ export function translateCurrentRule(rule = {}, roles = []) {
 
     const sentence = translateToHuman(rule, roles);
 
+    console.log("sentence -->", sentence);
+
     const typingContainer = document.getElementById("typing-text");
     if (typingContainer) {
-        applyTypingEffectWithCursor(typingContainer, sentence);
+        // applyTypingEffectWithCursor(typingContainer, sentence);
+        typingContainer.innerHTML = sentence || '—';
     }
 }
 
@@ -397,9 +405,14 @@ function prepareRulesForDisplay(enrichedRules) {
 
 function translateToHuman(rule = {}, roles = []) {
     if (!roles?.length) {
-        console.error("No roles provided for rule translation");
-        return false;
+        throw new Error("translateToHuman: roles missing");
     }
+
+    console.log(
+        'PREVIEW INPUT',
+        JSON.parse(JSON.stringify(rule))
+    );
+
 
     const sentence = generateFullHumanSentence(rule, roles);
     if (!sentence) return false;
@@ -496,26 +509,8 @@ function getMinRoleForTeam(roles, team) {
     const teamRoles = roles.filter(r => ROLE_TO_TEAM[r] === team);
     return teamRoles.length ? Math.min(...teamRoles) : Infinity;
 }
-/*
-function renderCategory({ team, teamName, rules, container }) {
-    const tpl = document.getElementById('rule-category');
-    const fragment = tpl.content.cloneNode(true);
 
-    const li = fragment.querySelector('.rule-category');
-    const title = fragment.querySelector('.rule-category-title');
-    const dot = fragment.querySelector('.rule-dot');
-    const list = fragment.querySelector('.rule-category-list');
-
-    title.textContent = "Regeln füt Team: " + teamName || " INJEXT TEAM-NAME HERE";
-    dot.textContent = TEAM_REGISTRY[team]?.dot ?? '⚪️';
-
-    rules.forEach(rule => renderRule(rule, list));
-
-    container.appendChild(fragment);
-}
-*/
-
-function renderCategory({ team, teamName, rules, container }) {
+function renderCategory({ team, teamName, rules, container, roles }) {
     const tpl = document.getElementById('rule-category');
     const fragment = tpl.content.cloneNode(true);
 
@@ -531,7 +526,7 @@ function renderCategory({ team, teamName, rules, container }) {
     li.dataset.team = team;
     li.dataset.primaryRole = TEAM_PRIMARY_ROLE[team];
 
-    rules.forEach(rule => renderRule(rule, list));
+    rules.forEach(rule => renderRule(rule, list, roles));
     container.appendChild(fragment);
 }
 
@@ -583,7 +578,7 @@ export function translateExistingRules(
     initRuleChevronHandlers();
 }
 
-function renderRule(ruleView, container) {
+function renderRule(ruleView, container, roles) {
 
     if (ruleView._deleted) return;
 
@@ -593,7 +588,7 @@ function renderRule(ruleView, container) {
     li.classList.add('existing-rule-item');
     const text = fragment.querySelector('.rule-text');
     li.dataset.ruleId = ruleView.id;
-    text.textContent = generateFullHumanSentence(ruleView.rule) ?? '—';
+    text.textContent = generateFullHumanSentence(ruleView, roles);
 
     renderRoleDots(li, ruleView);
     renderEllipsis(li, ruleView);
@@ -611,27 +606,29 @@ function renderCompactDots(ruleView, marker) {
 
     if (!current) return;
 
-    // current team first
-    addDot(marker, current, true);
-
     const others = teams.filter(t => t !== current);
 
+    // 1. primary
+    addDot(marker, current, true);
+
+    // 2. secondary dots
+    others.slice(0, 2).forEach(team =>
+        addDot(marker, team, false)
+    );
+
+    // 3. overflow indicators
     if (others.length) {
         addPlus(marker);
+    }
 
-        others.slice(0, 2).forEach(team =>
-            addDot(marker, team, false)
-        );
-
-        if (others.length > 2) {
-            addCount(marker, others.length);
-        }
+    if (others.length > 2) {
+        addCount(marker, others.length);
     }
 }
 
 function addDot(container, team, isPrimary = false) {
     const span = document.createElement('span');
-    span.className = 'rule-dot';
+    span.className = 'rule-dot noto';
     if (isPrimary) span.classList.add('primary', 'noto');
 
     span.textContent = TEAM_REGISTRY[team]?.dot ?? '❓';
@@ -640,14 +637,14 @@ function addDot(container, team, isPrimary = false) {
 
 function addPlus(container) {
     const span = document.createElement('span');
-    span.className = 'rule-dot rule-plus';
+    span.className = 'rule-dot rule-plus noto';
     span.textContent = '+';
     container.appendChild(span);
 }
 
 function addCount(container, count) {
     const span = document.createElement('span');
-    span.className = 'rule-dot rule-count';
+    span.className = 'rule-dot rule-count noto';
     span.textContent = count;
     container.appendChild(span);
 }
@@ -888,3 +885,15 @@ function updateAllWarningCounters() {
     updateRuleWarningCounters();
     updateCategoryWarningCounters();
 }
+
+export function renderRoleSpan(roleName, roleIndex) {
+    const span = document.createElement("span");
+    span.classList.add("role-chip", "noto", `role-color-${roleIndex}`);
+    span.textContent = roleName;
+    return span;
+}
+
+function roleHTML(name, index) {
+    return `<span class="role-chip noto role-color-${index}">${name}</span>`;
+}
+

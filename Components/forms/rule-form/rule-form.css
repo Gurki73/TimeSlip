@@ -115,7 +115,7 @@
 .rule-table td {
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
-  background-color: pink;
+  background-color: var(--calendar-day-weekend-bg);
 }
 
 .rule-table th,
@@ -143,31 +143,46 @@
   min-height: 150px;
 }
 .rule-table th[data-highlight="true"] {
-  min-width: 16rem;
   background-color: seagreen;
-  animation: pulse 1.5s infinite;
+  animation: pulse-warning 2.5s infinite;
 }
 
 .rule-item-warning-list {
   background-color: chocolate;
 }
 
-.rule-table td[data-highlight="true"] {
-  min-width: 16rem;
-  background-color: rgba(144, 238, 144, 0.4);
-  border: 2px solid lime;
-  animation: pulse 1.5s infinite;
+.rule-table th[data-highlight="true"] {
+  background-color: seagreen;
+  animation: pulse-warning 2.5s infinite;
 }
 
-@keyframes pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 2px lime;
-  }
-  50% {
-    box-shadow: 0 0 10px lime;
-  }
+.rule-table td[data-highlight="true"] {
+  background-color: rgba(144, 238, 144, 0.4);
+  border: 2px solid lime;
+  animation: pulse-warning 2.5s infinite;
 }
+
+.rule-table th[data-forbidden="true"] {
+  background-color: orange;
+  animation: pulse-forbidden 2.5s infinite;
+}
+
+.rule-table td[data-forbidden="true"] {
+  background-color: wheat;
+  border: 2px solid tomato;
+  animation: pulse-forbidden 2.5s infinite;
+}
+
+@keyframes pulse-warning {
+  0%, 100% { box-shadow: 0 0 2px yellow; }
+  50% { box-shadow: 0 0 10px yellow; }
+}
+
+@keyframes pulse-forbidden {
+  0%, 100% { box-shadow: 0 0 2px red; }
+  50% { box-shadow: 0 0 10px red; }
+}
+
 
 .blinking-cursor {
   animation: blink 1s step-end infinite;
@@ -189,10 +204,14 @@
 }
 
 #typing-text {
-  font-family: "Courier New", monospace;
+  display: flex;
+  align-items: center;      
+  justify-content:first baseline;
+  font-family: "Courier New", monospace, "noto";
   white-space: pre;
   overflow: hidden;
 }
+
 
 #space-between-tables {
   width: 100%;
@@ -346,19 +365,20 @@
 .rule-dot.primary {
   font-size: 1.1em;
   min-height: 1.5rem;
-  min-width: 5rem;
+  min-width: 1.75rem;
   vertical-align: middle;  
 }
 
 .rule-plus,
 .rule-count {
-  color: #777;
-  font-size: 0.85em;
+  color: var(--color-text);
+  font-size: 1.5em;
 }
 
+
 .rule-category-header {
-  min-height: 1.75rem;
-  max-height: 1.75rem;
+  min-height: 2.15rem;
+  max-height: 2.15rem;
   border-color: var(--color-text);
   border-bottom-style: double;
   border-bottom-width: 3px;
@@ -412,6 +432,9 @@
 }
 
 .rule-chevron {
+  padding: 4px;
+  max-width: 1.25rem;
+  max-height: 1.25rem;
   transition: transform 0.2s ease;
 }
 
@@ -438,12 +461,6 @@
   margin-left: 2.5rem;
   max-width: 20rem;
   min-width: 15rem;
-}
-
-.rule-chevron {
-  max-width: 1.15rem;
-  max-height: 1.15rem;
-  padding: 4px;
 }
 
 .warning-counter-category,
@@ -481,12 +498,14 @@
   display: flex;
   flex-direction: row;
   white-space: nowrap;
-  max-height: 1.35rem;
+  max-height: 2.15rem;
+  min-height: 2.15rem;
 }
 
 .warning-text {
   background-color: transparent !important;
-  color: var(--accent-inactive)
+  color: var(--accent-inactive);
+  min-width: 100%;
 }
 
 .checkbox-grid {
@@ -531,3 +550,38 @@
   min-width: 100%;
 }
 
+table th option[data-is-enabled="true"] {
+  opacity: 1;
+  cursor: pointer;
+}
+
+table th option[data-is-enabled="false"] {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.role-chip {
+  border-color: #444;
+  border-width: 1px;
+  border-style: solid;
+  background-color: var(--role-color);
+  padding: 0.15em 0.5em;
+  border-radius: 0.5em;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.role-color-0 { --role-color: var(--role-0-color) }
+.role-color-1 { --role-color: var(--role-1-color) }
+.role-color-2 { --role-color: var(--role-2-color) }
+.role-color-3 { --role-color: var(--role-3-color) }
+.role-color-4 { --role-color: var(--role-4-color) }
+.role-color-5 { --role-color: var(--role-5-color) }
+.role-color-6 { --role-color: var(--role-6-color) }
+.role-color-7 { --role-color: var(--role-7-color) }
+.role-color-8 { --role-color: var(--role-8-color) }
+.role-color-9 { --role-color: var(--role-9-color) }
+.role-color-10 { --role-color: var(--role-10-color) }
+.role-color-11 { --role-color: var(--role-11-color) }
+.role-color-12 { --role-color: var(--role-12-color) }
+.role-color-13 { --role-color: var(--role-13-color) }

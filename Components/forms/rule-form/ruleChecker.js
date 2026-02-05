@@ -2,13 +2,114 @@
 
 const SHIFTS_PER_DAY = 3;
 
+const BASE_MANDATORY = {
+    W: false,
+    T: false,
+    A: true,
+    G: true,
+    D: true,
+    E: false,
+
+    // secondary defaults
+    w: false,
+    t: false,
+    a: false,
+    g: false,
+    d: false,
+};
+
+const FORBIDDEN_PAIRS = {
+    // T0 = empty; T1 = shift;  T2 = Day;  T3 = week; T5 = absence
+    // W0 = empty; W1 = always, W2 = Xor;  W3 = only; W4 = per 
+    T_W: [['T1', 'W2'], ['T3', 'W2'], ['T5', 'W2'], ['T3', 'W3'], ['T5', 'W3'],
+    ['T1', 'W4'], ['T2', 'W4'], ['T5', 'W4']],
+    W_T: [['W2', 'T1'], ['W2', 'T3'], ['W2', 'T5'], ['W3', 'T3'], ['W3', 'T5'],
+    ['W4', 'T1'], ['W4', 'T2'], ['W4', 'T5']],
+};
+
+/**
+ * @typedef {Object} LiveSanityResult
+ * @property {boolean} blocking - true if mandatory fields are missing
+ * @property {string[]} missingMandatory - list of missing mandatory block keys
+ * @property {string[]} forbidden - list of block keys that are forbidden
+ */
+
 export function runLiveSanity(ruleDraft) {
-    // TEMP: stub until logic is implemented
-    return {
-        blocking: false,
-        missingMandatory: [],
-        forbidden: []
-    };
+    const mandatory = deriveMandatory(ruleDraft);
+    const missingMandatory = [];
+
+    const mainKeys = ['W', 'T', 'A', 'G', 'D', 'E'];
+    mainKeys.forEach(key => {
+        if (!mandatory[key]) return;
+        const block = ruleDraft.main?.[key];
+        if (!isBlockSelected(block)) missingMandatory.push(key);
+    });
+
+    const secondaryKeys = ['w', 't', 'a', 'g', 'd'];
+    secondaryKeys.forEach(key => {
+        if (!mandatory[key]) return;
+        const block = ruleDraft.secondary?.[key];
+        if (!isBlockSelected(block)) missingMandatory.push(key);
+    });
+
+    const forbidden = scanForForbidden(ruleDraft);
+
+    const blocking = missingMandatory.length > 0 || forbidden.length > 0;
+
+    return { blocking, missingMandatory, forbidden };
+}
+
+function isBlockSelected(block) {
+    if (!block) return false;
+    if (!block.id) return false;
+
+    return isBlockSelected(block);
+}
+
+
+function hasBlock(ruleDraft, key) {
+    const main = ruleDraft.main?.[key];
+    const secondary = ruleDraft.secondary?.[key];
+    return !!(main || secondary);
+}
+
+function deriveMandatory(ruleDraft) {
+    const mandatory = { ...BASE_MANDATORY };
+
+    // --- Core blocks always mandatory ---
+    mandatory.A = true;
+    mandatory.G = true;
+    mandatory.D = true;
+
+    // --- Exceptions E ---
+    if (ruleDraft.main?.E && ruleDraft.main.E.value !== 'E0') {
+        mandatory.A = true;
+        mandatory.G = true;
+        mandatory.D = true;
+    }
+
+    // --- T/W dynamic dependency ---
+    const WSelected = ruleDraft.main?.W ? ruleDraft.main.W.id[1] !== '0' : false;
+    const wSelected = ruleDraft.secondary?.w ? ruleDraft.secondary.w.id[1] !== '0' : false;
+
+    mandatory.T = WSelected; // T mandatory if W selected
+    mandatory.t = wSelected; // t mandatory if w selected
+
+    // --- Optional: mirror secondary blocks if main is mandatory ---
+    if (mandatory.A) mandatory.a = true;
+    if (mandatory.G) mandatory.g = true;
+    if (mandatory.D) mandatory.d = true;
+
+    return mandatory;
+}
+
+
+function isMandatorySatisfied(ruleDraft, key) {
+    const scope = key === key.toUpperCase() ? "main" : "secondary";
+    const semanticKey = mapKeyToSemantic(key); // e.g. G → group
+
+    const block = ruleDraft?.[scope]?.[semanticKey];
+    return isBlockSelected(block);
 }
 
 function createEmptyWeekCube(roleCount) {
@@ -308,4 +409,54 @@ export function runRulePreview(rule, weeklyCubes) {
 export function runRequestRuleCheck(startDate, endDate, requests) {
     // intentionally empty – implemented later
     return [];
+}
+
+export function runRuleTest() {
+    const newMachineRule = updateRulesPreview([ruleForEditing]);
+    console.log("new machine rule:", newMachineRule);
+
+    return new Promise(resolve => {
+        const ok = Math.random() > 0.3;
+
+        resolve({
+            ok,
+            errors: ok ? [] : [
+                {
+                    type: "RANDOM_FAILURE",
+                    message: "Zufälliger Testfehler 🤡",
+                    source: "self"
+                }
+            ],
+            warnings: ok ? [] : [
+                {
+                    type: "RANDOM_WARNING",
+                    message: "Das ist nur ein Platzhalter",
+                    source: "self"
+                }
+            ]
+        });
+    });
+}
+
+function scanForForbidden(ruleDraft) {
+    const forbidden = [];
+
+    Object.values(FORBIDDEN_PAIRS).forEach(pairs => {
+        pairs.forEach(([first, second]) => {
+            // Look through main and secondary blocks for exact match
+            const allBlocks = [
+                ...(ruleDraft.main ? Object.values(ruleDraft.main) : []),
+                ...(ruleDraft.secondary ? Object.values(ruleDraft.secondary) : [])
+            ];
+
+            const firstSelected = allBlocks.find(b => b?.id === first);
+            const secondSelected = allBlocks.find(b => b?.id === second);
+
+            if (firstSelected && secondSelected) {
+                forbidden.push(`${first} + ${second}`);
+            }
+        });
+    });
+
+    return forbidden;
 }
