@@ -295,6 +295,38 @@ function writeCSVFileSafely(fullPath, content, baseFolder) {
     }
 }
 
+function writeTextFileSafely(fullPath, content) {
+    if (isLocked(fullPath)) {
+        console.warn(`⛔ Write in progress for: ${fullPath}`);
+        return false;
+    }
+
+    lock(fullPath);
+    const dir = path.dirname(fullPath);
+    const tmpPath = fullPath + '.tmp';
+
+    try {
+        ensureDirectoryExists(dir);
+
+        if (typeof content !== 'string') {
+            console.error(`❌ Refusing to write non-string content: ${fullPath}`);
+            return false;
+        }
+
+        fs.writeFileSync(tmpPath, content, 'utf8');
+        fs.renameSync(tmpPath, fullPath);
+        return true;
+    } catch (err) {
+        console.error(`❌ Error writing text file: ${fullPath}`, err);
+        return false;
+    } finally {
+        try {
+            if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+        } catch (_) { }
+        unlock(fullPath);
+    }
+}
+
 export function listRuleFiles(homeKey) {
     const folder = getClientDataFolder(homeKey);
     if (!folder) return [];
@@ -327,6 +359,35 @@ export function saveRuleFile(homeKey, relativePath, content) {
     const filename = path.basename(relativePath);
     const folder = path.dirname(relativePath);
     return saveCSV('client', folder, filename, content);
+}
+
+export function loadTextFile(homeKey, relativePath) {
+    const folder = getClientDataFolder(homeKey);
+    if (!folder) return null;
+
+    const full = path.join(folder, relativePath);
+    if (!fs.existsSync(full)) return null;
+
+    try {
+        return fs.readFileSync(full, 'utf8');
+    } catch (err) {
+        console.error(`❌ Error reading text file: ${full}`, err);
+        return null;
+    }
+}
+
+export function saveTextFile(homeKey, relativePath, content) {
+    let resolvedFolder = getClientDataFolder(homeKey);
+    if (!resolvedFolder) {
+        resolvedFolder = tryCreateClientDataFolderFallback();
+        if (!resolvedFolder) {
+            showFatalFolderCreationError();
+            return false;
+        }
+    }
+
+    const fullPath = path.join(resolvedFolder, relativePath);
+    return writeTextFileSafely(fullPath, content);
 }
 
 export function deleteRuleFile(homeKey, relativePath) {

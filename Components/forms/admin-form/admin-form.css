@@ -581,6 +581,157 @@ input[type="color"] {
   flex-direction: column;
 }
 
+/* === MINI CALENDAR CUSTOMIZER === */
+.mini-calendar-customizer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mini-calendar-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.mini-calendar-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+}
+
+.mini-calendar {
+  background: var(--bg-white);
+  border: 1px solid var(--accent-muted);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.mini-calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin-bottom: 6px;
+}
+
+.mini-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.mini-day {
+  border: 1px solid var(--accent-muted);
+  border-radius: 8px;
+  padding: 6px 0;
+  background: var(--calendar-day-regular-bg);
+  cursor: pointer;
+}
+
+.mini-day.weekend {
+  background: var(--calendar-day-weekend-bg);
+}
+
+.mini-day.holiday {
+  background: var(--calendar-day-holiday-bg);
+}
+
+.mini-day.closed {
+  background: var(--calendar-day-closed-bg);
+}
+
+.mini-day.selected {
+  outline: 2px solid var(--accent-active);
+}
+
+.mini-calendar-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--bg-white);
+  border: 1px solid var(--accent-muted);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.mini-day-preview {
+  border-radius: 10px;
+  padding: 10px;
+  border: 1px solid var(--accent-muted);
+}
+
+.mini-day-preview-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+.mini-day-preview-shifts {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.shift-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.shift-swatch {
+  display: inline-block;
+  width: 48px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1px solid var(--accent-muted);
+  background: var(--calendar-shift-day-bg);
+}
+
+.mini-color-controls {
+  display: grid;
+  gap: 8px;
+}
+
+.color-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* === APP TAB === */
+.app-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.app-theme-group {
+  background: var(--bg-white);
+  border: 1px solid var(--accent-muted);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.app-theme-group h3 {
+  margin-top: 0;
+}
+
+.limited-picker-hint {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  opacity: 0.7;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .mini-calendar-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* === PANEL COLUMNS === */
 .tab-panel-col {
   background-color: var(--bg-white);

@@ -1,0 +1,127 @@
+You are assisting with a single-page Electron desktop application.
+
+==================================================
+PROJECT CONTEXT
+==================================================
+
+- This is a mostly offline Electron app running on a single device
+- It is conceptually a 1:1 replacement for an Excel sheet used for employee vacation planning
+- The UI is intentionally simple and functional
+- This is a solo project
+
+==================================================
+TARGET PLATFORMS
+==================================================
+
+- Primary target: Windows
+- Secondary target: Linux
+- Development is done using WSL2
+- macOS, mobile, and web deployments are out of scope
+
+==================================================
+TECH STACK
+==================================================
+
+- Plain JavaScript (no TypeScript)
+- HTML and CSS
+- Electron with Node.js runtime
+- Strong Content Security Policy (CSP)
+
+Do NOT suggest or introduce:
+- React, Vue, Angular, Svelte, Flutter
+- Build tools, bundlers, or transpilers
+- Third-party libraries or frameworks
+
+==================================================
+ELECTRON ARCHITECTURE
+==================================================
+
+- Strict separation between main and renderer
+- Main process:
+  - Used almost exclusively for disk access and storage
+- Renderer process:
+  - UI logic only
+  - No direct Node.js access
+- IPC is done via preload scripts using contextBridge
+- Preload scripts:
+  - Use .cjs
+  - Use require(), not import
+- Renderer scripts:
+  - Use normal JavaScript
+  - No inline scripts unless explicitly allowed
+
+Security expectations:
+- contextIsolation is enabled
+- nodeIntegration is disabled
+- CSP must not be weakened or bypassed
+
+==================================================
+DATA STORAGE RULES
+==================================================
+
+- Primary data format is CSV for Excel compatibility
+- Additional data:
+  - Small JSON-like config files (rulesets, color themes)
+  - Simple .txt files for trivial state (e.g. federal state)
+  - Renderer localStorage ONLY for non-critical UI state
+    (e.g. zoom factor, selected theme)
+
+ABSOLUTE RULE:
+- Never modify existing stored data structures
+- Even if a typo or design flaw is found
+- Data structures may ONLY be extended in a backward-compatible way
+- Never migrate or rewrite user data unless explicitly instructed
+
+==================================================
+CODING STYLE & QUALITY RULES
+==================================================
+
+General philosophy (in order of importance):
+1. Robustness over everything
+2. Maintainability over performance
+3. Simple code over sophisticated code
+
+Rules:
+- Prefer explicit, readable logic
+- Avoid nesting deeper than 2 levels
+- Functions should usually be 20–50 lines after refactoring
+- Script files should not exceed ~1000 lines
+- Concept-phase code may be messy, but refactoring is expected
+
+Defensive coding is REQUIRED:
+- All while-loops must have a timeout or escape condition
+- Use guards generously
+- Use try/catch when behavior is uncertain
+- Assume user data may be malformed
+
+==================================================
+JAVASCRIPT STYLE
+==================================================
+
+- Semicolons are required
+- No classes; use functions only
+- Avoid clever abstractions
+
+Quotes:
+- Use single quotes for strings by default
+- Use double quotes inside rendered text when needed
+- Use template literals (`) when embedding variables or HTML snippets
+
+==================================================
+ACCESSIBILITY & INPUT
+==================================================
+
+- Always consider basic ARIA attributes
+- Keyboard navigation and input must be supported
+- Mouse-only interactions are not sufficient
+
+==================================================
+ABSOLUTE DO-NOT LIST
+==================================================
+
+- Do NOT add third-party libraries
+- Do NOT weaken CSP or security settings
+- Do NOT introduce databases
+- Do NOT modify mock data or onboarding data unless explicitly asked
+- Do NOT change existing data schemas
+

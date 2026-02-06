@@ -263,6 +263,25 @@ export function registerEventHandlers(mainWindow) {
     });
 
 
+    ipcMain.handle('load-text', async (event, { homeKey, relativePath }) => {
+        try {
+            return dataLoader.loadTextFile(homeKey, relativePath);
+        } catch (err) {
+            console.error(`❌ Failed load-text for ${relativePath}:`, err);
+            return null;
+        }
+    });
+
+    ipcMain.handle('save-text', async (event, { homeKey, relativePath, content }) => {
+        if (homeKey === 'sample') return false;
+        try {
+            return dataLoader.saveTextFile(homeKey, relativePath, content);
+        } catch (err) {
+            console.error(`❌ Failed save-text for ${relativePath}:`, err);
+            return false;
+        }
+    });
+
     ipcMain.handle('load-csv', async (event, { homeKey, relativePath }) => {
         try {
             const content = await dataLoader.loadCSV(homeKey, relativePath);
@@ -315,4 +334,3 @@ export function loadFormAndSendToRenderer(formName, webContents) {
         }
     });
 }
-

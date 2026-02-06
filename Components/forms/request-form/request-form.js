@@ -123,7 +123,9 @@ export async function initializeRequestForm(passedApi) {
     yearFilter.addEventListener('change', async () => {
       const selectedYear = parseInt(yearFilter.value, 10) || new Date().getFullYear();
       localStorage.setItem('RequestListDate', selectedYear);
-      await initializeRequestForm(api);
+      requestYear = selectedYear;
+      await loadAndRenderRequests();
+      updateFilterButtons();
     });
   }
   const clearBtn = document.getElementById("clear-filters-btn");
@@ -552,11 +554,13 @@ function storeRequest() {
 
   const requestToStore = {};
 
-  const previewStart = document.getElementById('request-preview-start').textContent;
-  const previewEnd = document.getElementById('request-preview-end').textContent;
+  const startInput = document.getElementById('request-start-picker')?.value || "";
+  const endInput = document.getElementById('request-end-picker')?.value || "";
+  const previewStart = document.getElementById('request-preview-start')?.textContent || "";
+  const previewEnd = document.getElementById('request-preview-end')?.textContent || "";
 
-  requestToStore.start = parsePreviewDate(previewStart);
-  requestToStore.end = parsePreviewDate(previewEnd);
+  requestToStore.start = startInput || parsePreviewDate(previewStart);
+  requestToStore.end = endInput || parsePreviewDate(previewEnd);
 
   if (!requestToStore.start || !requestToStore.end) {
     console.error("❌ Invalid start/end dates:", previewStart, previewEnd);
@@ -884,6 +888,7 @@ function renderRequestsTable(requests) {
 
   setupTableEvents();
   initSingleClearFilterButtons()
+  updateFilterAvailability(requests);
 }
 
 function getTableBody() {
@@ -949,6 +954,14 @@ function collectAvailableFilters(requests) {
   });
 
   return filters;
+}
+
+function updateFilterAvailability(requests) {
+  const filters = collectAvailableFilters(requests);
+  toggleFilterOptions("requester-filter", new Set([...filters.employees].map(String)));
+  toggleFilterOptions("decision-type-select", new Set([...filters.types].map(String)));
+  toggleFilterOptions("month-filter", new Set([...filters.months].map(String)));
+  toggleFilterOptions("status-filter", new Set([...filters.statuses].map(String)));
 }
 
 function updateSingleClearButtons() {
@@ -1158,15 +1171,19 @@ function populateEmployeeFilter(availableEmployeeIDs) {
 
 function toggleFilterOptions(filterId, availableValues) {
   const selectElement = document.getElementById(filterId);
+  if (!selectElement) return;
+
   const options = selectElement.querySelectorAll("option");
 
   options.forEach(option => {
     const value = option.value;
-    if (value === "all" || availableValues.has(value)) {
-      option.disabled = false;
-      option.style.color = "";
-      option.style.fontStyle = "";
-    }
+    const isAvailable = value === "all" || availableValues.has(value);
+
+    option.disabled = !isAvailable;
+    option.style.opacity = isAvailable ? "" : "0.3";
+    option.style.cursor = isAvailable ? "" : "not-allowed";
+    option.style.color = "";
+    option.style.fontStyle = "";
   });
 }
 
@@ -1323,7 +1340,7 @@ function parsePreviewDate(previewText) {
 }
 
 function fireWarnings() {
-
+  recalcWarnings(saveButtonHeader);
 }
 
 function setEnabled() {

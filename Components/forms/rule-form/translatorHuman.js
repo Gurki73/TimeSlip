@@ -586,6 +586,7 @@ function renderRule(ruleView, container, roles) {
     const fragment = tpl.content.cloneNode(true);
     const li = fragment.querySelector('li');
     li.classList.add('existing-rule-item');
+    if (ruleView.isAsleep) li.classList.add('rule-asleep');
     const text = fragment.querySelector('.rule-text');
     li.dataset.ruleId = ruleView.id;
     text.textContent = generateFullHumanSentence(ruleView, roles);
@@ -896,4 +897,3 @@ export function renderRoleSpan(roleName, roleIndex) {
 function roleHTML(name, index) {
     return `<span class="role-chip noto role-color-${index}">${name}</span>`;
 }
-

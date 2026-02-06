@@ -27,3 +27,14 @@ General UX Principles
 - Save buttons must reflect dirty state truthfully
 - Autosave must never trigger without visible intent
 - Visual polish is used to increase trust, not aesthetics
+
+
+User Input
+   ↓
+UI state update
+   ↓
+Sanity (live / scoped)
+   ↓
+Derived feedback
+   ↓
+Wizard renders feedback

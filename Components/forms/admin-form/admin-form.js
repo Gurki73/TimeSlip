@@ -12,7 +12,7 @@ export const adminTools = [
   { id: 'emoji-customization', name: 'Symbol Auswahl', icon: 'smiley-happy-svgrepo-com.svg', enabled: true },
   { id: 'auto-save-toggle', name: 'Automatisch Speichern', icon: 'rocket-svgrepo-com.svg', enabled: true },
   { id: 'clear-cache', name: 'Puffer leeren', icon: 'safe-svgrepo-com.svg', enabled: true },
-  { id: 'rules-settings', name: 'Regel Toleranzen', icon: 'knowledge-graph-svgrepo-com.svg', enabled: false },
+  { id: 'rules-settings', name: 'Regel Toleranzen', icon: 'knowledge-graph-svgrepo-com.svg', enabled: true },
   { id: 'calendar-settings', name: 'Kalendar Anpassung', icon: 'calendar-svgrepo-com.svg', enabled: true },
   { id: 'deleted-employees', name: 'Mitarbeiter Wiederherstellen', icon: 'reshot-icon-trash-SX6L89TFAM.svg', enabled: true },
   { id: 'buy-coffee', name: 'Spenden Unterstützen', icon: 'BuyMeACoffee.png', enabled: true }

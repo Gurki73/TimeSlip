@@ -11,13 +11,14 @@ const validReceiveChannels = [
   'excel-template-done', 'excel-template-error', 'set-shift-symbols', 'set-zodiac-style'
 ];
 const validInvokeChannels = [
-  'load-data', 'save-data', 'check-path', 'save-csv', 'load-csv',  // <-- add here
+  'load-data', 'save-data', 'check-path', 'save-csv', 'load-csv', 'load-text', 'save-text',
   'get-recovered-path', 'set-cache-value', 'get-cache-value',
   'health-check', 'get-school-holidays'
 ];
 
 const CACHE_WHITELIST = [
   'colorTheme',
+  'customColorTheme',
   'zoomFactor',
   'windowSize',
   'clientDataFolder',
@@ -70,6 +71,14 @@ if (!window.api) {
     return await ipcRenderer.invoke('load-csv', { homeKey, relativePath });
   };
 
+  const loadText = async (homeKey, relativePath) => {
+    return await ipcRenderer.invoke('load-text', { homeKey, relativePath });
+  };
+
+  const saveText = async (homeKey, relativePath, content) => {
+    return await ipcRenderer.invoke('save-text', { homeKey, relativePath, content });
+  };
+
   const checkPath = async (relativePath) => {
     const homeKey = resolveHomeKey();
     return await ipcRenderer.invoke('check-path', { homeKey, relativePath });
@@ -96,6 +105,8 @@ if (!window.api) {
     saveCSV,
     loadCSV,
     checkPath,
+    loadText,
+    saveText,
 
     // other API functions
     getRequestFiles: () => ipcRenderer.invoke("get-request-files"),

@@ -81,6 +81,8 @@ SolverResult = {
   Warnings: 
      a) Overstuffed ${count} to much ${roleID.name}
      b) understuffes not enough of ${roleID.name}, missing ${count} 
+
+  stopReason?: 'solved' | 'stuck' | 'impossible' | 'cycle' | 'max_steps'
 }
 
 */
@@ -132,6 +134,7 @@ export function runSolver(input) {
 function solveShift({ timeframe, attendance, rules, options = {} }) {
     const maxSteps = options.maxSteps ?? 10;
     const allowEmergency = options.allowEmergency ?? false;
+    const logPrefix = `[Solver][${timeframe}]`;
 
     /*
     ⚠️ SOLVER DISCLAIMER:
@@ -142,10 +145,12 @@ function solveShift({ timeframe, attendance, rules, options = {} }) {
     */
 
     const staticDemand = buildStaticDemand(rules.static, timeframe);
+    console.info(`${logPrefix} Static demand built.`);
     const feasibility = feasibilityCheck(attendance, staticDemand);
     const infeasibleRoles = feasibility.filter(r => !r.feasible);
 
     if (infeasibleRoles.length) {
+        console.warn(`${logPrefix} Stop reason: impossible (feasibility gate).`);
         return {
             status: 'infeasible',
             demand: { static: staticDemand, effective: null },
@@ -153,13 +158,17 @@ function solveShift({ timeframe, attendance, rules, options = {} }) {
             roleStatus: null,
             moves: [],
             finalAttendance: attendance,
-            warnings: infeasibleRoles.map(r => `Role ${r.roleId} cannot be satisfied`)
+            warnings: infeasibleRoles.map(r => `Role ${r.roleId} cannot be satisfied`),
+            stopReason: 'impossible'
         };
     }
 
     let attendanceClone = cloneAttendance(attendance);
     let moves = [];
     let steps = 0;
+    let stopReason = 'stuck';
+    const seenSnapshots = new Set();
+    console.info(`${logPrefix} Solver loop start (maxSteps=${maxSteps}, allowEmergency=${allowEmergency}).`);
 
     const attemptMove = (targetRole, effectiveDemand) => {
         for (let fromRank = 0; fromRank < 3; fromRank++) {
@@ -191,6 +200,7 @@ function solveShift({ timeframe, attendance, rules, options = {} }) {
                             to: { roleId: targetRole.roleId, rank: toRank },
                             reason: targetRole.deficit > 0 ? 'deficit' : 'surplus'
                         });
+                        console.info(`${logPrefix} Move committed: from role ${donorRoleId} rank ${fromRank} -> role ${targetRole.roleId} rank ${toRank}.`);
                         return true;
                     }
                 }
@@ -200,14 +210,34 @@ function solveShift({ timeframe, attendance, rules, options = {} }) {
     };
 
     while (steps++ < maxSteps) {
+        const snapshot = attendanceFingerprint(attendanceClone);
+        if (seenSnapshots.has(snapshot)) {
+            stopReason = 'cycle';
+            console.warn(`${logPrefix} Stop reason: cycle detected (attendance repeated).`);
+            break;
+        }
+        seenSnapshots.add(snapshot);
+
         const flexDemand = shrinkFlexDemand(rules.flexible, attendanceClone, timeframe);
         const effectiveDemand = mergeDemand(staticDemand, flexDemand);
+        console.info(`${logPrefix} Demand snapshot (step ${steps}):`, { staticDemand, flexDemand, effectiveDemand });
 
         const roleStatus = computeRoleFlexibility(attendanceClone, effectiveDemand);
         const targetRole = rankRolesByPriority(roleStatus).find(r => r.deficit > 0 || r.surplus > 0);
-        if (!targetRole) break;
+        if (!targetRole) {
+            stopReason = 'solved';
+            break;
+        }
 
-        if (!attemptMove(targetRole, effectiveDemand)) break;
+        if (!attemptMove(targetRole, effectiveDemand)) {
+            stopReason = 'stuck';
+            break;
+        }
+    }
+
+    if (stopReason === 'stuck' && steps >= maxSteps) {
+        stopReason = 'max_steps';
+        console.warn(`${logPrefix} Stop reason: max steps (${maxSteps}) reached.`);
     }
 
     const finalRoleStatus = computeRoleFlexibility(
@@ -215,22 +245,25 @@ function solveShift({ timeframe, attendance, rules, options = {} }) {
         mergeDemand(staticDemand, shrinkFlexDemand(rules.flexible, attendanceClone, timeframe))
     );
 
-    if (!moves.length) console.info(`[Solver] No safe moves found for "${timeframe}".`);
-    else console.info(`[Solver] Committed ${moves.length} safe moves for "${timeframe}".`);
+    console.info(`${logPrefix} Stop reason: ${stopReason}.`);
+    if (!moves.length) console.info(`${logPrefix} No safe moves found.`);
+    else console.info(`${logPrefix} Committed ${moves.length} safe moves.`);
 
     const effectiveDemand = mergeDemand(staticDemand, shrinkFlexDemand(rules.flexible, attendanceClone, timeframe));
+    console.info(`${logPrefix} Final demand snapshot:`, { staticDemand, effectiveDemand });
     const warnings = finalRoleStatus
         .filter(r => r.deficit > 0)
         .map(r => `Role ${r.roleId} remains underfilled: missing ${r.deficit}`);
 
     return {
-        status: moves.length > 0 ? 'ok' : 'unsolved',
+        status: stopReason === 'solved' || moves.length > 0 ? 'ok' : 'unsolved',
         demand: { static: staticDemand, effective: effectiveDemand },
         feasibility,
         roleStatus: finalRoleStatus,
         moves,
         finalAttendance: attendanceClone,
-        warnings
+        warnings,
+        stopReason
     };
 }
 
@@ -473,6 +506,14 @@ function cloneAttendance(attendance) {
         if (!Array.isArray(role)) return [0, 0, 0];
         return [...role]; // shallow copy is enough since inner arrays are primitive numbers
     });
+}
+
+function attendanceFingerprint(attendance) {
+    if (!Array.isArray(attendance)) return 'invalid';
+
+    return attendance
+        .map(role => (Array.isArray(role) ? role.join(',') : '0,0,0'))
+        .join('|');
 }
 
 function replaceRoleInCloneAttendance(cloneAttendance, oldRoleID, oldRoleRank, newRoleId, newRoleRank) {

@@ -367,12 +367,40 @@
 
 /* Dialogue layout */
 .dialog-row {
-  display: flex;
-  flex-wrap: nowrap;   /* ⬅️ force single line */
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) minmax(0, 1fr) minmax(120px, 180px);
   align-items: center;
-  justify-content: space-between;
-  gap: 1em;
+  column-gap: 1em;
   margin: 1em 0;
+  width: 100%;
+}
+
+/* Keep dialog in one row: left figure | bubbles | right figure */
+.dialog-row .dialog-content {
+  grid-column: 2;
+  min-width: 0;
+}
+
+.dialog-row .help-img.character {
+  grid-column: 1;
+  justify-self: start;
+}
+
+/* Two characters in one row: left + right */
+.dialog-row:has(figure + .dialog-content + figure) .help-img.character:first-of-type {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.dialog-row:has(figure + .dialog-content + figure) .help-img.character:last-of-type {
+  grid-column: 3;
+  justify-self: end;
+}
+
+/* Single speaker rows: align speaker based on bubble direction */
+.dialog-row:has(.bubble.right):not(:has(figure + .dialog-content + figure)) .help-img.character {
+  grid-column: 3;
+  justify-self: end;
 }
 
 /* Speech bubble */

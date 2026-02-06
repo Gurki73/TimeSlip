@@ -1,14 +1,3 @@
-User Input
-   ↓
-UI state update
-   ↓
-Sanity (live / scoped)
-   ↓
-Derived feedback
-   ↓
-Wizard renders feedback
-
-────────────────
 Legend:
 ☐  open           🚧 in work      ✅ finished ❌ cannceld
 🔥 ship-blocker   🧩 beta-value   🧠 post-beta
@@ -16,17 +5,10 @@ Legend:
 🔥 Ship-Blockers
 
 Request-form
-1 ✅ Infinite rerender loop on refresh
-2 🚧 Filter shows filtered list then jumps back
-3 ☐ Selecting one field clears another (order-dependent)
-4 ☐ “No start date entered” while one exists
-5 🚧 filter icon buttons in requests doesn’t have any event listeners
-6 ☐ fix year filter in requests
-7 ☐ only show available filter options in requests
-8 🚧 allow combined filters in requests
-9 🚧 requester and vacation type cancel each other
+6 🚧 fix year filter in requests
 10 ☐ fix the start and end date picking
-11 ☐Fix & rebaseline sanity check
+11 ✅Fix & rebaseline sanity check
+  11.1 update state button with no more warnings
 12 ☐ Restore save button state machine
 
 Rule-form

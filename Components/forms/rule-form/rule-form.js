@@ -371,67 +371,182 @@ function showFailure(msg) {
     console.log(" test ==> failure", msg);
 }
 
-export function populateFormFromRule(rule) {
+export function populateFormFromRule(rule, { setEditorState = true } = {}) {
     if (!rule || !rule.main) return;
-    // set selects
-    document.getElementById('request-type-select-repeats').value = rule.main.repeat?.type || 'W0';
-    document.getElementById('request-type-select-time').value = rule.main.timeframe?.type || 'T0';
-    document.getElementById('request-type-select-amount').value = rule.main.amount?.type || 'A1';
-    document.getElementById('request-type-select-group').value = rule.main.group?.type || 'G0';
-    document.getElementById('request-type-select-dependency').value = rule.main.dependency?.type || 'D0';
-    document.getElementById('request-type-select-exception').value = rule.main.exception?.type || 'E0';
 
-    handleTopCellNumberInput(document.getElementById('request-type-select-amount').value);
-    handleTopCellTimeFrame(document.getElementById('request-type-select-time').value);
-    handleTopCellRoles(document.getElementById('request-type-select-group').value);
-    handleTopCellDependency(document.getElementById('request-type-select-dependency').value);
-    handleTopCellException(document.getElementById('request-type-select-exception').value);
+    const condition = rule.secondary || rule.condition || {};
 
-    // now fill cell values for numbers / days / roles
-    // amount bottom/top
-    const amountCell = document.getElementById('rule-main-A-td');
-    if (rule.main.amount) {
-        const bottoms = rule.main.amount.bottom ?? rule.main.amount.number ?? null;
-        const tops = rule.main.amount.top ?? null;
-        // find inputs inside amountCell (we created them earlier in handleTopCellNumberInput)
-        const inputs = amountCell.querySelectorAll('input[type="number"]');
-        if (inputs.length === 1 && bottoms != null) inputs[0].value = bottoms;
-        if (inputs.length === 2) {
-            if (bottoms != null) inputs[0].value = bottoms;
-            if (tops != null) inputs[1].value = tops;
+    const isBlockId = (value) => /^[WTAGDE]\d+$/i.test(String(value).replace(/\s+/g, ''));
+
+    const normalizeType = (typeOrId, fallback, isSecondary) => {
+        if (!typeOrId) return fallback;
+        const t = String(typeOrId).trim();
+        if (isBlockId(t)) {
+            return isSecondary ? t.toLowerCase() : t.toUpperCase();
         }
-    }
+        const head = t.charAt(0);
+        const normHead = isSecondary ? head.toLowerCase() : head.toUpperCase();
+        return normHead + t.slice(1);
+    };
 
-    // timeframe T2 days checkbox selection
-    if (rule.main.timeframe?.type === 'T2') {
-        const days = rule.main.timeframe.days || [];
-        const checkboxContainer = document.getElementById('rule-main-T-td');
-        Array.from(checkboxContainer.querySelectorAll('input[type="checkbox"]')).forEach(cb => {
-            const idx = Number(cb.dataset.index);
-            cb.checked = days.includes(idx);
-            cb.dispatchEvent(new Event('change'));
+    const pickTypeId = (block, fallback, isSecondary) => {
+        if (!block) return fallback;
+        if (block.id && isBlockId(block.id)) {
+            return isSecondary ? String(block.id).toLowerCase() : String(block.id).toUpperCase();
+        }
+        return normalizeType(block.type, fallback, isSecondary);
+    };
+
+    const dispatch = (el, type) => {
+        if (!el) return;
+        el.dispatchEvent(new Event(type, { bubbles: true }));
+    };
+
+    const setSelect = (key, value) => {
+        const sel = getSelect(key);
+        if (!sel) return;
+        sel.value = value;
+        dispatch(sel, 'change');
+    };
+
+    const fillNumberCell = (key, amountObj) => {
+        const cell = getCell(key);
+        if (!cell) return;
+        const inputs = cell.querySelectorAll('input[type="number"]');
+        if (!inputs.length) return;
+        const bottom =
+            amountObj?.bottom ?? amountObj?.number ?? amountObj?.details?.bottom ?? null;
+        const top =
+            amountObj?.top ?? amountObj?.details?.top ?? null;
+        if (inputs.length >= 1 && bottom != null) inputs[0].value = bottom;
+        if (inputs.length >= 2 && top != null) inputs[1].value = top;
+        inputs.forEach(input => dispatch(input, 'input'));
+    };
+
+    const fillTimeframe = (key, timeframeObj, typeValue) => {
+        const cell = getCell(key);
+        if (!cell) return;
+
+        if (typeValue.toLowerCase() === 't1') {
+            const sel = cell.querySelector('select');
+            const shift =
+                timeframeObj?.shifts?.[0] ??
+                timeframeObj?.details?.shifts?.[0] ??
+                timeframeObj?.value ??
+                null;
+            if (sel && shift != null) {
+                sel.value = String(shift);
+                dispatch(sel, 'change');
+            }
+            return;
+        }
+
+        if (typeValue.toLowerCase() === 't2') {
+            const days =
+                timeframeObj?.days ??
+                timeframeObj?.details?.days ??
+                [];
+            const checkboxes = cell.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                const idx = Number(cb.dataset.index);
+                cb.checked = Array.isArray(days) && days.includes(idx);
+                dispatch(cb, 'change');
+            });
+        }
+    };
+
+    const fillGroup = (key, groupObj, typeValue) => {
+        const cell = getCell(key);
+        if (!cell) return;
+        const roles = groupObj?.roles ?? groupObj?.details?.roles ?? [];
+
+        if (String(typeValue).toLowerCase() === 'g0') {
+            const sel = cell.querySelector('select');
+            if (sel && Array.isArray(roles) && roles.length) {
+                sel.value = String(roles[0]);
+                dispatch(sel, 'change');
+            }
+            return;
+        }
+
+        const checkboxes = cell.querySelectorAll('input[type="checkbox"]');
+        if (!checkboxes.length) return;
+        checkboxes.forEach(cb => {
+            const val = cb.dataset.index ?? cb.value;
+            cb.checked = Array.isArray(roles) && roles.map(String).includes(String(val));
+            dispatch(cb, 'change');
         });
-    }
+    };
 
-    // group roles: select the role option that corresponds to rule.main.group.roles[0]
-    const groupCell = document.getElementById('rule-main-G-td');
-    const roleSel = groupCell?.querySelector('select');
-    if (roleSel && Array.isArray(rule.main.group?.roles) && rule.main.group.roles.length) {
-        // match by cachedRoles colorIndex or fallback to index
-        const target = rule.main.group.roles[0];
-        const foundIndex = cachedRoles.findIndex(r => String(r.colorIndex) === String(target));
-        if (foundIndex >= 0) {
-            roleSel.value = String(foundIndex);
-            roleSel.dispatchEvent(new Event('change'));
+    const fillDependency = (key, depObj) => {
+        const cell = getCell(key);
+        if (!cell) return;
+        const inputs = cell.querySelectorAll('input[type="number"]');
+        const bottom =
+            depObj?.bottom ?? depObj?.numerator ?? depObj?.details?.bottom ?? null;
+        const top =
+            depObj?.top ?? depObj?.denominator ?? depObj?.details?.top ?? null;
+        if (inputs.length >= 1 && bottom != null) inputs[0].value = bottom;
+        if (inputs.length >= 2 && top != null) inputs[1].value = top;
+        inputs.forEach(input => dispatch(input, 'input'));
+
+        const sel = cell.querySelector('select');
+        const roles = depObj?.roles ?? depObj?.details?.roles ?? [];
+        if (sel && Array.isArray(roles) && roles.length) {
+            sel.value = String(roles[0]);
+            dispatch(sel, 'change');
         }
+    };
+
+    // --- main selects ---
+    const mainRepeat = pickTypeId(rule.main.repeat, 'W0', false);
+    const mainTime = pickTypeId(rule.main.timeframe, 'T0', false);
+    const mainAmount = pickTypeId(rule.main.amount, 'A1', false);
+    const mainGroup = pickTypeId(rule.main.group, 'G0', false);
+    const mainDep = pickTypeId(rule.main.dependency, 'D0', false);
+    const mainEx = pickTypeId(rule.main.exception, 'E0', false);
+
+    setSelect('W', mainRepeat);
+    setSelect('T', mainTime);
+    setSelect('A', mainAmount);
+    setSelect('G', mainGroup);
+    setSelect('D', mainDep);
+    setSelect('E', mainEx);
+
+    // --- secondary selects ---
+    const secRepeat = pickTypeId(condition.repeat, 'w0', true);
+    const secTime = pickTypeId(condition.timeframe, 't0', true);
+    const secAmount = pickTypeId(condition.amount, 'a1', true);
+    const secGroup = pickTypeId(condition.group, 'g0', true);
+    const secDep = pickTypeId(condition.dependency, 'd0', true);
+
+    setSelect('w', secRepeat);
+    setSelect('t', secTime);
+    setSelect('a', secAmount);
+    setSelect('g', secGroup);
+    setSelect('d', secDep);
+
+    // --- fill main details ---
+    fillNumberCell('W', rule.main.repeat);
+    fillNumberCell('A', rule.main.amount);
+    fillTimeframe('T', rule.main.timeframe, mainTime);
+    fillGroup('G', rule.main.group, mainGroup);
+    fillDependency('D', rule.main.dependency);
+
+    // --- fill secondary details ---
+    fillNumberCell('w', condition.repeat);
+    fillNumberCell('a', condition.amount);
+    fillTimeframe('t', condition.timeframe, secTime);
+    fillGroup('g', condition.group, secGroup);
+    fillDependency('d', condition.dependency);
+
+    if (setEditorState) {
+        ruleForEditing = { ...rule };
+        translateCurrentRule(ruleForEditing, cachedRoles);
+        scrollRulesToBottomIfAllowed();
     }
 
-    // keep editor state
-    ruleForEditing = { ...rule };
-    translateCurrentRule(ruleForEditing, cachedRoles);
-    scrollRulesToBottomIfAllowed();
-
-    console.log(" new rule");
+    console.log("new rule populated");
 }
 
 // robust delegated handler (replace existing)
@@ -783,11 +898,10 @@ function handleTopCellTimeFrame(id) {
                     ruleWorkdays,           // items to display
                     timeFrameElement,       // parent container
                     (container) => {
-                        const handler = handleCheckboxChangeWithNeighbors(container, 't2');
-                        const checkboxes = container.querySelectorAll('input[type="checkbox"]');
-                        checkboxes.forEach(cb => cb.addEventListener('change', handler));
+                        const handler = handleCheckboxChangeWithNeighbors(container, id);
+                        handler();
                     },
-                    { idPrefix: `T2-checkbox}` }
+                    { idPrefix: `${id}-checkbox` }
                 );
             }
             break;
@@ -1000,11 +1114,8 @@ function handleTopCellRoles(id) {
                 items,
                 roleElement,
                 (container) => {
-                    const handler = handleCheckboxChangeWithNeighbors(container, id, cb =>
-                        cachedRoles.find(r => r.colorIndex === cb.dataset.colorIndex)
-                    );
-                    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
-                    checkboxes.forEach(cb => cb.addEventListener('change', handler));
+                    const handler = handleCheckboxChangeWithNeighbors(container, id);
+                    handler();
                 },
                 { idPrefix: `${id}-checkbox` }
             );
@@ -1045,7 +1156,7 @@ function handleTopCellRoles(id) {
             const selectedOption = singleRoleSelection.options[singleRoleSelection.selectedIndex];
             singleRoleSelection.style.backgroundColor = selectedOption.style.backgroundColor;
             const inputObject = {};
-            inputObject.id = "G0";
+            inputObject.id = id;
             inputObject.type = "group";
             inputObject.words = selectedOption.dataset.name;
             inputObject.value = selectedOption.value;
@@ -1242,11 +1353,13 @@ function handleCheckboxChangeWithNeighbors(container, blockId) {
         );
 
         const selectedNames = checked.map(cb => cb.dataset.name);
+        const selectedValues = checked.map(cb => cb.dataset.index ?? cb.dataset.colorIndex ?? cb.value);
 
         const inputObject = {
             id: blockId,
             inputID: "topCell",
-            words: selectedNames
+            words: selectedNames,
+            value: selectedValues
         };
 
         handleInput(inputObject);
@@ -1422,6 +1535,10 @@ export function handleInput(inputObj) {
         case "timeframe":
             if (!target.details) target.details = {};
             if (inputObj.words) target.details.days = inputObj.words;
+            if (inputObj.value != null) {
+                const shifts = Array.isArray(inputObj.value) ? inputObj.value : [inputObj.value];
+                target.details.shifts = shifts;
+            }
             break;
 
         case "amount":
@@ -1510,27 +1627,43 @@ function fillRules(rulesArray) {
 }
 
 export function copyRule(ruleView) {
-    console.info('Copy rule into editor:', ruleView.id);
+    const rule = ruleView?.rule ?? ruleView;
+    if (!rule) {
+        console.warn('Copy rule failed: no rule provided', ruleView);
+        return;
+    }
 
-    const blueprint = ruleToBlueprint(ruleView.rule, { keepId: false });
+    console.info('Copy rule into editor:', rule.id);
+
+    const blueprint = ruleToBlueprint(rule, { keepId: false });
     const editorRule = createRuleFromBlueprint(blueprint);
 
-    populateFormFromRule(ruleView.rule);
+    populateFormFromRule(rule, { setEditorState: false });
 
     ruleForEditing = editorRule;
+    translateCurrentRule(ruleForEditing, cachedRoles);
+    scrollRulesToBottomIfAllowed();
 
     console.info('New rule id:', editorRule.id);
 }
 
 export function editRule(ruleView) {
-    console.info('Edit rule:', ruleView.id);
+    const rule = ruleView?.rule ?? ruleView;
+    if (!rule) {
+        console.warn('Edit rule failed: no rule provided', ruleView);
+        return;
+    }
 
-    const blueprint = ruleToBlueprint(ruleView.rule, { keepId: true });
+    console.info('Edit rule:', rule.id);
+
+    const blueprint = ruleToBlueprint(rule, { keepId: true });
     const editorRule = createRuleFromBlueprint(blueprint);
 
-    populateFormFromRule(ruleView.rule);
+    populateFormFromRule(rule, { setEditorState: false });
 
     ruleForEditing = editorRule;
+    translateCurrentRule(ruleForEditing, cachedRoles);
+    scrollRulesToBottomIfAllowed();
 }
 
 

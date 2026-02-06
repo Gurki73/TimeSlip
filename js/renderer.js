@@ -222,12 +222,34 @@ function setupFormLoader() {
 
 // ----------- Theme Handling -----------
 
+const CUSTOM_THEME_KEY = 'customColorTheme';
+
 function setTheme(themeName) {
   console.log("theme-NAME =>", themeName);
   document.body.classList.remove("theme-dark", "theme-default", "theme-pastel", "theme-greyscale");
   document.body.classList.add(`theme-${themeName}`);
   localStorage.setItem('colorTheme', themeName);
   window.api.send('update-cache', { colorTheme: themeName });
+}
+
+function applyCustomThemeFromStorage() {
+  try {
+    const raw = localStorage.getItem(CUSTOM_THEME_KEY);
+    if (!raw) return;
+    const theme = JSON.parse(raw);
+    if (!theme || typeof theme !== 'object') return;
+    ['roles', 'calendar', 'app'].forEach((section) => {
+      const vars = theme[section];
+      if (!vars || typeof vars !== 'object') return;
+      Object.entries(vars).forEach(([key, value]) => {
+        if (typeof value === 'string') {
+          document.documentElement.style.setProperty(`--${key}`, value);
+        }
+      });
+    });
+  } catch (err) {
+    console.warn('Failed to apply custom theme:', err);
+  }
 }
 
 function setZoom(factor) {
@@ -240,6 +262,7 @@ function setZoom(factor) {
 
 function initTheme() {
   setTheme(localStorage.getItem('colorTheme') || 'default');
+  applyCustomThemeFromStorage();
   setZoom(localStorage.getItem('zoomFactor') || 1.0);
 }
 
@@ -284,6 +307,7 @@ function setupIPCListeners() {
   window.api.receive('get-cache-dump', async (requestId) => {
     const clientDataFolder = await window.cacheAPI.getCacheValue('clientDataFolder');
     const colorTheme = await window.cacheAPI.getCacheValue('colorTheme');
+    const customColorTheme = await window.cacheAPI.getCacheValue('customColorTheme');
     const zoomFactor = await window.cacheAPI.getCacheValue('zoomFactor');
     const windowSize = await window.cacheAPI.getCacheValue('windowSize');
 
@@ -291,6 +315,7 @@ function setupIPCListeners() {
       requestId,
       clientDataFolder,
       colorTheme,
+      customColorTheme,
       zoomFactor,
       windowSize
     });
