@@ -105,7 +105,6 @@ function focusFirstTOCEntry() {
     const firstLink = document.querySelector("#help-toc a");
     if (firstLink) {
         firstLink.focus();
-        console.log("🔵 Focused first TOC entry.");
     } else {
         console.warn("⚠️ No TOC link found.");
     }
@@ -154,34 +153,11 @@ function initHelpCollapse() {
     });
 }
 
-function runHelpSetup() {
-    const helpContent = document.getElementById("help-scroll-container");
-
-    if (!helpContent) {
-        console.warn("⚠️ #help-scroll-container not found.");
-        return;
-    }
-
-    console.log("✅ Found #help-scroll-container. Scanning content...");
-    scanAndReplaceHelpContent(helpContent);
-}
-
-function applyCollapseState(toggleBtn, expand) {
-    const contentId = toggleBtn.getAttribute('aria-controls');
-    const content = document.getElementById(contentId);
-
-    if (!content) return;
-
-    toggleBtn.setAttribute('aria-expanded', expand);
-    toggleBtn.classList.toggle('expanded', expand);
-    content.style.display = expand ? 'block' : 'none';
-}
 
 function expandChapterBySectionId(sectionId) {
     const section = document.getElementById(sectionId);
     if (!section) return;
 
-    // Finde das zugehörige Button-Element innerhalb der Section
     const toggleButton = section.querySelector('[data-help-toggle]');
     if (!toggleButton) return;
 
@@ -189,11 +165,9 @@ function expandChapterBySectionId(sectionId) {
     const content = document.getElementById(contentId);
     if (!content) return;
 
-    // Setze aria-expanded auf true
     toggleButton.setAttribute('aria-expanded', 'true');
 
-    // Inhalt anzeigen (entferne ggf. hide-Klasse oder setze style)
-    content.style.display = 'block'; // oder: content.classList.remove('helpChapterHidden');
+    content.style.display = 'block';
 }
 
 function initTOCScroll() {
@@ -282,8 +256,6 @@ function initEventListener() {
 
 function scanAndReplaceHelpContent(container) {
     const placeholders = container.querySelectorAll("p, li, span, div");
-    console.log(`Scanning ${placeholders.length} elements for placeholders.`);
-
     placeholders.forEach(el => {
         const original = el.innerHTML;
 

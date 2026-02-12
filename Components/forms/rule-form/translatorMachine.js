@@ -114,14 +114,11 @@ function translateToMachineRules(inputRule, id) {
 function translateToMachine(inputRule, id = 'test') {
     if (!inputRule) return null;
 
-    // console.log("input rule", inputRule);
-
     if (!inputRule.main) {
         console.error("No main condition inside a rule");
         return;
     }
 
-    // Normalize main condition locally
     const main = {
         ...inputRule.main,
         exception: {
@@ -130,9 +127,7 @@ function translateToMachine(inputRule, id = 'test') {
         }
     };
 
-    // Normalize secondary safely
     const secondary = inputRule.secondary ? normalizeCondition(inputRule.secondary) : null;
-
     const safeCreateCondition = (cond) => createCondition(cond ?? null);
 
     let conditionLink = '';
@@ -220,15 +215,12 @@ function pickUniverse(timeframeId) {
 function createCondition(condition) {
     if (!condition) return createAlwaysTrue(); // fallback
 
-    // Helper: safe lowercase
     const safeId = (obj) => (obj?.id ?? "").toLowerCase();
     const safeDetails = (obj) => obj?.details ?? {};
 
-    // --- Timeframe / Repeat ---
     const repeatId = safeId(condition.repeat) || "w0";
     const timeframeId = safeId(condition.timeframe) || "t0";
-
-    // console.log(repeatId, timeframeId);
+    const dependency = condition.dependency || condition.dependencies || {};
 
     let timeframeSlots = [0, 1, 2, 3, 4, 5, 6];
     let timeframeThreshold = 0;
@@ -251,7 +243,7 @@ function createCondition(condition) {
             }
             break;
         case "w4": // EXACT X
-            timeframeThreshold = safeDetails(condition.repeats).number ?? 0;
+            timeframeThreshold = safeDetails(condition.repeat).number ?? 0;
             break;
         default:
             timeframeThreshold = -1;
@@ -263,17 +255,17 @@ function createCondition(condition) {
     let referenceRoles = [];
     let roleLogicOperator = "total";
 
-    let dependencyId = safeId(condition.dependencies);
+    let dependencyId = safeId(dependency);
     const groupDetails = safeDetails(condition.group ?? condition.groups);
 
     if (dependencyId === "d0") { // presence
         roleLogicOperator = "total";
         subjectRoles = groupDetails.roles ?? [];
     } else if (dependencyId === "d2") { // needs
-        subjectRoles = safeDetails(condition.dependencies).role ?? [];
+        subjectRoles = safeDetails(dependency).role ?? [];
         referenceRoles = groupDetails.roles ?? [];
     } else if (dependencyId === "d3") { // helps
-        referenceRoles = safeDetails(condition.dependencies).role ?? [];
+        referenceRoles = safeDetails(dependency).role ?? [];
         subjectRoles = groupDetails.roles ?? [];
     } else {
         roleLogicOperator = "corrupt";
@@ -313,8 +305,7 @@ function createCondition(condition) {
         }
     } else { // ratio checks
         const groupAggregation = (condition.group?.id ?? "g0").toLowerCase();
-        dependencyId = (condition.dependency?.id ?? "d0").toLowerCase();
-        // console.log(dependencyId, groupAggregation);
+        dependencyId = (dependency?.id ?? "d0").toLowerCase();
         if (dependencyId === "d2") { // needs
             ratioType = ["g0", "g1"].includes(groupAggregation) ? 'WORKLOAD' : 'PRESENCE';
         } else if (dependencyId === "d3") { // helps
@@ -322,7 +313,6 @@ function createCondition(condition) {
         } else {
             ratioType = "corrupt";
         }
-        // console.log(ratioType);
     }
 
     return {
@@ -333,7 +323,7 @@ function createCondition(condition) {
         referenceRoles,
         roleLogicOperator,
         ratioType,
-        ratio: safeDetails(condition.dependencies).number ?? 0,
+        ratio: safeDetails(dependency).number ?? 0,
         lowerLimit,
         upperLimit,
     };
@@ -345,8 +335,6 @@ export function updateRuleset(storedRuleset) {
         machineRuleset = createRuleset();
         return machineRuleset;
     }
-
-    // console.log("stored ruleset:", storedRuleset);
 
     machineRuleset = createRuleset(machineRuleset);
     fillRulesetFromUiRules(machineRuleset, storedRuleset);

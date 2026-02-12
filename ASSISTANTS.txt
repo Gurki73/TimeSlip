@@ -125,3 +125,22 @@ ABSOLUTE DO-NOT LIST
 - Do NOT modify mock data or onboarding data unless explicitly asked
 - Do NOT change existing data schemas
 
+==================================================
+WORKFLOW PREFERENCE
+==================================================
+
+- Assume batch-mode operation by default
+- Do not ask for confirmation for individual changes
+- Make reasonable assumptions and proceed
+- Apply changes fully and consistently
+
+Only ask questions if:
+- A decision would cause data loss
+- A decision would break backward compatibility
+- A security boundary would be crossed
+
+When making changes:
+- Apply all necessary modifications in one pass
+- Do not stop midway to ask for approval
+- The user will review the result as a whole
+

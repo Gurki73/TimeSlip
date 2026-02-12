@@ -10,6 +10,19 @@ const TEAM_COLOR_RULES = {
   trainee: { hue: [25, 45], sat: [40, 90], light: [40, 80] }
 };
 
+// State variables for picker
+let currentTeamKey = null;
+let currentVarKey = null;
+let themeState = null;
+let saveTimer = null;
+let teamnames = {
+  blue: "Team Blau",
+  green: "Team Grün",
+  red: "Team Rot",
+  black: "Team Schwarz",
+  trainee: "Azubi"
+};
+
 const THEME_KEYS = {
   roles: [
     "role-0-color",
@@ -82,16 +95,6 @@ const ROLE_TEAM_MAP = {
   13: "trainee"
 };
 
-let themeState = null;
-let saveTimer = null;
-let teamnames = {
-  blue: "Team Blau",
-  green: "Team Grün",
-  red: "Team Rot",
-  black: "Team Schwarz",
-  trainee: "Azubi"
-};
-
 export async function initRoleColorTab(api) {
   try {
     await hydrateThemeState();
@@ -100,6 +103,7 @@ export async function initRoleColorTab(api) {
     initRoleGrid();
     initCalendarTab();
     initAppTab();
+    initPicker(); // Initialize the picker
   } catch (err) {
     console.error("[colorTheme] init failed", err);
   }
@@ -132,7 +136,6 @@ function initTabs() {
     });
   });
 }
-
 function initRoleGrid() {
   const cells = document.querySelectorAll("#tab-roles td[data-role]");
   const teamNameEl = document.getElementById("limited-color-picker-teamname");
@@ -165,23 +168,6 @@ function initRoleGrid() {
     preview.className = "role-preview";
     preview.style.backgroundColor = initialColor;
 
-    const picker = document.createElement("input");
-    picker.type = "color";
-    picker.value = normalizeHex(initialColor);
-    picker.title = `Farbe fuer Aufgabe ${roleIndex}`;
-
-    picker.addEventListener("input", () => {
-      const clamped = clampToTeam(picker.value, teamKey);
-      const finalColor = normalizeHex(clamped);
-      if (picker.value !== finalColor) picker.value = finalColor;
-      setThemeVar(varKey, finalColor);
-      preview.style.backgroundColor = finalColor;
-      cell.style.backgroundColor = finalColor;
-      if (activeCell === cell) {
-        pickerDisc.style.background = finalColor;
-      }
-    });
-
     cell.addEventListener("click", () => {
       if (activeCell) activeCell.classList.remove("role-active");
       activeCell = cell;
@@ -190,9 +176,18 @@ function initRoleGrid() {
       if (teamNameEl) teamNameEl.textContent = name;
       if (roleNameEl) roleNameEl.textContent = `Aufgabe #${roleIndex}`;
       if (pickerDisc) pickerDisc.style.background = getCssVar(varKey);
+
+      // Set current state for picker
+      currentTeamKey = teamKey;
+      currentVarKey = varKey;
+
+      // Update picker
+      setPickerHue(teamKey);
+      updatePickerCursor(getCssVar(varKey));
     });
 
-    wrapper.append(label, preview, picker);
+    // Only append label and preview, NOT the picker input
+    wrapper.append(label, preview);
     cell.appendChild(wrapper);
   });
 
@@ -303,12 +298,230 @@ function initAppTab() {
   });
 }
 
+// Initialize the color picker
+function initPicker() {
+  const picker = document.getElementById("limited-color-picker");
+  const cursor = picker?.querySelector(".picker-cursor");
+
+  if (!picker || !cursor) {
+    console.warn("[colorTheme] Picker elements not found");
+    return;
+  }
+
+  // Create canvas for color gradient
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  // Set canvas size to match picker
+  const pickerRect = picker.getBoundingClientRect();
+  canvas.width = pickerRect.width || 200;
+  canvas.height = pickerRect.height || 200;
+
+  // Store canvas on picker element for easy access
+  picker._canvas = canvas;
+  picker._ctx = ctx;
+
+  // Initial draw with default hue
+  redrawPicker(picker, ctx, 210);
+
+  // Add event listeners
+  picker.addEventListener("mousedown", (e) => {
+    handlePickerClick(e, picker, cursor);
+  });
+
+  picker.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    handlePickerClick(e.touches[0], picker, cursor);
+  });
+}
+
+function handlePickerClick(e, picker, cursor) {
+  const rect = picker.getBoundingClientRect();
+  const ctx = picker._ctx;
+  const canvas = picker._canvas;
+
+  if (!ctx || !canvas) return;
+
+  const x = Math.floor(e.clientX - rect.left);
+  const y = Math.floor(e.clientY - rect.top);
+
+  // Ensure coordinates are within bounds
+  const clampedX = Math.max(0, Math.min(x, canvas.width - 1));
+  const clampedY = Math.max(0, Math.min(y, canvas.height - 1));
+
+  // Get color at position
+  const pixel = ctx.getImageData(clampedX, clampedY, 1, 1).data;
+  const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
+
+  // Update cursor position
+  cursor.style.left = `${clampedX}px`;
+  cursor.style.top = `${clampedY}px`;
+
+  // Apply color if we have current vars
+  if (currentVarKey && currentTeamKey) {
+    const clamped = clampToTeam(hex, currentTeamKey);
+    setThemeVar(currentVarKey, clamped);
+
+    // Update UI
+    picker.style.background = clamped;
+
+    // Update active cell if exists
+    const activeCell = document.querySelector(".role-active");
+    if (activeCell) {
+      const preview = activeCell.querySelector(".role-preview");
+      const input = activeCell.querySelector('input[type="color"]');
+      if (preview) preview.style.backgroundColor = clamped;
+      if (input) input.value = clamped;
+      activeCell.style.backgroundColor = clamped;
+    }
+  }
+
+  // Add move listeners for drag
+  const moveHandler = (moveEvent) => {
+    const clientX = moveEvent.clientX || (moveEvent.touches && moveEvent.touches[0].clientX);
+    const clientY = moveEvent.clientY || (moveEvent.touches && moveEvent.touches[0].clientY);
+
+    if (clientX && clientY) {
+      const moveX = Math.floor(clientX - rect.left);
+      const moveY = Math.floor(clientY - rect.top);
+      const clampedMoveX = Math.max(0, Math.min(moveX, canvas.width - 1));
+      const clampedMoveY = Math.max(0, Math.min(moveY, canvas.height - 1));
+
+      const movePixel = ctx.getImageData(clampedMoveX, clampedMoveY, 1, 1).data;
+      const moveHex = rgbToHex(movePixel[0], movePixel[1], movePixel[2]);
+
+      cursor.style.left = `${clampedMoveX}px`;
+      cursor.style.top = `${clampedMoveY}px`;
+
+      if (currentVarKey && currentTeamKey) {
+        const clamped = clampToTeam(moveHex, currentTeamKey);
+        setThemeVar(currentVarKey, clamped);
+
+        picker.style.background = clamped;
+
+        const activeCell = document.querySelector(".role-active");
+        if (activeCell) {
+          const preview = activeCell.querySelector(".role-preview");
+          const input = activeCell.querySelector('input[type="color"]');
+          if (preview) preview.style.backgroundColor = clamped;
+          if (input) input.value = clamped;
+          activeCell.style.backgroundColor = clamped;
+        }
+      }
+    }
+  };
+
+  const upHandler = () => {
+    document.removeEventListener("mousemove", moveHandler);
+    document.removeEventListener("touchmove", moveHandler);
+    document.removeEventListener("mouseup", upHandler);
+    document.removeEventListener("touchend", upHandler);
+  };
+
+  document.addEventListener("mousemove", moveHandler);
+  document.addEventListener("touchmove", moveHandler);
+  document.addEventListener("mouseup", upHandler, { once: true });
+  document.addEventListener("touchend", upHandler, { once: true });
+}
+
+function redrawPicker(picker, ctx, hue) {
+  const w = picker.clientWidth || 200;
+  const h = picker.clientHeight || 200;
+
+  // Update canvas size if needed
+  if (ctx.canvas.width !== w || ctx.canvas.height !== h) {
+    ctx.canvas.width = w;
+    ctx.canvas.height = h;
+  }
+
+  // Clear canvas
+  ctx.clearRect(0, 0, w, h);
+
+  // Base color
+  ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+  ctx.fillRect(0, 0, w, h);
+
+  // White → transparent (saturation)
+  const whiteGrad = ctx.createLinearGradient(0, 0, w, 0);
+  whiteGrad.addColorStop(0, "#fff");
+  whiteGrad.addColorStop(1, "transparent");
+  ctx.fillStyle = whiteGrad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Transparent → black (lightness)
+  const blackGrad = ctx.createLinearGradient(0, 0, 0, h);
+  blackGrad.addColorStop(0, "transparent");
+  blackGrad.addColorStop(1, "#000");
+  ctx.fillStyle = blackGrad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Update picker background
+  picker.style.backgroundImage = `url(${ctx.canvas.toDataURL()})`;
+}
+
+function updatePickerCursor(color) {
+  const picker = document.getElementById("limited-color-picker");
+  const cursor = picker?.querySelector(".picker-cursor");
+
+  if (!picker || !cursor) return;
+
+  const ctx = picker._ctx;
+  if (!ctx) return;
+
+  // Convert color to HSL
+  const hsl = toHSL(color);
+  const hue = hsl.h;
+
+  // Redraw picker with current hue if needed
+  const currentHue = parseInt(picker.style.getPropertyValue("--picker-hue") || "210");
+  if (Math.abs(currentHue - hue) > 5) {
+    redrawPicker(picker, ctx, hue);
+  }
+
+  // Position cursor based on saturation and lightness
+  const w = picker.clientWidth || 200;
+  const h = picker.clientHeight || 200;
+
+  // Saturation: 0% = left, 100% = right
+  const satPercent = hsl.s / 100;
+  // Lightness: 0% = bottom, 100% = top (inverted because 0% is black at bottom)
+  const lightPercent = 1 - (hsl.l / 100);
+
+  const x = Math.max(0, Math.min(satPercent * w, w - 1));
+  const y = Math.max(0, Math.min(lightPercent * h, h - 1));
+
+  cursor.style.left = `${x}px`;
+  cursor.style.top = `${y}px`;
+}
+
+function setPickerHue(teamKey) {
+  const picker = document.getElementById("limited-color-picker");
+  const ctx = picker?._ctx;
+
+  if (!picker || !ctx) return;
+
+  const rules = TEAM_COLOR_RULES[teamKey] || TEAM_COLOR_RULES.blue;
+  const hue = averageHue(rules.hue);
+
+  // Update CSS variable
+  picker.style.setProperty("--picker-hue", `${hue}deg`);
+
+  // Redraw picker
+  redrawPicker(picker, ctx, hue);
+}
+
+// Theme state management functions
 async function hydrateThemeState() {
-  const base = buildThemeFromCss();
-  const stored = await readStoredTheme();
-  themeState = mergeTheme(base, stored);
-  applyTheme(themeState);
-  scheduleSave();
+  try {
+    const base = buildThemeFromCss();
+    const stored = await readStoredTheme();
+    themeState = mergeTheme(base, stored);
+    applyTheme(themeState);
+    scheduleSave();
+  } catch (err) {
+    console.warn("[colorTheme] hydrateThemeState failed", err);
+    themeState = createEmptyTheme();
+  }
 }
 
 function buildThemeFromCss() {
@@ -422,6 +635,7 @@ function resolveTeamKey(teamRaw, roleIndex) {
   return ROLE_TEAM_MAP[roleIndex] || "blue";
 }
 
+// Color manipulation functions
 function clampToTeam(color, teamKey) {
   const rules = TEAM_COLOR_RULES[teamKey] || TEAM_COLOR_RULES.blue;
   let { h, s, l } = toHSL(color);
@@ -531,7 +745,7 @@ function fromHSL(h, s, l) {
   else if (h >= 120 && h < 180) [r, g, b] = [0, c, x];
   else if (h >= 180 && h < 240) [r, g, b] = [0, x, c];
   else if (h >= 240 && h < 300) [r, g, b] = [x, 0, c];
-  else [r, g, b] = [c, 0, x];
+  else[r, g, b] = [c, 0, x];
 
   const r255 = Math.round((r + m) * 255);
   const g255 = Math.round((g + m) * 255);
@@ -541,7 +755,7 @@ function fromHSL(h, s, l) {
 
 function parseColorToRgb(color) {
   if (color.startsWith("#")) return hexToRgb(color);
-  const rgbMatch = color.match(/rgb\\((\\d+),\\s*(\\d+),\\s*(\\d+)\\)/i);
+  const rgbMatch = color.match(/rgb\\((\d+),\s*(\d+),\s*(\d+)\\)/i);
   if (rgbMatch) {
     return {
       r: Number(rgbMatch[1]),
@@ -572,5 +786,11 @@ function hexToRgb(hex) {
 
 function rgbToHex(r, g, b) {
   const toHex = (val) => val.toString(16).padStart(2, "0");
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toLowerCase();
+}
+
+function averageHue([min, max]) {
+  return min <= max
+    ? Math.round((min + max) / 2)
+    : Math.round(((min + max + 360) / 2) % 360);
 }

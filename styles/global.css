@@ -574,6 +574,12 @@ body.resizing {
 .layout-full-size {
   min-width: 100%;
   height: 100%;
+  align-items: flex-start;
+}
+
+.cards-container {
+  display: flex;
+  flex-direction: row;
   justify-content: space-evenly;
 }
 
@@ -1006,6 +1012,7 @@ body.mode-sample #main-container {
   cursor: not-allowed !important;
 }
 
+button.is-readonly,
 .save-button.is-readOnly {
   opacity: 0.85;
   cursor: not-allowed !important;
@@ -1099,3 +1106,12 @@ body.sample-feedback::before {
   font-weight: bold;
   font-size: larger;
 }
+
+.fn-hint.hidden {
+  max-height: 0;          /* collapse vertically */
+  overflow: hidden;       /* hide the content */
+  transition: max-height 0.3s ease; /* optional smooth collapse */
+  padding: 0;             /* remove spacing */
+  margin: 0;              /* remove spacing */
+}
+

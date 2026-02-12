@@ -57,14 +57,12 @@ export function createSaveButton({ onSave }) {
     }
 
     button.addEventListener('click', async e => {
-        console.log(' save button was clicked');
         e.preventDefault();
 
-        if (state === 'blocked') {
+        if (state === 'blocked' || state === 'readonly') {
             forbiddenFeedback();
             return;
         }
-
         try {
             setState('saving');
             await onSave?.();

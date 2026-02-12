@@ -318,6 +318,24 @@
   background-color: #f0c674;
 }
 
+.request-date-jump {
+  display: inline-block;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: center;
+  white-space: pre-line;
+  padding: 0;
+}
+
+.request-date-jump:hover,
+.request-date-jump:focus-visible {
+  text-decoration: underline;
+}
+
 .request-date {
   max-width: 140px; /* Adjust if necessary */
   min-width: 80px;

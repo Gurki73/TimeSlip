@@ -18,7 +18,7 @@
 }
 
 .double-row {
-  height: 5rem !important;
+  height: 3rem !important;
   margin: 10px;
 }
 #employee-form-weekdays {
@@ -92,11 +92,9 @@ input[type="range"] {
 }
 
 #employee-form-privacy-column {
-  max-width: 120px !important;
-  flex: 1;
-  flex-grow: 1;
+  width: 120px;
   background-color: var(--bg-white);
-  height: 80vh;
+  display: flex;
 }
 
 #employee-form-list-column {
@@ -383,19 +381,11 @@ input[type="range"] {
 .privacy-collapsible {
   display: flex;
   flex-direction: row;
-  align-items: stretch; /* ensures all columns same height */
-  gap: 0.5rem;
+  flex: 1;                 /* fill column */
   border: 2px double darkorange;
   border-radius: 0.5rem;
   background-color: #fff4e5;
   overflow: hidden;
-  width: fit-content; /* okay for desktop row layout */
-  height: 98%; /* fixed height */
-  min-height: 98%;
-  max-height: 98%;
-  transition:
-    flex-basis 0.3s ease,
-    width 0.3s ease;
 }
 
 .privacy-collapsible .rule-collapsible-content {
@@ -421,12 +411,9 @@ input[type="range"] {
 }
 
 .privacy-warning-content {
-  flex: 1 1 auto;
-  min-width: 0; /* allow shrinking */
-  overflow-wrap: break-word;
-  word-break: break-word;
+  flex: 1;
   padding: 0.5rem;
-  min-height: calc(98% - 1rem);
+  overflow-y: auto;        /* THIS is what you actually want */
 }
 
 .privacy-warning-content p b {

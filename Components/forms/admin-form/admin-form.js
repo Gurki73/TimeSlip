@@ -114,7 +114,6 @@ function updateDivider(className = 'bg-admin') {
 
   const branchSelect = createBranchSelect({
     onChange: (val) => {
-      console.log('Branch changed to:', val);
     }
   });
 
@@ -210,19 +209,9 @@ async function initRoleColorTabSafe(api) {
 // Emoji Customizer (NOW COMPLETELY SELF-INERT)
 // ---------------------------------------------------------
 export async function initEmojiCustomizer() {
-  console.group("🧩 Emoji Customizer Init");
 
   const loaded = await loadEmojiData(adminApi);
-  console.log("Loaded raw emoji data:", loaded);
-
   const { pool, employees, roles } = normalizeEmojiData(loaded);
-  console.log("Normalized emoji data:", {
-    poolCount: pool?.length,
-    employeeCount: employees?.length,
-    roleCount: roles?.length,
-    poolSample: pool?.slice(0, 10)
-  });
-
 
   let poolEmojis = [...pool];
   let employeeEmojis = [...employees];
@@ -238,12 +227,6 @@ export async function initEmojiCustomizer() {
   const helpOverlay = document.getElementById('emoji-help-overlay');
   const helpClose = document.getElementById('emoji-help-close');
 
-  console.log("DOM grids:", {
-    poolGrid,
-    employeeGrid,
-    roleGrid
-  });
-
   if (!employeeGrid || !poolGrid || !roleGrid) {
     console.error("Emoji grids missing in DOM");
     return;
@@ -251,18 +234,12 @@ export async function initEmojiCustomizer() {
 
   let lastFocusedEmoji = null;
 
-  /* ------------------ Deduplicate ------------------ */
   function dedupe() {
     const used = new Set([...employeeEmojis, ...roleEmojis]);
     poolEmojis = poolEmojis.filter(e => !used.has(e));
   }
 
-  /* ------------------ Rendering ------------------ */
   function renderGrid(grid, data) {
-
-    console.group(`🎨 Rendering grid: #${grid.id}`);
-    console.log("Emoji count:", data.length);
-    console.log("Emojis:", data);
 
     grid.innerHTML = "";
 
@@ -295,41 +272,22 @@ export async function initEmojiCustomizer() {
 
   function renderAll() {
 
-    console.group("🔄 renderAll()");
-    console.log("Before dedupe:", {
-      pool: poolEmojis.length,
-      employees: employeeEmojis.length,
-      roles: roleEmojis.length
-    });
-
     dedupe();
     renderGrid(poolGrid, poolEmojis);
     renderGrid(employeeGrid, employeeEmojis);
     renderGrid(roleGrid, roleEmojis);
 
-    console.log("After dedupe:", {
-      pool: poolEmojis.length,
-      employees: employeeEmojis.length,
-      roles: roleEmojis.length
-    });
-
-    // Restore focus
     if (lastFocusedEmoji) {
       const match = document.querySelector(`[data-emoji="${lastFocusedEmoji}"]`);
-      console.log("Restore focus:", lastFocusedEmoji, !!match);
       if (match) match.focus();
     }
-
-    console.groupEnd();
   }
 
   renderAll();
 
-  /* ------------------ Moving logic ------------------ */
   function moveEmojiTo(destination, emoji) {
     lastFocusedEmoji = emoji;
 
-    // Remove from all
     poolEmojis = poolEmojis.filter(v => v !== emoji);
     employeeEmojis = employeeEmojis.filter(v => v !== emoji);
     roleEmojis = roleEmojis.filter(v => v !== emoji);
@@ -351,24 +309,30 @@ export async function initEmojiCustomizer() {
 
   /* ------------------ MOUSE BEHAVIOR ------------------ */
 
-  // Pool: left → employee
   poolGrid.addEventListener("click", (e) => {
     if (!e.target.classList.contains("emoji-customizer-emoji")) return;
-    moveEmojiTo("employee", e.target.textContent);
+    animateMove(e.target, "left", employeeGrid);
+    setTimeout(() => moveEmojiTo("employee", e.target.textContent), 160);
   });
 
-  // Pool: right → role
   poolGrid.addEventListener("contextmenu", (e) => {
     e.preventDefault();
     if (!e.target.classList.contains("emoji-customizer-emoji")) return;
-    moveEmojiTo("role", e.target.textContent);
+
+    animateMove(e.target, "right", roleGrid);
+    setTimeout(() => {
+      moveEmojiTo("role", e.target.textContent);
+    }, 160);
   });
 
-  // Employees / Roles: click → back to pool
   [employeeGrid, roleGrid].forEach((grid) => {
     grid.addEventListener("click", (e) => {
       if (!e.target.classList.contains("emoji-customizer-emoji")) return;
-      moveEmojiTo("pool", e.target.textContent);
+
+      animateMove(e.target, "center", poolGrid);
+      setTimeout(() => {
+        moveEmojiTo("pool", e.target.textContent);
+      }, 120);
     });
   });
 
@@ -409,23 +373,97 @@ export async function initEmojiCustomizer() {
   document.addEventListener("keydown", handleArrowNav);
 
   /* ------------------ ADD CUSTOM EMOJI ------------------ */
-  addBtn.addEventListener("click", () => {
-    const userInput = prompt("Eigenes Emoji einfügen:");
+  const blockedEmojis = new Set(['🎭', '⚡', '❓', '💾', '🗑️', '➕', '⊖']);
+
+  function splitGraphemes(str) {
+    const clean = (str || '').trim();
+    if (!clean) return [];
+    if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+      return Array.from(
+        new Intl.Segmenter('en', { granularity: 'grapheme' }).segment(clean),
+        s => s.segment
+      );
+    }
+    return [...clean];
+  }
+
+  function normalizeEmojiInput(input) {
+    const parts = splitGraphemes(input);
+    return parts[0] || '';
+  }
+
+  function isProbablyEmoji(emoji) {
+    if (!emoji) return false;
+    if (/^[\p{L}\p{N}_]+$/u.test(emoji)) return false;
+    return true;
+  }
+
+  function emojiExists(emoji) {
+    const categories = Object.values(loaded.categories || {})
+      .flatMap(arr => Array.isArray(arr) ? arr : []);
+    const all = new Set([...categories, ...poolEmojis, ...employeeEmojis, ...roleEmojis]);
+    return all.has(emoji);
+  }
+
+  async function readClipboardTextSafe() {
+    try {
+      if (!navigator?.clipboard?.readText) return '';
+      return await navigator.clipboard.readText();
+    } catch (err) {
+      console.warn('Clipboard read failed', err);
+      return '';
+    }
+  }
+
+  addBtn.addEventListener("click", async () => {
+    let userInput = await readClipboardTextSafe();
+    if (!userInput || !userInput.trim()) {
+      userInput = prompt("Eigenes Emoji einfügen (aus der Zwischenablage):");
+    }
     if (!userInput) return;
 
-    const emoji = [...userInput.trim()][0]; // sanitize, take first emoji
+    const parts = splitGraphemes(userInput);
+    const emoji = parts[0] || '';
 
     if (!emoji) return;
+    if (!isProbablyEmoji(emoji)) {
+      alert('Bitte ein echtes Emoji verwenden (keine Buchstaben/Zahlen).');
+      return;
+    }
+    if (blockedEmojis.has(emoji)) {
+      alert('Dieses Emoji ist reserviert und darf hier nicht verwendet werden.');
+      return;
+    }
+    if (emojiExists(emoji)) {
+      alert('Dieses Emoji existiert bereits im Bestand.');
+      return;
+    }
+    if (parts.length > 1) {
+      alert('Mehrere Zeichen erkannt. Es wird nur das erste Emoji übernommen.');
+    }
 
-    if (!loaded.categories.custom)
-      loaded.categories.custom = [];
-
+    if (!loaded.categories.custom) loaded.categories.custom = [];
     loaded.categories.custom.push(emoji);
     poolEmojis.push(emoji);
 
     lastFocusedEmoji = emoji;
     renderAll();
   });
+
+  function animateMove(el, direction, targetGrid) {
+    el.classList.add(
+      direction === "left" ? "emoji-move-left" :
+        direction === "right" ? "emoji-move-right" :
+          "emoji-move-center"
+    );
+
+    targetGrid.classList.add("pulse");
+
+    setTimeout(() => {
+      targetGrid.classList.remove("pulse");
+    }, 250);
+  }
+
 
   /* ------------------ SAVE BUTTON ------------------ */
   saveBtn.addEventListener("click", () => {
@@ -436,33 +474,13 @@ export async function initEmojiCustomizer() {
     });
     alert("Emojis gespeichert!");
   });
-
-  /* ------------------ HELP OVERLAY ------------------ 
-  helpBtn.addEventListener("click", () => {
-    helpOverlay.classList.add("active");
-  });
-  */
-  // helpClose.addEventListener("click", () => {
-  //   helpOverlay.classList.remove("active");
-  // });
-
-  console.log("✅ Emoji Customizer initialized");
-  console.groupEnd();
 }
-
-/*
- 
-  R E V I V I N G   -  E M P L O Y E E
- 
-*/
 
 let apiRef = null;
 let emojiPool = [];
 
 export async function initDeletedEmployees(api) {
   apiRef = api;
-  // load emoji pool & employees concurrently
-  console.log("reveive deleted employees");
   try {
     const [loadedEmoji, _deletedEmployees] = await Promise.all([
       loadEmojiData(apiRef).catch(err => {
@@ -483,7 +501,6 @@ export async function initDeletedEmployees(api) {
       return aDate - bDate;
     });
 
-    console.log("[admin tools] deleted employees: ", deletedEmployees);
     renderDeletedList();
     attachControls();
   } catch (err) {
@@ -492,7 +509,6 @@ export async function initDeletedEmployees(api) {
   }
 }
 
-/* ---------- Rendering ---------- */
 function renderDeletedList() {
   const list = document.getElementById('deleted-list');
   if (!list) return console.error('deleted-list not found');
@@ -500,32 +516,25 @@ function renderDeletedList() {
 
   deletedEmployees.forEach(emp => {
 
-    console.log("deleted employee => ", emp);
-
-
     const li = document.createElement('li');
     li.className = 'deleted-item';
     li.dataset.id = emp.id;
 
-    // checkbox
     const cb = document.createElement('input');
     cb.type = 'checkbox';
     cb.className = 'select-cb';
     cb.title = 'Select for bulk restore';
 
-    // id small
     const idSpan = document.createElement('div');
     idSpan.className = 'id';
     idSpan.textContent = String(emp.id).slice(-6); // concise
 
-    // emoji button (click opens picker)
     const emojiBtn = document.createElement('button');
     emojiBtn.className = 'emoji-btn';
     emojiBtn.type = 'button';
     emojiBtn.title = 'Click to pick emoji';
     emojiBtn.innerHTML = `<span class="preview-emoji noto">❓</span>`;
 
-    // name + optional info
     const nameSpan = document.createElement('div');
     nameSpan.className = 'name';
     nameSpan.textContent = emp.name || '(no name)';
@@ -538,14 +547,13 @@ function renderDeletedList() {
     endSpan.className = 'end';
     endSpan.textContent = emp.endDate || '';
 
-    // actions
     const actions = document.createElement('div');
     actions.className = 'actions';
 
     const saveBtn = document.createElement('button');
     saveBtn.className = 'save-btn';
     saveBtn.textContent = 'Save';
-    saveBtn.style.display = 'none'; // only visible after emoji selected
+    saveBtn.style.display = 'none';
 
     const cancelBtn = document.createElement('button');
     cancelBtn.type = 'button';
@@ -554,7 +562,6 @@ function renderDeletedList() {
 
     actions.append(saveBtn, cancelBtn);
 
-    // Append elements
     li.appendChild(cb);
     li.appendChild(idSpan);
     li.appendChild(emojiBtn);
@@ -563,28 +570,22 @@ function renderDeletedList() {
     li.appendChild(endSpan);
     li.appendChild(actions);
 
-    // Interaction: open emoji picker anchored to emojiBtn
     emojiBtn.addEventListener('click', (ev) => {
       ev.stopPropagation();
       createEmojiPicker(emojiPool, emojiBtn, emp.mainRoleIndex || 1, (chosenEmoji) => {
         if (!chosenEmoji) {
-          // canceled
           saveBtn.style.display = 'none';
           cancelBtn.style.display = 'none';
-          // restore preview to trash
           li.querySelector('.preview-emoji').textContent = emp.personalEmoji;
           return;
         }
-        // set preview and show Save
         li.querySelector('.preview-emoji').textContent = chosenEmoji;
         saveBtn.style.display = '';
         cancelBtn.style.display = '';
-        // attach chosen to dataset for later save
         li.dataset.chosenEmoji = chosenEmoji;
       });
     });
 
-    // Cancel selection: revert preview
     cancelBtn.addEventListener('click', () => {
       li.querySelector('.preview-emoji').textContent = emp.personalEmoji;
       saveBtn.style.display = 'none';
@@ -592,25 +593,19 @@ function renderDeletedList() {
       delete li.dataset.chosenEmoji;
     });
 
-    // Save: update only personalEmoji and endDate (+10 years)
     saveBtn.addEventListener('click', async () => {
       const chosen = li.dataset.chosenEmoji;
       if (!chosen) return alert('No emoji selected.');
 
-      // compute new endDate = today + 10 years
       const newEnd = computeDatePlusYearsISO(10);
-
-      // create shallow copy to send to storeEmployeeChange
       const updated = { ...emp, personalEmoji: chosen, endDate: newEnd };
 
       try {
         saveBtn.disabled = true;
         saveBtn.textContent = 'Saving...';
         await storeEmployeeChange(apiRef, updated, 'update');
-        // update local cache row
         emp.personalEmoji = chosen;
         emp.endDate = newEnd;
-        // remove from deletedEmployees (restored)
         deletedEmployees = deletedEmployees.filter(e => String(e.id) !== String(emp.id));
         renderDeletedList();
         alert(`Employee ${emp.name} restored.`);
@@ -626,7 +621,6 @@ function renderDeletedList() {
     list.appendChild(li);
   });
 
-  // If none, show empty placeholder
   if (deletedEmployees.length === 0) {
     const placeholder = document.createElement('li');
     placeholder.className = 'deleted-item';
@@ -635,7 +629,6 @@ function renderDeletedList() {
   }
 }
 
-/* ---------- Controls ---------- */
 function attachControls() {
   const refresh = document.getElementById('refresh-deleted');
   const selectAllBtn = document.getElementById('select-all-toggle');
@@ -657,13 +650,10 @@ function attachControls() {
     const selectedBoxes = Array.from(document.querySelectorAll('#deleted-list .select-cb:checked'));
     if (selectedBoxes.length === 0) return alert('Keine Mitarbeiter ausgewählt.');
 
-    // ask user to pick emoji once to apply to all selected
-    // anchor to restoreSelectedBtn
     createEmojiPicker(emojiPool, restoreSelectedBtn, 1, async (chosenEmoji) => {
-      if (!chosenEmoji) return; // cancelled
+      if (!chosenEmoji) return;
       if (!confirm(`Restore ${selectedBoxes.length} employees with emoji "${chosenEmoji}"?`)) return;
 
-      // Batch save
       restoreSelectedBtn.disabled = true;
       restoreSelectedBtn.textContent = 'Saving...';
 
@@ -676,8 +666,6 @@ function attachControls() {
       try {
         for (const emp of toRestore) {
           const updated = { ...emp, personalEmoji: chosenEmoji, endDate: computeDatePlusYearsISO(10) };
-          // sequential saves are safer to avoid race with your save routine; you can parallelize if desired
-          // eslint-disable-next-line no-await-in-loop
           await storeEmployeeChange(apiRef, updated, 'update');
         }
         await refreshList();
@@ -707,15 +695,12 @@ async function refreshList() {
   }
 }
 
-/* ---------- Utilities ---------- */
 function computeDatePlusYearsISO(years) {
   const d = new Date();
   d.setFullYear(d.getFullYear() + years);
   return d.toISOString().split('T')[0];
 }
 
-/* ---------- Emoji Picker (integrated) ---------- */
-/* Use your createEmojiPicker function (slightly adapted to use callback) */
 export function createEmojiPicker(emojiArray, targetButton, colorIndex = 1, callback) {
   const existingPicker = document.querySelector('.emoji-picker');
   if (existingPicker) existingPicker.remove();
@@ -725,7 +710,6 @@ export function createEmojiPicker(emojiArray, targetButton, colorIndex = 1, call
     return;
   }
 
-  // Grid size (square-ish)
   let n = 0;
   while (n * n < emojiArray.length) n++;
   const emojiPickerRow = n, emojiPickerCol = n;
@@ -748,7 +732,6 @@ export function createEmojiPicker(emojiArray, targetButton, colorIndex = 1, call
   topBar.classList.add('top-bar', 'emoji-picker-top-bar');
   topBar.textContent = 'bitte ein neues Emoji auswählen';
 
-  // compute fallback color:
   let topBarColor = getComputedStyle(document.documentElement).getPropertyValue(`--role-${colorIndex}-color`)?.trim();
   if (!topBarColor || topBarColor === '#fff' || topBarColor === 'rgb(255, 255, 255)') topBarColor = 'cornflowerblue';
   topBarWrapper.style.backgroundColor = topBarColor;
@@ -822,7 +805,6 @@ export function createEmojiPicker(emojiArray, targetButton, colorIndex = 1, call
 
   emojiPicker.appendChild(emojiGrid);
 
-  // Position picker near targetButton (try below, fallback to center)
   const rect = targetButton.getBoundingClientRect();
   const top = rect.bottom + window.scrollY + 6;
   const left = Math.max(8, rect.left + window.scrollX - 80);
@@ -836,7 +818,6 @@ export function createEmojiPicker(emojiArray, targetButton, colorIndex = 1, call
     (firstEmoji || closeButton).focus();
   }, 0);
 
-  // close on outside click
   setTimeout(() => {
     const onOutside = (ev) => {
       if (!emojiPicker.contains(ev.target)) {
@@ -856,7 +837,6 @@ function handleEmojiSelection(emoji, pickerElement, callback) {
 
 function getContrastYIQ(hexcolor) {
   hexcolor = hexcolor.replace('#', '');
-  // if rgb(...) passed, return black by default
   if (hexcolor.indexOf('rgb') === 0) return 'black';
   const r = parseInt(hexcolor.substr(0, 2), 16) || 0;
   const g = parseInt(hexcolor.substr(2, 2), 16) || 0;

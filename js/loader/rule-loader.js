@@ -9,7 +9,6 @@ let rules = [];       // evaluated (usable) rules
 let allRules = [];    // raw rule objects loaded
 let rulesMode = null;
 
-// ----------------- Public API -----------------
 export async function loadRuleData(api, attempt = 1) {
   if (!api) {
     console.error('[rule-loader] window.api not available');
@@ -20,11 +19,9 @@ export async function loadRuleData(api, attempt = 1) {
 
   if (homeKey === 'sample') {
     if (rulesMode === 'sample' && rules.length > 0) {
-      console.log('[rule-loader] sample rules already loaded');
       return [...allRules];
     }
 
-    console.log('[rule-loader] loading sample rules');
     const sample = await loadSampleRuleData();
     allRules = sample;
     rules = allRules.filter(r => r && r.main);
@@ -32,8 +29,6 @@ export async function loadRuleData(api, attempt = 1) {
     return [...allRules];
   }
 
-
-  // ---------- Infrastructure layer (retry allowed) ----------
   let ruleFiles;
   try {
     ruleFiles = await api.getRuleFiles();
@@ -52,8 +47,6 @@ export async function loadRuleData(api, attempt = 1) {
     return [...allRules];
   }
 
-  console.log('[rule-loader] rule files found:', ruleFiles);
-
   if (!Array.isArray(ruleFiles) || ruleFiles.length === 0) {
     console.warn('[rule-loader] no rule JSON files found');
     allRules = [];
@@ -61,7 +54,6 @@ export async function loadRuleData(api, attempt = 1) {
     return [];
   }
 
-  // ---------- File-level processing (NO retry) ----------
   const loaded = [];
 
   for (const filePath of ruleFiles) {
@@ -71,14 +63,6 @@ export async function loadRuleData(api, attempt = 1) {
         console.warn('[rule-loader] missing rule file', filePath);
         continue;
       }
-
-      // TEMP forensic logging – remove later
-      console.debug(
-        '[rule-loader] raw file head:',
-        typeof data === 'string'
-          ? data.slice(0, 120)
-          : JSON.stringify(data).slice(0, 120)
-      );
 
       const result = parseRuleJSON(data);
       if (!result || !result.ok) {
@@ -102,7 +86,6 @@ export async function loadRuleData(api, attempt = 1) {
   rules = allRules.filter(r => r && r.main);
   rulesMode = 'client';
 
-  console.log(`✅ Loaded ${rules.length} rules`);
   return [...allRules];
 }
 
@@ -111,15 +94,6 @@ export async function loadSampleRuleList() {
     "rule_sample_001.json",
     "rule_sample_002.json",
     "rule_sample_003.json",
-    "rule_sample_004.json",
-    "rule_sample_005.json",
-    "rule_sample_006.json",
-    "rule_sample_007.json",
-    "rule_sample_008.json",
-    "rule_sample_009.json",
-    "rule_sample_010.json",
-    "rule_sample_011.json",
-    "rule_sample_012.json",
   ]);
 }
 
@@ -134,14 +108,16 @@ function parseIndexOrSampleList(raw) {
   return [];
 }
 
-export async function loadSampleRuleData() {
+let sampleCache = null;
 
-  console.log(" LOAD SAMPLE RULE DATA ");
+export async function loadSampleRuleData() {
+  if (sampleCache) return [...sampleCache];
+
+  const sampleRules = [];
   try {
-    // try fetch the sample files bundled with the app
     const sampleIndex = await loadSampleRuleList();
     const files = parseIndexOrSampleList(sampleIndex);
-    const sampleRules = [];
+
     for (const rel of files) {
       try {
         const normalized = rel.replace(/^rules\//, '');
@@ -154,13 +130,12 @@ export async function loadSampleRuleData() {
           continue;
         }
         sampleRules.push(sanitizeRule(parsed.value));
-
-        sampleRules.push(sanitizeRule(parsed));
       } catch (e) {
         console.warn('⚠️ sample rule missing', rel, e);
       }
     }
-    return sampleRules;
+    sampleCache = sampleRules;
+    return [...sampleRules];
   } catch (err) {
     console.error('❌ Error loading sample rules:', err);
     return [];
@@ -305,7 +280,6 @@ export async function saveRuleData(api, ruleObj) {
 
   try {
     const saved = await saveFile(api, RULE_FOLDER, `${fixed.id}.json`, content);
-    console.log('💾 Rule saved:', saved);
     return { success: !!saved, path: saved, rule: fixed };
   } catch (err) {
     console.error('✗ Error saving rule:', err);
@@ -314,13 +288,10 @@ export async function saveRuleData(api, ruleObj) {
 }
 
 export async function deleteRule(api, id) {
-  // We assume saveFile has a delete helper in main; if not, add IPC handler in preload/main
   try {
-    // deleteRule: normalize id to match saveRuleData
     const safeId = id => String(id).replace(/[^a-zA-Z0-9_\-]/g, '_').replace(/_+/g, '_');
     const full = `${RULE_FOLDER}/${safeId(id)}.json`;
     if (!api) throw new Error('no api');
-    // send delete request through a channel 'rules:delete' implemented in preload/main
     if (typeof api.invoke === 'function') {
       const res = await api.invoke('rules:delete', full);
       return res;

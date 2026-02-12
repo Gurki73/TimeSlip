@@ -39,7 +39,6 @@ export async function initializeLegend(api) {
         return; // stop here if data failed
     }
 
-    // Safe DOM + rendering logic
     lengendRoles = roles;
     legendEmployees = employees;
 
@@ -47,8 +46,7 @@ export async function initializeLegend(api) {
     const employeeContent = document.getElementById('legend-employees');
 
     document.addEventListener('calendar-ready', (event) => {
-        console.log('Calendar finished rendering:', event.detail);
-        rebuildEmojiCaches(); // update caches & refresh legend items
+        rebuildEmojiCaches();
     });
 
     renderRoles(roleContent);

@@ -524,3 +524,33 @@
   border-radius: 3px;
   pointer-events: none;
 }
+
+.day-column.jump-target {
+  outline: 3px solid var(--accent-active);
+  outline-offset: -2px;
+  border-radius: 4px;
+  position: relative;
+  animation: calendar-jump-pulse 1.4s ease-out 2;
+}
+
+.day-column.jump-range {
+  box-shadow: inset 0 0 0 2px var(--accent-active);
+}
+
+.day-column.jump-range-start,
+.day-column.jump-range-end {
+  outline: 2px dashed var(--accent-active);
+  outline-offset: -2px;
+}
+
+@keyframes calendar-jump-pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--accent-active);
+  }
+  70% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}

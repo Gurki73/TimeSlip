@@ -109,6 +109,15 @@ function serializeRequestsCSV(requests) {
 }
 
 export async function loadRequests(api, year) {
+    if (!api) {
+        console.error('❌ loadRequests called without api');
+        return [];
+    }
+
+    let homeKey = localStorage.getItem('dataMode') || 'auto';
+    if (homeKey === 'sample') {
+        return await loadSampleRequests(year);  // inject year here
+    }
 
     let availableFiles = [];
     try {
@@ -118,7 +127,7 @@ export async function loadRequests(api, year) {
     }
 
     const clientDataFolder = localStorage.getItem('clientDefinedDataFolder');
-    const clientFolderExists = availableFiles.length > 0 || (clientDataFolder);
+    const clientFolderExists = availableFiles.length > 0 || clientDataFolder;
 
     if (!clientFolderExists) {
         const homeKey = localStorage.getItem('dataMode') || 'auto';
@@ -132,52 +141,28 @@ export async function loadRequests(api, year) {
 
     const requestedFile = availableFiles.find(f => f.year === year);
 
-    if (requestedFile) {
-        // ✅ File exists → load and parse
-        try {
-            const fileData = await loadFile(api, 'client', `requests/${requestedFile.year}_requests.csv`, () => loadSampleRequests());
-            const parsedData = parseRequestsCSV(fileData);
-            return parsedData;
-        } catch (err) {
-            console.warn(`❌ Failed to load request data for year ${year}:`, err);
+    if (!requestedFile) {
+        return [
+            { info: `Noch keine Anträge für ${year} gestellt` }
+        ];
+    }
+
+    try {
+        const fileData = await loadFile(api, 'client', `requests/${requestedFile.year}_requests.csv`, async () => []);
+
+        if (!fileData) {
+            console.warn(`⚠️ Request file ${requestedFile.year}_requests.csv not found`);
             return [];
         }
-    } else {
-        return [
-            {
-                info: `Noch keine Anträge für ${year} gestellt`,
-            },
-        ];
+        return parseRequestsCSV(fileData);
+    } catch (err) {
+        console.error(`❌ Failed to load request data for year ${year}:`, err);
+        return [];
     }
 }
 
-/*
-export async function loadRequests(api, year) {
-    const key = `requests_${year}`;
-
-    return loadDataset(key, async () => {
-        const availableFiles = await getAvailableRequestFiles(api);
-        const requestedFile = availableFiles.find(f => f.year === year);
-
-        if (!requestedFile) {
-            // No file for this year → return structured empty fallback
-            return [
-                { info: `Noch keine Anträge für ${year} gestellt` }
-            ];
-        }
-
-        const fileData = await loadFile(api, 'client', `requests/${requestedFile.year}_requests.csv`);
-        if (!fileData) return [];  // gracefully handle missing/corrupt CSV
-
-        return parseRequestsCSV(fileData);
-    }, []); // fallback for onboarding / missing file
-}
-*/
-
-
-/* ---------- Load fallback sample ---------- */
-async function loadSampleRequests() {
-
+async function loadSampleRequests(year) {
+    const requestYear = year || new Date().getFullYear();
     const samplePath = './samples/requests/sampleRequests.csv';
     try {
         const response = await fetch(samplePath);
@@ -185,8 +170,27 @@ async function loadSampleRequests() {
             console.warn(`⚠️ Sample request file not found: ${samplePath}`);
             return [];
         }
-        const data = await response.text();
-        return data;
+        const csvData = await response.text();
+        const parsedRequests = parseRequestsCSV(csvData);
+
+        const requestsWithYear = parsedRequests.map(r => {
+            const startDate = new Date(r.start);
+            const endDate = new Date(r.end);
+
+            startDate.setFullYear(requestYear);
+            endDate.setFullYear(requestYear);
+
+            return {
+                ...r,
+                year: requestYear,                                   // for filtering
+                start: startDate.toISOString().slice(0, 10),        // YYYY-MM-DD
+                end: endDate.toISOString().slice(0, 10),            // YYYY-MM-DD
+                requestedAt: r.requestedAt ? r.requestedAt.replace(/^\d{4}/, requestYear) : ''
+            };
+        });
+
+        return requestsWithYear;
+
     } catch (error) {
         console.warn(`❌ Error loading sample request data:`, error);
         return [];
@@ -197,9 +201,6 @@ export async function appendRequest(api, year, request) {
     const folderPath = 'requests/';
     const fileName = `${year}_requests.csv`;
 
-
-    console.log(" new request", request, year);
-
     try {
         const existing = await loadFile(api, 'client', `requests/${year}_requests.csv`);
         let requests = existing ? parseRequestsCSV(existing) : [];
@@ -207,8 +208,6 @@ export async function appendRequest(api, year, request) {
         requests.push(request);
 
         const csv = serializeRequestsCSV(requests);
-
-        console.log(" request as cvs: ", csv);
 
         await saveFile(api, folderPath, fileName, csv);
     } catch (err) {

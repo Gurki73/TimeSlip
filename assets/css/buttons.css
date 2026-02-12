@@ -272,7 +272,7 @@
   height: 1rem;
 }
 
-/* === UNIVERSAL CHEVRON / TOGGLE BUTTON === */
+/* === UNIVERSAL CHEVRON / TOGGLE BUTTON === 
 .chev-btn,
 .chevron-btn,
 .resize-button,
@@ -311,6 +311,35 @@
 #collapse-shift-toggle:hover {
   background-color: var(--chev-bg-hover);
 }
+  */
+
+  /* === CHEVRON BEHAVIOR (ARIA-DRIVEN) === */
+.chev-button,
+.chev-btn,
+.chevron-btn,
+.resize-button {
+  transition:
+    transform 140ms ease-out,
+    background-color 250ms ease;
+  transform: rotate(0deg);
+}
+
+/* expanded via aria */
+[aria-expanded="true"] .chev-button,
+[aria-expanded="true"] .chev-btn,
+[aria-expanded="true"] .chevron-btn,
+[aria-expanded="true"] .resize-button {
+  transform: rotate(90deg);
+}
+
+/* fallback for legacy JS */
+.chev-button.active,
+.chev-btn.active,
+.chevron-btn.active,
+.resize-button.active {
+  transform: rotate(90deg);
+}
+
 
 /* === UNIVERSAL SAVE / STORE BUTTON === */
 .save-btn,

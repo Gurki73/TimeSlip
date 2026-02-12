@@ -282,11 +282,9 @@ function calendarStateToCSV(state) {
 }
 
 export async function saveOfficeDays(api, calendarState) {
+
     const folderPath = 'calendar';
     const fileName = 'officeDays.csv';
-
-    console.log(" save office days ", calendarState);
-
     const csvContent = calendarStateToCSV(calendarState);
 
     try {

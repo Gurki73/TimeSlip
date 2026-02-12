@@ -220,7 +220,7 @@ export async function initializeCalendarForm(passedApi) {
       GetSchoolHoliday(cachedApi, 'SL', currentYear),
       loadOfficeDaysData(cachedApi, isOnboarding),
       loadCompanyHolidayData(cachedApi, currentYear),
-      loadBridgeDays(cachedApi)  // ✅ NEW
+      loadBridgeDays(cachedApi)
     ]);
 
     savedBridgeDays = bridgeDaysData;
@@ -228,7 +228,6 @@ export async function initializeCalendarForm(passedApi) {
     ruleFormState = _flag;
     officeDays = officeDaysData;
     companyHolidays = companyHolidaysData;
-    console.log("✅ Data loaded:", { ruleFormState, officeDays, companyHolidays, isOnboarding });
   } catch (error) {
     console.error('❌ Error loading data in calendar-form:', error);
     return;
@@ -266,8 +265,6 @@ export async function initializeCalendarForm(passedApi) {
 }
 
 function updateShiftState(shiftsData, officeDays) {
-  console.log("office days", officeDays);
-  console.log("shift state", shiftsData);
 
   const weekDays = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 
@@ -326,23 +323,19 @@ async function buildCollapsableContainer() {
   });
 
   await new Promise(requestAnimationFrame);
-  console.log('✅ All collapsibles created');
 }
 
 function initCalendarStateFromCSV(csvRow) {
   const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
   days.forEach((day, i) => {
-    const key = csvRow[i]; // e.g. "full", "morning"
+    const key = csvRow[i];
     calendarState[day] = keyToBools(key);
   });
-
-  console.log("[calendar-form] init state", calendarState);
 }
 
 function updateCalendarUIFromState() {
   Object.entries(calendarState).forEach(([day, shifts]) => {
-    // weekday checkbox
     const weekdayCheckbox = document.getElementById(`chk-${day}`);
     if (weekdayCheckbox) {
       const anyActive = shifts.early || shifts.day || shifts.late;
@@ -350,16 +343,15 @@ function updateCalendarUIFromState() {
       updateWeekdayIcon(day, anyActive);
     }
 
-    // shift checkboxes
     Object.entries(shifts).forEach(([shiftId, isActive]) => {
       const shiftCheckbox = document.getElementById(`chk-${day}-${shiftId}`);
       if (shiftCheckbox) {
         shiftCheckbox.checked = isActive;
-        // optionally update lock icon / color
         const icon = shiftCheckbox.parentNode.querySelector('.lock-icon');
         if (icon) {
           icon.classList.toggle('unlocked', isActive);
           icon.classList.toggle('locked', !isActive);
+          applyOpenClosedTooltip(icon, isActive);
         }
       }
     });
@@ -384,19 +376,8 @@ async function handleYearUpdate(year) {
 
 function createYearAndStateSpan(ruleFormState) {
 
-  console.log("update divider in calendarform, adding year input and federal state select ");
-
   const yearAndStateInput = document.createElement("div");
   yearAndStateInput.id = "state-year-ui";
-
-  /*
-  publicHolidayState = await loadStateData(cachedApi);
-*/
-  console.log("public holiday state ", ruleFormState);
-
-  /* ======================
-     YEAR INPUT
-  ====================== */
 
   const yearInput = document.createElement("input");
   yearInput.id = "calendar-form-year";
@@ -407,24 +388,15 @@ function createYearAndStateSpan(ruleFormState) {
   yearInput.value = currentYear;
 
   yearInput.addEventListener("change", async (e) => {
-    console.log("  ***  year input change  ***");
     const selectedYear = parseInt(e.target.value, 10);
     localStorage.setItem("calendarSettingYear", selectedYear);
     currentYear = selectedYear;
     await handleYearUpdate(selectedYear);
   });
 
-  /* ======================
-     FLAG
-  ====================== */
-
   const flagDiv = document.createElement("div");
   flagDiv.id = "state-flag";
   flagDiv.classList.add("state-flag-icon");
-
-  /* ======================
-     STATE SELECT
-  ====================== */
 
   const stateSelect = document.createElement("select");
   stateSelect.id = "state-select";
@@ -442,10 +414,6 @@ function createYearAndStateSpan(ruleFormState) {
     stateSelect.appendChild(opt);
   });
 
-  /* ======================
-     SAVE BUTTON
-  ====================== */
-
   const saveBtn = document.createElement("button");
   saveBtn.id = "save-state-btn";
   saveBtn.textContent = "🛡️💾";
@@ -454,19 +422,13 @@ function createYearAndStateSpan(ruleFormState) {
   saveBtn.classList.add("noto", "hidden", "save-button", "button");
 
   saveBtn.addEventListener("click", async () => {
-    console.log("  ***  federal state select change  ***");
     await saveStateData(cachedApi, stateSelect.value);
     saveBtn.classList.add("hidden");
   });
 
-  /* ======================
-     WIRING
-  ====================== */
-
   updateStateFlag(stateSelect.value, flagDiv);
 
   stateSelect.addEventListener("change", async (e) => {
-    console.log("   state selected has changed ", e);
     const selectedStateCode = e.target.value;
 
     ruleFederalState = selectedStateCode;
@@ -493,10 +455,6 @@ function createYearAndStateSpan(ruleFormState) {
     populateSchoolHolidaysListUnified(cachedApi, selectedStateCode, currentYear);
   });
 
-  /* ======================
-     ASSEMBLE SPAN
-  ====================== */
-
   yearAndStateInput.append(
     flagDiv,
     stateSelect,
@@ -519,22 +477,9 @@ async function clearAndLoadDOM() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const html = await res.text();
     container.innerHTML = html;
-    console.log('✅ Base calendar form HTML loaded');
   } catch (err) {
     console.error('❌ Failed to load form HTML:', err);
   }
-}
-
-async function buildCollapsables() {
-  for (const cfg of calendarLists) {
-    const parent = document.getElementById(cfg.target);
-    if (!parent) continue;
-
-    const node = createCollapsible(cfg);
-    parent.appendChild(node);
-  }
-  await new Promise(requestAnimationFrame);
-  console.log("✅ All collapsibles created");
 }
 
 function createCollapsible(cfg) {
@@ -546,13 +491,11 @@ function createCollapsible(cfg) {
 
   const toggleBtn = clone.querySelector(".rule-collapsible-toggle");
   if (toggleBtn) {
-    // Give the toggle button a unique ID
     toggleBtn.id = `collapse-${cfg.id}-toggle`;
   }
 
   const chev = clone.querySelector(".chev");
   if (chev) {
-    // Optionally give the chev its own ID
     chev.id = `chev-${cfg.id}`;
   }
 
@@ -579,7 +522,6 @@ function createCollapsible(cfg) {
 
   if (content && innerNode) content.appendChild(innerNode);
 
-  console.log(`🧱 Collapsible created: fieldset=${wrapper?.id}, toggle=${toggleBtn?.id}, chev=${chev?.id}`);
   return clone;
 }
 
@@ -594,27 +536,22 @@ function createStandardList(cfg) {
     return document.createElement('div');
   }
 
-  // Clone the list container template
   const listNode = tpl.content.cloneNode(true);
   const body = listNode.querySelector('.list-body');
 
-  // Fill with data
   (cfg.data || []).forEach(item => {
     const li = createListItem(item);
     body.appendChild(li);
   });
 
-  // Optional: mini view for collapsed state
   const miniView = document.createElement('div');
   miniView.className = 'list-mini';
   (cfg.data || []).forEach(item => {
     const miniItem = document.createElement('span');
     miniItem.className = 'mini-item';
 
-    // Show only icon (locked/unlocked) for mini
     const icon = document.createElement('span');
     miniItem.appendChild(icon);
-
     miniView.appendChild(miniItem);
   });
 
@@ -624,13 +561,9 @@ function createStandardList(cfg) {
 }
 
 function onShiftToggle(day, shiftId, isActive) {
-  console.log("[calendar-form] day/id/active:", day, shiftId, isActive);
   calendarState[day][shiftId] = isActive;
   const dayState = calendarState[day];
-  console.log("[calendar-form] day state:", dayState);
   const anyActive = dayState.early || dayState.day || dayState.late;
-  console.log("[calendar-form] any active:", anyActive);
-  console.log("[calendar setting] weekday identifier", `input[data-day="${day}"][data-type="weekday"]`);
   const weekdayCheckbox = document.getElementById(`chk-${day}`);
 
   if (weekdayCheckbox) {
@@ -641,8 +574,6 @@ function onShiftToggle(day, shiftId, isActive) {
   if (typeof handleCalendarSettingChange === 'function') {
     handleCalendarSettingChange(`${day}-${shiftId}`, isActive);
   }
-
-  // Optional debug
   console.table(calendarState);
 }
 
@@ -665,33 +596,10 @@ function onWeekdayToggle(day, isActive) {
   updateWeekdayIcon(day, isActive);
 }
 
-// optional helper
 function updateWeekdayIcon(day, active) {
   const weekdayRow = document.querySelector(`[data-weekday="${day}"]`);
   if (!weekdayRow) return;
   weekdayRow.classList.toggle('is-active', active);
-}
-
-
-// === 🧩 Create the list inside each collapsible ===
-function createList(cfg) {
-  const tpl = document.getElementById('tpl-list');
-  const tplItem = document.getElementById('tpl-list-item');
-
-  const listNode = tpl.content.cloneNode(true);
-  const body = listNode.querySelector('.list-body');
-
-  if (Array.isArray(cfg.data)) {
-    cfg.data.forEach(item => body.appendChild(createListItem(item)));
-  } else if (typeof cfg.data === 'object') {
-    Object.entries(cfg.data).forEach(([day, shifts]) => {
-      shifts.forEach(shift => {
-        body.appendChild(createListItem({ day, ...shift }));
-      });
-    });
-  }
-
-  return listNode;
 }
 
 function createListItem(item, colorClass = "is-closed") {
@@ -728,10 +636,9 @@ function createListItem(item, colorClass = "is-closed") {
   labelText.appendChild(nameSpan);
 
   const shortSpan = document.createElement('span');
-  shortSpan.classList.add('short-name', 'hidden'); // hidden by default
+  shortSpan.classList.add('short-name', 'hidden');
   shortSpan.textContent = item.short || item.name?.slice(0, 2) || '?';
   labelText.appendChild(shortSpan);
-
 
   const checkbox = row.querySelector('.row-checkbox');
   checkbox.type = "checkbox";
@@ -810,13 +717,13 @@ function populateWeekdaysList() {
 }
 
 function populatePublicHolidayList(publicHolidays) {
-  const collapsible = document.getElementById('rule-collapsible-holiday');
+  const collapsible = document.getElementById('rule-collapsible-holidays');
   if (!collapsible) {
     console.warn("⚠️ Didn't find public holiday container");
     return;
   }
   const body = collapsible.querySelector('.list-body');
-  body.innerHTML = ''; // clear any existing rows
+  body.innerHTML = '';
 
   const publicHolidaySaveBtn = collapsible.querySelector('.btn-store');
 
@@ -825,12 +732,10 @@ function populatePublicHolidayList(publicHolidays) {
     publicHolidaySaveBtn.classList.add('noto');
     publicHolidaySaveBtn.addEventListener('click', async () => {
       gatherHolidaysAndSave();
-      console.log('✅ Public holidays saved!');
     });
   }
 
   publicHolidays.forEach(holiday => {
-    // Format date like "Di. 25.12"
     const dateObj = new Date(holiday.date);
     const weekday = dateObj.toLocaleDateString('de-DE', { weekday: 'short' }).replace('.', '');
     const day = String(dateObj.getDate()).padStart(2, '0');
@@ -851,8 +756,6 @@ function populatePublicHolidayList(publicHolidays) {
       body.appendChild(listItem);
     }
   });
-
-  console.log(`✅ Populated ${publicHolidays.length} public holidays`);
 }
 
 async function saveCompanyHoliday(startInputId = 'preview-start', endInputId = 'preview-end') {
@@ -880,7 +783,6 @@ async function saveCompanyHoliday(startInputId = 'preview-start', endInputId = '
     return;
   }
 
-  // Normalize order (end >= start)
   const fixedEndDate = endDate < startDate ? startDate : endDate;
 
   companyHolidays.push({
@@ -888,7 +790,6 @@ async function saveCompanyHoliday(startInputId = 'preview-start', endInputId = '
     endDate: fixedEndDate.toISOString().slice(0, 10)
   });
 
-  // Sort chronologically
   companyHolidays.sort(
     (a, b) => new Date(a.startDate) - new Date(b.startDate)
   );
@@ -921,8 +822,6 @@ function editCompanyHoliday(period) {
   activeCompanyHolidayPicker.setEnd(period.endDate);
 }
 
-
-
 async function gatherBridgeDaysAndSave() {
   const allBridgeDays = [];
 
@@ -938,7 +837,6 @@ async function gatherBridgeDaysAndSave() {
     });
   });
 
-  // Update global state
   bridgeDayState = allBridgeDays.reduce((acc, { id, isOpen }) => {
     acc[id] = isOpen;
     return acc;
@@ -946,7 +844,6 @@ async function gatherBridgeDaysAndSave() {
 
   try {
     await saveBridgeDaysSimple(cachedApi, allBridgeDays);
-    console.log('✅ Bridge days saved');
   } catch (err) {
     console.error('❌ Bridge days save failed', err);
   }
@@ -954,12 +851,10 @@ async function gatherBridgeDaysAndSave() {
 
 async function gatherHolidaysAndSave() {
   const allHolidays = [];
-
-  // Find all holiday checkboxes in the list
   const checkboxes = document.querySelectorAll('#rule-collapsible-holidays .row-checkbox');
 
   checkboxes.forEach(cb => {
-    const id = cb.dataset.id || cb.id; // use dataset.id if set, fallback to id
+    const id = cb.dataset.id || cb.id;
     if (!id) return;
 
     allHolidays.push({
@@ -968,7 +863,6 @@ async function gatherHolidaysAndSave() {
     });
   });
 
-  // Update global state if you want
   publicHolidayState = allHolidays.reduce((acc, { id, isOpen }) => {
     acc[id] = isOpen;
     return acc;
@@ -976,12 +870,10 @@ async function gatherHolidaysAndSave() {
 
   try {
     await savePublicHolidaysSimple(cachedApi, allHolidays);
-    console.log('✅ Save completed');
   } catch (err) {
     console.error('❌ Save failed', err);
   }
 }
-
 
 function populateBridgeDaysList(bridgeDays) {
   const collapsible = document.getElementById('rule-collapsible-bridgedays');
@@ -991,7 +883,7 @@ function populateBridgeDaysList(bridgeDays) {
   }
 
   const body = collapsible.querySelector('.list-body');
-  body.innerHTML = ''; // clear any existing rows
+  body.innerHTML = '';
 
   const saveBtn = collapsible.querySelector('.btn-store');
   if (saveBtn) {
@@ -1009,25 +901,17 @@ function populateBridgeDaysList(bridgeDays) {
   }
 
   bridgeDays.forEach(day => {
-    // --- Format date like "Fr. 27.12" ---
     const dateObj = new Date(day.date);
     const weekday = dateObj.toLocaleDateString('de-DE', { weekday: 'short' }).replace('.', '');
     const dayNum = String(dateObj.getDate()).padStart(2, '0');
     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
     const formattedDate = `${weekday}. ${dayNum}.${month}`;
-
-    // --- Determine color class ---
     const colorClass = day.isOpen ? getDateColorClass(day.date) : 'isClosed';
-
-    // --- Determine emoji and label ---
     const bridgeLabel = day.after
       ? `<span class ="noto"> ${day.emoji} ⇾</span> ${day.name}`
       : `<span class ="noto"> ⇽ ${day.emoji} </span> ${day.name}`;
 
-    console.log("day: ", day);
-
     const bridgeShort = `<span class="noto">${day.emoji}</span>`;
-    // --- Create list item ---
     const listItem = createListItem({
       id: `bridge-${day.date}`,
       name: bridgeLabel,
@@ -1041,8 +925,6 @@ function populateBridgeDaysList(bridgeDays) {
       body.appendChild(listItem);
     }
   });
-
-  console.log(`✅ Populated ${bridgeDays.length} bridge days`);
 }
 
 function populateCompanyHolidaysList(companyHolidays = []) {
@@ -1052,17 +934,13 @@ function populateCompanyHolidaysList(companyHolidays = []) {
     return;
   }
 
-  // Clone main list template
   const tplList = document.getElementById('tpl-list');
   const listNode = tplList.content.cloneNode(true);
   const listBody = listNode.querySelector('.list-body');
   const listControls = listNode.querySelector('.list-controls');
-
-  // --- Input controls for new company holiday ---
   const inputContainer = document.createElement('div');
   inputContainer.classList.add('company-holiday-input', 'noto', 'flex-col');
 
-  // Generate unique IDs
   const timestamp = Date.now();
   const startBtnId = `pick-start-${timestamp}`;
   const endBtnId = `pick-end-${timestamp}`;
@@ -1082,7 +960,6 @@ function populateCompanyHolidaysList(companyHolidays = []) {
   const startPreview = node.querySelector('.start-preview');
   const endPreview = node.querySelector('.end-preview');
 
-  // assign dynamic IDs if you really need them
   startBtn.id = startBtnId;
   endBtn.id = endBtnId;
   startInput.id = startInputId;
@@ -1093,12 +970,10 @@ function populateCompanyHolidaysList(companyHolidays = []) {
   inputContainer.appendChild(node);
   listControls.appendChild(inputContainer);
 
-  // --- Append fragment to DOM first ---
   const content = collapsible.querySelector('.rule-collapsible-content');
   content.innerHTML = '';
   content.appendChild(listNode);
 
-  // --- Initialize the date picker AFTER DOM is ready ---
   activeCompanyHolidayPicker = createDateRangePicker({
     startButton: `#${startBtnId}`,
     endButton: `#${endBtnId}`,
@@ -1111,15 +986,12 @@ function populateCompanyHolidaysList(companyHolidays = []) {
   });
 
 
-  // --- Render existing holidays ---
   if (!companyHolidays.length) {
     const empty = document.createElement('span');
     empty.textContent = "Keine Betriebsferien hinterlegt";
     listBody.appendChild(empty);
   } else {
-    // SORT HOLIDAYS BY START DATE (earliest first)
     companyHolidays.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
-
     companyHolidays.forEach(period => {
       const tplItem = document.getElementById('tpl-list-item');
       const fragment = tplItem.content.cloneNode(true);
@@ -1137,6 +1009,8 @@ function populateCompanyHolidaysList(companyHolidays = []) {
       const end = new Date(period.endDate);
       const startStr = start.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
       const endStr = end.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+
+      if (startStr !== endStr) itemNode.classList.add('multi-day');
 
       const label = document.createElement('div');
       label.classList.add('company-holiday-label');
@@ -1234,16 +1108,14 @@ async function populateSchoolHolidaysListUnified(cachedApi, state, year) {
   }
 
   const contentWrapper = collapsible.querySelector('.rule-collapsible-content');
-  contentWrapper.innerHTML = ''; // always start fresh
+  contentWrapper.innerHTML = '';
 
-  // --- Clone the generic list template ---
   const tplList = document.getElementById('tpl-list');
   if (!tplList) return;
   const listNode = tplList.content.cloneNode(true);
   const body = listNode.querySelector('.list-body');
   const controls = listNode.querySelector('.list-controls');
 
-  // --- Header ---
   const title = document.createElement('div');
   title.innerHTML = ``;
   controls.appendChild(title);
@@ -1254,7 +1126,6 @@ async function populateSchoolHolidaysListUnified(cachedApi, state, year) {
   }
 
   if (!schoolHolidays || schoolHolidays.length < 1) {
-    // --- CSV not found: show download button ---
     const downloadBtn = document.createElement('button');
     downloadBtn.classList.add('noto', 'download-school-data-btn');
     downloadBtn.innerHTML = `<span class="noto">🌐 Schulferien aktualisieren</span>`;
@@ -1304,7 +1175,6 @@ async function populateSchoolHolidaysListUnified(cachedApi, state, year) {
       }
     });
   } else {
-    // --- Render holidays list ---
     schoolHolidays.forEach(holiday => {
       const tpl = document.getElementById('tpl-list-item');
       if (!tpl) return;
@@ -1314,11 +1184,15 @@ async function populateSchoolHolidaysListUnified(cachedApi, state, year) {
       const checkbox = li.querySelector('input[type="checkbox"]');
       const lockIcon = li.querySelector('.lock-icon');
 
-      // --- Format date ---
       const start = new Date(holiday.startDate);
       const end = new Date(holiday.endDate);
       const startStr = start.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
       const endStr = end.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+
+      const dataRow = li.querySelector('.data-row');
+      if (startStr !== endStr && dataRow) {
+        dataRow.classList.add('multi-day');
+      }
 
       labelText.innerHTML = `${startStr} ⇨ ${endStr} <br>`;
       const emoji = document.createElement('span');
@@ -1331,30 +1205,23 @@ async function populateSchoolHolidaysListUnified(cachedApi, state, year) {
       nameSpan.textContent = ` ${holiday.name}`;
       labelText.appendChild(nameSpan);
 
-      if (checkbox) checkbox.remove(); // probably not needed
+      if (checkbox) checkbox.remove();
       if (lockIcon) lockIcon.remove();
 
       body.appendChild(li);
     });
-
-    console.log(`✅ Populated ${schoolHolidays.length} school holidays`);
   }
-
-  // --- Append to DOM ---
   contentWrapper.appendChild(listNode);
 }
 
 function initChecklist() {
-  // Remove existing checklist if one is already present
   const oldChecklist = document.getElementById('holiday-checklist');
   if (oldChecklist) oldChecklist.remove();
 
-  // Create a new checklist container
   const checklist = document.createElement('ul');
   checklist.id = 'holiday-checklist';
   checklist.classList.add('holiday-checklist');
 
-  // Define the steps you want to display
   const steps = [
     { key: 'online', label: 'Online' },
     { key: 'apiReachable', label: 'API erreichbar' },
@@ -1364,11 +1231,10 @@ function initChecklist() {
     { key: 'csvWritten', label: 'CSV gespeichert' }
   ];
 
-  // Build the list items
   steps.forEach(step => {
     const li = document.createElement('li');
     li.dataset.step = step.key;
-    li.classList.add('pending'); // initial state
+    li.classList.add('pending');
     li.innerHTML = `
       <span class="status-indicator noto">⏳</span>
       <span class="status-label">${step.label}</span>
@@ -1376,7 +1242,6 @@ function initChecklist() {
     checklist.appendChild(li);
   });
 
-  // Find a place to insert the checklist
   const container =
     document.querySelector('#rule-collapsible-schoolHolidays .list-controls') ||
     document.querySelector('#rule-collapsible-schoolHolidays .rule-collapsible-content');
@@ -1390,7 +1255,6 @@ function initChecklist() {
 
 function findBridgeDays(holidays, weekdays, persistedBridgeDays = []) {
   if (holidays.some(h => h.state === 'XX')) {
-    console.log('Skipping bridge day generation for Nimmerland.');
     return [];
   }
 
@@ -1450,7 +1314,6 @@ function createMatrixList(cfg) {
   const container = document.createElement('div');
   container.className = 'shift-matrix-container';
 
-  // Create both versions
   const expandedGrid = createExpandedMatrix(cfg);
   const miniGrid = createMiniMatrix(cfg);
 
@@ -1464,13 +1327,12 @@ function createExpandedMatrix(cfg) {
   const expandedGrid = document.createElement('div');
   expandedGrid.className = 'shift-matrix shift-matrix-expanded';
 
-  // --- Header row ---
   const headerRow = document.createElement('div');
   headerRow.className = 'shift-row shift-header-row';
 
   const topLeft = document.createElement('div');
   topLeft.className = 'shift-label';
-  topLeft.textContent = ''; // empty top-left corner
+  topLeft.textContent = '';
   headerRow.appendChild(topLeft);
 
   const shiftIds = ['early', 'day', 'late'];
@@ -1487,7 +1349,6 @@ function createExpandedMatrix(cfg) {
 
   expandedGrid.appendChild(headerRow);
 
-  // --- Data rows for weekdays ---
   const weekdayLabels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
   const rowHeaderClasses = ['is-regular', 'is-regular', 'is-regular', 'is-regular', 'is-regular', 'is-weekend', 'is-sunday'];
 
@@ -1495,24 +1356,18 @@ function createExpandedMatrix(cfg) {
     const row = document.createElement('div');
     row.className = 'shift-row';
 
-    // Row header
     const label = document.createElement('div');
     label.className = 'shift-label';
     label.textContent = weekdayLabels[index];
     label.classList.add(rowHeaderClasses[index]);
     row.appendChild(label);
 
-
-
-    // Cells with checkboxes
     shifts.forEach(shift => {
-      const cell = createMatrixCell(day, shift, true); // true for expanded version
+      const cell = createMatrixCell(day, shift, true);
       row.appendChild(cell);
     });
-
     expandedGrid.appendChild(row);
   });
-
   return expandedGrid;
 }
 
@@ -1520,7 +1375,6 @@ function createMiniMatrix(cfg) {
   const miniGrid = document.createElement('div');
   miniGrid.className = 'shift-matrix shift-matrix-mini';
 
-  // --- Mini header row (same color classes as big matrix) ---
   const miniHeaderRow = document.createElement('div');
   miniHeaderRow.className = 'shift-row-mini shift-header-row-mini';
 
@@ -1531,7 +1385,7 @@ function createMiniMatrix(cfg) {
     late: 'is-late'
   };
   const shiftHeaderLabels = {
-    early: 'F',   // small abbrev or icon
+    early: 'F',
     day: 'T',
     late: 'S'
   };
@@ -1575,7 +1429,6 @@ function createMatrixCell(day, shift, isExpanded) {
 
     if (shiftColorClass) cell.classList.add(shiftColorClass);
 
-    // Add closed state if inactive
     if (!shift.active) {
       cell.classList.add('is-closed');
       cell.classList.remove('is-early', 'is-day', 'is-late');
@@ -1585,7 +1438,6 @@ function createMatrixCell(day, shift, isExpanded) {
     const todayShiftEntry = todayShift.find(s => s.id === shift.id);
     const isShiftOpen = todayShiftEntry ? todayShiftEntry.active : false;
 
-    // === Checkbox for expanded version ===
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = isShiftOpen;
@@ -1593,18 +1445,15 @@ function createMatrixCell(day, shift, isExpanded) {
     checkbox.dataset.shift = shift.id;
     checkbox.dataset.key = `${day} - ${shift.id}`;
 
-    // === Lock Icon ===
     const icon = document.createElement('span');
     icon.className = 'lock-icon ' + (shift.active ? 'unlocked' : 'locked');
 
-    // === Assemble cell ===
     cell.appendChild(checkbox);
     cell.appendChild(icon);
 
     checkbox.addEventListener('change', e => {
       const isActive = e.target.checked;
 
-      // Update lock icon
       icon.classList.toggle('unlocked', isActive);
       icon.classList.toggle('locked', !isActive);
 
@@ -1615,35 +1464,30 @@ function createMatrixCell(day, shift, isExpanded) {
       } else {
         cell.classList.add('is-closed');
       }
-
       onShiftToggle(day, shift.id, isActive);
     });
 
   } else {
-    // --- MINI VERSION (visual only, but same colors + lock icons as expanded) ---
     cell.classList.add('shift-cell-mini');
 
-    const shiftColorClass = {
-      early: 'is-early',
-      day: 'is-day',
-      late: 'is-late'
-    }[shift.id] || '';
+    const shiftColorClass = { early: 'is-early', day: 'is-day', late: 'is-late' }[shift.id] || '';
 
-    if (shiftColorClass) cell.classList.add(shiftColorClass);
+    const todayShift = shiftsData[day]; // same as expanded
+    const todayShiftEntry = todayShift.find(s => s.id === shift.id);
+    const isShiftOpen = todayShiftEntry ? todayShiftEntry.active : false;
 
-    // Closed state removes color and shows gray look
-    if (!shift.active) {
+    if (isShiftOpen) {
+      cell.classList.add(shiftColorClass);
+      cell.classList.remove('is-closed');
+    } else {
       cell.classList.add('is-closed');
       cell.classList.remove('is-early', 'is-day', 'is-late');
     }
 
-    // --- Mini lock icon (same locked/unlocked semantics) ---
     const icon = document.createElement('span');
-    icon.className = 'lock-icon-mini ' + (shift.active ? 'unlocked' : 'locked');
-    icon.classList.add('noto');
+    icon.className = 'lock-icon-mini ' + (isShiftOpen ? 'unlocked' : 'locked');
     cell.appendChild(icon);
   }
-
   return cell;
 }
 
@@ -1667,13 +1511,6 @@ function getDateColorClass(dateStr, isClosed = false) {
   return 'is-regular';
 }
 
-
-// Helper for weekday abbreviation
-function dayAbbr(dayId) {
-  const map = { mon: 'Mo', tue: 'Di', wed: 'Mi', thu: 'Do', fri: 'Fr', sat: 'Sa', sun: 'So' };
-  return map[dayId] || dayId;
-}
-
 function updateDivider(className = "bg-calendar", ruleFormState) {
   const divider = document.getElementById('horizontal-divider-box');
   if (!divider) {
@@ -1686,22 +1523,18 @@ function updateDivider(className = "bg-calendar", ruleFormState) {
 
   const yearAndState = createYearAndStateSpan(ruleFormState);
 
-  // Left gap
   const leftGap = document.createElement('div');
   leftGap.className = 'left-gap';
 
-  // Header
   const h2 = document.createElement('div');
   h2.id = 'role-form-title';
   h2.className = 'sr-only';
   h2.innerHTML = `<span class="noto" >🕗</span > Öffnungszeiten planen <span class="noto" >🕟</span> `;
 
-  // Container for form controls
   const buttonContainer = document.createElement('div');
   buttonContainer.id = 'form-buttons';
   buttonContainer.className = 'flex items-center gap-3';
 
-  // --- Global buttons (will work as before) ---
   const helpBtn = createHelpButton('chapter-employees');
   const branchSelect = createBranchSelect({
     onChange: (val) => applyBranchPreset(val)
@@ -1709,7 +1542,7 @@ function updateDivider(className = "bg-calendar", ruleFormState) {
 
   saveButtonHeader = createSaveButton({ onSave: () => storeAllCalendarSettings(cachedApi) });
 
-  const windowBtns = createWindowButtons(); // your new min/max buttons
+  const windowBtns = createWindowButtons();
 
   buttonContainer.append(helpBtn, branchSelect, windowBtns);
   leftGap.innerHTML = '';
@@ -1725,284 +1558,11 @@ function storeAllCalendarSettings(api) {
   console.log(" store all calendar settings");
 }
 
-function createYearSelect({ defaultYear = new Date().getFullYear(), minYear = 2025, onChange } = {}) {
-  const container = document.createElement('div');
-  container.className = 'calendar-form-field year-select-group flex items-center gap-2';
-
-  const label = document.createElement('label');
-  label.setAttribute('for', 'calendar-form-year');
-  label.textContent = 'Jahr';
-
-  const input = document.createElement('input');
-  input.type = 'number';
-  input.id = 'calendar-form-year';
-  input.min = minYear;
-  input.value = defaultYear;
-  input.setAttribute('aria-label', 'Jahr auswählen');
-
-  function handleYearChange(e) {
-    const year = parseInt(e.target.value, 10);
-    debug('[YEAR INPUT] event fired', { raw: e.target.value, parsed: year });
-
-    if (!isNaN(year) && year >= minYear) {
-      if (typeof onChange === 'function') {
-        debug('[YEAR INPUT] calling onChange handler');
-        onChange(year);
-      } else {
-        debug('[YEAR INPUT] onChange missing or not a function');
-      }
-    } else {
-      debug('[YEAR INPUT] invalid year, resetting');
-      e.target.value = defaultYear;
-    }
-  }
-
-  try {
-    input.addEventListener('change', handleYearChange);
-    input.addEventListener('blur', handleYearChange);
-    input.addEventListener('input', debounce(handleYearChange, 500));
-    debug('[YEAR INPUT] listeners attached ✅');
-  } catch (err) {
-    console.error('[YEAR INPUT] Failed to attach listener ❌', err);
-  }
-
-  queueMicrotask(() => {
-    const el = document.getElementById('calendar-form-year');
-    debug('[YEAR INPUT] Post-init check:', {
-      exists: !!el,
-      disabled: el?.disabled,
-      readOnly: el?.readOnly,
-      parentVisible: el?.offsetParent !== null,
-    });
-  });
-
-  container.append(label, input);
-  return container;
-}
-
-
-const DEBUG_UI = true; // set false for production
-
-function debug(...args) {
-  if (DEBUG_UI) console.log('[DEBUG]', ...args);
-}
-
-function createStateSelect({ defaultValue = 'BB', onChange } = {}) {
-  const container = document.createElement('div');
-  container.className = 'calendar-form-field state-select-group flex items-center gap-2';
-
-  const flagImg = document.createElement('img');
-  flagImg.className = 'state-flag-icon';
-  flagImg.alt = 'Bundesland Flagge';
-  flagImg.setAttribute('aria-hidden', 'true');
-
-  const label = document.createElement('label');
-  label.setAttribute('for', 'state-select');
-  label.textContent = 'Bundesland';
-
-  const select = document.createElement('select');
-  select.id = 'state-select';
-  select.setAttribute('aria-label', 'Bundesland auswählen');
-
-  states.forEach(({ code, name }) => {
-    const opt = document.createElement('option');
-    opt.value = code;
-    opt.textContent = name;
-    select.appendChild(opt);
-  });
-
-  select.value = defaultValue;
-
-  const updateFlag = (stateCode) => {
-    flagImg.src = `assets / png / wappen - ${mapStateCode(stateCode)}.png`;
-  };
-  updateFlag(select.value);
-
-  // 🧠 Add event listener diagnostics
-  try {
-    select.addEventListener('change', (e) => {
-      const val = e.target.value;
-      debug('[STATE SELECT] event fired', { val, disabled: select.disabled });
-
-      updateFlag(val);
-      if (typeof onChange === 'function') {
-        debug('[STATE SELECT] calling onChange handler');
-        onChange(val);
-      } else {
-        debug('[STATE SELECT] onChange missing or not a function');
-      }
-    });
-
-    debug('[STATE SELECT] Event listener attached ✅');
-  } catch (err) {
-    console.error('[STATE SELECT] Failed to attach listener ❌', err);
-  }
-
-  // 🧠 DOM inspection
-  queueMicrotask(() => {
-    const el = document.getElementById('state-select');
-    debug('[STATE SELECT] Post-init check:', {
-      exists: !!el,
-      disabled: el?.disabled,
-      parentVisible: el?.offsetParent !== null,
-    });
-  });
-
-  container.append(flagImg, label, select);
-
-  setTimeout(() => {
-    const stateSelect = document.getElementById('state-select');
-    debug('[STATE SELECT] Live element check after rebind:', {
-      sameNode: stateSelect === select,
-      eventListenersStillPresent: getEventListeners ? getEventListeners(stateSelect) : 'n/a',
-    });
-  }, 2000);
-
-  return container;
-}
-
-
-// Debounce helper function for better performance
-function debounce(func, wait) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
-
-function createCalendarFormYearSelect() {
-  const formYearInput = document.getElementById('calendar-form-year');
-  if (formYearInput) {
-    formYearInput.addEventListener('change', () => {
-      const newYear = parseInt(formYearInput.value, 10);
-      if (!isNaN(newYear)) {
-        currentYear = newYear;
-        setDateRemote(newYear);
-      }
-    });
-  }
-}
-
-function initCheckboxLockToggles() {
-  document.querySelectorAll('.data-box input[type="checkbox"]').forEach(checkbox => {
-    checkbox.addEventListener('change', () => {
-      const container = checkbox.closest('.data-box');
-      const key = container.getAttribute('data-shift') || container.getAttribute('data-day');
-      if (!key) return;
-
-      const isChecked = checkbox.checked;
-
-      document.querySelectorAll(`[data - lock - key= "${key}"]`).forEach(icon => {
-        icon.classList.toggle('unlocked', isChecked);
-        icon.classList.toggle('locked', !isChecked);
-      });
-
-      container.classList.toggle('checked', isChecked);
-
-      document.querySelectorAll(`.data - box[data - shift="${key}"]`).forEach((box) => {
-        box.classList.remove('ambigious');
-        box.classList.toggle('checked', isChecked);
-      });
-
-      const storeButton = container.closest('.shift-controls')?.querySelector('#store-shifts');
-      if (storeButton) storeButton.classList.remove('hidden');
-
-      updateShiftSelectOptions();
-      const sectionId = getSectionId(checkbox);
-      if (!sectionId) {
-        console.warn('Could not determine section for checkbox');
-        return;
-      }
-
-      switch (sectionId) {
-        case 'weekday-expanded':
-          interpretWeekdays(checkbox);
-          break;
-        case 'shift-expanded':
-          interpretShifts(); // still same for now
-          break;
-        case 'holiday-expanded':
-          updatePublicHolidays();
-          break;
-        case 'bridgeday-expanded':
-          updateBridgeDays();
-          break;
-        default:
-          console.warn('Unhandled checkbox section:', sectionId);
-      }
-      updateCalendarDisplay();
-    });
-  });
-
-  updateShiftSelectOptions();
-}
-
-function getSectionId(element) {
-  // climb up the DOM tree until we find an element with one of the known section IDs
-  const sectionIds = ['weekday-expanded', 'shift-expanded', 'holiday-expanded', 'bridgeday-expanded'];
-  let current = element;
-  while (current) {
-    if (current.id && sectionIds.includes(current.id)) {
-      return current.id;
-    }
-    current = current.parentElement;
-  }
-  return null;
-}
-
 function gatherShiftStates() {
   const early = document.getElementById("input-shift-early").checked;
   const day = document.getElementById("input-shift-day").checked;
   const late = document.getElementById("input-shift-late").checked;
   return Util.boolsToKey({ early, day, late });
-}
-
-
-function interpretWeekdays(weekdayCheckbox) {
-  const dayIds = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-  const dayKey = weekdayCheckbox.getAttribute('data-day') || weekdayCheckbox.id.split('-').pop();
-  const dayIndex = dayIds.indexOf(dayKey);
-  if (dayIndex === -1) {
-    console.warn('Day key not found:', dayKey);
-    return;
-  }
-
-  const shiftWeekdaySelect = document.getElementById('shift-weekday');
-  const selectedShiftDay = shiftWeekdaySelect.value; // e.g. 'shift-all', 'shift-mon', etc.
-
-  if (!weekdayCheckbox.checked) {
-    updateOfficeDays(dayIndex, "never");
-    return;
-  }
-
-  if (selectedShiftDay !== 'shift-all' && selectedShiftDay !== `shift - ${dayKey}`) {
-    shiftWeekdaySelect.value = `shift - ${dayKey}`;
-
-    document.getElementById("input-shift-early").checked = false;
-    document.getElementById("input-shift-day").checked = true;
-    document.getElementById("input-shift-late").checked = false;
-  }
-
-  const shiftKey = gatherShiftStates();
-  updateOfficeDays(dayIndex, shiftKey);
-}
-
-function interpretShifts() {
-  console.log('interpretShifts() called ✅');
-  const key = gatherShiftStates();
-}
-
-function updateBridgeDays() {
-  console.log('updateBridgeDays() called ✅');
-}
-
-function updatePublicHolidays() {
-  console.log('updatePublicHolidays() called ✅');
 }
 
 function initCollapseExpandToggles() {
@@ -2019,20 +1579,15 @@ function initCollapseExpandToggles() {
   document.querySelectorAll('.rule-collapsible-toggle').forEach(toggleBtn => {
     const id = toggleBtn.id;
     const savedState = localStorage.getItem(`collapseState - ${id}`);
-    console.log("[calendar-form] init chevrons: ", id);
 
     if (toggleBtn._collapseHandler) {
       toggleBtn.removeEventListener('click', toggleBtn._collapseHandler);
     }
 
     const handler = (e) => {
-      console.log("toggle: ", e);
-      const id = toggleBtn.id; // <= anonymus function doesnt know id
-      console.log("button id: ", id);
+      const id = toggleBtn.id;
       const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
-      console.log("old is expanded:", isExpanded);
       const newState = !isExpanded;
-      console.log("new is expanded: ", newState);
       applyCollapseState(toggleBtn, newState);
       localStorage.setItem(`collapseState - ${id}`, newState);
     }
@@ -2451,8 +2006,12 @@ function updateHolidaysForYear(year) {
       label.appendChild(labelText);
 
       const lockIcon = document.createElement('span');
-      lockIcon.classList.add('lock-icon', 'unlocked', 'noto');
+      lockIcon.classList.add('lock-icon', isOpen ? 'unlocked' : 'locked', 'noto');
       lockIcon.dataset.lockKey = key;
+
+      // Pass real state, not true
+      applyOpenClosedTooltip(lockIcon, isOpen);
+
 
       dataBox.appendChild(label);
       dataBox.appendChild(lockIcon);
@@ -2471,13 +2030,18 @@ function updateHolidaysForYear(year) {
       emojiSpan.innerText = holiday.emoji; // Show emoji ✔️
 
       const collapsedLock = document.createElement('span');
+      collapsedLock.classList.add('lock-icon', isOpen ? 'unlocked' : 'locked', 'noto');
+      collapsedLock.dataset.lockKey = key;
+
+      // Same tooltip for collapsed view
+      applyOpenClosedTooltip(collapsedLock, isOpen);
+
+      emojiSpan.appendChild(collapsedLock);
+      collapsedContainer.appendChild(collapsedBox);
+
       collapsedLock.classList.add('lock-icon', 'unlocked', 'noto');
       collapsedLock.dataset.lockKey = key;
 
-      // Nest the lock icon inside the emoji span
-      emojiSpan.appendChild(collapsedLock);
-
-      collapsedBox.appendChild(emojiSpan);
       collapsedContainer.appendChild(collapsedBox);
     }); // <-- properly closes the forEach loop
 
@@ -2617,10 +2181,6 @@ function updateChecklist(step, status) {
     pending: '⏳'
   };
 
-  if (window.debugChecklist) {
-    console.log(`🪶[Checklist] ${step} → ${status} `);
-  }
-
   const baseDelay = 250; // minimum 0.25s
   const randomExtra = Math.random() * 1000; // + up to 1.0s
   const totalDelay = baseDelay + randomExtra;
@@ -2649,33 +2209,10 @@ function onSave() {
   const allShiftsUnchecked = [...document.querySelectorAll('.shift-controls input[type="checkbox"]')].every(cb => !cb.checked);
   const allWeekdaysUnchecked = [...document.querySelectorAll('.weekday-controls input[type="checkbox"]')].every(cb => !cb.checked);
 
-
-  console.log("onSave", allShiftsUnchecked, allWeekdaysUnchecked);
-  /*
-  if (allShiftsUnchecked || allWeekdaysUnchecked) {
-    showWarningDialog(
-      () => {
-        // User confirmed saving despite no selection
-        console.log("User confirmed save.");
-        proceedWithSave();
-      },
-      () => {
-        // User canceled, do nothing or focus back on UI
-        console.log("User canceled save.");
-      }
-    );
-  } else {
-    proceedWithSave();
-  }
-  */
   proceedWithSave();
 }
 
-function proceedWithSave() {
-  // Your actual save logic here
-  console.log("Saving data...");
-  // maybe update UI, localStorage, send data to backend, etc.
-}
+function proceedWithSave() { }
 
 function getDefaultHolidayDates() {
   const monthNames = [
@@ -2702,7 +2239,7 @@ function getDefaultHolidayDates() {
   } else if (currentYear === todayYear) {
     defaultMonth = todayMonth;
   } else {
-    defaultMonth = 6; // July
+    defaultMonth = 6;
   }
 
   const start = new Date(currentYear, defaultMonth, 1);
@@ -2749,18 +2286,14 @@ function updatePreview(type, dateString) {
 function updateBridgeDaysForYear(year, state) {
   const holidays = getAllHolidaysForYear(year, state);
   const bridgeDays = findBridgeDays(holidays);
-
-  console.log(holidays);
-  console.log("[update Bridgedays");
-  console.log(bridgeDays);
-
   const bridgeList = document.getElementById('bridge-days');
+
   if (!bridgeList) {
     console.warn('Bridge list container not found!');
     return;
   }
 
-  bridgeList.innerHTML = ''; // Clear existing list
+  bridgeList.innerHTML = '';
 
   bridgeDays.forEach(item => {
     const date = new Date(item.date);
@@ -2804,10 +2337,13 @@ function restoreOfficeDaysUI(officeDays) {
       checkbox.checked = true;
       el.classList.add("checked");
       lockIcon?.classList.add("unlocked");
+      applyOpenClosedTooltip(collapsedLock, true);
+
     } else {
       checkbox.checked = false;
       el.classList.remove("checked");
       lockIcon?.classList.remove("unlocked");
+      applyOpenClosedTooltip(collapsedLock, true);
     }
 
     const weekdayCheckbox = document.querySelector(
@@ -2895,4 +2431,13 @@ function restoreOfficeDaysUI(officeDays) {
   });
 
 
+}
+
+function applyOpenClosedTooltip(iconEl, isOpen) {
+  const text = isOpen
+    ? "Geöffent"
+    : "Geschloßen";
+
+  iconEl.title = text;
+  iconEl.setAttribute("aria-label", text);
 }

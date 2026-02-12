@@ -159,10 +159,7 @@ export async function loadTeamnames(api) {
     }
 }
 
-
-// ----------------- Save -----------------
 export async function saveTeamnames(api, newTeams = teamnames) {
-    // Create CSV (simple one-name-per-line)
     const csvContent = [
         'blue,green,red,black',
         `${newTeams.blue},${newTeams.green},${newTeams.red},${newTeams.black}`
@@ -170,17 +167,14 @@ export async function saveTeamnames(api, newTeams = teamnames) {
 
     try {
         const savedPath = await saveFile(api, folderPath, teamFile, csvContent);
-        console.log('💾 Teamnames saved:', savedPath);
     } catch (err) {
         console.error('✗ Error saving teamnames:', err);
     }
 }
 
-// ----------------- Parse -----------------
 export function parseTeamnames(data) {
     const lines = data.split('\n').map(l => l.trim()).filter(Boolean);
 
-    // if CSV has headers
     if (lines.length > 1 && lines[0].includes(',')) {
         const [, row] = lines;
         const [blue, green, red, black] = row.split(',').map(s => s.trim());

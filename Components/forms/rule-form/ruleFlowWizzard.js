@@ -38,19 +38,13 @@ function idsFor(key) {
 export function updateWizard(liveResult, lastUpdatedID) {
     clearHighlights();
 
-    console.groupCollapsed("🧙 Wizard update");
-    console.log("Live sanity result:", liveResult);
-
     const exValue = getSelectedValue('E');
-
-    console.log("[wizzard] is ex table active", exValue, exValue !== 'E0');
 
     resetOptions('main', true);
     resetOptions('ex', exValue !== 'E0');
 
     applyValidationState(liveResult, lastUpdatedID);
 
-    // 🔴 Forbidden blocks
     liveResult.forbidden.forEach(key => {
         const ids = idsFor(key);
         if (!ids) {
@@ -171,4 +165,23 @@ export function attachTooltip(element, text) {
 
 export function clearTooltip(element) {
     delete element.dataset.tooltip;
+}
+
+function groupByWeekday(violations) {
+    const map = Array(7).fill(0);
+
+    violations.forEach(v => {
+        if (v.weekdayIndex != null) {
+            map[v.weekdayIndex]++;
+        }
+    });
+
+    return map;
+}
+
+function weekdayStats(counts, totalWeeks) {
+    return counts.map(c => ({
+        count: c,
+        ratio: totalWeeks ? c / totalWeeks : 0
+    }));
 }

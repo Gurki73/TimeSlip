@@ -205,31 +205,23 @@ export async function storeEmployeeChange(api, employeeData, action = "update") 
                 ...employeeData
             };
         } else if (action === "create") {
-            // unlikely: id collides — overwrite to keep deterministic
             employeeBefore[existingIndex] = { ...employeeBefore[existingIndex], ...employeeData };
         }
     } else {
-        // Not found
         if (action === "create") {
-            // add new employee
             employeeBefore.push(employeeData);
-            console.log(`➕ Added new employee id=${employeeData.id}`);
         } else if (action === "update") {
-            // update requested but not found → fall back to adding as new (safer), but log clearly
             console.warn(`⚠ Employee with ID ${employeeData.id} not found for update — adding as new.`);
             employeeBefore.push(employeeData);
         } else {
-            // other actions (shouldn't reach here)
             console.warn(`⚠ Unknown action "${action}" for employee id=${employeeData.id}. Adding as new by default.`);
             employeeBefore.push(employeeData);
         }
     }
 
-    // Convert and save
     const employeeCSV = convertEmployeesToCSV(employeeBefore);
     try {
         await saveEmployeeData(api, employeeCSV);
-        // Update in-memory `employees` array if you use it locally
         employees = employeeBefore;
     } catch (err) {
         console.error("❌ Failed to save employee changes:", err);

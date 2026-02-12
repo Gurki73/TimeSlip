@@ -643,6 +643,10 @@
   background-color: var(--calendar-day-regular-bg);
 }
 
+.data-row.multi-day {
+  min-height: 3.7rem; /* adjust as needed */
+}
+
 .shift-matrix {
   display: grid;
   grid-template-columns: 3rem repeat(3, 5rem); /* weekday + 3 shifts */
@@ -650,9 +654,9 @@
   align-items: center;
 }
 
-.shift-row {
+/* Ensure calendar matrix rows aren't overridden by admin-form's .shift-row */
+.shift-matrix .shift-row {
   display: contents; /* children participate directly in grid */
-  min-height: 22.4rem;
 }
 
 .shift-label {
@@ -976,6 +980,15 @@
   max-width: 100%;
 }
 
+#rule-collapsible-companyHolidays .date-preview,
+#rule-collapsible-companyHolidays .date-label,
+#rule-collapsible-companyHolidays .duration-value,
+#rule-collapsible-companyHolidays .duration-unit {
+    font-family: ui-default, "Segoe UI", "Helvetica Neue", sans-serif !important;
+    font-weight: 400;
+    font-size: 1rem;
+}
+
 .date-label {
   white-space: nowrap;
   opacity: 0.8;
@@ -1008,3 +1021,4 @@
   outline: 2px solid var(--accent);
   border-radius: 4px;
 }
+

@@ -113,8 +113,6 @@ export async function loadFile(api, homeKey, relativePath, fallbackFunc = null, 
         try {
             return await fallbackFunc();
         } catch (err) {
-            console.log("error loading fallback stuff");
-            console.trace();
             throw err; // IMPORTANT
         } finally {
             fallbackDepth--;
@@ -168,7 +166,6 @@ export async function saveFile(api, folderPath, fileName, content) {
             }
 
             showSuccess(`✅ ${friendlyName} gespeichert`);
-            console.log(`✅ Successfully saved ${fileName} → ${savedPath}`);
         } else {
             showFailure(`⚠️ ${friendlyName} konnte nicht gespeichert werden`);
             console.warn(`⚠ Failed to save ${fileName}`);

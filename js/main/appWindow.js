@@ -71,7 +71,6 @@ function sendThemeToRenderer(themeName) {
     const focusedWindow = BrowserWindow.getFocusedWindow();
 
     if (focusedWindow) {
-        console.log(`[Theme] Sending theme "${themeName}" to renderer`);
         focusedWindow.webContents.send('set-theme', themeName);
     } else {
         console.warn('[Theme] No focused window — could not send theme to renderer');
@@ -101,7 +100,6 @@ async function createWindow() {
     mainWindow.setTitle(SAFE_MODE ? 'Mitarbeiter Kalender (Safe Mode)' : 'Mitarbeiter Kalender');
 
     if (SAFE_MODE) {
-        console.log('🧩 Safe mode active → skipping normal renderer');
         await mainWindow.loadURL('data:text/html,<h1>🧩 Safe Mode Active</h1><p>No preload, no renderer</p>');
         return mainWindow;
     }
@@ -229,11 +227,11 @@ function showAcknowledgementsDialog(browserWindow, topic) {
         },
         electron: {
             title: 'Danksagungen / Acknowledgements',
-            message: 'Diese App verwendet folgende Technologie\nThis app uses the following technologie:',
+            message: 'Diese App verwendet folgende Technologie\nThis app uses the following technology:',
             detail:
                 '- Electron (https://www.electronjs.org/):\n' +
                 '  Ein Framework zum Erstellen plattformübergreifender Desktop-Apps mit Web-Technologien.\n' +
-                '  A framework for building cross-platform desktop apps using web technologies.\n\n' +
+                '  A framework for building cross-platform desktop apps using web technology.\n\n' +
                 'Wir danken dem Electron-Team für die Bereitstellung dieser leistungsfähigen Plattform!\n' +
                 'We thank the Electron team for providing this powerful platform!'
         },
@@ -270,6 +268,36 @@ function showAcknowledgementsDialog(browserWindow, topic) {
                 'We thank the developers for this powerful open-source library.\n\n' +
                 'SheetJS wird unter der Apache-2.0-Lizenz bereitgestellt.\n' +
                 'SheetJS is provided under the Apache-2.0 license.'
+        },
+        deepseek: {
+            title: 'Danksagungen / Acknowledgements',
+            message: 'KI-Assistenz / AI Assistance',
+            detail:
+                '- DeepSeek (深度求索):\n' +
+                '  Code-Refaktorisierung und Debugging-Unterstützung\n' +
+                '  Code refactoring and debugging assistance\n\n' +
+                'Vielen Dank für die Hilfe bei der Optimierung der Regel-Formular-Logik!\n' +
+                'Thank you for the help optimizing the rule form logic!'
+        },
+        chatgpt: {
+            title: 'Danksagungen / Acknowledgements',
+            message: 'KI-Assistenz / AI Assistance',
+            detail:
+                '- ChatGPT:\n' +
+                '  Unterstützung bei Architektur, Feature-Design und Konzeption\n' +
+                '  Assistance with architecture, feature design, and conceptual guidance\n\n' +
+                'Vielen Dank für die Hilfe bei der App-Architektur und den Funktionsideen!\n' +
+                'Thank you for the help with app architecture and feature ideas!'
+        },
+        codex: {
+            title: 'Danksagungen / Acknowledgements',
+            message: 'KI‑Assistenz / AI Assistance',
+            detail:
+                '- Codex (OpenAI):\n' +
+                '  Komplexes Debugging, Unterstützung über mehrere Skripte und Code‑Generierung\n' +
+                '  Complex debugging, cross‑script support, and code generation\n\n' +
+                'Vielen Dank für die Hilfe beim Refactoring und der Skript‑Integration!\n' +
+                'Thank you for the help with refactoring and script integration!'
         }
     };
 
@@ -368,7 +396,6 @@ function buildMenuTemplate() {
                             const mod = await import('../excel/excelTemplate.js');
                             // NEW function name:
                             const filePath = mod.buildTemplateToDownloads();
-                            console.log('Template created at:', filePath);
                         } catch (err) {
                             console.error('Template menu error', err);
                             dialog.showErrorBox('Vorlage Fehler', String(err));
@@ -573,6 +600,24 @@ function buildMenuTemplate() {
                             label: 'SheetJS',
                             click: (menuItem, browserWindow) => {
                                 showAcknowledgementsDialog(browserWindow, 'sheetjs');
+                            }
+                        },
+                        {
+                            label: 'DeepSeek',
+                            click: (menuItem, browserWindow) => {
+                                showAcknowledgementsDialog(browserWindow, 'deepseek');
+                            }
+                        },
+                        {
+                            label: 'ChatGPT',
+                            click: (menuItem, browserWindow) => {
+                                showAcknowledgementsDialog(browserWindow, 'chatgpt');
+                            }
+                        },
+                        {
+                            label: 'Codex',
+                            click: (menuItem, browserWindow) => {
+                                showAcknowledgementsDialog(browserWindow, 'codex');
                             }
                         }
 

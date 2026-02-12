@@ -17,12 +17,9 @@ export function resetAndBind(el, event, handler) {
     }
 
     if (skipIds.includes(el.id)) {
-        console.log(`⚠️ Skipping resetAndBind for ${el.tagName}#${el.id}`);
         el.addEventListener(event, handler); // attach listener only
         return el;
     }
-
-    // console.log("✅ Cloning and rebinding:", el.tagName, el.id || el.className);
 
     const newEl = el.cloneNode(true);
     el.replaceWith(newEl);

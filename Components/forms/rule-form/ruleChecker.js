@@ -1,4 +1,6 @@
 // Components\forms\rule-form\ruleChecker.js
+import { runSolver, runSolverPerShift } from './solver.js';
+import { updateRulesPreview } from './translatorMachine.js';
 
 const SHIFTS_PER_DAY = 3;
 
@@ -63,15 +65,11 @@ function isBlockSelected(block) {
     if (!block) return false;
     if (!block.id) return false;
 
-    return isBlockSelected(block);
+    const id = String(block.id);
+    if (id.length < 2) return false;
+    return id[1] !== '0';
 }
 
-
-function hasBlock(ruleDraft, key) {
-    const main = ruleDraft.main?.[key];
-    const secondary = ruleDraft.secondary?.[key];
-    return !!(main || secondary);
-}
 
 function deriveMandatory(ruleDraft) {
     const mandatory = { ...BASE_MANDATORY };
@@ -104,14 +102,6 @@ function deriveMandatory(ruleDraft) {
 }
 
 
-function isMandatorySatisfied(ruleDraft, key) {
-    const scope = key === key.toUpperCase() ? "main" : "secondary";
-    const semanticKey = mapKeyToSemantic(key); // e.g. G → group
-
-    const block = ruleDraft?.[scope]?.[semanticKey];
-    return isBlockSelected(block);
-}
-
 function createEmptyWeekCube(roleCount) {
     return Array.from({ length: 7 }, () =>
         Array.from({ length: SHIFTS_PER_DAY }, () =>
@@ -120,28 +110,23 @@ function createEmptyWeekCube(roleCount) {
     );
 }
 
-function createWeekCube(attendanceByRole, roleCount) {
-    const cube = createEmptyWeekCube(roleCount);
-
-    for (let role = 0; role < roleCount; role++) {
-        const roleData = attendanceByRole[role] || [];
-        for (let day = 0; day < 7; day++) {
-            const shifts = roleData[day] || [0, 0, 0];
-            for (let s = 0; s < SHIFTS_PER_DAY; s++) {
-                cube[day][s][role] = shifts[s];
-            }
-        }
-    }
-
-    return cube;
-}
-
 function sumRuleInCube(condition, cube) {
     let total = 0;
 
-    condition.timeframeSlots.forEach(day => {
+    // Make sure subjectRoles is always an array
+    const subjectRoles = Array.isArray(condition.subjectRoles)
+        ? condition.subjectRoles
+        : condition.subjectRoles
+            ? [condition.subjectRoles]  // wrap single string
+            : [];                       // fallback empty array
+
+    const timeframeSlots = Array.isArray(condition.timeframeSlots)
+        ? condition.timeframeSlots
+        : []; // fallback empty array
+
+    timeframeSlots.forEach(day => {
         for (let s = 0; s < SHIFTS_PER_DAY; s++) {
-            condition.subjectRoles.forEach(role => {
+            subjectRoles.forEach(role => {
                 total += cube[day][s][role] || 0;
             });
         }
@@ -149,6 +134,7 @@ function sumRuleInCube(condition, cube) {
 
     return total;
 }
+
 
 function evaluateCondition(condition, cube) {
     const total = sumRuleInCube(condition, cube);
@@ -171,37 +157,6 @@ function evaluateCondition(condition, cube) {
     }
 
     return violations;
-}
-
-async function updateOfficeDays(api) {
-    if (!api) console.error("API was not passed ==> " + api);
-
-    let openOfficeDays = {};
-
-    try {
-        openOfficeDays = await loadOfficeDaysData(api);
-        if (!Array.isArray(cachedRoles)) {
-            console.warn("Roles is not an array, initializing empty array");
-            cachedRoles = [];
-        }
-    } catch (error) {
-        console.error('Error during initialization:', error);
-        return;
-    }
-}
-async function updateEmployeeShedule(api) {
-    if (!api) console.error("API was not passed ==> " + api);
-
-    let employeeShedule = {};
-}
-
-async function updateRequests(api) {
-    if (!api) console.error("API was not passed ==> " + api);
-    let requestList = [];
-
-    constcurrentYear = Date.getFullYear();
-
-
 }
 
 function evaluateRule(rule, cube) {
@@ -228,10 +183,6 @@ function evaluateRule(rule, cube) {
         default:
             return dom;
     }
-}
-
-function evaluateRuleset(rules, cube) {
-    return rules.flatMap(rule => evaluateRule(rule, cube));
 }
 
 function startOfISOWeek(date) {
@@ -282,45 +233,186 @@ function collectDayAttendance(requests, dayFacts) {
     return attendance;
 }
 
-function buildWeeklyAttendanceCubes(
-    from,
-    to,
+export function runRequestRuleCheck(startDate, endDate, requests, options = {}) {
+    const start = normalizeDateInput(startDate);
+    const end = normalizeDateInput(endDate);
+
+    if (!start || !end || start > end) {
+        return {
+            ok: false,
+            failures: [],
+            skipped: [],
+            summary: { totalFailures: 0, totalSkipped: 0, byScope: {} },
+            meta: {
+                startDate: startDate ?? null,
+                endDate: endDate ?? null,
+                error: 'INVALID_DATE_RANGE'
+            }
+        };
+    }
+
+    const {
+        machineRuleset = null,
+        uiRules = null,
+        employees = [],
+        includePending = true,
+        roleCount: roleCountOverride = null,
+        dayFactsByDate = null,
+        shiftMode = 'all',
+        attendanceByDate = null
+    } = options;
+
+    const ruleset = machineRuleset || (Array.isArray(uiRules) ? updateRulesPreview(uiRules) : null);
+    if (!ruleset) {
+        return {
+            ok: false,
+            failures: [],
+            skipped: [],
+            summary: { totalFailures: 0, totalSkipped: 0, byScope: {} },
+            meta: {
+                startDate: dateKey(start),
+                endDate: dateKey(end),
+                error: 'NO_RULESET'
+            }
+        };
+    }
+
+    const roleCount = Number.isFinite(roleCountOverride)
+        ? roleCountOverride
+        : Array.isArray(employees) && employees.length
+            ? Math.max(...employees.map(e => Number(e.mainRoleIndex ?? 0))) + 1
+            : 14;
+
+    const requestsByDate = buildRequestsByDate(
+        requests,
+        start,
+        end,
+        employees,
+        { includePending, shiftMode }
+    );
+
+    const rulesetForCheck = {
+        ...ruleset,
+        context: {
+            requestsByDate,
+            dayFactsByDate,
+            roleCount,
+            attendanceByDate
+        }
+    };
+
+    return executeRuleset(rulesetForCheck, start, end, false);
+}
+
+export function executeRulechecker(startDate, endDate, requests, options = {}) {
+    return runRequestRuleCheck(startDate, endDate, requests, options);
+}
+
+function normalizeRuleset(ruleset) {
+    if (Array.isArray(ruleset)) {
+        return {
+            weekly: ruleset,
+            daily: [],
+            shiftly: [],
+            special: [],
+            corrupted: []
+        };
+    }
+
+    return {
+        weekly: Array.isArray(ruleset?.weekly) ? ruleset.weekly : [],
+        daily: Array.isArray(ruleset?.daily) ? ruleset.daily : [],
+        shiftly: Array.isArray(ruleset?.shiftly) ? ruleset.shiftly : [],
+        special: Array.isArray(ruleset?.special) ? ruleset.special : [],
+        corrupted: Array.isArray(ruleset?.corrupted) ? ruleset.corrupted : []
+    };
+}
+
+export function normalizeDateInput(dateInput) {
+    if (!dateInput) return null;
+    const d = dateInput instanceof Date ? new Date(dateInput) : new Date(dateInput);
+    if (Number.isNaN(d.getTime())) return null;
+    d.setHours(0, 0, 0, 0);
+    return d;
+}
+
+function createEmptyAttendanceMatrix(roleCount) {
+    return Array.from({ length: roleCount }, () => [0, 0, 0]);
+}
+
+function normalizeDayFacts(dayFacts) {
+    if (dayFacts && typeof dayFacts === 'object') return dayFacts;
+    return {
+        isOfficeOpen: true,
+        openShifts: { early: true, day: true, late: true }
+    };
+}
+
+function buildAttendanceByDate(
+    startDate,
+    endDate,
     requestsByDate,
     dayFactsByDate,
     roleCount
 ) {
-    const weeks = [];
-    let cursor = startOfISOWeek(from);
+    const attendanceByDate = {};
+    let cursor = new Date(startDate);
+    let guard = 0;
 
-    while (cursor <= to) {
+    while (cursor <= endDate && guard++ < 370) {
+        const key = dateKey(cursor);
+        const dayFacts = normalizeDayFacts(dayFactsByDate?.[key]);
+        const requests = requestsByDate?.[key] || [];
+        const attendance = createEmptyAttendanceMatrix(roleCount);
+
+        const dayAttendance = collectDayAttendance(requests, dayFacts);
+        Object.entries(dayAttendance).forEach(([roleId, shifts]) => {
+            const idx = Number(roleId);
+            if (!attendance[idx]) return;
+            for (let s = 0; s < SHIFTS_PER_DAY; s++) {
+                attendance[idx][s] += shifts[s] ?? 0;
+            }
+        });
+
+        attendanceByDate[key] = attendance;
+        cursor = addDays(cursor, 1);
+    }
+
+    return attendanceByDate;
+}
+
+function buildWeeklyCubesFromAttendance(
+    startDate,
+    endDate,
+    attendanceByDate,
+    roleCount
+) {
+    const weeks = [];
+    let cursor = startOfISOWeek(startDate);
+    let guard = 0;
+
+    while (cursor <= endDate && guard++ < 60) {
         const weekStart = new Date(cursor);
         const cube = createEmptyWeekCube(roleCount);
 
         for (let d = 0; d < 7; d++) {
             const date = addDays(weekStart, d);
             const key = dateKey(date);
+            const attendance = attendanceByDate[key];
+            if (!Array.isArray(attendance)) continue;
 
-            const dayAttendance = collectDayAttendance(
-                requestsByDate[key] || [],
-                dayFactsByDate[key]
-            );
-
-            Object.entries(dayAttendance).forEach(([role, shifts]) => {
+            for (let role = 0; role < roleCount; role++) {
                 for (let s = 0; s < SHIFTS_PER_DAY; s++) {
-                    cube[d][s][role] += shifts[s];
+                    cube[d][s][role] += attendance?.[role]?.[s] ?? 0;
                 }
-            });
+            }
         }
 
         weeks.push({
-            weekNumber,
-            from,
-            to,
-            cube,
-            daysMeta: Array.from({ length: 7 }, (_, i) =>
-                dateKey(addDays(weekStart, i))
-            )
-
+            weekNumber: getISOWeekNumber(weekStart),
+            weekStart: dateKey(weekStart),
+            weekEnd: dateKey(addDays(weekStart, 6)),
+            cube
         });
 
         cursor = addDays(cursor, 7);
@@ -329,113 +421,304 @@ function buildWeeklyAttendanceCubes(
     return weeks;
 }
 
-function _normalizeCondition(condition) {
+function extractContext(ruleset) {
+    const context = ruleset?.context || ruleset?._context || {};
 
     return {
-        weekdays: [0, 1, 2],
-        shifts: ['early'],
-        specials: [],
-        roleScope: {
-            subjects: [2, 4, 7],
-            references: []
-        },
-        limits: {
-            min: 2,
-            max: 5,
-            unit: 'WEEK' | 'DAY' | 'SHIFT'
+        roleCount: Number.isFinite(context.roleCount) ? context.roleCount : 14,
+        requestsByDate: context.requestsByDate || {},
+        dayFactsByDate: context.dayFactsByDate || {},
+        attendanceByDate: context.attendanceByDate || null,
+        attendanceByShift: context.attendanceByShift || null,
+        solverRules: context.solverRules || ruleset?.solverRules || null,
+        solverInput: context.solverInput || null
+    };
+}
+
+function summarizeFailures(failures, skipped) {
+    const byScope = {};
+    failures.forEach(f => {
+        byScope[f.scope] = (byScope[f.scope] || 0) + 1;
+    });
+
+    return {
+        totalFailures: failures.length,
+        totalSkipped: skipped.length,
+        byScope
+    };
+}
+
+export function executeRuleset(
+    ruleset,
+    startDate,
+    endDate,
+    useSolver = true
+) {
+    const normalizedRules = normalizeRuleset(ruleset);
+    const start = normalizeDateInput(startDate);
+    const end = normalizeDateInput(endDate);
+
+    if (!start || !end || start > end) {
+        return {
+            ok: false,
+            failures: [],
+            skipped: [],
+            summary: { totalFailures: 0, totalSkipped: 0, byScope: {} },
+            meta: {
+                startDate: startDate ?? null,
+                endDate: endDate ?? null,
+                error: 'INVALID_DATE_RANGE'
+            }
+        };
+    }
+
+    const context = extractContext(ruleset);
+    const roleCount = context.roleCount;
+
+    const attendanceByDate = context.attendanceByDate ||
+        buildAttendanceByDate(
+            start,
+            end,
+            context.requestsByDate,
+            context.dayFactsByDate,
+            roleCount
+        );
+
+    const weeks = buildWeeklyCubesFromAttendance(start, end, attendanceByDate, roleCount);
+    const failures = [];
+    const skipped = [];
+    let solverResult = null;
+
+    if (useSolver) {
+        try {
+            if (context.solverInput) {
+                solverResult = runSolver(context.solverInput);
+            } else if (context.attendanceByShift && context.solverRules) {
+                solverResult = runSolverPerShift(context.attendanceByShift, context.solverRules);
+            }
+        } catch (error) {
+            skipped.push({
+                scope: 'solver',
+                reason: 'SOLVER_FAILED',
+                details: String(error)
+            });
         }
     }
-}
 
-function _evaluateConditionOnWeek(condition, weekCube) {
-    return {
-        violations: [
-            {
-                unit: 'DAY',
-                key: 'Wednesday',
-                count: 3,
-                limit: 2
+    weeks.forEach(week => {
+        normalizedRules.weekly.forEach(rule => {
+            const violations = evaluateRule(rule, week.cube);
+            if (!violations.length) return;
+
+            violations.forEach(v => {
+                failures.push({
+                    ruleId: rule.id,
+                    scope: 'weekly',
+                    weekNumber: week.weekNumber,
+                    weekStart: week.weekStart,
+                    weekEnd: week.weekEnd,
+                    type: v.type,
+                    total: v.total,
+                    limit: v.limit,
+                    subjectRoles: rule?.dominantCondition?.subjectRoles || []
+                });
+            });
+        });
+    });
+
+    let cursor = new Date(start);
+    let guard = 0;
+    while (cursor <= end && guard++ < 370) {
+        const dayIndex = (cursor.getDay() + 6) % 7;
+        const key = dateKey(cursor);
+        const dayAttendance = attendanceByDate[key] || createEmptyAttendanceMatrix(roleCount);
+
+        normalizedRules.daily.forEach(rule => {
+            const slots = rule?.dominantCondition?.timeframeSlots || [];
+            const slotsAreNumbers = slots.every(slot => typeof slot === 'number');
+            if (!slotsAreNumbers) {
+                skipped.push({
+                    ruleId: rule.id,
+                    scope: 'daily',
+                    date: key,
+                    reason: 'UNSUPPORTED_TIMEFRAME_SLOTS'
+                });
+                return;
             }
-        ]
+
+            if (slots.length > 0 && !slots.includes(dayIndex)) return;
+
+            const dayCube = createEmptyWeekCube(roleCount);
+            for (let role = 0; role < roleCount; role++) {
+                for (let s = 0; s < SHIFTS_PER_DAY; s++) {
+                    dayCube[dayIndex][s][role] = dayAttendance?.[role]?.[s] ?? 0;
+                }
+            }
+
+            const violations = evaluateRule(rule, dayCube);
+            if (!violations.length) return;
+
+            violations.forEach(v => {
+                failures.push({
+                    ruleId: rule.id,
+                    scope: 'daily',
+                    date: key,
+                    weekdayIndex: dayIndex,
+                    type: v.type,
+                    total: v.total,
+                    limit: v.limit,
+                    subjectRoles: rule?.dominantCondition?.subjectRoles || []
+                });
+            });
+        });
+
+        cursor = addDays(cursor, 1);
     }
+
+    if (normalizedRules.shiftly.length) {
+        normalizedRules.shiftly.forEach(rule => {
+            skipped.push({
+                ruleId: rule.id,
+                scope: 'shiftly',
+                reason: 'NOT_IMPLEMENTED'
+            });
+        });
+    }
+
+    if (normalizedRules.special.length) {
+        normalizedRules.special.forEach(rule => {
+            skipped.push({
+                ruleId: rule.id,
+                scope: 'special',
+                reason: 'NOT_IMPLEMENTED'
+            });
+        });
+    }
+
+    const summary = summarizeFailures(failures, skipped);
+
+    return {
+        ok: failures.length === 0,
+        failures,
+        skipped,
+        summary,
+        meta: {
+            startDate: dateKey(start),
+            endDate: dateKey(end),
+            useSolver,
+            roleCount
+        },
+        solver: solverResult
+    };
 }
 
-function _summarizeViolations(violations, weeksCount) {
+export function runRuleTest(ruleDraft, existingRules = [], options = {}) {
+    return runRuleChecks({ ruleDraft, existingRules, ...options });
+}
+
+export function runRuleChecks({
+    ruleDraft,
+    existingRules = [],
+    includeInactive = false,
+    attendanceByDate = null,
+    attendanceStart = null,
+    attendanceEnd = null,
+    roleCount: roleCountOverride = null
+} = {}) {
+    const errors = [];
+    const warnings = [];
+
+    if (!ruleDraft) {
+        return {
+            ok: false,
+            errors: ['RULE_MISSING'],
+            warnings: [],
+            details: { self: null, duplicates: [], conflicts: [] }
+        };
+    }
+
+    const self = runLiveSanity(ruleDraft);
+    if (self.missingMandatory.length) {
+        errors.push(`MISSING_BLOCKS: ${self.missingMandatory.join(', ')}`);
+    }
+    if (self.forbidden.length) {
+        errors.push(`FORBIDDEN_COMBOS: ${self.forbidden.join(', ')}`);
+    }
+
+    const previewRuleset = updateRulesPreview([ruleDraft]);
+    const newMachineRules = flattenRuleset(previewRuleset);
+    if (!newMachineRules.length) {
+        warnings.push('RULE_TRANSLATION_EMPTY');
+    }
+
+    const activeExisting = includeInactive
+        ? Array.isArray(existingRules) ? existingRules : []
+        : getActiveRules(existingRules);
+    const existingRuleset = updateRulesPreview(activeExisting);
+    const existingMachineRules = flattenRuleset(existingRuleset);
+
+    const duplicates = findDuplicateRules(newMachineRules, existingMachineRules);
+    const conflicts = findPotentialConflicts(newMachineRules, existingMachineRules);
+    const delta = buildDeltaReport(newMachineRules, existingMachineRules);
+
+    if (duplicates.length) {
+        warnings.push(`DUPLICATE_RULES: ${duplicates.length}`);
+    }
+    if (conflicts.length) {
+        warnings.push(`POTENTIAL_CONFLICTS: ${conflicts.length}`);
+    }
+    if (delta?.newRules) {
+        warnings.push(`DELTA_NEW_RULES: ${delta.newRules}`);
+    }
+    if (delta?.duplicates) {
+        warnings.push(`DELTA_DUPLICATES: ${delta.duplicates}`);
+    }
+    if (delta?.conflicts) {
+        warnings.push(`DELTA_CONFLICTS: ${delta.conflicts}`);
+    }
+
+    const futureStart = normalizeDateInput(attendanceStart);
+    const futureEnd = normalizeDateInput(attendanceEnd);
+    if (attendanceByDate && futureStart && futureEnd && futureStart <= futureEnd) {
+        const derivedRoleCount = Number.isFinite(roleCountOverride)
+            ? roleCountOverride
+            : deriveRoleCountFromAttendance(attendanceByDate) ?? 14;
+
+        const rulesetForCheck = {
+            ...previewRuleset,
+            context: {
+                ...(previewRuleset?.context || {}),
+                attendanceByDate,
+                roleCount: derivedRoleCount
+            }
+        };
+
+        const futureStats = executeRuleset(rulesetForCheck, futureStart, futureEnd, false);
+        if (!futureStats.ok && Array.isArray(futureStats.failures)) {
+            warnings.push(`FUTURE_VIOLATIONS: ${futureStats.failures.length}`);
+        }
+    }
+
     return {
-        severity: 'LOW' | 'MEDIUM' | 'HIGH',
-        ratio: 0.31,
-        breakdown: {
-            Wednesday: 16 / 52
+        ok: errors.length === 0,
+        errors,
+        warnings,
+        details: {
+            self,
+            duplicates,
+            conflicts,
+            delta,
+            future: (attendanceByDate && futureStart && futureEnd)
+                ? { start: dateKey(futureStart), end: dateKey(futureEnd) }
+                : null
         }
     };
 }
 
-export function runCalendarRuleCheck(weeklyCubes, ruleset) {
-    const results = [];
-
-    weeklyCubes.forEach(week => {
-        ruleset.forEach(rule => {
-            const violations = evaluateRule(rule, week.cube);
-
-            if (violations.length > 0) {
-                results.push({
-                    ruleId: rule.id,
-                    weekNumber: week.weekNumber,
-                    violations
-                });
-            }
-        });
-    });
-
-    return results;
-}
-
-
-export function runRulePreview(rule, weeklyCubes) {
-
-    switch (rule.timeslot) {
-        case 'weekly':
-            return weeklyStatistics;
-        case 'daily':
-            return dailyStatistics;
-        case 'shiftly':
-            return shiftlyStatistics;
-        case 'special':
-            return specialStatistics;
-        default: return err;
-    }
-}
-
-export function runRequestRuleCheck(startDate, endDate, requests) {
-    // intentionally empty – implemented later
-    return [];
-}
-
-export function runRuleTest() {
-    const newMachineRule = updateRulesPreview([ruleForEditing]);
-    console.log("new machine rule:", newMachineRule);
-
-    return new Promise(resolve => {
-        const ok = Math.random() > 0.3;
-
-        resolve({
-            ok,
-            errors: ok ? [] : [
-                {
-                    type: "RANDOM_FAILURE",
-                    message: "Zufälliger Testfehler 🤡",
-                    source: "self"
-                }
-            ],
-            warnings: ok ? [] : [
-                {
-                    type: "RANDOM_WARNING",
-                    message: "Das ist nur ein Platzhalter",
-                    source: "self"
-                }
-            ]
-        });
-    });
+function deriveRoleCountFromAttendance(attendanceByDate) {
+    if (!attendanceByDate || typeof attendanceByDate !== 'object') return null;
+    const first = Object.values(attendanceByDate).find(v => Array.isArray(v));
+    return Array.isArray(first) ? first.length : null;
 }
 
 function scanForForbidden(ruleDraft) {
@@ -459,4 +742,240 @@ function scanForForbidden(ruleDraft) {
     });
 
     return forbidden;
+}
+
+function getActiveRules(rules) {
+    if (!Array.isArray(rules)) return [];
+    return rules.filter(r => !r?._deleted && !r?.isAsleep);
+}
+
+function flattenRuleset(ruleset) {
+    if (!ruleset || typeof ruleset !== 'object') return [];
+    const weekly = Array.isArray(ruleset.weekly) ? ruleset.weekly : [];
+    const daily = Array.isArray(ruleset.daily) ? ruleset.daily : [];
+    const shiftly = Array.isArray(ruleset.shiftly) ? ruleset.shiftly : [];
+    const special = Array.isArray(ruleset.special) ? ruleset.special : [];
+    return [
+        ...weekly.map(r => ({ scope: 'weekly', rule: r })),
+        ...daily.map(r => ({ scope: 'daily', rule: r })),
+        ...shiftly.map(r => ({ scope: 'shiftly', rule: r })),
+        ...special.map(r => ({ scope: 'special', rule: r }))
+    ];
+}
+
+function normalizeArray(arr) {
+    if (!Array.isArray(arr)) return [];
+    return [...arr].map(String).sort();
+}
+
+function ruleSignature(machineRule, scope) {
+    const dom = machineRule?.dominantCondition ?? {};
+    const sub = machineRule?.submissiveCondition ?? {};
+
+    const base = {
+        scope,
+        conditionLink: machineRule?.conditionLink ?? '',
+        dominant: {
+            timeframeSlots: normalizeArray(dom.timeframeSlots),
+            timeframeLogicOperator: dom.timeframeLogicOperator ?? '',
+            subjectRoles: normalizeArray(dom.subjectRoles),
+            referenceRoles: normalizeArray(dom.referenceRoles),
+            roleLogicOperator: dom.roleLogicOperator ?? '',
+            lowerLimit: dom.lowerLimit ?? null,
+            upperLimit: dom.upperLimit ?? null
+        },
+        submissive: {
+            timeframeSlots: normalizeArray(sub.timeframeSlots),
+            timeframeLogicOperator: sub.timeframeLogicOperator ?? '',
+            subjectRoles: normalizeArray(sub.subjectRoles),
+            referenceRoles: normalizeArray(sub.referenceRoles),
+            roleLogicOperator: sub.roleLogicOperator ?? '',
+            lowerLimit: sub.lowerLimit ?? null,
+            upperLimit: sub.upperLimit ?? null
+        }
+    };
+
+    return JSON.stringify(base);
+}
+
+function findDuplicateRules(newRules, existingRules) {
+    const existingSignatures = new Set(
+        existingRules.map(({ scope, rule }) => ruleSignature(rule, scope))
+    );
+
+    return newRules
+        .map(({ scope, rule }) => ({
+            scope,
+            rule,
+            signature: ruleSignature(rule, scope)
+        }))
+        .filter(item => existingSignatures.has(item.signature));
+}
+
+function findPotentialConflicts(newRules, existingRules) {
+    const conflicts = [];
+
+    newRules.forEach(({ scope, rule }) => {
+        const dom = rule?.dominantCondition ?? {};
+        const slots = normalizeArray(dom.timeframeSlots);
+        const roles = normalizeArray(dom.subjectRoles);
+
+        existingRules.forEach(other => {
+            if (other.scope !== scope) return;
+            const otherDom = other.rule?.dominantCondition ?? {};
+            const otherSlots = normalizeArray(otherDom.timeframeSlots);
+            const otherRoles = normalizeArray(otherDom.subjectRoles);
+
+            const sameFrame =
+                slots.join(',') === otherSlots.join(',') &&
+                roles.join(',') === otherRoles.join(',') &&
+                (dom.timeframeLogicOperator ?? '') === (otherDom.timeframeLogicOperator ?? '');
+
+            if (!sameFrame) return;
+
+            const limitsDiffer =
+                (dom.lowerLimit ?? null) !== (otherDom.lowerLimit ?? null) ||
+                (dom.upperLimit ?? null) !== (otherDom.upperLimit ?? null);
+
+            if (limitsDiffer) {
+                conflicts.push({
+                    scope,
+                    ruleId: rule?.id ?? '',
+                    otherRuleId: other.rule?.id ?? '',
+                    note: 'LIMIT_MISMATCH'
+                });
+            }
+        });
+    });
+
+    return conflicts;
+}
+
+function buildDeltaReport(newRules, existingRules) {
+    if (!Array.isArray(newRules) || !Array.isArray(existingRules)) {
+        return { newRules: 0, duplicates: 0, conflicts: 0 };
+    }
+
+    const duplicates = findDuplicateRules(newRules, existingRules);
+    const conflicts = findPotentialConflicts(newRules, existingRules);
+    const uniqueCount = Math.max(0, newRules.length - duplicates.length);
+
+    return {
+        newRules: uniqueCount,
+        duplicates: duplicates.length,
+        conflicts: conflicts.length
+    };
+}
+
+function buildRequestsByDate(requests, startDate, endDate, employees, options = {}) {
+    const { includePending = true, shiftMode = 'all' } = options;
+    const result = {};
+    if (!Array.isArray(requests)) return result;
+
+    const roleByEmployeeId = new Map();
+    if (Array.isArray(employees)) {
+        employees.forEach(emp => {
+            const id = emp?.id ?? emp?.employeeID ?? emp?.employeeId;
+            const roleIndex = Number(emp?.mainRoleIndex ?? emp?.roleIndex);
+            if (id != null && Number.isFinite(roleIndex)) {
+                roleByEmployeeId.set(String(id), roleIndex);
+            }
+        });
+    }
+
+    const pushEntry = (dateKeyStr, roleIndex, shift) => {
+        if (!result[dateKeyStr]) result[dateKeyStr] = [];
+        result[dateKeyStr].push({ roleIndex, shift });
+    };
+
+    const normalizeShift = (shiftValue) => {
+        if (shiftValue === 'early' || shiftValue === 'day' || shiftValue === 'late') return [shiftValue];
+        if (shiftValue === true || shiftValue === 'half') return ['day'];
+        if (shiftMode === 'day') return ['day'];
+        return ['early', 'day', 'late'];
+    };
+
+    requests.forEach(req => {
+        if (!req || !req.start || !req.end) return;
+        if (req.status === 'rejected') return;
+        if (!includePending && req.status === 'pending') return;
+
+        const roleIndex = Number(req.roleIndex ?? roleByEmployeeId.get(String(req.employeeID)));
+        if (!Number.isFinite(roleIndex)) return;
+
+        const start = normalizeDateInput(req.start);
+        const end = normalizeDateInput(req.end);
+        if (!start || !end) return;
+
+        const clampStart = start < startDate ? startDate : start;
+        const clampEnd = end > endDate ? endDate : end;
+        const shifts = normalizeShift(req.shift);
+
+        let cursor = new Date(clampStart);
+        let guard = 0;
+        while (cursor <= clampEnd && guard++ < 370) {
+            const key = dateKey(cursor);
+            shifts.forEach(shift => pushEntry(key, roleIndex, shift));
+            cursor = addDays(cursor, 1);
+        }
+    });
+
+    return result;
+}
+
+export async function computeRequestDelta(requests, newRequest, options = {}) {
+    const { extraRequests = [], uiRules, employees } = options;
+
+    const allRequests = [...requests];
+    const range = getRequestRange(allRequests);
+    if (!range) return null;
+
+    // 1️⃣ Build baseline attendance (without the new request)
+    let attendanceByDate = null;
+    const calendarReady = await ensureCalendarReady(api);
+    if (calendarReady) {
+        attendanceByDate = await computeAttendanceForRange(range.start, range.end, { extraRequests });
+    }
+
+    const baselineStats = executeRulechecker(range.start, range.end, requests, {
+        uiRules,
+        employees,
+        includePending: true,
+        attendanceByDate
+    });
+
+    // 2️⃣ Build future attendance (with newRequest)
+    const futureRequests = [...requests, newRequest];
+    const futureStats = executeRulechecker(range.start, range.end, futureRequests, {
+        uiRules,
+        employees,
+        includePending: true,
+        attendanceByDate
+    });
+
+    // 3️⃣ Compute delta for each violation key
+    const mapFailures = (arr) => new Map(
+        arr.map(f => [`${f.ruleId}_${f.scope}_${f.date ?? f.weekNumber}_${f.subjectRoles.join(',')}`, f])
+    );
+
+    const baselineMap = mapFailures(baselineStats.failures);
+    const futureMap = mapFailures(futureStats.failures);
+
+    const delta = [];
+    const allKeys = new Set([...baselineMap.keys(), ...futureMap.keys()]);
+
+    allKeys.forEach(key => {
+        const baseline = baselineMap.get(key);
+        const future = futureMap.get(key);
+
+        delta.push({
+            key,
+            baselineTotal: baseline?.total ?? 0,
+            futureTotal: future?.total ?? 0,
+            delta: (future?.total ?? 0) - (baseline?.total ?? 0),
+            type: future?.type ?? baseline?.type ?? 'UNKNOWN'
+        });
+    });
+
+    return { baselineStats, futureStats, delta };
 }

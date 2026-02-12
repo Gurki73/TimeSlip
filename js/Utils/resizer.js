@@ -67,8 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 export function toggleResize(panelTop, panelBottom, action) {
 
-  console.log('[resize button] clicked');
-
   if (!panelTop || !panelBottom) return;
 
   const container = panelTop.parentElement; // Assuming both panels share the same parent
@@ -85,15 +83,8 @@ export function toggleResize(panelTop, panelBottom, action) {
     return;
   }
 
-  console.log(" new to height ==> ", newTopHeight);
-
-
   panelTop.style.height = `${newTopHeight}px`;
   panelBottom.style.height = `${containerHeight - newTopHeight - dividerHeight}px`;
-
-
-  // resizeFormContainer();
-  // Force a repaint if needed
   panelTop.offsetHeight;
   panelBottom.offsetHeight;
 
@@ -135,20 +126,14 @@ export function resizeByPreferredForm(formKey, fraction = 0.75) {
   const rightPanel = document.getElementById('right-panel');
   const dividerHeight = document.getElementById('horizontal-divider')?.offsetHeight || 0;
 
-  console.log("Form key ====>", formKey);
   currentFormKey = formKey;
   if (!bottomPanel || !topPanel || !rightPanel) return;
   const prefs = formHeightLookup[formKey];
-  console.log(" Formkey and Prefs =====>", formKey, prefs.bottomRem);
   if (!prefs) return;
 
   const containerHeight = rightPanel.getBoundingClientRect().height;
   const maxBottomPx = remToPx(prefs.bottomRem); // clamp by form type
-  console.log("mAX BOTTOM PX =====> ", maxBottomPx);
-  console.log("mmax mall fracction ====>", (fraction * containerHeight));
   const initialBottomHeight = Math.min(containerHeight * fraction, maxBottomPx);
-
-  console.log("initialBottomHeight ====>", initialBottomHeight);
 
   bottomPanel.style.height = `${initialBottomHeight}px`;
   bottomPanel.style.maxHeight = `${maxBottomPx}px`;
@@ -164,12 +149,8 @@ export function resizeByPreferredForm(formKey, fraction = 0.75) {
   const divider = document.getElementById('horizontal-divider');
 
   const dividerTop = containerHeight - initialBottomHeight - dividerHeight;
-  console.log("divider top ", dividerTop);
-  console.log("conmtainer height", containerHeight);
   divider.style.top = `${dividerTop}px`;
 }
-
-// ----------- Drag & Resize Handlers -----------
 
 export function startDrag(e) {
   isDragging = true;

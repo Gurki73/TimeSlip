@@ -13,7 +13,7 @@ const validReceiveChannels = [
 const validInvokeChannels = [
   'load-data', 'save-data', 'check-path', 'save-csv', 'load-csv', 'load-text', 'save-text',
   'get-recovered-path', 'set-cache-value', 'get-cache-value',
-  'health-check', 'get-school-holidays'
+  'health-check', 'get-school-holidays', 'confirm'
 ];
 
 const CACHE_WHITELIST = [
@@ -119,6 +119,7 @@ if (!window.api) {
     openExternalLink: (url) => ipcRenderer.send('open-external', url),
     loadForm: (formName) => ipcRenderer.send('load-form', formName),
     saveSchoolCSV: (filePath, data) => ipcRenderer.invoke('save-school-csv', filePath, data),
+    confirm: (message) => ipcRenderer.invoke('confirm', { message }),
   });
 }
 

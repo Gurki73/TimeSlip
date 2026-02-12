@@ -58,11 +58,8 @@ export async function initializeEmployeeForm(passedApi) {
 
   const emojiData = await loadEmojiData(api);
   if (emojiData?.employeeEmojis?.length) {
-    console.log("[EmployeeForm] Using custom employee emojis:", emojiData.employeeEmojis);
     employeeEmojis.length = 0;
     employeeEmojis.push(...emojiData.employeeEmojis);
-    console.log(emojiData);
-    console.log(employeeEmojis);
   }
 
   currentEmployeeId = cachedEmployees.length > 0 ? cachedEmployees[0].id : -1;
@@ -288,8 +285,6 @@ function renderNewEmployeeForm() {
   resetEmployeeForm(newEmployeeDefaults);
   rebindEmployeeFormEvents(newEmployeeDefaults);
 
-  console.log("office data:", officeDays);
-
   const deleteButton = document.getElementById("employee-delete-button");
   if (deleteButton) deleteButton.style.display = "none";
 
@@ -432,12 +427,6 @@ function updateDivider(className) {
   const helpBtn = createHelpButton('chapter-employees');
   helpBtn.setAttribute('aria-label', 'Hilfe öffnen für Rollen-Formular');
 
-  const branchSelect = createBranchSelect({
-    onChange: (val) => {
-      console.log('Branch changed to:', val);
-      // applyBranchPreset(val);
-    }
-  });
   saveButtonHeader = createSaveButton({ onSave: () => storeAllEmployees(api) });
   saveButtonHeader.setState('blocked');
   const windowBtns = createWindowButtons(); // your new min/max buttons
@@ -447,10 +436,7 @@ function updateDivider(className) {
   divider.append(leftGap, h2, buttonContainer);
 }
 
-function storeAllEmployees(api) {
-  console.log("store all employees");
-}
-
+function storeAllEmployees(api) { }
 
 function deleteEmoji(emoji) {
   const index = employeeEmojiOptions.indexOf(emoji);
@@ -962,7 +948,6 @@ function bindEmployeeVacationInputs(employee) {
 
 function resetEmployeeBirthday() {
   const employee = getEmployeeById(currentEmployeeId);
-  console.log("remove birthday");
   if (!employee) return;
   const bdayDay = document.getElementById('employee-form-birthday-day');
   const bdayMonth = document.getElementById('employee-form-birthday-month');
@@ -1288,8 +1273,6 @@ function sanityCheckEmployee(employee) {
     return false;
   }
 
-  console.log('[sanityCheck] PASS');
-  console.groupEnd();
   return true;
 }
 
@@ -1322,8 +1305,6 @@ function sanityCheckEmployeeMandatory(employee) {
 function sanityCheckEmployeeRoles(employee) {
   let result = false;
 
-  console.log(`[roles] MainRoleIndex: ${employee.mainRoleIndex}, SecondaryRoleIndex: ${employee.secondaryRoleIndex}, TertiaryRoleIndex: ${employee.tertiaryRoleIndex}`);
-
   if (employee.mainRoleIndex === 13 && employee.secondaryRoleIndex === 0) {
     console.warn('[roles] Main role is 13 with no secondary role, marked as fail');
     return true;
@@ -1332,16 +1313,12 @@ function sanityCheckEmployeeRoles(employee) {
   if (employee.mainRoleIndex < 1 || employee.mainRoleIndex > 13) {
     console.warn('[roles] Main role out of bounds, attempting self-heal');
     result = true;
-    // trySelfhealRoles(employee);
-    console.log(`[roles] After self-heal: MainRoleIndex=${employee.mainRoleIndex}, SecondaryRoleIndex=${employee.secondaryRoleIndex}, TertiaryRoleIndex=${employee.tertiaryRoleIndex}`);
   }
 
   return result;
 }
 
 function sanityCheckEmployeeShifts(employee) {
-
-  console.log("Sanity check shifts: ", officeDays);
 
   if (!employee || !employee.shifts) {
     console.warn('[shifts] No shifts defined');
@@ -1379,46 +1356,7 @@ function sanityCheckEmployeeShifts(employee) {
     return false;
   }
 
-  console.log('[shifts] Shifts valid');
   return false;
-}
-
-function trySelfhealRoles(employee) {
-  if (employee.secondaryRoleIndex > 0) {
-    employee.mainRoleIndex = employee.secondaryRoleIndex;
-    employee.secondaryRoleIndex = 0;
-    if (employee.trinaryRoleIndex > 0) {
-      employee.secondaryRoleIndex = employee.trinaryRoleIndex;
-      employee.trinaryRoleIndex = 0;
-    }
-  } else if (employee.tertiaryRoleIndex > 0) {
-    employee.mainRoleIndex = employee.tertiaryRoleIndex;
-    employee.tertiaryRoleIndex = 0;
-  } else {
-    employee.mainRoleIndex = 0;
-  }
-}
-
-function normalizePriorityValues(employee) {
-  const normalize = (v) => (isNaN(v) ? 0 : Math.max(0, Math.min(10, Math.round(v))));
-  const before = [employee.roleSplitMain, employee.roleSplitSecondary, employee.roleSplitTertiary].join(',');
-
-  employee.roleSplitMain = normalize(employee.roleSplitMain);
-  employee.roleSplitSecondary = normalize(employee.roleSplitSecondary);
-  employee.roleSplitTertiary = normalize(employee.roleSplitTertiary);
-
-  let sum = employee.roleSplitMain + employee.roleSplitSecondary + employee.roleSplitTertiary;
-  if (sum === 0) {
-    employee.roleSplitMain = 10;
-  } else if (sum !== 10) {
-    const scale = 10 / sum;
-    employee.roleSplitMain = Math.round(employee.roleSplitMain * scale);
-    employee.roleSplitSecondary = Math.round(employee.roleSplitSecondary * scale);
-    employee.roleSplitTertiary = Math.max(0, 10 - (employee.roleSplitMain + employee.roleSplitSecondary));
-  }
-
-  const after = [employee.roleSplitMain, employee.roleSplitSecondary, employee.roleSplitTertiary].join(',');
-  return before !== after;
 }
 
 function markEmployeeAsCorrupt(employee, warningText) {
@@ -1440,10 +1378,8 @@ function renderEmployeeList() {
     employee.corrupt = false;
     employee.warning = '';
     const valid = sanityCheckEmployee(employee);
-
-    console.log("[employee-form] sanity check reults: ", valid);
-
     const listItem = document.createElement('div');
+
     listItem.classList.add('employee-item');
     listItem.classList.remove('corrupt');
 
@@ -1473,7 +1409,6 @@ function renderEmployeeList() {
 }
 
 function createEmployeeEllipsis(employee) {
-  console.log(employee);
 
   const context = {
     delete: () => deleteEmployeeSafely(employee.id),

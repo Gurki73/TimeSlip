@@ -18,6 +18,7 @@ const SHIFT_SYMBOL_PRESETS = {
 };
 
 let isRefreshing = false;
+let latestMode = null;
 
 if (!localStorage.getItem('dataMode')) {
   localStorage.setItem('dataMode', 'auto');
@@ -189,8 +190,6 @@ function setupFormLoader() {
 
   window.electron.onFormLoaded(async (event, { formName, htmlContent }) => {
 
-    console.log("[renderer] on form loaded", formName);
-
     const formContainer = document.getElementById('form-container');
     if (!formContainer) {
       console.error('❌ form-container not found!');
@@ -225,7 +224,6 @@ function setupFormLoader() {
 const CUSTOM_THEME_KEY = 'customColorTheme';
 
 function setTheme(themeName) {
-  console.log("theme-NAME =>", themeName);
   document.body.classList.remove("theme-dark", "theme-default", "theme-pastel", "theme-greyscale");
   document.body.classList.add(`theme-${themeName}`);
   localStorage.setItem('colorTheme', themeName);
@@ -292,13 +290,8 @@ function setupIPCListeners() {
   });
 
   window.api.receive('set-presence-ui-mode', async (mode) => {
-    console.log("[renderer] toggle or radio? ", mode);
     await window.cacheAPI.setCacheValue('presenceUIMode', mode);
-
-    // Dispatch event for other modules
     document.dispatchEvent(new CustomEvent('presence-ui-mode-changed', { detail: mode }));
-
-    // Update the UI immediately
     switchPresenceUIMode(mode);
   });
 
@@ -330,14 +323,12 @@ function setupIPCListeners() {
   });
 
   window.api.receive('set-shift-symbols', async (presetKey) => {
-    console.log("[renderer] receive shift style", presetKey);
     await window.cacheAPI.setCacheValue('shiftSymbols', presetKey);
     localStorage.setItem('shiftSymbols', presetKey); // optional
     window.api.send('refresh-calendar');
   });
 
   window.api.receive('set-zodiac-style', async (style) => {
-    console.log("[renderer] receive zodiac style", style);
     await window.cacheAPI.setCacheValue('zodiacStyle', style);
     localStorage.setItem('zodiacStyle', style); // optional
     window.api.send('refresh-calendar');
@@ -358,7 +349,6 @@ function setupIPCListeners() {
     loadCalendarIntoContainer(calendarContainer);
   });
   window.api.receive('open-help', (topicId) => {
-    console.log(`‽ Help requested for topic: ${topicId}`);
 
     const helpContainer = document.getElementById('calendar');
     const container = document.getElementById('calendar');
@@ -370,7 +360,6 @@ function setupIPCListeners() {
   });
 }
 
-// ----------- Initialization -----------
 window.addEventListener('DOMContentLoaded', async () => {
   await loadFormModules();
 
@@ -435,7 +424,13 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   window.addEventListener('dataModeChanged', async (event) => {
     const { mode } = event.detail || {};
-    applyModeClass(event.detail.mode);
+    if (!mode) return;
+
+    // Skip if mode hasn't changed
+    if (mode === latestMode) return;
+
+    latestMode = mode;
+    applyModeClass(mode);
     await globalRefresh(mode);
   });
 
@@ -500,13 +495,12 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 
   window.api.receive('open-help', (topic) => {
-    console.log(`🕮 Opening help topic: ${topic}`);
+
     switchMainView('help'); // <- loads the help page in the shared container
 
     window.dispatchEvent(new CustomEvent('help-topic', { detail: topic }));
   });
 
-  // --- Restore Presence UI Mode ---
   (async () => {
     let savedMode = await window.cacheAPI.getCacheValue('presenceUIMode');
     if (!savedMode) savedMode = 'toggle'; // default
@@ -526,12 +520,17 @@ window.addEventListener('DOMContentLoaded', async () => {
   injectWindowButtonsIntoWelcomeHeader();
 });
 
+
 export async function globalRefresh(mode = localStorage.getItem('dataMode') || 'default') {
-  if (isRefreshing) {
-    console.warn('⏳ Refresh already running...');
+  // Skip if a refresh is already running for the same mode
+  if (isRefreshing && mode === latestMode) {
+    console.warn('⏳ Refresh already running for this mode...');
     return;
   }
+
   isRefreshing = true;
+  latestMode = mode;
+
   try {
     localStorage.setItem('dataMode', mode);
     document.body.setAttribute('data-mode', mode);
@@ -562,7 +561,7 @@ export async function globalRefresh(mode = localStorage.getItem('dataMode') || '
   } catch (err) {
     console.warn('⚠ No cached form to restore on global refresh');
   } finally {
-    isRefreshing = false; // 🔓 Always unlock
+    isRefreshing = false;
   }
 }
 

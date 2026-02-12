@@ -117,7 +117,6 @@ function toggleSaveButtonVisibility(event) {
 }
 
 export function resetRule() {
-    console.log(" inout object was reset");
     currentRule = JSON.parse(JSON.stringify(newRule));
     warnings.length = 0;
     updateMachineRule(currentRule);
@@ -125,13 +124,10 @@ export function resetRule() {
 
 export function loadRule(ruleData) {
     if (!ruleData || typeof ruleData !== "object") {
-        console.error("Invalid rule data provided.");
         return;
     }
     currentRule = JSON.parse(JSON.stringify(ruleData));
-
     warnings.length = 0; // Clear warnings from previous rule
-    console.log("Rule loaded:", currentRule);
 }
 
 
@@ -174,8 +170,6 @@ export function checkInput(inputObject) {
     checkRuleConsistency();
     showWarnings();
 
-    console.log("Current Rule:", currentRule);
-
     return { ...currentRule };
 }
 
@@ -189,7 +183,6 @@ function updateCurrentRule(category, inputObject) {
     currentRule[category].id = inputObject.id;
 
     if (inputObject.id === "E0") {
-        console.log(" disabled second condition");
         currentRule["E"].state = RuleState.EMPTY;
         currentRule["w"].state = RuleState.DISABLED;
         currentRule["t"].state = RuleState.DISABLED;
@@ -202,15 +195,12 @@ function updateCurrentRule(category, inputObject) {
     switch (inputObject.inputID) {
         case "number1":
             currentRule[category].bottomLimit = inputObject.value;
-            console.log("checker nubmber 1");
             break;
         case "number2":
             currentRule[category].upperLimit = inputObject.value;
-            console.log("checker nubmber 2");
             break;
         case "checkboxes":
             currentRule[category].bottomLimit = inputObject.value;
-            console.log("checker checkboxes");
             break;
         case "topCell":
             const newCat = newRule[category] || {};
@@ -226,79 +216,12 @@ function updateCurrentRule(category, inputObject) {
             if ('indices' in newCat) {
                 currentRule[category].indices = newCat.indices;
             }
-            console.log("checker top cell");
             break;
 
         case "select":
             currentRule[category].bottomLimit = inputObject.value;
-            console.log("checker select");
             break;
     }
-    // 🔹 Handle rules that only update words
-    // if (["t2", "T2"].includes(inputObject.id)) {
-    //     currentRule[category].words = inputObject.words;
-    //     return;
-    // }
-
-    // 🔹 Handle rules that update both numbers and words
-    // if (["w3", "W3"].includes(inputObject.id)) {
-    //     currentRule[category].words = inputObject.words;
-    //     currentRule[category].number1 = inputObject.number1;
-    //     checkNumberInput(inputObject.id, inputObject.number1);
-    //     return;
-    // }
-
-    // 🔹 Handle "A" or "a" followed by specific numbers
-    //if (["a", "A"].includes(inputObject.id[0]) && "14568".includes(inputObject.id[1])) {
-    //    currentRule[category].words = inputObject.words;
-    //    if (["a", "A"].includes(inputObject.id[0]) && "14568".includes(inputObject.id[1])) {
-    //        currentRule[category].words = inputObject.words;
-    //
-    //        if (inputObject.id.length > 2 && inputObject.id[2] === "-") {
-    //            if (inputObject.id[3] === "1") currentRule[category].number1 = inputObject.number1;
-    //            if (inputObject.id[3] === "2") currentRule[category].number2 = inputObject.number2;
-    //
-    //            inputObject.id = inputObject.id.substring(0, inputObject.id.length - 2);
-    //        } else {
-    //            currentRule[category].number1 = inputObject.number1;
-    //        }
-    //
-    //        checkNumberInput(inputObject.id, inputObject.number1);
-    //        return;
-    //    }
-    //    checkNumberInput(inputObject.id, inputObject.number1);
-    //    return;
-    //}
-
-    //if (["d2", "D2", "d3", "D3"].includes(inputObject.id)) {
-    //    currentRule[category].number1 = inputObject.number1;
-    //    checkNumberInput(inputObject.id, inputObject.number1);
-    //    return;
-    //}
-    //
-    //if (["d4", "D4", "a3", "A3"].includes(inputObject.id)) {
-    //    Object.assign(currentRule[category], {
-    //        words: inputObject.words,
-    //        number1: inputObject.number1,
-    //        number2: inputObject.number2
-    //    });
-    //    checkNumberInput(inputObject.id, inputObject.number1);
-    //    checkNumberInput(inputObject.id, inputObject.number2);
-    //    return;
-    //}
-
-    // 🔹 Handle Group-based Rules (G)
-    //if (["g0", "G0"].includes(inputObject.id)) {
-    //    currentRule[category].words = inputObject.words.length > 0 ? inputObject.words[0] : roles[0];
-    //    return;
-    //}
-    //
-    //if (["g1", "G1", "G2", "G3"].includes(inputObject.id)) {
-    //    currentRule[category].words = inputObject.words.length > 1
-    //        ? inputObject.words
-    //        : [inputObject.words.length > 0 ? inputObject.words[0] : roles[0]];
-    //    return;
-    //}
 }
 
 function checkNumberInput(id, number) {
@@ -394,7 +317,6 @@ function validateInput(id) {
             console.warn(`Option with ID "${option}" not found in the DOM.`);
         }
     });
-    console.log(warnings);
 }
 
 function getOptionByID(id) {

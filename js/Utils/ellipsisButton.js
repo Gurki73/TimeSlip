@@ -81,10 +81,10 @@ export function createEllipsis(actions = [], context = {}) {
         <span class="ellipsis-label">${def.label}</span>
     `;
 
-        // 🔒 sample mode handling (AFTER item exists)
+
         if (isSampleMode && def.sampleDisabled) {
             item.disabled = true;
-            item.classList.add('is-readonly');
+            item.classList.add('is-readOnly');
             item.title = 'Beispielmodus – Aktion deaktiviert';
         }
 

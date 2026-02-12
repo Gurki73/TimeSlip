@@ -57,7 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
 function getMaxBottomPx() {
   const prefs = formHeightLookup[currentFormKey];
 
-  console.log(" from look up table =", prefs);
   return prefs ? remToPx(prefs.bottomRem) : Infinity;
 }
 
@@ -92,8 +91,6 @@ function applyBottomHeight(requestedBottomPx) {
 }
 
 export function toggleResize(action) {
-
-  console.log(" resize actuion", action);
 
   if (!['minimize', 'maximize'].includes(action)) {
     console.warn('toggleResize called with invalid action:', action);

@@ -16,6 +16,8 @@ const posWarnings = {
 };
 
 let warningList = new Set();
+let lastSaveBtn = null;
+let ruleCheckInfo = null;
 
 export function resetWarnings(saveBtn) {
     warningList.clear();
@@ -50,47 +52,105 @@ export function updateWarningsUI(saveBtn) {
     const container = document.querySelector(".request-form-warn");
     if (!container) return;
 
+    if (saveBtn) lastSaveBtn = saveBtn;
+
     container.innerHTML = "";
 
     const sorted = [...warningList].sort(
         (a, b) => posWarnings[b].rank - posWarnings[a].rank
     );
 
-    if (sorted.length === 0) {
+    const isEmpty = sorted.length === 0;
+
+    if (isEmpty) {
         const empty = document.createElement("div");
         empty.textContent = "Keine Warnungen.";
         empty.style.opacity = "0.5";
         container.appendChild(empty);
-        if (localStorage.getItem('dataMode') !== 'sample') updateSaveButtonState(saveBtn, sorted);
-        return;
+    } else {
+        const heading = document.createElement("div");
+        heading.textContent = "⚠️ Warnungen ⚠️";
+        container.appendChild(heading);
+
+        const list = document.createElement("div");
+        list.style.display = "flex";
+        list.style.flexDirection = "column";
+        list.style.gap = "3px";
+
+        sorted.forEach(type => {
+            const item = document.createElement("div");
+            item.textContent = posWarnings[type].warn;
+            list.appendChild(item);
+        });
+
+        container.appendChild(list);
     }
 
+    if (localStorage.getItem('dataMode') !== 'sample') updateSaveButtonState(saveBtn, sorted);
+    const maxRank = sorted.length ? Math.max(...sorted.map(type => posWarnings[type].rank)) : 0;
+    updateWarningFrameStyle({ isEmpty, maxRank });
+
+    renderRuleCheckInfo(container);
+
+    const saveState = saveBtn?.getState?.();
+    if (maxRank <= 1 && saveState === 'dirty') {
+        document.dispatchEvent(new CustomEvent('request-sanity-ok', {
+            detail: { maxRank, warnings: sorted }
+        }));
+    }
+}
+
+export function setRuleCheckInfo(info) {
+    ruleCheckInfo = info || null;
+    if (lastSaveBtn) updateWarningsUI(lastSaveBtn);
+}
+
+function renderRuleCheckInfo(container) {
+    if (!ruleCheckInfo) return;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "rulecheck-info";
+    wrapper.style.marginTop = "6px";
+
     const heading = document.createElement("div");
-    heading.textContent = "⚠️ Warnungen ⚠️";
-    container.appendChild(heading);
+    heading.textContent = "Regelprüfung";
+    wrapper.appendChild(heading);
 
     const list = document.createElement("div");
     list.style.display = "flex";
     list.style.flexDirection = "column";
     list.style.gap = "3px";
 
-    sorted.forEach(type => {
+    const lines = Array.isArray(ruleCheckInfo.lines) ? ruleCheckInfo.lines : [];
+    const total = Number.isFinite(ruleCheckInfo.totalFailures) ? ruleCheckInfo.totalFailures : null;
+
+    if (lines.length === 0 && total === 0) {
         const item = document.createElement("div");
-        item.textContent = posWarnings[type].warn;
+        item.textContent = "Keine Regelverstöße.";
         list.appendChild(item);
-    });
+    } else if (lines.length === 0 && total != null) {
+        const item = document.createElement("div");
+        item.textContent = `Regelverstöße: ${total}`;
+        list.appendChild(item);
+    } else {
+        const maxLines = 4;
+        lines.slice(0, maxLines).forEach(line => {
+            const item = document.createElement("div");
+            item.textContent = line;
+            list.appendChild(item);
+        });
+        if (lines.length > maxLines) {
+            const more = document.createElement("div");
+            more.textContent = `Weitere: ${lines.length - maxLines}`;
+            list.appendChild(more);
+        }
+    }
 
-    container.appendChild(list);
-    updateSaveButtonState(saveBtn, sorted);
-
-    console.log("warnings list:", sorted);
-
-    const maxRank = sorted.length ? Math.max(...sorted.map(type => posWarnings[type].rank)) : 0;
-    updateWarningFrameStyle({ isEmpty: sorted.length < 1, maxRank });
+    wrapper.appendChild(list);
+    container.appendChild(wrapper);
 }
 
 function updateSaveButtonState(saveBtn, sortedWarnings) {
-    console.log("[request warning js] update save button state: ", saveBtn, sortedWarnings);
 
     if (!saveBtn || typeof saveBtn.setState !== 'function') {
         console.error("Invalid saveBtn passed:", saveBtn);
@@ -101,14 +161,11 @@ function updateSaveButtonState(saveBtn, sortedWarnings) {
         (max, type) => Math.max(max, posWarnings[type].rank),
         0
     );
-    console.log(maxRank);
     if (maxRank <= 1) saveBtn.setState('dirty');
     else saveBtn.setState('blocked');
 }
 
 function updateWarningFrameStyle({ isEmpty, maxRank }) {
-
-    console.log("warning frame style");
 
     const container = document.querySelector(".request-form-warn");
     if (!container) return;
@@ -140,10 +197,12 @@ export function getCurrentFormState() {
     const typeValue = typeSelect?.value || "";
 
     const startInput = document.getElementById("request-start-picker");
-    const startDate = startInput?.value || "";
-
     const endInput = document.getElementById("request-end-picker");
-    const endDate = endInput?.value || "";
+    const previewStart = document.getElementById("request-preview-start")?.textContent || "";
+    const previewEnd = document.getElementById("request-preview-end")?.textContent || "";
+
+    const startDate = startInput?.value || parsePreviewDate(previewStart) || "";
+    const endDate = endInput?.value || parsePreviewDate(previewEnd) || "";
 
     const storeButton = document.getElementById("requestStoreButton");
 
@@ -157,3 +216,10 @@ export function getCurrentFormState() {
     };
 }
 
+function parsePreviewDate(previewText) {
+    if (!previewText || previewText.includes("--")) return "";
+    const parts = previewText.split(".");
+    if (parts.length !== 3) return "";
+    const [d, m, y] = parts;
+    return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+}

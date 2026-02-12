@@ -160,6 +160,7 @@
                 </button>
               </div>
             </th>
+            <!-- For requester filter - change data-target to match select ID -->
             <th>
               <div class="filter-wrapper">
                 <select class="noto" id="requester-filter">
@@ -172,44 +173,32 @@
                   <img src="./assets/svg/funnel-svgrepo-com.svg" alt="" />
                 </button>
                 <button type="button" class="filter-btn clear-filter hidden" aria-label="Filter löschen"
-                  data-target="employee-filter">
+                  data-target="requester-filter"> <!-- FIXED: was "employee-filter" -->
                   <img src="./assets/svg/clear-filter.svg" alt="" />
                 </button>
               </div>
             </th>
 
+            <!-- For type filter - change data-target to match select ID -->
             <th>
               <div class="filter-wrapper">
                 <select class="noto" id="decision-type-select">
                   <option value="all">alle Arten</option>
                   <option class="noto" value="vac">🏖️ Urlaub</option>
                   <option class="noto" value="spe">🎁 Sonderurlaub</option>
-                  <option value="otc">
-                    <span class="noto">⚖️</span> Ausgleichstag
-                  </option>
-                  <option value="but">
-                    <span class="noto">🚕</span> Geschäftreise
-                  </option>
-                  <option value="hom">
-                    <span class="noto">🏠</span> Home-Office
-                  </option>
-                  <option value="sho">
-                    <span class="noto">📐</span> Berufsschule
-                  </option>
-                  <option value="sik">
-                    <span class="noto">💉</span> Gesund-werden
-                  </option>
-                  <option value="par">
-                    <span class="noto">🧸</span> Elternzeit
-                  </option>
-                  <option value="unp">💸</span> unbezahlt
-                  </option>
+                  <option value="otc">⚖️ Ausgleichstag</option>
+                  <option value="but">🚕 Geschäftreise</option>
+                  <option value="hom">🏠 Home-Office</option>
+                  <option value="sho">📐 Berufsschule</option>
+                  <option value="sik">💉 Gesund-werden</option>
+                  <option value="par">🧸 Elternzeit</option>
+                  <option value="unp">💸 unbezahlt</option>
                 </select>
                 <button type="button" class="filter-btn funnel" aria-label="Filter anwenden">
                   <img src="./assets/svg/funnel-svgrepo-com.svg" alt="🏺" />
                 </button>
                 <button type="button" class="filter-btn clear-filter hidden" aria-label="Filter löschen"
-                  data-target="type-filter">
+                  data-target="decision-type-select"> <!-- FIXED: was "type-filter" -->
                   <img src="./assets/svg/clear-filter.svg" alt="❌" />
                 </button>
               </div>

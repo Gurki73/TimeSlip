@@ -2,14 +2,16 @@ import { loadRoleData } from '../../../js/loader/role-loader.js';
 import { loadEmployeeData, filterEmployeesByEndDate, storeEmployeeChange } from '../../../js/loader/employee-loader.js';
 import { loadOfficeDaysData, loadPublicHolidaysSimple, loadStateData } from '../../../js/loader/calendar-loader.js';
 import { loadRequests, appendRequest, updateRequest, getAvailableRequestFiles, storeApproval } from '../../../js/loader/request-loader.js';
+import { loadRuleData } from '../../../js/loader/rule-loader.js';
 import { filterPublicHolidaysByYearAndState, getAllHolidaysForYear } from '../../../js/Utils/holidayUtils.js';
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
 import { createBranchSelect } from '../../../js/Utils/branch-select.js';
-import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js';
-import { recalcWarnings, resetWarnings } from "./request-warnings.js";
+import { recalcWarnings, resetWarnings, setRuleCheckInfo } from "./request-warnings.js";
 import { createDateRangePicker } from '../../../Components/customDatePicker/customDatePicker.js';
 import { createSaveButton } from '../../../js/Utils/saveButton.js';
+import { executeRulechecker, computeRequestDelta } from '../rule-form/ruleChecker.js';
+import { ensureCalendarReady, computeAttendanceForRange } from '../../calendar/calendar.js';
 
 let requestYear = 2000;
 let api;
@@ -21,6 +23,12 @@ let publicHolidays = [];
 let federalState = '';
 let saveButtonHeader;
 let filtersInitialized = false;
+let draftRuleCheckTimer = null;
+let sanityListenerInitialized = false;
+let calendarJumpTimer = null;
+let baselineViolations = new Map(); // Maps request ID -> violations count
+let baselineViolationDetails = new Map(); // Maps request ID -> warning lines
+let requestBeingEdited = null;
 
 const rankEmojis = {
   1: "📝",   // Hint / minor
@@ -69,22 +77,15 @@ export async function initializeRequestForm(passedApi) {
   api = passedApi;
   if (!api) console.error("Api was not passed ==> " + api);
 
-  console.log("📌 Initializing request form...");
-  console.log("Current dataMode:", api.dataMode);
-
-  // 1️⃣ Load office days first (optional)
   try {
     officeDays = await loadOfficeDaysData(api);
-    console.log("✅ Loaded office days:", officeDays.length);
   } catch (err) {
     console.warn("⚠️ Failed to load office days:", err);
     officeDays = [];
   }
 
-  // 2️⃣ Load employees
   try {
     requestEmployees = await loadEmployeeData(api);
-    console.log("✅ Loaded employees:", requestEmployees.length);
   } catch (err) {
     console.error("❌ Failed to load employees:", err);
     requestEmployees = [];
@@ -92,7 +93,6 @@ export async function initializeRequestForm(passedApi) {
 
   try {
     federalState = await loadStateData(api);
-    console.log("✅ federal state:", federalState);
   } catch (err) {
     console.error("❌ Failed to load federal state:", err);
     federalState = '';
@@ -100,10 +100,9 @@ export async function initializeRequestForm(passedApi) {
 
   publicHolidays = await loadPublicHolidaysSimple(api);
 
-  // 3️⃣ Prepare form container
   const formContainer = document.getElementById('form-container');
   if (!formContainer) return console.error("Form container not found");
-  formContainer.innerHTML = ''; // clear old form
+  formContainer.innerHTML = '';
 
   try {
     const response = await fetch('Components/forms/request-form/request-form.html');
@@ -114,7 +113,6 @@ export async function initializeRequestForm(passedApi) {
     return;
   }
 
-  // 4️⃣ Year filter
   const yearFilter = document.getElementById('request-year');
   requestYear = parseInt(localStorage.getItem('RequestListDate'), 10) || new Date().getFullYear();
   if (yearFilter) {
@@ -151,6 +149,10 @@ export async function initializeRequestForm(passedApi) {
       if (saveButtonHeader) saveButtonHeader.el.classList.add('hidden');
       initDecisionEventListener();
       initFilterListener();
+      initFunnelButtons();
+      initSingleClearFilterButtons();
+      updateFilterButtons();
+
       await loadAndRenderRequests();
     } else {
       if (saveButtonHeader) {
@@ -179,11 +181,9 @@ export async function initializeRequestForm(passedApi) {
     await switchMode("approve");
   });
 
-  // 6️⃣ Load last tab
   const lastTab = localStorage.getItem('requestForm_lastTab') || 'approve';
   await switchMode(lastTab);
 
-  // 7️⃣ Finish
   updateDivider("bg-request");
   resetRequestWarnings();
   updateFilterButtons();
@@ -202,13 +202,10 @@ function getRequestMonth(request) {
   return String(date.getMonth() + 1).padStart(2, "0");
 }
 
-
 function handleFilterChange(e) {
-  console.log("handle change filter event: ", e);
   const filteredRequests = filterRequests(allRequests);
   renderRequestsTable(filteredRequests);
   updateFilterButtons();
-
 }
 
 function initFilterListener() {
@@ -222,11 +219,6 @@ function initFilterListener() {
     select.removeEventListener("change", handleFilterChange);
     select.addEventListener("change", (e) => handleFilterChange(e));
   });
-}
-
-function matchesMonthFilter(request, selectedMonth) {
-  if (!selectedMonth) return true;
-  return getRequestMonth(request) === selectedMonth;
 }
 
 function switchVacationType(ev) {
@@ -282,12 +274,6 @@ function updateDivider(className) {
   const helpBtn = createHelpButton('chapter-requests');
   helpBtn.setAttribute('aria-label', 'Hilfe öffnen für Rollen-Formular');
 
-  const branchSelect = createBranchSelect({
-    onChange: (val) => {
-      console.log('Branch changed to:', val);
-      // applyBranchPreset(val);
-    }
-  });
   saveButtonHeader = createSaveButton({ onSave: () => storeAllRequests(api) });
   saveButtonHeader.el.id = 'new-request-save-btn';
   const windowBtns = createWindowButtons(); // your new min/max buttons
@@ -308,13 +294,11 @@ function updateDivider(className) {
 
 function storeAllRequests(api) {
   storeRequest(api);
-  console.log(" store all requests");
   if (localStorage.getItem('dataMode') !== 'sample') saveButtonHeader.saveButtonHeader.setState('blocked');
   else saveButtonHeader.saveButtonHeader.setState('readonly');
 }
 
 function initDatePickers() {
-  // Initialize the date picker for Vacation Request form
   createDateRangePicker({
     startButton: "#pick-request-start",
     endButton: "#pick-request-end",
@@ -328,8 +312,6 @@ function initDatePickers() {
 }
 
 function handleDateChange() {
-  console.log("handle date change");
-
   const start = document.querySelector("#request-start-picker")?.value;
   let end = document.querySelector("#request-end-picker")?.value;
 
@@ -352,7 +334,6 @@ function handleDateChange() {
     days = calculateDaysOff(start, end);
   }
 
-  // ✅ Allow checkbox ONLY for exactly 1 calendar day
   if (days === 1) {
     halfDayCheckbox.disabled = false;
   } else {
@@ -360,7 +341,6 @@ function handleDateChange() {
     halfDayCheckbox.disabled = true;
   }
 
-  // 🔹 Compute effective duration
   let effectiveDays = days;
   if (days === 1 && halfDayCheckbox.checked) {
     effectiveDays = 0.5;
@@ -372,6 +352,13 @@ function handleDateChange() {
     : "Tage";
 
   fireWarnings();
+
+  if (start && end) {
+    scheduleCalendarJump(start, end);
+  }
+
+  const event = new Event('change', { bubbles: true });
+  document.getElementById('request-end-picker')?.dispatchEvent(event);
 }
 
 function calculateDaysOff(startDate, endDate, federalState) {
@@ -387,7 +374,6 @@ function calculateDaysOff(startDate, endDate, federalState) {
 
   const year = start.getFullYear();
 
-  // --- Safe holiday lookup ---
   let allHolidays = [];
   try {
     allHolidays = getAllHolidaysForYear(year, federalState) || [];
@@ -400,7 +386,6 @@ function calculateDaysOff(startDate, endDate, federalState) {
     .filter(h => !federalState || h.bundesländer?.includes(federalState))
     .map(h => h.date || "");
 
-  // --- Safe employee lookup ---
   let employee = currentEmployee;
   const employeeIdRaw = document.getElementById("requester-select")?.value;
 
@@ -413,7 +398,6 @@ function calculateDaysOff(startDate, endDate, federalState) {
 
   const employeeWorkdays = employee.workDays || [1, 1, 1, 1, 1, 0, 0]; // fallback Mon–Fri
 
-  // --- Loop through days ---
   const yearLimit = new Date(year, 11, 31);
   yearLimit.setHours(0, 0, 0, 0);
 
@@ -485,7 +469,6 @@ function renderRequesterList() {
 
   requesterSelect.innerHTML = '';
 
-  // 1️⃣ Placeholder option
   const placeholderOption = document.createElement('option');
   placeholderOption.value = '';                  // no value
   placeholderOption.innerText = 'Mitarbeiter wählen';
@@ -493,10 +476,7 @@ function renderRequesterList() {
   placeholderOption.disabled = true;             // prevents selecting again
   requesterSelect.appendChild(placeholderOption);
 
-  // 2️⃣ Add valid employees
   const validEmployees = filterEmployeesByEndDate(requestEmployees);
-  console.log("🔹 renderRequesterList -> validEmployees:", validEmployees);
-
   validEmployees.forEach(employee => {
     if (['⊖', 'keine', '?', 'name'].includes(employee.personalEmoji)) return;
 
@@ -538,6 +518,7 @@ function initRequestEventListener() {
   requesterMSG.addEventListener('keydown', (ev) => handleRequestMSG(ev));
 
   initDatePickers();
+  initRequestSanityListener();
 
 }
 
@@ -548,6 +529,35 @@ function isValidDate(dateString) {
 
   const date = new Date(dateString);
   return date instanceof Date && !isNaN(date.getTime());
+}
+
+function scheduleCalendarJump(start, end, options = {}) {
+  if (!start) return;
+  if (calendarJumpTimer) clearTimeout(calendarJumpTimer);
+  calendarJumpTimer = setTimeout(() => {
+    calendarJumpTimer = null;
+    jumpCalendarToRange(start, end, options);
+  }, 180);
+}
+
+async function jumpCalendarToRange(start, end, options = {}) {
+  if (!isValidDate(start)) return;
+
+  try {
+    await ensureCalendarReady(api);
+  } catch (err) {
+    console.warn("Calendar not ready for jump:", err);
+    return;
+  }
+
+  const jumper = window.calendarJump;
+  if (!jumper || typeof jumper.toDate !== 'function') return;
+
+  if (end && isValidDate(end) && typeof jumper.toRange === 'function') {
+    jumper.toRange(start, end, options);
+  } else {
+    jumper.toDate(start, options);
+  }
 }
 
 function storeRequest() {
@@ -594,8 +604,6 @@ function storeRequest() {
     return;
   }
 
-  console.log(" new request before passing: ", requestToStore);
-
   try {
     appendRequest(api, Number(year), requestToStore);
     resetRequestWarnings();
@@ -611,39 +619,6 @@ function handleRequestMSG(event) {
     event.preventDefault();
     newRequest.msg = event.target.value;
   }
-}
-
-function afterTypePicked() {
-  // Enable hints or anything else if needed
-  recalcWarnings(saveButtonHeader); // trigger warning update
-}
-
-function afterRequesterSelected() {
-  setEnabled(document.getElementById('request-type-select'), true);
-  setEnabled(document.getElementById('pick-request-start'), true);
-  setEnabled(document.getElementById('pick-request-end'), false);
-  setEnabled(document.getElementById('multiline-input'), false);
-  setEnabled(document.getElementById('requestStoreButton'), false);
-  setStepActive("step1", true);
-
-  recalcWarnings(saveButtonHeader); // ⚡ trigger warnings safely here
-}
-
-function afterStartDatePicked() {
-  setEnabled(document.getElementById('pick-request-end'), true);
-  setEnabled(document.getElementById('multiline-input'), true);
-  setStepActive("step2", true);
-
-  setTimeout(() => {
-    const warningContainer = document.querySelector(".request-form-warn");
-    if (warningContainer) warningContainer.style.opacity = 1;
-    recalcWarnings(saveButtonHeader); // ⚡ trigger warnings after container visible
-  }, 1500);
-}
-
-function afterEndDatePicked() {
-  setEnabled(document.getElementById('requestStoreButton'), true);
-  recalcWarnings(saveButtonHeader); // ⚡ final recalculation
 }
 
 function resetRequestForm() {
@@ -671,7 +646,6 @@ function switchRequester(ev) {
     currentEmployee = null;
     newRequest.employeeID = null;
 
-    // only reset employee-related UI
     document.getElementById('requester-emoji').innerHTML = '⊖';
     document.getElementById('request-vacation-left').innerHTML = 'xx';
     document.getElementById('request-vacation-total').innerHTML = 'xx';
@@ -749,12 +723,10 @@ async function loadAndRenderRequests() {
 
   let requests = [];
 
-  // 🧭 If no valid files found, try loading manually (onboarding or fallback)
   if (!validFiles || validFiles.length === 0) {
     console.warn("⚠️ No valid request files found — loading sample or placeholder data");
     requests = await loadRequests(api, year);
   } else {
-    // ✅ Folder exists; try to load data for selected year
     const fileForYear = validFiles.find(f => f.year === year);
     if (fileForYear) {
       requests = await loadRequests(api, year);
@@ -763,18 +735,20 @@ async function loadAndRenderRequests() {
       requests = [{ info: `Noch keine Anträge für ${year} gestellt` }];
     }
   }
+
   allRequests = requests.filter(r => r.start && r.employeeID);
+
+  await establishBaselineViolations();
+  await updateRequestRuleWarnings(allRequests);
 
   initRequestsOnce(allRequests);
   renderRequestsTable(allRequests);
 }
 
-
 function filterRequests(requests) {
-
   const filters = {
     status: document.getElementById("status-filter")?.value || 'all',
-    employee: document.getElementById("requester-filter")?.value || 'all', // NEW
+    employee: document.getElementById("requester-filter")?.value || 'all',
     type: document.getElementById("decision-type-select")?.value || 'all',
     month: document.getElementById("month-filter")?.value || 'all',
   };
@@ -787,7 +761,8 @@ function filterRequests(requests) {
   }
 
   return requests.filter(request => {
-    if (filters.employee !== "all" && String(request.employeeID) !== filters.employee) return false; // filter employee
+
+    if (filters.employee !== "all" && String(request.employeeID) !== filters.employee) return false;
     if (filters.type !== "all" && request.vacationType !== filters.type) return false;
     if (filters.month !== "all") {
       const requestMonth = getRequestMonth(request);
@@ -803,36 +778,65 @@ function filterRequests(requests) {
 
 function initSingleClearFilterButtons() {
   document.querySelectorAll(".clear-filter").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const targetId = btn.dataset.target;
-      if (!targetId) return;
-
-      const filterEl = document.getElementById(targetId);
-      if (!filterEl) return;
-
-      filterEl.value = "all";
-      btn.classList.add("hidden");
-
-      handleFilterChange();
-    });
+    // Remove old listener to prevent duplicates
+    btn.removeEventListener("click", handleClearFilterClick);
+    btn.addEventListener("click", handleClearFilterClick);
   });
+}
+
+
+function handleClearFilterClick(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const btn = e.currentTarget;
+
+  const targetId = btn.dataset.target;
+  if (!targetId) return;
+
+  const filterEl = document.getElementById(targetId);
+  if (!filterEl) return;
+
+  filterEl.value = "all";
+
+  filterEl.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
 function updateFilterButtons() {
   document.querySelectorAll(".filter-wrapper").forEach(wrapper => {
     const select = wrapper.querySelector("select");
-    const funnelBtn = wrapper.querySelector(".filter-btn.funnel");
-    const clearBtn = wrapper.querySelector(".filter-btn.clear-filter");
+    const funnelBtn = wrapper.querySelector(".funnel"); // Your funnel button has class "funnel"
+    const clearBtn = wrapper.querySelector(".clear-filter"); // Your clear button has class "clear-filter"
 
     if (!select || !funnelBtn || !clearBtn) return;
 
     const isDefault = select.value === "all";
 
-    funnelBtn.classList.toggle("hidden", !isDefault);
-    clearBtn.classList.toggle("hidden", isDefault);
+    funnelBtn.classList.toggle("hidden", !isDefault); // Hide funnel when NOT default
+    clearBtn.classList.toggle("hidden", isDefault); // Hide clear when default
   });
 }
 
+function initFunnelButtons() {
+  document.querySelectorAll(".funnel").forEach(btn => {
+    btn.removeEventListener("click", handleFunnelClick);
+    btn.addEventListener("click", handleFunnelClick);
+  });
+}
+
+function handleFunnelClick(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const btn = e.currentTarget;
+  const wrapper = btn.closest('.filter-wrapper');
+  if (!wrapper) return;
+
+  const select = wrapper.querySelector('select');
+  if (!select) return;
+
+  select.showPicker();
+}
 
 function clearAllFilters() {
   ["status-filter", "requester-filter", "decision-type-select", "month-filter"].forEach(id => {
@@ -851,20 +855,14 @@ function initDecisionEventListener() {
       if (e.target.value !== "all") {
         document.querySelectorAll("select").forEach(otherSelect => {
           if (otherSelect !== e.target) {
-            //  otherSelect.value = "all";
           }
         });
-        // loadAndRenderRequests();
       }
     });
   });
 }
 
 function renderRequestsTable(requests) {
-
-  console.group("🔄 renderRequestsTable called");
-  console.trace("Trace: renderRequestsTable triggered");
-  console.log("Requests length:", requests.length);
 
   const tbody = getTableBody();
   if (!tbody) return;
@@ -908,17 +906,10 @@ function renderEmptyState(tbody) {
     </tr>`;
 }
 
-function applyAndRenderFilters() {
-  const filtered = applyFilters(allRequests);
-  renderRequestsTable(filtered);
-}
-
-
 function initAllRequests(requests) {
   if (allRequests.length > 0) return;
 
   allRequests = requests.filter(isValidRequest);
-  console.log("allRequests =>", allRequests);
 }
 
 function isValidRequest(request) {
@@ -964,21 +955,8 @@ function updateFilterAvailability(requests) {
   toggleFilterOptions("status-filter", new Set([...filters.statuses].map(String)));
 }
 
-function updateSingleClearButtons() {
-  document.querySelectorAll(".clear-filter").forEach(btn => {
-    const targetId = btn.dataset.target;
-    const filterEl = document.getElementById(targetId);
-
-    if (!filterEl) return;
-
-    const isDefault = filterEl.value === "all";
-    btn.classList.toggle("hidden", isDefault);
-  });
-}
-
-
 function initFiltersOnce(filters) {
-  populateEmployeeFilter([...filters.employees]);
+  populateEmployeeFilter([...filters.employees]); // This will now preserve selection
 
   if (filtersInitialized) return;
 
@@ -995,11 +973,25 @@ function createRequestRow(request) {
 
   ensureEffectiveDays(request);
 
+  const start = request.start || "";
+  const end = request.end || "";
+  const dateLabel = `${formatDateDMY(start)} bis\n${formatDateDMY(end)}`;
+  const dateTitle = `Kalender öffnen: ${formatDateDMY(start)} bis ${formatDateDMY(end)}`;
+
   row.innerHTML = `
     <td class='noto flex-row-2'>${renderStatusCell(request)}</td>
     <td class='noto'>${renderEmployeeCell(request)}</td>
     <td class='noto'>${getVacationIcon(request.vacationType)}</td>
-    <td>${formatDateDMY(request.start)} bis<br>${formatDateDMY(request.end)}</td>
+    <td>
+      <button
+        type="button"
+        class="request-date-jump"
+        data-start="${start}"
+        data-end="${end}"
+        title="${escapeAttr(dateTitle)}"
+        aria-label="${escapeAttr(dateTitle)}"
+      >${dateLabel}</button>
+    </td>
     <td>${renderEffectiveDays(request)}</td>
     <td class='request-msg-cell'>${request.requesterMSG || ""}</td>
     <td class='noto approverCell'>${request.approverMSG || ""}</td>
@@ -1037,7 +1029,6 @@ function ensureEffectiveDays(request) {
     calculateDaysOff(start, end, employee.workdays)
   );
 
-  // updateRequest(api, request.id, request, start.getFullYear());
 }
 
 function renderStatusCell(request) {
@@ -1099,7 +1090,9 @@ function initRequestsOnce(requests) {
 
 function setupTableEvents() {
   const table = document.getElementById("decision-table");
+  if (!table) return;
   table.removeEventListener("click", handleTableClick);
+  table.addEventListener("click", handleTableClick);
 }
 
 
@@ -1118,9 +1111,14 @@ function formatDateDMY(dateStr) {
 }
 
 async function handleTableClick(e) {
-  console.log("TABLE CLICK", e.target);
+  const jumpButton = e.target.closest(".request-date-jump");
+  if (jumpButton) {
+    const start = jumpButton.dataset.start;
+    const end = jumpButton.dataset.end;
+    scheduleCalendarJump(start, end, { focus: "start" });
+    return;
+  }
 
-  return;
   const target = e.target;
 
   const yearInput = document.getElementById('request-year');
@@ -1145,6 +1143,9 @@ function populateEmployeeFilter(availableEmployeeIDs) {
   const filterSelect = document.getElementById("requester-filter");
   if (!filterSelect) return;
 
+  // Store current selection before rebuilding
+  const currentSelection = filterSelect.value;
+
   filterSelect.innerHTML = "";
 
   const defaultOption = document.createElement('option');
@@ -1152,8 +1153,10 @@ function populateEmployeeFilter(availableEmployeeIDs) {
   defaultOption.innerText = 'Alle Mitarbeiter';
   filterSelect.appendChild(defaultOption);
 
-  requestEmployees.forEach(employee => {
-    if (!availableEmployeeIDs.includes(employee.id)) return; // skip if not in current requests
+  const validEmployees = filterEmployeesByEndDate(requestEmployees);
+
+  validEmployees.forEach(employee => {
+    if (['⊖', 'keine', '?', 'name'].includes(employee.personalEmoji)) return;
 
     const option = document.createElement('option');
     const roleColor = getComputedStyle(document.body).getPropertyValue(
@@ -1161,13 +1164,28 @@ function populateEmployeeFilter(availableEmployeeIDs) {
     );
     option.style.backgroundColor = roleColor;
     option.classList.add("noto");
-    option.innerText = `${employee.personalEmoji} ⇨ ${employee.name}`;
+
+    if (currentSelection === String(employee.id)) {
+      option.innerText = `✓ ${employee.personalEmoji} ⇨ ${employee.name}`;
+    } else {
+      option.innerText = `${employee.personalEmoji} ⇨ ${employee.name}`;
+    }
+
     option.title = employee.name;
     option.value = employee.id;
+
+    if (!availableEmployeeIDs.includes(employee.id)) {
+      option.style.opacity = "0.7";
+      option.title += " (keine Anträge in diesem Jahr)";
+    }
+
     filterSelect.appendChild(option);
   });
-}
 
+  filterSelect.value = currentSelection && currentSelection !== 'all' &&
+    Array.from(filterSelect.options).some(opt => opt.value === currentSelection)
+    ? currentSelection : 'all';
+}
 
 function toggleFilterOptions(filterId, availableValues) {
   const selectElement = document.getElementById(filterId);
@@ -1196,13 +1214,58 @@ function getVacationIcon(type) {
 }
 
 function getWarningsIcon(request) {
-  if (request.violations > 1) return "🛑";
-  if (request.violations === 1) return "⚠️";
-  return "";
+  if (!request || request.status === 'rejected') return '';
+
+  const delta = getDeltaViolations(request);
+
+  if (delta > 1) {
+    return buildWarningIconMarkup('🛑', getDeltaWarningsText(request, delta));
+  }
+  if (delta === 1) {
+    return buildWarningIconMarkup('⚠️', getDeltaWarningsText(request, delta));
+  }
+  return '';
 }
 
-function getWarningsText(request) {
-  return request.violations > 0 ? `Regelverstöße: ${request.violations}` : "Keine Warnungen";
+function getDeltaViolations(request) {
+  if (!request || request.status === 'rejected') return 0;
+
+  const baseline = baselineViolations.get(request.id) || 0;
+  const current = request.violations || 0;
+
+  return Math.max(0, current - baseline);
+}
+
+function getDeltaWarningsText(request, delta) {
+  if (!request || request.status === 'rejected') return '';
+  if (delta === 0) return 'Keine neuen Regelverstöße';
+
+  const baseline = baselineViolations.get(request.id) || 0;
+  const baselineDetails = baselineViolationDetails.get(request.id) || [];
+  const currentLines = request.ruleWarningLines || [];
+  const newViolations = currentLines.filter(line =>
+    !baselineDetails.includes(line)
+  );
+
+  if (newViolations.length > 0) {
+    return `Neue Regelverstöße bei Genehmigung: ${delta}\n${newViolations.slice(0, 3).join('\n')}${newViolations.length > 3 ? `\nWeitere: ${newViolations.length - 3}` : ''}`;
+  }
+
+  return `${delta} zusätzliche Regelverstöße bei Genehmigung`;
+}
+
+function buildWarningIconMarkup(icon, text) {
+  const safeText = escapeAttr(text || '');
+  return `<span class="warning-icon noto" role="img" aria-label="${safeText}" title="${safeText}">${icon}</span>`;
+}
+
+function escapeAttr(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n/g, '&#10;');
 }
 
 function approveRequest(id) {
@@ -1223,7 +1286,9 @@ async function handleRequestUpdate(id, newState) {
       approverMSG: approverMessage,
       decisionDate,
     });
+
     await loadAndRenderRequests();
+
   } catch (error) {
     console.error("Failed to update request:", error);
   }
@@ -1252,7 +1317,6 @@ export function updateDurationPreview(savePTOchange = false) {
     return;
   }
 
-  console.log("currentEmployee:", currentEmployee);
   calculateDaysOff(startVal, endVal, currentEmployee.workDays, publicHolidays);
 
   startEl.textContent = startVal || "--.--";
@@ -1343,14 +1407,413 @@ function fireWarnings() {
   recalcWarnings(saveButtonHeader);
 }
 
-function setEnabled() {
+async function updateRequestRuleWarnings(requests, options = {}) {
+  const { extraRequests = [], isBaseline = false } = options;
+
+  if (!Array.isArray(requests) || requests.length === 0) return;
+
+  let rules = [];
+  try {
+    rules = await loadRuleData(api);
+  } catch (err) {
+    console.warn("⚠️ Failed to load rules for request warnings:", err);
+    return;
+  }
+
+  const range = getRequestRange(requests);
+  if (!range) return;
+
+  let attendanceByDate = null;
+  const calendarReady = await ensureCalendarReady(api);
+  if (calendarReady) {
+    attendanceByDate = await computeAttendanceForRange(range.start, range.end, { extraRequests });
+  }
+
+  let ruleStatsDelta;
+
+  if (!isBaseline && requestBeingEdited) {
+    ruleStatsDelta = await computeRequestDelta(requests, requestBeingEdited, {
+      uiRules: rules,
+      employees: requestEmployees,
+      extraRequests
+    });
+  } else {
+    const ruleStats = executeRulechecker(range.start, range.end, requests, {
+      uiRules: rules,
+      employees: requestEmployees,
+      includePending: true,
+      attendanceByDate
+    });
+
+    ruleStatsDelta = {
+      delta: ruleStats,
+      baseline: ruleStats
+    };
+  }
+
+  applyRequestViolations(requests, ruleStatsDelta?.delta || ruleStatsDelta, { isBaseline });
+
+  if (!isBaseline) {
+    setRuleCheckInfo(buildRuleCheckInfo(ruleStatsDelta));
+  }
+}
+
+export async function establishBaselineViolations() {
+
+  const approvedRequests = allRequests.filter(req =>
+    req && req.status === 'approved' && req.start && req.end
+  );
+
+  if (approvedRequests.length === 0) {
+    baselineViolations.clear();
+    baselineViolationDetails.clear();
+    return;
+  }
+
+  await updateRequestRuleWarnings(approvedRequests, { isBaseline: true });
 
 }
 
-function setStepActive() {
+function buildRuleCheckInfo(ruleStats) {
+  if (!ruleStats) return null;
 
+  const failures = ruleStats.failures || (ruleStats.delta?.failures) || [];
+
+  if (!Array.isArray(failures) || failures.length === 0) {
+    return { totalFailures: 0, lines: ["Keine Regelverstöße."] };
+  }
+
+  const totalFailures = failures.length;
+  const dailyByDate = new Map();
+  const weeklyBySpan = new Map();
+
+  failures.forEach(failure => {
+    if (failure.scope === 'daily' && failure.date) {
+      dailyByDate.set(failure.date, (dailyByDate.get(failure.date) || 0) + 1);
+      return;
+    }
+
+    if (failure.scope === 'weekly' && failure.weekStart && failure.weekEnd) {
+      const label = `KW ${failure.weekNumber} (${formatDateDMY(failure.weekStart)}–${formatDateDMY(failure.weekEnd)})`;
+      weeklyBySpan.set(label, (weeklyBySpan.get(label) || 0) + 1);
+    }
+  });
+
+  const lines = [];
+  dailyByDate.forEach((count, date) => {
+    lines.push(`${formatDateDMY(date)}: ${count} Regelverstöße`);
+  });
+  weeklyBySpan.forEach((count, label) => {
+    lines.push(`${label}: ${count} Regelverstöße`);
+  });
+
+  if (lines.length === 0) {
+    lines.push(`Regelverstöße gefunden: ${totalFailures}`);
+  }
+
+  return { totalFailures, lines };
 }
 
-function applyFilters() {
+function buildDraftRequestFromForm() {
+  const requester = document.getElementById('requester-select')?.value;
+  const startInput = document.getElementById('request-start-picker')?.value;
+  const endInput = document.getElementById('request-end-picker')?.value;
+  const previewStart = document.getElementById('request-preview-start')?.textContent || '';
+  const previewEnd = document.getElementById('request-preview-end')?.textContent || '';
+  const type = document.getElementById('request-type-select')?.value;
 
+  const start = startInput || parsePreviewDate(previewStart);
+  const end = endInput || parsePreviewDate(previewEnd);
+
+  if (!requester || requester === '' || requester === 'xy') return null;
+  if (!type || type === '' || type === 'none') return null;
+
+  if (!start || !end) return null;
+
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime()) || endDate < startDate) return null;
+
+  const employee = requestEmployees.find(emp => emp.id == requester);
+  if (!employee) return null;
+
+  const durationEl = document.querySelector("#request-durration");
+  const effectiveDays = durationEl?.textContent ? parseFloat(durationEl.textContent) : 1;
+
+  if (effectiveDays <= 0) return null;
+
+  return {
+    id: `draft_${Date.now()}`,
+    employeeID: parseInt(requester, 10),
+    start,
+    end,
+    shift: 'full',
+    status: 'pending',
+    vacationType: type,
+    effectiveDays: effectiveDays,
+    isDraft: true
+  };
+}
+
+async function runDraftRequestRuleCheck() {
+  const draft = buildDraftRequestFromForm();
+  if (!draft) return;
+
+  requestBeingEdited = draft;
+
+  const approvedRequests = allRequests.filter(req =>
+    req && req.status === 'approved' && req.start && req.end
+  );
+
+  const requests = [...approvedRequests, draft];
+
+  if (baselineViolations.size === 0 && approvedRequests.length > 0) {
+    await updateRequestRuleWarnings(approvedRequests, { isBaseline: true });
+  }
+
+  await updateRequestRuleWarnings(requests, { extraRequests: [draft] });
+}
+
+function scheduleDraftRuleCheck() {
+  if (draftRuleCheckTimer) clearTimeout(draftRuleCheckTimer);
+  draftRuleCheckTimer = setTimeout(async () => {
+    draftRuleCheckTimer = null;
+    try {
+      await runDraftRequestRuleCheck();
+    } catch (err) {
+      console.warn('Draft rule check failed:', err);
+    }
+  }, 250);
+}
+
+function initRequestSanityListener() {
+  if (sanityListenerInitialized) return;
+
+  const requesterSelect = document.getElementById('requester-select');
+  const requestTypeSelect = document.getElementById('request-type-select');
+  const startPicker = document.getElementById('request-start-picker');
+  const endPicker = document.getElementById('request-end-picker');
+
+  function isFormReadyForValidation() {
+    const requester = requesterSelect?.value;
+    const type = requestTypeSelect?.value;
+    const start = startPicker?.value;
+    const end = endPicker?.value;
+    const durationEl = document.querySelector("#request-durration");
+    const effectiveDays = durationEl?.textContent ? parseFloat(durationEl.textContent) : 0;
+
+    return requester &&
+      requester !== '' &&
+      requester !== 'xy' &&
+      type &&
+      type !== '' &&
+      type !== 'none' &&
+      start &&
+      end &&
+      effectiveDays > 0;
+  }
+
+  let validationTimer = null;
+  function triggerValidationIfReady() {
+    if (validationTimer) clearTimeout(validationTimer);
+
+    validationTimer = setTimeout(() => {
+      validationTimer = null;
+
+      const createTab = document.getElementById('create-request-mode-btn');
+      if (!createTab || !createTab.classList.contains('active')) return;
+
+      if (isFormReadyForValidation()) {
+        scheduleDraftRuleCheck();
+      }
+    }, 500);
+  }
+
+  if (requesterSelect) {
+    requesterSelect.removeEventListener('change', triggerValidationIfReady);
+    requesterSelect.addEventListener('change', triggerValidationIfReady);
+  }
+
+  if (requestTypeSelect) {
+    requestTypeSelect.removeEventListener('change', triggerValidationIfReady);
+    requestTypeSelect.addEventListener('change', triggerValidationIfReady);
+  }
+
+  if (startPicker) {
+    startPicker.removeEventListener('change', triggerValidationIfReady);
+    startPicker.addEventListener('change', triggerValidationIfReady);
+  }
+
+  if (endPicker) {
+    endPicker.removeEventListener('change', triggerValidationIfReady);
+    endPicker.addEventListener('change', triggerValidationIfReady);
+  }
+
+  const halfDayCheckbox = document.querySelector("#request-halfDay");
+  if (halfDayCheckbox) {
+    halfDayCheckbox.removeEventListener('change', triggerValidationIfReady);
+    halfDayCheckbox.addEventListener('change', triggerValidationIfReady);
+  }
+
+  sanityListenerInitialized = true;
+}
+
+function getRequestRange(requests) {
+  let min = null;
+  let max = null;
+
+  requests.forEach(req => {
+    const start = normalizeDate(req.start);
+    const end = normalizeDate(req.end);
+    if (!start || !end) return;
+
+    if (!min || start < min) min = start;
+    if (!max || end > max) max = end;
+  });
+
+  if (!min || !max) return null;
+  return { start: min, end: max };
+}
+
+function normalizeDate(value) {
+  if (!value) return null;
+  const d = value instanceof Date ? new Date(value) : new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function dateKey(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function applyRequestViolations(requests, ruleStats, options = {}) {
+  const { isBaseline = false } = options;
+
+  if (!Array.isArray(requests)) return;
+
+  let failures = [];
+  if (ruleStats && Array.isArray(ruleStats.failures)) {
+    failures = ruleStats.failures;
+  } else if (Array.isArray(ruleStats)) {
+    failures = ruleStats;
+  }
+
+  const dailyFailures = failures.filter(f => f && f.scope === 'daily' && f.date);
+  const weeklyFailures = failures.filter(f =>
+    f && f.scope === 'weekly' && f.weekStart && f.weekEnd
+  );
+
+  const dailyByDate = new Map();
+  dailyFailures.forEach(f => {
+    const key = f.date;
+    dailyByDate.set(key, (dailyByDate.get(key) || 0) + 1);
+  });
+  const dailyEntries = [...dailyByDate.entries()]
+    .map(([date, count]) => ({ date, count }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const weeklyBySpan = new Map();
+  weeklyFailures.forEach(f => {
+    const key = `${f.weekStart}|${f.weekEnd}|${f.weekNumber ?? ''}`;
+    const current = weeklyBySpan.get(key);
+    if (!current) {
+      weeklyBySpan.set(key, {
+        count: 1,
+        weekStart: f.weekStart,
+        weekEnd: f.weekEnd,
+        weekNumber: f.weekNumber
+      });
+    } else {
+      current.count += 1;
+    }
+  });
+  const weeklyEntries = [...weeklyBySpan.values()]
+    .sort((a, b) => String(a.weekStart).localeCompare(String(b.weekStart)));
+
+  requests.forEach(req => {
+    if (!req || req.status === 'rejected') {
+      if (req) {
+        req.violations = 0;
+        req.ruleWarningText = '';
+        req.ruleWarningLines = [];
+
+        if (isBaseline && req.id && !req.id.toString().startsWith('draft_')) {
+          baselineViolations.set(req.id, 0);
+          baselineViolationDetails.set(req.id, []);
+        }
+      }
+      return;
+    }
+
+    if (!req?.start || !req?.end) {
+      req.violations = 0;
+      req.ruleWarningText = '';
+      req.ruleWarningLines = [];
+
+      if (isBaseline && req.id && !req.id.toString().startsWith('draft_')) {
+        baselineViolations.set(req.id, 0);
+        baselineViolationDetails.set(req.id, []);
+      }
+      return;
+    }
+
+    const start = normalizeDate(req.start);
+    const end = normalizeDate(req.end);
+    if (!start || !end) {
+      req.violations = 0;
+      req.ruleWarningText = '';
+      req.ruleWarningLines = [];
+
+      if (isBaseline && req.id && !req.id.toString().startsWith('draft_')) {
+        baselineViolations.set(req.id, 0);
+        baselineViolationDetails.set(req.id, []);
+      }
+      return;
+    }
+
+    let total = 0;
+    const lines = [];
+
+    dailyEntries.forEach(entry => {
+      const dateStr = entry.date;
+      const count = entry.count;
+      const d = normalizeDate(dateStr);
+      if (!d) return;
+      if (d < start || d > end) return;
+      total += count;
+      lines.push(`${formatDateDMY(dateStr)}: ${count} Regelverstöße`);
+    });
+
+    weeklyEntries.forEach(info => {
+      const ws = normalizeDate(info.weekStart);
+      const we = normalizeDate(info.weekEnd);
+      if (!ws || !we) return;
+      if (ws > end || we < start) return;
+      total += info.count;
+      const label = `KW ${info.weekNumber ?? '?'} (${formatDateDMY(info.weekStart)}–${formatDateDMY(info.weekEnd)})`;
+      lines.push(`${label}: ${info.count} Regelverstöße`);
+    });
+
+    req.violations = total;
+    req.ruleWarningLines = lines;
+    req.ruleWarningText = buildWarningTooltipText(total, lines);
+
+    if (isBaseline && req.id && !req.id.toString().startsWith('draft_')) {
+      baselineViolations.set(req.id, total);
+      baselineViolationDetails.set(req.id, [...lines]);
+    }
+  });
+}
+
+function buildWarningTooltipText(total, lines) {
+  if (!total) return 'Keine Warnungen';
+  const trimmed = Array.isArray(lines) ? lines.filter(Boolean) : [];
+  const maxLines = 6;
+  const out = [`Regelverstöße: ${total}`];
+  trimmed.slice(0, maxLines).forEach(line => out.push(line));
+  if (trimmed.length > maxLines) {
+    out.push(`Weitere: ${trimmed.length - maxLines}`);
+  }
+  return out.join('\n');
 }

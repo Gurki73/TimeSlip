@@ -94,7 +94,7 @@ function resolveTeamName(team, teamnames) {
 
 // ========== HELPER FUNCTIONS ==========
 function joinGermanList(items = [], connector = "und") {
-    if (!items?.length) return "<Aufgaben fehlen>";;
+    if (!items?.length) return "&lt;Aufgaben fehlen&gt;";
     if (items.length === 1) return items[0];
     if (items.length === 2) return `${items[0]} ${connector} ${items[1]}`;
 
@@ -154,22 +154,22 @@ const REPEAT_CONFIG = {
         T5: (tf) => `Während jeder ${tf.toHumanReadable?.() || ""}`
     },
     W2: { // XOR
-        T1: () => "<Fehler>",
+        T1: () => "&lt;Fehler&gt;",
         T2: (tf) => `Entweder am ${formatDaysList(tf.details?.days, false, "oder")} sollen`,
-        T3: () => "<Fehler>",
-        T5: () => "<Fehler>"
+        T3: () => "&lt;Fehler&gt;",
+        T5: () => "&lt;Fehler&gt;"
     },
     W3: { // Only
         T1: (tf) => `Nur in der ${getShiftName(tf.details?.days?.[0])}-Schicht sollen`,
         T2: (tf) => `Nur an ${formatDaysList(tf.details?.days, false, "oder")}en sollen`,
-        T3: () => "<Fehler>",
-        T5: () => "<Fehler>"
+        T3: () => "&lt;Fehler&gt;",
+        T5: () => "&lt;Fehler&gt;"
     },
     W4: { // Per day per week
-        T1: () => "<Fehler>",
-        T2: () => "<Fehler>",
+        T1: () => "&lt;Fehler&gt;",
+        T2: () => "&lt;Fehler&gt;",
         T3: (tf, rep) => `${rep.details?.bottom || "?"} mal pro Woche sollen`,
-        T5: () => "<Fehler>"
+        T5: () => "&lt;Fehler&gt;"
     }
 };
 
@@ -180,7 +180,7 @@ function formatSentenceStart(repeatBlock = {}, timeFrameBlock = {}) {
     const config = REPEAT_CONFIG[repeatId];
     if (!config || !config[timeFrameId]) {
         console.warn(`Unsupported combination: ${repeatId}/${timeFrameId}`);
-        return "<Fehler 3: unbekannte Kombination>";
+        return "&lt;Fehler 3: unbekannte Kombination&gt;";
     }
 
     return config[timeFrameId](timeFrameBlock, repeatBlock);
@@ -194,7 +194,7 @@ function formatAmount(amountBlock = {}) {
         A1: () => details.bottom != null ? `ungefähr ${details.bottom}` : "ungefähr",
         A3: () => details.bottom != null && details.top != null
             ? `zwischen ${details.bottom} und ${details.top}`
-            : "zwischen <Fehler>",
+            : "zwischen &lt;Fehler&gt;",
         A4: () => details.bottom != null ? `maximal ${details.bottom}` : "maximal",
         A5: () => details.bottom != null ? `mindestens ${details.bottom}` : "mindestens",
         A8: () => details.bottom != null ? `genau ${details.bottom}` : "genau"
@@ -223,7 +223,7 @@ function buildCorePhrase(groupBlock, dependencyBlock, roles) {
     const details = groupBlock.details || { roles: [] };
     const roleIds = details.roles || [];
 
-    const safeRoleIds = roleIds.length ? [...roleIds] : ["<Aufgabe fehlt>"];
+    const safeRoleIds = roleIds.length ? [...roleIds] : ["&lt;Aufgabe fehlt&gt;"];
 
     const roleNames = getRoleNames(safeRoleIds, roles);
 
@@ -236,7 +236,7 @@ function buildCorePhrase(groupBlock, dependencyBlock, roles) {
 
     // Dependency: Needs (D2)
     if (dependencyId === "D2") {
-        if (groupId === "G2") return "<Fehler>";
+        if (groupId === "G2") return "&lt;Fehler&gt;";
 
         const helperName = details.role?.[0] || "?";
         const helperCount = details.bottom || "?";
@@ -256,28 +256,25 @@ function buildCorePhrase(groupBlock, dependencyBlock, roles) {
         return `${roleText} ${verb} ${neederCount} ${neederName}`;
     }
 
-    return "<Fehler 4: unbekannte Kombination>";
+    return "&lt;Fehler 4: unbekannte Kombination&gt;";
 }
 
 // ========== UTILITY FUNCTIONS ==========
 function getShiftName(shiftCode) {
-    return SHIFT_CONFIG[shiftCode]?.name || "<Fehler>";
+    return SHIFT_CONFIG[shiftCode]?.name || "&lt;Fehler&gt;";
 }
 
 function formatDaysList(days = [], usePrefix = false, connector = "und") {
-    if (!days?.length) return "<Tag fehlt>";
+    if (!days?.length) return "&lt;Tag fehlt&gt;";
 
-    const dayNames = days.map(day =>
-        WEEKDAY_CONFIG.find(w => w.abbr === day)?.name || day
-    );
-
-    const list = joinGermanList(dayNames, connector);
-    return usePrefix ? list : list;
+    const dayNames = days.map(normalizeDay);
+    return joinGermanList(dayNames, connector);
 }
+
 
 function generateHumanSentence(rulePart = {}, roles = []) {
     if (!rulePart) return "ungenügende Auswahl zum Erstellen einer neuen Regel!";
-    if (!rulePart.group || !rulePart.dependency) return "<unvollständige Regel>";
+    if (!rulePart.group || !rulePart.dependency) return "&lt;unvollständige Regel&gt;";
 
     const sentenceStart = formatSentenceStart(rulePart.repeat || {}, rulePart.timeframe || {});
     const amountText = formatAmount(rulePart.amount || {});
@@ -287,20 +284,47 @@ function generateHumanSentence(rulePart = {}, roles = []) {
     return cleanUpText(parts.join(" "));
 }
 
-function generateFullHumanSentence(rule = {}, roles = []) {
+function normalizeDay(day, mode = "name") {
+    // Number → index
+    if (typeof day === "number") {
+        return WEEKDAY_CONFIG[day]?.name ?? day;
+    }
+
+    // String number → index
+    if (!isNaN(day)) {
+        return WEEKDAY_CONFIG[Number(day)]?.name ?? day;
+    }
+
+    // Abbreviation → name
+    if (typeof day === "string") {
+        const found = WEEKDAY_CONFIG.find(w => w.abbr === day);
+        return found?.name ?? day;
+    }
+    const cfg =
+        typeof day === "number"
+            ? WEEKDAY_CONFIG[day]
+            : WEEKDAY_CONFIG.find(w => w.abbr === day);
+
+    if (!cfg) return day;
+    return mode === "adv" ? cfg.adv : cfg.name;
+}
+
+
+export function generateFullHumanSentence(rule = {}, roles = []) {
     if (!rule || typeof rule !== "object") {
         console.warn("Invalid rule object");
-        return "<Fehler 1: unbekannte Kombination>";
+        return "&lt;Fehler 1: unbekannte Kombination&gt;";
     }
 
     const mainPart = rule.main || rule;
     const condPart = rule.condition || null;
-    const exceptionType = mainPart.exception?.type || rule.exception?.type || "E0";
-
+    const exceptionType = mainPart.exception?.id || rule.exception?.id || "E0";
     const mainText = generateHumanSentence(mainPart, roles);
-    const condText = condPart ? generateHumanSentence(condPart, roles) : "";
+    const condText =
+        exceptionType !== "E0" && condPart
+            ? generateHumanSentence(condPart, roles)
+            : "";
 
-    // Simple case: no condition or no exception
     if (!condText || exceptionType === "E0") {
         return cleanUpText(`${mainText}.`);
     }
@@ -335,12 +359,8 @@ function generateFullHumanSentence(rule = {}, roles = []) {
 export function translateCurrentRule(rule = {}, roles = []) {
 
     const sentence = translateToHuman(rule, roles);
-
-    console.log("sentence -->", sentence);
-
     const typingContainer = document.getElementById("typing-text");
     if (typingContainer) {
-        // applyTypingEffectWithCursor(typingContainer, sentence);
         typingContainer.innerHTML = sentence || '—';
     }
 }
@@ -407,12 +427,6 @@ function translateToHuman(rule = {}, roles = []) {
     if (!roles?.length) {
         throw new Error("translateToHuman: roles missing");
     }
-
-    console.log(
-        'PREVIEW INPUT',
-        JSON.parse(JSON.stringify(rule))
-    );
-
 
     const sentence = generateFullHumanSentence(rule, roles);
     if (!sentence) return false;
@@ -589,7 +603,7 @@ function renderRule(ruleView, container, roles) {
     if (ruleView.isAsleep) li.classList.add('rule-asleep');
     const text = fragment.querySelector('.rule-text');
     li.dataset.ruleId = ruleView.id;
-    text.textContent = generateFullHumanSentence(ruleView, roles);
+    text.innerHTML = generateFullHumanSentence(ruleView, roles);
 
     renderRoleDots(li, ruleView);
     renderEllipsis(li, ruleView);

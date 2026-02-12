@@ -640,32 +640,6 @@ function mergeDemand(staticDemand, flexDemand) {
     });
 }
 
-/*
-function solveAttendance(attendance, staticDemand, maxSteps = 5) {
-
-    // once per shift (hard gate)
-    const feasibility = feasibilityCheck(attendance, staticDemand);
-
-    let steps = 0;
-    while (steps < maxSteps) {
-        steps++;
-
-        // once per shift (hard gate)
-        const feasibility = feasibilityCheck(attendance, staticDemand);
-        // dynamic
-        const flexDemand = shrinkFlexDemand(flexRules, attendance, timeframeSlot);
-
-        // intersection only — flex never relaxes
-        const effectiveDemand = mergeDemand(staticDemand, flexDemand);
-
-        // solver always reasons against effectiveDemand
-        const roleStatus = computeRoleFlexibility(attendance, effectiveDemand);
-
-        // rank, simulate, commit...
-    }
-
-}
-*/
 export function createEmptyAttendance(roleCount = 14) {
     return Array(roleCount).fill(null).map(() => [0, 0, 0]);
 }
@@ -698,21 +672,11 @@ function sumRoles(attendance, roleIds) {
 }
 
 
-// -------------------- RULE CHECKS --------------------
-// ===================================================
-// we dont try to solve for weekly rule Violations 
-// or handle and special situations
-// in case of weekly or special checks we return ruleID warnings
-// ===================================================
-
-
 export function checkRulesForSpecial(specialName, shiftAttendance) {
-    // console.log(`✅ Checking shift: ${shiftName}`);
     // console.table(shiftAttendance);
     // later: return violations array
 }
 
-// Check all weekly rules against weeklyAttendance
 export function checkRulesForWeek(weeklyAttendance, machineRuleSet) {
     const violations = [];
 

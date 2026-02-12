@@ -1,43 +1,46 @@
 {
-  "id": "rule_sample_001",
+  "id": "rule_core_chef_waiter",
   "created": 1699990000001,
   "updated": 1699990000001,
   "isAsleep": false,
 
   "main": {
-    "repeat": { 
+    "repeat": {
       "type": "repeat",
-       "id": "W1", 
-       "details": { "bottom": 0, "top": 0 } 
-      },
-
-    "timeframe": { 
-      "type": "timeframe",
-       "id": "T0", 
-       "details": { "days": [0, 1, 3, 5] }
-       },
-
-    "amount": { 
-      "type": "amount",
-      "id": "A5",
-      "details": { "bottom": 1, "top": 1 } 
+      "id": "W0",
+      "details": { "bottom": 0, "top": 0 }
     },
 
-    "group": { 
+    "timeframe": {
+      "type": "timeframe",
+      "id": "T0",
+      "details": {}
+    },
+
+    "amount": {
+      "type": "amount",
+      "id": "A5",
+      "details": { "bottom": 1, "top": 1 }
+    },
+
+    "group": {
       "type": "group",
-      "id": "G0", 
-      "details": { "roles": [1] }
-     },
+      "id": "G1",
+      "details": {
+        "roles": [1, 4]
+      }
+    },
 
     "dependency": {
-       "type": "dependency", 
-       "id": "D0",
-       "details": { "roles": [13], "bottom": 0, "top": 0 } 
-      },
+      "type": "dependency",
+      "id": "D0",
+      "details": { "roles": [], "bottom": 0, "top": 0 }
+    },
 
-    "exception": { 
+    "exception": {
       "type": "exception",
-      "id": "E0" }
+      "id": "E0"
+    }
   },
 
   "condition": {
@@ -53,8 +56,8 @@
     },
     "amount": {
       "type": "amount",
-      "id": "a1",
-      "details": { "bottom": 1, "top": 1 }
+      "id": "a0",
+      "details": { "bottom": 0, "top": 0 }
     },
     "group": {
       "type": "group",
@@ -62,10 +65,9 @@
       "details": { "roles": [] }
     },
     "dependency": {
-      "type": "depemdeny",
+      "type": "dependency",
       "id": "d0",
       "details": { "roles": [], "bottom": 0, "top": 0 }
     }
   }
 }
-

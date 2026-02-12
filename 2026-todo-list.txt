@@ -1,162 +1,111 @@
 Legend:
 ☐  open           🚧 in work      ✅ finished ❌ cannceld
 🔥 ship-blocker   🧩 beta-value   🧠 post-beta
-────────────────
-🔥 Ship-Blockers
 
-Request-form
-6 🚧 fix year filter in requests
-10 ☐ fix the start and end date picking
-11 ✅Fix & rebaseline sanity check
-  11.1 update state button with no more warnings
-12 ☐ Restore save button state machine
+legend:
+- fic 180° chevron
+navigation
+- make highlight bliking
 
-Rule-form
-13 ☐ Fix & rebaseline sanity check
- 13.1 ☐ List all mandatory blocks per rule type
- 13.2 ☐ List all forbidden block combinations (static first)
- ✅ 13.3 ☐ Make sanity check pure (input → output, no DOM)
- 13.4 ☐ Apply results to UI:
-  13.4.1 neutral
-  13.4.2 forbidden (red)
-  13.4.3 missing mandatory (green)
- 13.5 ☐ Disable invalid <select> options based on context
-14 ☐ Refactor editing call chain
- 14.1 ☐ onInputChange
-   → updateRuleModel
-   → updatePreview
-   → runDynamicSanityCheck
-   → updateWizardUI
-   → updateSaveButtonState
-  14.2 ☐ onManualCheck OR onSave
-   → runExtendedSanityCheck
-   → renderValidationReport
-   → if clean → allow save
-  14.3 ✅ Single onRuleChanged(reason) entry point
-  14.4 ☐ Remove ad-hoc calls to sanity/preview elsewhere
-  14.5 ☐ Make preview + wizard read-only consumers
-15 ☐ Restore save button state machine
-  15.1 ☐ Central setSaveState(state)
-  15.2 ☐ Sanity check drives valid / invalid
-  15.3 ☐ Editing drives dirty
-  15.4 ☐ Successful save → clean
-  15.5 ☐ Sleeping rule change counts as dirty
-16 ☐ Save button not marked dirty
-  16.1 ❌ Hash / snapshot last-saved rule model:
-      no redo/undo , last saved version of rules already exsist in list all rules
-  16.2 ☐ Compare on each change
-  16.3 ☐ Dynamic warnings ≠ dirty
-  16.4 ☐ Structural changes = dirty
-17 ☐ Flow wizard enforcing wrong order
-  17.1 ☐ Define allowed block order per rule type
-  17.2 ☐ Identify which constraints are:
-  17.3 ☐ hard (forbidden)
-  17.4 ☐ soft (recommended)
-  17.5 ☐ Wizard enforces only hard constraints
-  17.6 ☐ ☐ Sanity check enforces completeness, not sequence
-18 🚧 Flow wizard colors lying (green = missing)
-  18.1 ✅ Single source of truth: blockId
-  18.2 ✅ No DOM queries by CSS structure
-  18.3 ☐ applyValidationState(✅ blockId, state)
-  18.4 ✅ Always clear previous state before applying new one
-19 🚧 Wizard & validation feedback
-  19.1 ☐ Extended sanity returns structured report
-  19.2 ☐ Render list:
-  19.3 ☐ errors
-  19.4 ☐ warnings
-  19.5 ☐ affected blocks
-  19.6 ☐ Clicking report item focuses block
-  19.7 ☐ Save only allowed if report empty
-20 ☐ Forbidden combinations list incomplete
-  20.1 ☐ Move combos into declarative config
-  20.2 ☐ Add unit-style test cases (even manual)
-  20.3 ☐ Expand once logic proven stable
-21 ☐ Rule enable/disable
-  21.1 ☐ Add state: active | sleeping to rule model
-  21.2 ☐ Visual marker in existing rules list
-  21.3 ☐ Loader filters sleeping rules
-  21.4 ☐ Execution engine skips sleeping rules
-  21.5 ☐ Sleep/awake marks app dirty
-22 🚧 Typing effect not updating after editing rule
-  22.1 ☐ Identify blocks not triggering preview update
-  22.2 ☐ Ensure preview is rebuilt from model, not DOM
-  ✅ 22.3 ☐ Restart typing effect on any preview text change
-23 ☐ Color coding consistency
-  23.1 ☐ Central color resolver (role/day/shift → color)
-  23.2 ☐ Apply everywhere (preview + builder)
-  23.4 ☐ No inline color logic
-24 ☐ Headers & titles
-  24.1 ✅ Normalize chevron size
-  24.2 ☐ Decide auto-expand rules
-  24.3 ✅ Test role markers
-  24.4 ☐ Align typography hierarchy
-25 ☐ Rule preview / simulation
-  25.1 ☐ Compare new rule vs existing rules
-  25.2 ☐ Simulate against real data
-  25.3 ☐ Present diff-style output
-26 ☐ Replace mock data
-  26.1 ☐ Freeze data shape
-  26.2 ☐ Replace noise with edge-case fixtures
-  26.3 ☐ Keep some “ugly” cases on purpose
-27 ✅ Ellipses menu not rendering
-  
-Calendar
-28 ☐ Warnings not shown in calendar
+welcome page
+ ❌ exit hint fn keys
+maxamize minimize on load, inject form max min heights
 
-Employee-form
-29 ☐ Wrong shift assignments on closed days
-30 🚧 Ellipses buttons dead
-31 ☐ Restore save button state machine
+calendar:
+highlight day or range for requests or warnings
+check if role reasignments are rendered
+integrtate shift icon on closed days
 
-Calendar-settings
-32 ☐ Save buttons / state handling
-33 ☐ Public holiday rendering
-34 ☐ Restore save button state machine
+requests:
+- filter by employee name 
+- resolve folder with warnings into single warning. filter by requester roles exclude overstaffing ( except lead role )
+maybe delta test instead of simple results...
 
-────────────────
-🧩 Beta-Value (fix before polish)
+employees:
+- fit privacy warning in its conatianer
+- add sample mode style to delete button in pay-updateRuleModel
+- explain warnings for corrupt shift assignments
+- switch from label to something fitting for style ( regular shedule )
 
-Request-form
-35 ☐ Warnings for conflicting request
-36 ☐ PTO calculations  
+roles:
+- fix endless loop stuck in loading ( maybe a silent failure or uncatched error only)
+- check tranparence or opacity for table
 
-Rule-form
-37 ☐ Warnings should be sticky & collapsible
+ruleset:
+- warnings as delta + heatmap for time 
+- and delta + votes for treams and roles 
+- elipsses style for awake and asleep in sample model
+- check if awake and asleep are considered in rule checker
+- add more mok data rules
+- check complex rules
+- add chip for weekdays ( color )
+- add chip for shift ( icon + color)
+- extend team marker ( maybe with ellipses if no space)
 
-Employee-form
-38 🚧 PDO calculation wrong
+calendar-settings:
+- animate chevron for all lists
+- fix filling of minimized shifts 
+- wxtend width of schoolholiday column
+- chnage font for start and end date of company holidays
+- check opacity for collapsed lists 
+- add tool tip texts for icons "open" and "closed"
+- adjust height for company holidays 
+- (include bridge days in company holiday)
+- (auto remove available days off for employees depending an regular shedule ) 
 
-Admin-tools
-39 🚧 Old style save button in wrong place
-40 ☐ Color customization
-41 ☐ Missing color pickers
-42 ☐ Incomplete calendar previews
-43 ☐ Styling issues
-44 ☐ Emoji select UX clarity (pooled / click behavior)
-45 ☐ Team names not editable visually
-46 🚧 Revive deleted employees
-47 ☐ Enforce limited color range per team (optional)
-48 ☐ Add team + role name in the picker container (#limited-color-picker-teamname / #limited-color-picker-rolename) dynamically on cell focus.
+admin tools:
+- fix home button
+admin tools.emojies: 
+- add a input for add an emojies
+- test saving emojies
+- fix animation (z-index?) for animation
+- improove hint for left and right mouse buttons
+admin tools.color:
+- custom color picker looses gradient when picking, roles
+- use actual role names and icons in preview
+- use actual team names in role preview
+- center table and picker in form
+- fix the tabulators
+- finish layout for calandar color cusmasation
+- finish th layout for button and background  colors
+- maybe a dialog simular to screen settings in window with a countdown keep changes?
+admin tools.auto save
+- disable are you sure dialogs
+- replace dirty state with autosave in shared state save button
+admin tools.clear cache... 
+- move to the end 
+- use german language for dialog buttons ok and cannceld
+- (maaybe show current cache?)
+admin tool.ruleset-settings
+- gather ideas
+- build prilimary UI
+admin tools.calendar settings
+- reuse options from main menu
+- build lay out 
+- disable sample mode 
+- discuss if needed anymore
+admin tools. revive delted employees
+- add sample
+- move more to left
+- add phönix for mass revive
+- fix end date picker
+admin tools.donate
+- add an offline alternatove
+- make a begging text
 
+minx:
+- allow state dirty for sample save button(?)
+- update version from 1.x.x to 2.0.0 dev to prototype
+- publish as prototype on itch.icon
+- make basic marketing article for itch.icon
+- plan you-tube tutorial
 
-Help
-49 🚧 Add basic content per chapter
-50 🚧 Glossary icons update
-51 ☐ Iconography & nomenclature explanation
-52 🚧 Story arc + protagonist idea
+help page:
+- write done the thoughts about  heros journey and save the calculations
+- update Glossary
+- build a skeleton for screenshots
+- highlight in nav when hover/click in help
 
-Misc
-53 🚧 fix min max btn on welcome page
-54 🚧 fix radio button lay out for menu optic on load
-
-
-Calendar-settings
-55 ☐ Company holiday inputs / height / alignment
-56 ☐ Feedback on corrupted datasets
-
-────────────────
-🧠 Post-Beta (frozen)
-
-57 🧠 Admin-tools: Rule tolerances / advanced calendar settings
-58 🧠 Feedback bar / state panel fix
-59 🧠 Hint for weekday <-> shifts
+“Collapsed list opacity: make adjustable via color/appearance settings.
+Should respect different screen brightness, resolution, and client monitors.
+Currently hardcoded; consider adding a cached local setting for transparency once prototype is stable.”

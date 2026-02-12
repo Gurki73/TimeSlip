@@ -12,6 +12,24 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export function registerEventHandlers(mainWindow) {
+    ipcMain.handle('confirm', async (event, payload = {}) => {
+        const host = mainWindow || getMainWindow();
+        const message = String(payload?.message ?? '');
+        const title = String(payload?.title ?? 'Bestätigung');
+        const confirmText = String(payload?.confirmText ?? 'OK');
+        const cancelText = String(payload?.cancelText ?? 'Abbrechen');
+
+        const { response } = await dialog.showMessageBox(host, {
+            type: 'question',
+            buttons: [confirmText, cancelText],
+            defaultId: 0,
+            cancelId: 1,
+            title,
+            message
+        });
+
+        return response === 0;
+    });
     ipcMain.handle('get-recovered-path', async () => {
         // Implement logic to scan for data folders and return best candidate path or null
         const recoveredPath = await dataLoader.scanForDataFolders();

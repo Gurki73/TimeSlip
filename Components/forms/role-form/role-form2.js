@@ -19,12 +19,8 @@ export async function initializeRoleForm(passedApi) {
   await loadInitialData(api);
   const emojiData = await loadEmojiData(api);
   if (emojiData?.roleEmojis?.length) {
-    console.log("[RoleForm] Using custom role emojis:", emojiData.roleEmojis);
     roleEmojis.length = 0;
     roleEmojis.push(...emojiData.roleEmojis);
-
-    console.log(emojiData);
-    console.log(roleEmojis);
   }
   roleFormRoles = await getAllRoles(api);
   const formContainer = getFormContainer();
@@ -66,15 +62,12 @@ export async function initTeamnames(passedApi) {
       const newName = el.textContent.trim();
 
       if (!newName || team === 'azubi') return;
-
-      // 🔑 only save if something really changed
       if (newName === originalValue) return;
 
       teamnames[team] = newName;
 
       try {
         await saveTeamnames(passedApi, teamnames);
-        console.log(`💾 Saved teamnames → ${team}: ${newName}`);
       } catch (err) {
         console.error(`✗ Failed to save teamname "${team}"`, err);
       }
@@ -131,12 +124,9 @@ function setApi(passedApi) {
 
 function storeAllRoles(api) {
 
-  // 1. Find all changed roles
   const dirtyRoles = roleFormRoles.filter((role, idx) => roleChanges[idx]);
 
-  // 2. Save roles (example)
   saveRoleData(api, dirtyRoles).then(() => {
-    console.log("All roles saved successfully!");
   }).catch(err => console.error("Failed to save roles:", err));
 
   saveButtonHeader?.setState('clean');
@@ -318,7 +308,6 @@ function changeEmoji(index) {
   index = Number(index);
   const role = roleFormRoles[index];
 
-  // ✅ select using data-index
   const emojiButton = document.querySelector(`.emoji-button[data-index="${index}"]`);
 
   const handleEmojiSelectionChange = (selectedEmoji) => {
@@ -326,8 +315,6 @@ function changeEmoji(index) {
       role.emoji = selectedEmoji;
       markRoleAsChanged(index);
       renderRoleTable();
-    } else {
-      console.log(`No emoji selected for role ${role.name}.`);
     }
   };
   if (index !== 13) {

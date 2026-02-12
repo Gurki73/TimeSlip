@@ -1,43 +1,31 @@
 <!DOCTYPE html>
 <!--
-  Vacation Approval App for Small Businesses
-  -------------------------------------------
-  
-  Overview:
-  - This app is designed to help small business owners approve or reject vacation requests, ensuring that all necessary roles are covered with some tolerance for flexibility. 
-  - It replaces commonly used Excel sheets, providing a lightweight, portable, and intuitive solution for small offices.
-  - This app is ideal for businesses like restaurants, where roles such as cooks, busboys, and waiters are critical, and employees may switch roles depending on the situation.
+  Vacation Approval App – Prototype
+
+  Description:
+  A lightweight, offline-first web app for managing employee vacation requests
+  in small businesses. Serves as a practical alternative to spreadsheets,
+  with rule-based validation to ensure essential roles remain covered.
 
   Technical Details:
-  - Built with simple HTML, JavaScript, and CSS to avoid dependency on package managers or frameworks. 
-    (We might have chosen Angular otherwise, but simplicity rules!)
-  - Designed to run in modern Chromium-based browsers due to reliance on the File API. 
-    A fallback exists via Blob downloads, but it may require manual file handling, making it less feasible.
-  - No login or user identification required, mimicking the portability and simplicity of Excel sheets. 
-    We provide a warning regarding identity and privacy considerations.
+  - Built with plain HTML, CSS, and JavaScript for portability and simplicity.
+  - Offline-first design; no login or backend required.
+  - Optional external request used only for updating public holiday data.
 
-  Features:
-  - Rule-based validation ensures business-critical roles are covered during vacation periods.
-  - Completely offline functionality, suitable for environments without constant internet access.
-  - Color-blindness support is partially implemented and can be further improved.
-  - ARIA support for accessibility is not yet implemented due to resource constraints but remains a future goal.
+  Target Environment:
+  - Windows desktop devices with small screens
+  - Offline usage supported
+
+  Status:
+  - Functional prototype
+  - UI and accessibility features in progress
 
   License:
-  - Released under the MIT License, allowing free personal and commercial use. Attribution is appreciated but not required.
-  - Editing and advancing the app are encouraged! 
+  MIT License – free for personal and commercial use.
 
-  Monetization:
-  - Translators/adapters for other countries: You keep 85% of any donations; the rest supports this project's growth.
-  - Developers adding cloud or self-server support: The app becomes yours to monetize, but I’d love a coffee in return!
-  - Salespersons distributing the app: Voluntary contribution of 35% of earnings is welcome, but not mandatory. It’s free, after all.
-
-  Core Development Philosophy:
-  - "Robustness" is my primary coding principle, although the simplicity of a web app limits some advanced practices.
-  - Accessibility is a core value. While incomplete (e.g., ARIA support), I aim for inclusive design where possible.
-
-  Created with passion for small businesses and their unique needs. 
-  Let's replace messy spreadsheets with something smarter! ( i didn't wrote this, its just chatGpt like everything else)
+  Created by Jörg Miethe to demonstrate practical development skills.
 -->
+
 
 <html lang="de">
 
@@ -187,7 +175,11 @@
         <span class="noto">⇨ </span> Hilfe auf.
       </p>
 
-      <!-- Fn key hint (hidden by default) -->
+      <!-- 
+        Fn + F1 hint: shown only on small screens. 
+        Reason: During testing with real clients, many users on laptops did not realize they needed to press Fn + F1 to access help. 
+        On larger screens with full-size keyboards, dedicated F1 keys are available, so the hint is hidden.
+      -->
       <div id="fn-key-hint" class="fn-hint visually-hidden" role="note" aria-label="Fn-Tastentipp">
         <img src="./assets/png/Fn-key.png" alt="Fn-Taste auf einer Laptop-Tastatur" class="fn-hint-img" />
         <p>
@@ -198,76 +190,77 @@
       </div>
 
       <div class="layout-full-size flex-row">
-        <!-- CARD TEMPLATE -->
-        <article class="layout-card layout-card.request" aria-labelledby="heading-request">
-          <h4 class="card-title text-request" id="heading-request">
-            <img src="./assets/svg/file-document-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
-            <span class="card-title-text">Urlaubsanträge</span>
-            <img src="./assets/svg/file-document-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
-          </h4>
-          <p class="text-header-5">
-            <strong>Wieso</strong> ist jemand nicht da?
-          </p>
-          <p class="text-small">
-            Urlaube, Abwesenheiten und deren Status übersichtlich verwalten.
-          </p>
-        </article>
+        <div class="cards-container">
+          <article class="layout-card layout-card.request" aria-labelledby="heading-request">
+            <h4 class="card-title text-request" id="heading-request">
+              <img src="./assets/svg/file-document-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
+              <span class="card-title-text">Urlaubsanträge</span>
+              <img src="./assets/svg/file-document-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
+            </h4>
+            <p class="text-header-5">
+              <strong>Wieso</strong> ist jemand nicht da?
+            </p>
+            <p class="text-small">
+              Urlaube, Abwesenheiten und deren Status übersichtlich verwalten.
+            </p>
+          </article>
 
-        <article class="layout-card layout-card.employee" aria-labelledby="heading-employee">
-          <h4 class="card-title text-employee" id="heading-employee">
-            <img src="./assets/svg/person-team-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
-            <span class="card-title-text">Mitarbeiter</span>
-            <img src="./assets/svg/person-team-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
-          </h4>
-          <p class="text-header-5">
-            <strong>Wer</strong> kann <strong>was</strong> – und <strong>wann</strong>?
-          </p>
-          <p class="text-small">
-            Mitarbeiter definieren und Aufgaben und individuelle Arbeitszeiten zuweisen.
-          </p>
-        </article>
+          <article class="layout-card layout-card.employee" aria-labelledby="heading-employee">
+            <h4 class="card-title text-employee" id="heading-employee">
+              <img src="./assets/svg/person-team-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
+              <span class="card-title-text">Mitarbeiter</span>
+              <img src="./assets/svg/person-team-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
+            </h4>
+            <p class="text-header-5">
+              <strong>Wer</strong> kann <strong>was</strong> – und <strong>wann</strong>?
+            </p>
+            <p class="text-small">
+              Mitarbeiter definieren und Aufgaben und individuelle Arbeitszeiten zuweisen.
+            </p>
+          </article>
 
-        <article class="layout-card layout-card.tasks" aria-labelledby="heading-tasks">
-          <h4 class="card-title text-tasks" id="heading-tasks">
-            <img src="./assets/svg/puzzle-piece-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
-            <span class="card-title-text">Aufgaben</span>
-            <img src="./assets/svg/puzzle-piece-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
-          </h4>
-          <p class="text-header-5">
-            <strong>Was</strong> wird überhaupt gemacht?
-          </p>
-          <p class="text-small">
-            Aufgaben anlegen, benennen und visuell gruppieren.
-          </p>
-        </article>
+          <article class="layout-card layout-card.tasks" aria-labelledby="heading-tasks">
+            <h4 class="card-title text-tasks" id="heading-tasks">
+              <img src="./assets/svg/puzzle-piece-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
+              <span class="card-title-text">Aufgaben</span>
+              <img src="./assets/svg/puzzle-piece-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
+            </h4>
+            <p class="text-header-5">
+              <strong>Was</strong> wird überhaupt gemacht?
+            </p>
+            <p class="text-small">
+              Aufgaben anlegen, benennen und visuell gruppieren.
+            </p>
+          </article>
 
-        <article class="layout-card layout-card.rules" aria-labelledby="heading-rules">
-          <h4 class="card-title text-rules" id="heading-rules">
-            <img src="./assets/svg/knowledge-graph-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
-            <span class="card-title-text">Regeln</span>
-            <img src="./assets/svg/knowledge-graph-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
-          </h4>
-          <p class="text-header-5">
-            <strong>Wie</strong> sieht ein ideales Team aus?
-          </p>
-          <p class="text-small">
-            Regeln festlegen, die eib optimales Zusamenspiel vorgibt.
-          </p>
-        </article>
+          <article class="layout-card layout-card.rules" aria-labelledby="heading-rules">
+            <h4 class="card-title text-rules" id="heading-rules">
+              <img src="./assets/svg/knowledge-graph-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
+              <span class="card-title-text">Regeln</span>
+              <img src="./assets/svg/knowledge-graph-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
+            </h4>
+            <p class="text-header-5">
+              <strong>Wie</strong> sieht ein ideales Team aus?
+            </p>
+            <p class="text-small">
+              Regeln festlegen, die eib optimales Zusamenspiel vorgibt.
+            </p>
+          </article>
 
-        <article class="layout-card layout-card.calendar" aria-labelledby="heading-calendar">
-          <h4 class="card-title text-calendar" id="heading-calendar">
-            <img src="./assets/svg/calendar-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
-            <span class="card-title-text">Kalender</span>
-            <img src="./assets/svg/calendar-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
-          </h4>
-          <p class="text-header-5">
-            <strong>Wann</strong> wird gearbeitet?
-          </p>
-          <p class="text-small">
-            Öffnungszeiten, Feiertage, Schichten und besondere Tage festlegen.
-          </p>
-        </article>
+          <article class="layout-card layout-card.calendar" aria-labelledby="heading-calendar">
+            <h4 class="card-title text-calendar" id="heading-calendar">
+              <img src="./assets/svg/calendar-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
+              <span class="card-title-text">Kalender</span>
+              <img src="./assets/svg/calendar-svgrepo-com.svg" alt="" class="nav-icon" aria-hidden="true" />
+            </h4>
+            <p class="text-header-5">
+              <strong>Wann</strong> wird gearbeitet?
+            </p>
+            <p class="text-small">
+              Öffnungszeiten, Feiertage, Schichten und besondere Tage festlegen.
+            </p>
+          </article>
+        </div>
       </div>
     </section>
   </section>
