@@ -1,6 +1,9 @@
 // Components\forms\rule-form\ruleChecker.js
 import { runSolver, runSolverPerShift } from './solver.js';
 import { updateRulesPreview } from './translatorMachine.js';
+import { getRequestRange } from '../request-form/request-form.js';
+import { ensureCalendarReady, computeAttendanceForRange } from '../../calendar/calendar.js';
+import { loadRuleData } from '../../../js/loader/rule-loader.js';
 
 const SHIFTS_PER_DAY = 3;
 
@@ -233,7 +236,7 @@ function collectDayAttendance(requests, dayFacts) {
     return attendance;
 }
 
-export function runRequestRuleCheck(startDate, endDate, requests, options = {}) {
+export async function runRequestRuleCheck(startDate, endDate, requests, options = {}) {
     const start = normalizeDateInput(startDate);
     const end = normalizeDateInput(endDate);
 
@@ -251,7 +254,7 @@ export function runRequestRuleCheck(startDate, endDate, requests, options = {}) 
         };
     }
 
-    const {
+    let {
         machineRuleset = null,
         uiRules = null,
         employees = [],
@@ -259,8 +262,14 @@ export function runRequestRuleCheck(startDate, endDate, requests, options = {}) 
         roleCount: roleCountOverride = null,
         dayFactsByDate = null,
         shiftMode = 'all',
-        attendanceByDate = null
+        attendanceByDate = null,
+        useSolver = true
     } = options;
+
+    if (!uiRules) {
+        const loaderApi = (typeof window !== 'undefined' && window.api) ? window.api : null;
+        uiRules = await loadRuleData(loaderApi);
+    }
 
     const ruleset = machineRuleset || (Array.isArray(uiRules) ? updateRulesPreview(uiRules) : null);
     if (!ruleset) {
@@ -301,11 +310,11 @@ export function runRequestRuleCheck(startDate, endDate, requests, options = {}) 
         }
     };
 
-    return executeRuleset(rulesetForCheck, start, end, false);
+    return executeRuleset(rulesetForCheck, start, end, useSolver);
 }
 
 export function executeRulechecker(startDate, endDate, requests, options = {}) {
-    return runRequestRuleCheck(startDate, endDate, requests, options);
+    return runRequestRuleCheck(startDate, endDate, requests, options)
 }
 
 function normalizeRuleset(ruleset) {
@@ -435,6 +444,57 @@ function extractContext(ruleset) {
     };
 }
 
+function createSolverRulesFromMachineRules(normalizedRules) {
+    const rules = [];
+    const buckets = [
+        normalizedRules?.shiftly,
+        normalizedRules?.daily,
+        normalizedRules?.weekly,
+        normalizedRules?.special
+    ];
+
+    buckets.forEach(bucket => {
+        if (!Array.isArray(bucket)) return;
+        bucket.forEach(rule => {
+            const cond = rule?.dominantCondition;
+            const roleOp = String(cond?.roleLogicOperator || '').toUpperCase();
+            const slots = cond?.timeframeSlots;
+            if (roleOp !== 'TOTAL') return;
+            if (!Array.isArray(cond?.subjectRoles) || cond.subjectRoles.length < 1) return;
+            if (!Array.isArray(slots)) return;
+            const hasShiftSlots = slots.some(slot => typeof slot === 'string');
+            if (!hasShiftSlots) return;
+            rules.push(rule);
+        });
+    });
+
+    return { static: rules, flexible: [] };
+}
+
+function aggregateAttendanceByShift(attendanceByDate, roleCount) {
+    if (!attendanceByDate || typeof attendanceByDate !== 'object') return null;
+    const shiftTotals = {
+        early: createEmptyAttendanceMatrix(roleCount),
+        day: createEmptyAttendanceMatrix(roleCount),
+        late: createEmptyAttendanceMatrix(roleCount)
+    };
+    const shiftByIndex = ['early', 'day', 'late'];
+
+    Object.values(attendanceByDate).forEach(dayMatrix => {
+        if (!Array.isArray(dayMatrix)) return;
+        for (let roleId = 0; roleId < roleCount; roleId++) {
+            for (let shiftIdx = 0; shiftIdx < SHIFTS_PER_DAY; shiftIdx++) {
+                const shiftName = shiftByIndex[shiftIdx];
+                const mainCount = dayMatrix?.[roleId]?.[shiftIdx] ?? 0;
+                if (mainCount <= 0) continue;
+                shiftTotals[shiftName][roleId][0] += mainCount;
+            }
+        }
+    });
+
+    return shiftTotals;
+}
+
 function summarizeFailures(failures, skipped) {
     const byScope = {};
     failures.forEach(f => {
@@ -492,11 +552,28 @@ export function executeRuleset(
     if (useSolver) {
         try {
             if (context.solverInput) {
+                console.info('[RuleChecker][Solver] Running `runSolver` with explicit solver input.');
                 solverResult = runSolver(context.solverInput);
-            } else if (context.attendanceByShift && context.solverRules) {
-                solverResult = runSolverPerShift(context.attendanceByShift, context.solverRules);
+            } else {
+                const fallbackAttendanceByShift = context.attendanceByShift ||
+                    aggregateAttendanceByShift(attendanceByDate, roleCount);
+                const fallbackSolverRules = context.solverRules || createSolverRulesFromMachineRules(normalizedRules);
+                const hasRules = Array.isArray(fallbackSolverRules?.static) && fallbackSolverRules.static.length > 0;
+
+                if (fallbackAttendanceByShift && hasRules) {
+                    console.info('[RuleChecker][Solver] Running `runSolverPerShift` with derived attendance/rules.');
+                    solverResult = runSolverPerShift(fallbackAttendanceByShift, fallbackSolverRules);
+                } else {
+                    const reason = hasRules ? 'NO_ATTENDANCE_BY_SHIFT' : 'NO_SHIFT_AWARE_SOLVER_RULES';
+                    console.info(`[RuleChecker][Solver] Skipped (${reason}).`);
+                    skipped.push({
+                        scope: 'solver',
+                        reason
+                    });
+                }
             }
         } catch (error) {
+            console.warn('[RuleChecker][Solver] Execution failed:', error);
             skipped.push({
                 scope: 'solver',
                 reason: 'SOLVER_FAILED',
@@ -693,7 +770,7 @@ export function runRuleChecks({
             }
         };
 
-        const futureStats = executeRuleset(rulesetForCheck, futureStart, futureEnd, false);
+        const futureStats = executeRuleset(rulesetForCheck, futureStart, futureEnd, true);
         if (!futureStats.ok && Array.isArray(futureStats.failures)) {
             warnings.push(`FUTURE_VIOLATIONS: ${futureStats.failures.length}`);
         }
@@ -923,34 +1000,69 @@ function buildRequestsByDate(requests, startDate, endDate, employees, options = 
     return result;
 }
 
+let errorCount = 0;
+const MAX_ERRORS = 5;
+
 export async function computeRequestDelta(requests, newRequest, options = {}) {
+
+    if (errorCount >= MAX_ERRORS) {
+        return null; // fully silent after limit
+    }
+
     const { extraRequests = [], uiRules, employees } = options;
+
+    if (!Array.isArray(requests)) {
+        console.warn("[computeRequestDelta] requests is not an array:", requests);
+        errorCount++;
+        return null;
+    }
+    if (!newRequest) {
+        console.warn("[computeRequestDelta] newRequest missing");
+        errorCount++;
+        return null;
+    }
+
+    if (typeof getRequestRange !== "function") {
+        console.error("[computeRequestDelta] getRequestRange not defined");
+        errorCount++;
+        return null;
+    }
 
     const allRequests = [...requests];
     const range = getRequestRange(allRequests);
     if (!range) return null;
 
+    const normalizedExtraRequests = Array.isArray(extraRequests) ? extraRequests : [];
+    const baselineExtraRequests = normalizedExtraRequests.filter(req => req?.id !== newRequest?.id);
+    const futureExtraRequests = [...baselineExtraRequests, newRequest].filter(Boolean);
+
     // 1️⃣ Build baseline attendance (without the new request)
-    let attendanceByDate = null;
+    let baselineAttendanceByDate = null;
+    let futureAttendanceByDate = null;
     const calendarReady = await ensureCalendarReady(api);
     if (calendarReady) {
-        attendanceByDate = await computeAttendanceForRange(range.start, range.end, { extraRequests });
+        baselineAttendanceByDate = await computeAttendanceForRange(range.start, range.end, {
+            extraRequests: baselineExtraRequests
+        });
+        futureAttendanceByDate = await computeAttendanceForRange(range.start, range.end, {
+            extraRequests: futureExtraRequests
+        });
     }
 
-    const baselineStats = executeRulechecker(range.start, range.end, requests, {
+    const baselineStats = await executeRulechecker(range.start, range.end, requests, {
         uiRules,
         employees,
         includePending: true,
-        attendanceByDate
+        attendanceByDate: baselineAttendanceByDate
     });
 
     // 2️⃣ Build future attendance (with newRequest)
     const futureRequests = [...requests, newRequest];
-    const futureStats = executeRulechecker(range.start, range.end, futureRequests, {
+    const futureStats = await executeRulechecker(range.start, range.end, futureRequests, {
         uiRules,
         employees,
         includePending: true,
-        attendanceByDate
+        attendanceByDate: futureAttendanceByDate
     });
 
     // 3️⃣ Compute delta for each violation key
@@ -968,14 +1080,23 @@ export async function computeRequestDelta(requests, newRequest, options = {}) {
         const baseline = baselineMap.get(key);
         const future = futureMap.get(key);
 
-        delta.push({
-            key,
-            baselineTotal: baseline?.total ?? 0,
-            futureTotal: future?.total ?? 0,
-            delta: (future?.total ?? 0) - (baseline?.total ?? 0),
-            type: future?.type ?? baseline?.type ?? 'UNKNOWN'
-        });
+        const baselineTotal = baseline?.total ?? 0;
+        const futureTotal = future?.total ?? 0;
+        const diff = futureTotal - baselineTotal;
+
+        if (diff !== 0) {
+            delta.push({
+                key,
+                baselineTotal,
+                futureTotal,
+                delta: diff,
+                type: future?.type ?? baseline?.type ?? 'UNKNOWN'
+            });
+        }
     });
 
+    console.log("baseline failures:", baselineStats.failures);
+    console.log("future failures:", futureStats.failures);
+    console.log("delta:", delta);
     return { baselineStats, futureStats, delta };
 }

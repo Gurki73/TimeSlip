@@ -522,7 +522,13 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 
 export async function globalRefresh(mode = localStorage.getItem('dataMode') || 'default') {
-  // Skip if a refresh is already running for the same mode
+  /* TO:DO
+   Add refresh circuit breaker:
+   - attempt counter
+   - cooldown window (5s)
+   - max retries (5–10)
+   - structured console logs
+*/
   if (isRefreshing && mode === latestMode) {
     console.warn('⏳ Refresh already running for this mode...');
     return;

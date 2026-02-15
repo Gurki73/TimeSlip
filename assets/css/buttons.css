@@ -130,14 +130,14 @@
 }
 
 .funnel {
-  background-image: url("assets/svg/funnel-svgrepo-com.svg");
+  background-image: var(--icon-funnel);
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center;
 }
 
 .clear-filter {
-  background-image: url("assets/svg/clear-filter.svg");
+  background-image: var(--icon-clear-filter);
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center;

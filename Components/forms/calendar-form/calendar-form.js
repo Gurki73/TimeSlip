@@ -1,4 +1,4 @@
-import { saveStateData, saveOfficeDays, loadStateData, loadCompanyHolidayData, setBranch, updateOfficeDays, loadOfficeDaysData } from '../../../js/loader/calendar-loader.js';
+import { saveStateData, saveOfficeDays, loadStateData, loadCompanyHolidayData, setDataMode, updateOfficeDays, loadOfficeDaysData } from '../../../js/loader/calendar-loader.js';
 import { loadPublicHolidaysSimple, savePublicHolidaysSimple, saveBridgeDaysSimple, loadBridgeDays, saveCompanyHolidaysCSV } from '../../../js/loader/calendar-loader.js';
 import { getAllHolidaysForYear, filterPublicHolidaysByYearAndState } from '../../../js/Utils/holidayUtils.js';
 import { updateStateFlag } from '../../../js/Utils/flagUtils.js';
@@ -9,7 +9,7 @@ import * as Util from './calendar-form-utils.js';
 import { createDateRangePicker } from '../../customDatePicker/customDatePicker.js';
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
-import { createBranchSelect } from '../../../js/Utils/branch-select.js';
+import { createDataModeToggle } from '../../../js/Utils/DataMode-select.js';
 import { createSaveAllButton, saveAll } from '../../../js/Utils/saveAllButton.js';
 import { keyToBools } from './calendar-form-utils.js';
 import { createSaveButton } from '../../../js/Utils/saveButton.js';
@@ -170,7 +170,7 @@ let activeCompanyHolidayPicker;
 
 const DEFAULT_WORD = 'Öffnungszeiten';
 
-const branchHeaders = {
+const DataModeHeaders = {
   shop: "Öffnungszeiten festlegen",
   gastro: "Öffnungszeiten festlegen",
   hospitality: "Übernachtungszeiten festlegen",
@@ -1536,22 +1536,22 @@ function updateDivider(className = "bg-calendar", ruleFormState) {
   buttonContainer.className = 'flex items-center gap-3';
 
   const helpBtn = createHelpButton('chapter-employees');
-  const branchSelect = createBranchSelect({
-    onChange: (val) => applyBranchPreset(val)
+  const dataModeToggle = createDataModeToggle({
+    onChange: (val) => applyDataModePreset(val)
   });
 
   saveButtonHeader = createSaveButton({ onSave: () => storeAllCalendarSettings(cachedApi) });
 
   const windowBtns = createWindowButtons();
 
-  buttonContainer.append(helpBtn, branchSelect, windowBtns);
+  buttonContainer.append(helpBtn, dataModeToggle, windowBtns);
   leftGap.innerHTML = '';
   leftGap.append(yearAndState);
   divider.append(leftGap, h2, buttonContainer);
 }
 
-function applyBranchPreset(val) {
-  console.log("BRANCH SELCET");
+function applyDataModePreset(val) {
+  console.log("DataMode SELCET");
 }
 
 function storeAllCalendarSettings(api) {
@@ -1647,29 +1647,27 @@ function applyCollapseState(toggleBtn, expanded) {
   });
 }
 
-function initBranchSelectLogic() {
-  const branchSelect = document.getElementById('branch-select');
-  const LOCAL_STORAGE_KEY = 'customBranchWord';
-  let previousValue = branchSelect?.value;
+function initDataModeToggleLogic() {
+  const dataModeToggle = document.getElementById('DataMode-select');
+  const LOCAL_STORAGE_KEY = 'customDataModeWord';
+  let previousValue = dataModeToggle?.value;
 
-  branchSelect?.addEventListener('change', (event) => {
+  dataModeToggle?.addEventListener('change', (event) => {
     const newValue = event.target.value;
 
     if (previousValue === 'custom' && newValue !== 'custom') {
-      showBranchWarning(() => {
+      showDataModeWarning(() => {
         previousValue = newValue;
       }, () => {
-        branchSelect.value = previousValue;
+        dataModeToggle.value = previousValue;
       });
     } else {
       previousValue = newValue;
     }
     updateHeader(newValue);
-    const officeDaysUpdate = setBranch(newValue)
+    const officeDaysUpdate = setDataMode(newValue)
     updateWeekdayAndShiftCheckboxes(officeDaysUpdate);
   });
-
-
 }
 
 function createCompanyHolidayEventListeners() {
@@ -1678,14 +1676,12 @@ function createCompanyHolidayEventListeners() {
   const startDatePicker = document.getElementById("start-date-picker");
   const endDatePicker = document.getElementById("end-date-picker");
 
-  // Show warning dialog if year blocked
   function showYearBlockedDialog() {
     showYearWarning(onYearBlockedConfirmed, onYearBlockedCancelled);
   }
 
   function onYearBlockedConfirmed() {
     console.log("User confirmed year is blocked.");
-    // Optionally disable inputs/buttons here
   }
 
   function onYearBlockedCancelled() {
@@ -1748,27 +1744,24 @@ function createCompanyHolidayEventListeners() {
 
 //#endregion
 
-// Load stored custom word or fallback
 function getStoredCustomWord() {
   return localStorage.getItem(LOCAL_STORAGE_KEY) || DEFAULT_WORD;
 }
 
-// Save custom word
 function setStoredCustomWord(word) {
   localStorage.setItem(LOCAL_STORAGE_KEY, word);
 }
 
-// Update header text based on branch and stored custom word
-function updateHeader(branchValue) {
+function updateHeader(DataModeValue) {
   const header = document.getElementById('openinghours');
-  let branchWord = "`${ DEFAULT_WORD } festlegen`"
-  if (branchValue === 'custom') {
+  let DataModeWord = "`${ DEFAULT_WORD } festlegen`"
+  if (DataModeValue === 'custom') {
     const customWord = getStoredCustomWord();
-    branchWord = `${customWord} festlegen`;
+    DataModeWord = `${customWord} festlegen`;
   } else {
-    branchWord = branchHeaders[branchValue] || branchWord;
+    DataModeWord = DataModeHeaders[DataModeValue] || DataModeWord;
   }
-  header.innerHTML = branchWord;
+  header.innerHTML = DataModeWord;
 }
 
 function updateWeekdayAndShiftCheckboxes(officeDaysUpdate) {

@@ -15,6 +15,8 @@
   --icon-operation: url("../../assets/svg/operation-svgrepo-com.svg");
   --icon-add: url("../../assets/svg/file-add-svgrepo-com.svg");
   --icon-person: url("../../assets/svg/person-team-svgrepo-com.svg");
+  --icon-clear-filter: url ("../assets/svg/clear-filter.svg");
+  --icon-funnel: url("../assets/svg/funnel-svgrepo-com.svg")
 
   /* PNG fallback for region-specific icons */
   --icon-baden-wuerttemberg: url("../../assets/png/wappen-badenWuertenberg.png");

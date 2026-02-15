@@ -914,19 +914,19 @@ select.noto {
   appearance: none; /* remove native styling */
 }
 
-.branch-radio-group {
+.DataMode-radio-group {
   display: flex;
   align-items: center;
   gap: 1rem;
   font-size: 0.9rem;
 }
 
-.branch-radio-group input[type="radio"] {
+.DataMode-radio-group input[type="radio"] {
   transform: scale(1.2);
   cursor: pointer;
 }
 
-.branch-radio-group label {
+.DataMode-radio-group label {
   cursor: pointer;
 }
 

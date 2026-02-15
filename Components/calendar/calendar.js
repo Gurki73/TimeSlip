@@ -783,7 +783,7 @@ async function renderCalendarMonth(weeks) {
 
   const rangeStart = new Date(currentYear, currentMonthIndex, 1);
   const rangeEnd = new Date(currentYear, currentMonthIndex + 1, 0);
-  const ruleStats = executeRuleset(rulesetForCheck, rangeStart, rangeEnd, false);
+  const ruleStats = executeRuleset(rulesetForCheck, rangeStart, rangeEnd, true);
   if (renderSeq !== calendarRenderSeq) return;
   applyRuleWarnings(ruleStats);
 }

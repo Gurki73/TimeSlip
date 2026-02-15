@@ -19,16 +19,15 @@ let warningList = new Set();
 let lastSaveBtn = null;
 let ruleCheckInfo = null;
 
-export function resetWarnings(saveBtn) {
+export function resetWarnings() {
     warningList.clear();
-    updateWarningsUI(saveBtn);
 }
 
 export function addWarning(type) {
     if (posWarnings[type]) warningList.add(type);
 }
 
-export function recalcWarnings(saveBtn) {
+export function recalcWarnings(saveBtn, roles = [], requests = [], ruleset = [], employees) {
     const state = getCurrentFormState();
 
     resetWarnings(saveBtn);
@@ -45,10 +44,10 @@ export function recalcWarnings(saveBtn) {
     if (state.type === "hom") addWarning("homHint"); // match your <select> value
     if (!state.type || state.type === "none") addWarning("notype");
 
-    updateWarningsUI(saveBtn);
+    updateWarningsUI(saveBtn, roles, requests, ruleset);
 }
 
-export function updateWarningsUI(saveBtn) {
+async function updateWarningsUI(saveBtn, roles, requests, ruleset, employees) {
     const container = document.querySelector(".request-form-warn");
     if (!container) return;
 
@@ -90,7 +89,7 @@ export function updateWarningsUI(saveBtn) {
     const maxRank = sorted.length ? Math.max(...sorted.map(type => posWarnings[type].rank)) : 0;
     updateWarningFrameStyle({ isEmpty, maxRank });
 
-    renderRuleCheckInfo(container);
+    renderRuleCheckInfo(container, roles);
 
     const saveState = saveBtn?.getState?.();
     if (maxRank <= 1 && saveState === 'dirty') {
@@ -102,52 +101,156 @@ export function updateWarningsUI(saveBtn) {
 
 export function setRuleCheckInfo(info) {
     ruleCheckInfo = info || null;
-    if (lastSaveBtn) updateWarningsUI(lastSaveBtn);
+    // if (lastSaveBtn) updateWarningsUI(lastSaveBtn);
 }
 
-function renderRuleCheckInfo(container) {
-    if (!ruleCheckInfo) return;
+function renderRuleCheckInfo(container, roles) {
+    const normalized = normalizeRuleCheckInfo(ruleCheckInfo);
+    if (!normalized) return;
+    renderRuleDeltaPreview(container, normalized, roles);
+}
+
+
+function renderRuleDeltaPreview(container, ruleStatsDelta, allRoles = []) {
+    if (!ruleStatsDelta) return;
+
+    const baselineFailures = Array.isArray(ruleStatsDelta.baselineFailures)
+        ? ruleStatsDelta.baselineFailures
+        : [];
+    const futureFailures = Array.isArray(ruleStatsDelta.futureFailures)
+        ? ruleStatsDelta.futureFailures
+        : [];
+
+    const baselineMap = new Map();
+    baselineFailures.forEach(failure => {
+        const key = getFailureKey(failure);
+        const prev = baselineMap.get(key) || 0;
+        baselineMap.set(key, prev + getFailureWeight(failure));
+    });
+
+    const futureMap = new Map();
+    futureFailures.forEach(failure => {
+        const key = getFailureKey(failure);
+        const prev = futureMap.get(key) || 0;
+        futureMap.set(key, prev + getFailureWeight(failure));
+    });
+
+    const deltas = [];
+    const allKeys = new Set([...baselineMap.keys(), ...futureMap.keys()]);
+    allKeys.forEach(key => {
+        const baselineValue = baselineMap.get(key) || 0;
+        const futureValue = futureMap.get(key) || 0;
+        const diff = futureValue - baselineValue;
+        if (diff === 0) return;
+        deltas.push({ key, diff });
+    });
 
     const wrapper = document.createElement("div");
     wrapper.className = "rulecheck-info";
-    wrapper.style.marginTop = "6px";
 
     const heading = document.createElement("div");
-    heading.textContent = "Regelprüfung";
+    heading.className = "rulecheck-title";
+    heading.textContent = "What-If: Warnungen bei Genehmigung";
     wrapper.appendChild(heading);
 
+    if (deltas.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "rulecheck-empty";
+        empty.textContent = "Keine Änderungen gegenüber der aktuellen Warnungs-Basis.";
+        wrapper.appendChild(empty);
+        container.appendChild(wrapper);
+        return;
+    }
+
+    deltas.sort((a, b) => {
+        const absDiff = Math.abs(b.diff) - Math.abs(a.diff);
+        if (absDiff !== 0) return absDiff;
+        return a.key.localeCompare(b.key);
+    });
+
     const list = document.createElement("div");
-    list.style.display = "flex";
-    list.style.flexDirection = "column";
-    list.style.gap = "3px";
+    list.className = "rulecheck-list";
 
-    const lines = Array.isArray(ruleCheckInfo.lines) ? ruleCheckInfo.lines : [];
-    const total = Number.isFinite(ruleCheckInfo.totalFailures) ? ruleCheckInfo.totalFailures : null;
+    const maxLines = 6;
+    deltas.slice(0, maxLines).forEach(entry => {
+        const line = document.createElement("div");
+        line.className = "rulecheck-line";
 
-    if (lines.length === 0 && total === 0) {
-        const item = document.createElement("div");
-        item.textContent = "Keine Regelverstöße.";
-        list.appendChild(item);
-    } else if (lines.length === 0 && total != null) {
-        const item = document.createElement("div");
-        item.textContent = `Regelverstöße: ${total}`;
-        list.appendChild(item);
-    } else {
-        const maxLines = 4;
-        lines.slice(0, maxLines).forEach(line => {
-            const item = document.createElement("div");
-            item.textContent = line;
-            list.appendChild(item);
-        });
-        if (lines.length > maxLines) {
-            const more = document.createElement("div");
-            more.textContent = `Weitere: ${lines.length - maxLines}`;
-            list.appendChild(more);
-        }
+        const label = document.createElement("span");
+        label.className = "rulecheck-label";
+        label.textContent = buildFailureLabel(entry.key);
+        line.appendChild(label);
+
+        const delta = document.createElement("span");
+        delta.className = entry.diff > 0 ? "rulecheck-delta-plus" : "rulecheck-delta-minus";
+        delta.textContent = `${entry.diff > 0 ? '+' : ''}${entry.diff}`;
+        line.appendChild(delta);
+
+        list.appendChild(line);
+    });
+
+    if (deltas.length > maxLines) {
+        const more = document.createElement("div");
+        more.className = "rulecheck-more";
+        more.textContent = `Weitere Änderungen: ${deltas.length - maxLines}`;
+        list.appendChild(more);
     }
 
     wrapper.appendChild(list);
     container.appendChild(wrapper);
+}
+
+function normalizeRuleCheckInfo(info) {
+    if (!info || typeof info !== 'object') return null;
+
+    if (info.baselineStats && info.futureStats) {
+        return {
+            baselineFailures: info.baselineStats?.failures || [],
+            futureFailures: info.futureStats?.failures || []
+        };
+    }
+
+    if (info.baseline && info.delta) {
+        return {
+            baselineFailures: info.baseline?.failures || [],
+            futureFailures: info.delta?.failures || []
+        };
+    }
+
+    return null;
+}
+
+function getFailureKey(failure) {
+    const scope = failure?.scope || '';
+    const type = failure?.type || '';
+    const date = failure?.date || '';
+    const weekStart = failure?.weekStart || '';
+    const weekEnd = failure?.weekEnd || '';
+    return `${scope}|${type}|${date}|${weekStart}|${weekEnd}`;
+}
+
+function getFailureWeight(failure) {
+    const total = Number(failure?.total);
+    if (Number.isFinite(total) && total > 0) return total;
+    return 1;
+}
+
+function buildFailureLabel(key) {
+    const [scope, type, date, weekStart, weekEnd] = key.split('|');
+    if (scope === 'weekly') {
+        return `${type || 'Regel'}: KW (${formatDateDMY(weekStart)}–${formatDateDMY(weekEnd)})`;
+    }
+    return `${type || 'Regel'}: ${formatDateDMY(date)}`;
+}
+
+function formatDateDMY(value) {
+    if (!value) return 'n/a';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    const dd = String(date.getDate()).padStart(2, '0');
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    return `${dd}.${mm}.${yyyy}`;
 }
 
 function updateSaveButtonState(saveBtn, sortedWarnings) {

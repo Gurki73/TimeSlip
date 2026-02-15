@@ -135,6 +135,32 @@ function solveShift({ timeframe, attendance, rules, options = {} }) {
     const maxSteps = options.maxSteps ?? 10;
     const allowEmergency = options.allowEmergency ?? false;
     const logPrefix = `[Solver][${timeframe}]`;
+    const staticRuleCount = Array.isArray(rules?.static) ? rules.static.length : 0;
+    const flexRuleCount = Array.isArray(rules?.flexible) ? rules.flexible.length : 0;
+
+    if (!Array.isArray(attendance)) {
+        console.warn(`${logPrefix} Invalid attendance input. Expected role matrix, got:`, attendance);
+        return {
+            status: 'unsolved',
+            demand: { static: [], effective: [] },
+            feasibility: [],
+            roleStatus: [],
+            moves: [],
+            finalAttendance: createEmptyAttendance(),
+            warnings: ['Invalid attendance input'],
+            stopReason: 'invalid_input'
+        };
+    }
+
+    console.info(`${logPrefix} Start solveShift`, {
+        roleCount: attendance.length,
+        maxSteps,
+        allowEmergency,
+        staticRuleCount,
+        flexRuleCount
+    });
+
+    console.info(`${logPrefix} INPUT attendance:`, JSON.parse(JSON.stringify(attendance)))
 
     /*
     ⚠️ SOLVER DISCLAIMER:
@@ -254,6 +280,9 @@ function solveShift({ timeframe, attendance, rules, options = {} }) {
     const warnings = finalRoleStatus
         .filter(r => r.deficit > 0)
         .map(r => `Role ${r.roleId} remains underfilled: missing ${r.deficit}`);
+
+    console.info(`${logPrefix} FINAL attendance:`, attendanceClone);
+    console.info(`${logPrefix} MOVES:`, moves);
 
     return {
         status: stopReason === 'solved' || moves.length > 0 ? 'ok' : 'unsolved',

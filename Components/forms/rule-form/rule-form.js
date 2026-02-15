@@ -6,7 +6,7 @@ import { ensureCalendarReady, computeAttendanceForRange } from '../../calendar/c
 import { toggleExceptionTable, updateWizard } from './ruleFlowWizzard.js';
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
-import { createBranchSelect } from '../../../js/Utils/branch-select.js';
+import { createDataModeToggle } from '../../../js/Utils/DataMode-select.js';
 import { getShiftSymbol } from '../../../js/Utils/globalIcons.js';
 import { blocks, createRuleFromBlueprint, ruleToBlueprint } from "./buildingBlocks.js";
 import { translateCurrentRule, translateExistingRules, renderRoleSpan, generateFullHumanSentence } from "./translatorHuman.js";
@@ -50,6 +50,8 @@ const DEFAULT_BLUEPRINT = {
 
 const RULE_FUTURE_WINDOW_MONTHS = 6;
 const SCROLL_THRESHOLD = 40;
+const WEEKDAY_SHORT = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+const TEAM_KEY_ORDER = ['blue', 'green', 'red', 'black', 'azubi', 'none'];
 
 // ============= STATE =============
 let rulesScrollbox;
@@ -287,14 +289,14 @@ async function enrichReportWithImpact(report, draft, activeRules, futureContext)
         const baselineRuleset = updateRulesPreview(activeRules);
         const baselineStats = executeRuleset(
             { ...baselineRuleset, context: { ...baselineRuleset?.context, attendanceByDate, roleCount: derivedRoleCount } },
-            futureStart, futureEnd, false
+            futureStart, futureEnd, true
         );
 
         // Candidate (existing + draft)
         const candidateRuleset = updateRulesPreview([...activeRules, draft]);
         const candidateStats = executeRuleset(
             { ...candidateRuleset, context: { ...candidateRuleset?.context, attendanceByDate, roleCount: derivedRoleCount } },
-            futureStart, futureEnd, false
+            futureStart, futureEnd, true
         );
 
         // Delta comparison
@@ -310,7 +312,8 @@ async function enrichReportWithImpact(report, draft, activeRules, futureContext)
             added: impactRaw.added.length,
             removed: impactRaw.removed.length,
             changed: impactRaw.changed.length,
-            window: { start: dateKey(futureStart), end: dateKey(futureEnd) }
+            window: { start: dateKey(futureStart), end: dateKey(futureEnd) },
+            breakdown: buildImpactBreakdown(baselineStats.failures, candidateStats.failures)
         };
 
         report.details = report.details || {};
@@ -339,57 +342,11 @@ async function buildFutureRuleContext() {
 // ============= REPORT RENDERING =============
 function renderRuleCheckReport(report) {
     const list = document.getElementById('rule-new-warnings-list');
-    if (!list) return;
-
-    list.innerHTML = '';
-
-    if (!report) {
-        addListItem(list, 'Keine Testergebnisse verfügbar.');
-        return;
+    if (list) list.innerHTML = '';
+    clearImpactCharts();
+    if (report?.details?.impact) {
+        renderImpactCharts(report.details.impact);
     }
-
-    const items = [];
-
-    // Errors
-    if (Array.isArray(report.errors)) {
-        report.errors.forEach(err => items.push(`❌ ${err}`));
-    }
-
-    // Warnings
-    if (Array.isArray(report.warnings)) {
-        report.warnings.forEach(warn => items.push(`⚠️ ${warn}`));
-    }
-
-    // Structure delta
-    if (report.details?.delta) {
-        const { newRules, duplicates, conflicts } = report.details.delta;
-        items.push(`ℹ️ Struktur-Delta: new=${newRules}, dup=${duplicates}, conf=${conflicts}`);
-    }
-
-    // Impact
-    if (report.details?.impact) {
-        renderImpactReport(items, report.details.impact);
-    }
-
-    // Render items
-    if (items.length === 0) {
-        addListItem(list, 'Keine Warnungen gefunden.');
-        return;
-    }
-
-    const tpl = document.getElementById('warning-item-template');
-    items.forEach(text => {
-        if (text === '—') {
-            list.appendChild(document.createElement('hr'));
-        } else if (tpl?.content) {
-            const fragment = tpl.content.cloneNode(true);
-            const span = fragment.querySelector('.warning-text');
-            if (span) span.textContent = text;
-            list.appendChild(fragment);
-        } else {
-            addListItem(list, text);
-        }
-    });
 }
 
 function renderImpactReport(items, impact) {
@@ -421,6 +378,150 @@ function addListItem(list, text) {
     list.appendChild(li);
 }
 
+function clearImpactCharts() {
+    const existing = document.getElementById('rule-impact-charts');
+    if (existing) existing.remove();
+}
+
+function renderImpactCharts(impact) {
+    const container = document.getElementById('rule-tables-container');
+    if (!container || !impact?.breakdown) return;
+
+    const root = document.createElement('section');
+    root.id = 'rule-impact-charts';
+    root.setAttribute('aria-label', 'Vergleich Baseline und Zukunft');
+
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'impact-toggle noto';
+    toggle.textContent = '📊 Statistiken verbergen';
+    toggle.setAttribute('aria-expanded', 'true');
+    toggle.setAttribute('aria-controls', 'rule-impact-scroll');
+    root.appendChild(toggle);
+
+    const scrollContainer = document.createElement('div');
+    scrollContainer.id = 'rule-impact-scroll';
+    scrollContainer.className = 'impact-scroll';
+    root.appendChild(scrollContainer);
+
+    const weekdayRows = Array.isArray(impact.breakdown.weekday) ? impact.breakdown.weekday : [];
+    if (weekdayRows.length) {
+        scrollContainer.appendChild(createImpactChartPanel('Delta nach Wochentag (Baseline vs Zukunft)', weekdayRows));
+    }
+
+    const roleRows = Array.isArray(impact.breakdown.teamRoles) ? impact.breakdown.teamRoles : [];
+    if (roleRows.length) {
+        scrollContainer.appendChild(createTeamRolePanel(roleRows));
+    }
+
+    toggle.addEventListener('click', () => {
+        const expanded = toggle.getAttribute('aria-expanded') === 'true';
+        const next = !expanded;
+        toggle.setAttribute('aria-expanded', String(next));
+        toggle.textContent = next ? '📊 Statistiken verbergen' : '📊 Statistiken anzeigen';
+        scrollContainer.hidden = !next;
+    });
+
+    if (scrollContainer.children.length > 0) {
+        container.insertBefore(root, document.getElementById('table-container'));
+    }
+}
+
+function createImpactChartPanel(title, rows) {
+    const panel = document.createElement('div');
+    panel.className = 'impact-panel';
+
+    const heading = document.createElement('h4');
+    heading.className = 'impact-title noto';
+    heading.textContent = title;
+    panel.appendChild(heading);
+
+    panel.appendChild(createVerticalChart(rows));
+
+    return panel;
+}
+
+function createTeamRolePanel(rows) {
+    const panel = document.createElement('div');
+    panel.className = 'impact-panel';
+
+    const heading = document.createElement('h4');
+    heading.className = 'impact-title noto';
+    heading.textContent = 'Delta nach Rollen, gruppiert nach Teams';
+    panel.appendChild(heading);
+
+    const byTeam = new Map();
+
+    rows.forEach((row) => {
+        if (!byTeam.has(row.teamKey)) byTeam.set(row.teamKey, { label: row.teamLabel, rows: [] });
+        byTeam.get(row.teamKey).rows.push(row);
+    });
+
+    TEAM_KEY_ORDER.forEach((teamKey) => {
+        const group = byTeam.get(teamKey);
+        if (!group || !group.rows.length) return;
+
+        const teamHeading = document.createElement('h5');
+        teamHeading.className = 'impact-team-title';
+        teamHeading.textContent = group.label;
+        panel.appendChild(teamHeading);
+
+        const sortedRows = group.rows.sort((a, b) => Number(a.roleId) - Number(b.roleId));
+        panel.appendChild(createVerticalChart(sortedRows));
+    });
+
+    return panel;
+}
+
+function createVerticalChart(rows) {
+    const chart = document.createElement('div');
+    chart.className = 'impact-vertical-chart';
+
+    const maxValue = Math.max(1, ...rows.map(row => Math.max(row.before || 0, row.after || 0)));
+    rows.forEach((row) => {
+        chart.appendChild(createVerticalBarItem(row, maxValue));
+    });
+
+    return chart;
+}
+
+function createVerticalBarItem(row, maxValue) {
+    const item = document.createElement('div');
+    item.className = 'impact-vertical-item';
+
+    const deltaEl = document.createElement('span');
+    const numericDelta = Number(row?.delta) || 0;
+    const sign = numericDelta > 0 ? '+' : '';
+    deltaEl.className = `impact-delta ${numericDelta < 0 ? 'is-better' : numericDelta > 0 ? 'is-worse' : 'is-neutral'}`;
+    deltaEl.textContent = `${sign}${numericDelta}`;
+
+    const bars = document.createElement('div');
+    bars.className = 'impact-bars-vertical';
+
+    const baselineBar = document.createElement('div');
+    baselineBar.className = 'impact-bar impact-bar-vertical impact-bar-baseline';
+    baselineBar.style.height = `${Math.max(4, (Math.max(0, row?.before || 0) / maxValue) * 100)}%`;
+    baselineBar.title = `Baseline: ${row?.before || 0}`;
+
+    const futureBar = document.createElement('div');
+    futureBar.className = 'impact-bar impact-bar-vertical impact-bar-future';
+    futureBar.style.height = `${Math.max(4, (Math.max(0, row?.after || 0) / maxValue) * 100)}%`;
+    futureBar.title = `Future: ${row?.after || 0}`;
+
+    bars.append(baselineBar, futureBar);
+
+    const counts = document.createElement('span');
+    counts.className = 'impact-counts';
+    counts.textContent = `B${row?.before || 0} | F${row?.after || 0}`;
+
+    const labelEl = document.createElement('span');
+    labelEl.className = 'impact-label-vertical';
+    labelEl.textContent = row?.label || 'n/a';
+
+    item.append(deltaEl, bars, counts, labelEl);
+    return item;
+}
+
 // ============= RULE OPERATIONS =============
 function saveRule() {
     console.log("Saving rule…");
@@ -444,7 +545,6 @@ function scrollRulesToBottomIfAllowed(force = false) {
     }
 }
 
-// ============= UI UPDATES =============
 function updateDivider(className) {
     const divider = document.getElementById('horizontal-divider-box');
     divider.innerHTML = '';
@@ -463,14 +563,14 @@ function updateDivider(className) {
     const helpBtn = createHelpButton('chapter-employees');
     helpBtn.setAttribute('aria-label', 'Hilfe öffnen für Rollen-Formular');
 
-    const branchSelect = createBranchSelect({
-        onChange: (val) => console.log('Branch changed to:', val)
+    const dataModeToggle = createDataModeToggle({
+        onChange: (val) => console.log('DataMode changed to:', val)
     });
 
     saveButtonHeader = createSaveButton({ onSave: () => onSaveRuleClick });
     const windowBtns = createWindowButtons();
 
-    buttonContainer.append(saveButtonHeader.el, helpBtn, branchSelect, windowBtns);
+    buttonContainer.append(saveButtonHeader.el, helpBtn, dataModeToggle, windowBtns);
     divider.append(leftGap, h2, buttonContainer);
 }
 
@@ -1322,6 +1422,135 @@ function computeScopeDelta(baselineByScope = {}, candidateByScope = {}) {
     });
 
     return delta;
+}
+
+function buildImpactBreakdown(baselineFailures = [], candidateFailures = []) {
+    return {
+        weekday: buildWeekdayBreakdown(baselineFailures, candidateFailures),
+        teamRoles: buildTeamRoleBreakdown(baselineFailures, candidateFailures)
+    };
+}
+
+function buildWeekdayBreakdown(baselineFailures = [], candidateFailures = []) {
+    const beforeCounts = countFailuresByWeekday(baselineFailures);
+    const afterCounts = countFailuresByWeekday(candidateFailures);
+
+    return WEEKDAY_SHORT.map((label, idx) => {
+        const before = beforeCounts[idx] || 0;
+        const after = afterCounts[idx] || 0;
+        return { label, before, after, delta: after - before };
+    });
+}
+
+function countFailuresByWeekday(failures = []) {
+    const counts = Array(7).fill(0);
+    failures.forEach((failure) => {
+        const idx = resolveFailureWeekdayIndex(failure);
+        if (idx < 0 || idx > 6) return;
+        counts[idx] += 1;
+    });
+    return counts;
+}
+
+function resolveFailureWeekdayIndex(failure) {
+    if (!failure || typeof failure !== 'object') return -1;
+    if (Number.isInteger(failure.weekdayIndex) && failure.weekdayIndex >= 0 && failure.weekdayIndex <= 6) {
+        return failure.weekdayIndex;
+    }
+
+    const sourceDate = failure.date || failure.weekStart || null;
+    if (!sourceDate) return -1;
+    const parsed = new Date(sourceDate);
+    if (Number.isNaN(parsed.getTime())) return -1;
+    return (parsed.getDay() + 6) % 7;
+}
+
+function buildTeamRoleBreakdown(baselineFailures = [], candidateFailures = []) {
+    const before = countFailuresByTeamRole(baselineFailures);
+    const after = countFailuresByTeamRole(candidateFailures);
+    const keys = new Set([...before.keys(), ...after.keys()]);
+    const rows = [];
+
+    keys.forEach((key) => {
+        const baselineCount = before.get(key) || 0;
+        const futureCount = after.get(key) || 0;
+        if (baselineCount === 0 && futureCount === 0) return;
+
+        const [teamKey, roleIdRaw] = key.split('|');
+        const roleId = Number(roleIdRaw);
+        rows.push({
+            teamKey,
+            teamLabel: resolveTeamLabel(teamKey),
+            roleId,
+            label: resolveRoleLabel(roleId),
+            before: baselineCount,
+            after: futureCount,
+            delta: futureCount - baselineCount
+        });
+    });
+
+    return rows.sort((a, b) => {
+        const teamDiff = TEAM_KEY_ORDER.indexOf(a.teamKey) - TEAM_KEY_ORDER.indexOf(b.teamKey);
+        if (teamDiff !== 0) return teamDiff;
+        return Number(a.roleId) - Number(b.roleId);
+    });
+}
+
+function countFailuresByTeamRole(failures = []) {
+    const map = new Map();
+
+    failures.forEach((failure) => {
+        const roleIds = Array.isArray(failure?.subjectRoles) ? failure.subjectRoles : [];
+        const uniqueRoles = [...new Set(
+            roleIds
+                .map(roleId => Number(roleId))
+                .filter(roleId => Number.isInteger(roleId) && roleId >= 0)
+        )];
+
+        if (!uniqueRoles.length) {
+            return;
+        }
+
+        uniqueRoles.forEach((roleId) => {
+            const teamKey = mapRoleToTeamKey(roleId);
+            const key = `${teamKey}|${roleId}`;
+            map.set(key, (map.get(key) || 0) + 1);
+        });
+    });
+
+    return map;
+}
+
+function mapRoleToTeamKey(roleId) {
+    if (roleId >= 1 && roleId <= 3) return 'blue';
+    if (roleId >= 4 && roleId <= 6) return 'green';
+    if (roleId >= 7 && roleId <= 9) return 'red';
+    if (roleId >= 10 && roleId <= 12) return 'black';
+    if (roleId === 13) return 'azubi';
+    return 'none';
+}
+
+function resolveTeamLabel(teamKey) {
+    const fallback = {
+        blue: 'Team Blau',
+        green: 'Team Grün',
+        red: 'Team Rot',
+        black: 'Team Schwarz',
+        azubi: 'Ausbildung',
+        none: 'Ohne Team'
+    };
+
+    if (!teamnames || typeof teamnames !== 'object') return fallback[teamKey] || 'Team';
+    return teamnames[teamKey] || fallback[teamKey] || 'Team';
+}
+
+function resolveRoleLabel(roleId) {
+    const role = Array.isArray(cachedRoles)
+        ? cachedRoles.find(item => Number(item?.colorIndex) === Number(roleId))
+        : null;
+
+    if (!role) return `Rolle #${roleId}`;
+    return `${role.emoji || '•'} ${role.name || `Rolle #${roleId}`}`.trim();
 }
 
 // Stub functions that need implementation

@@ -3,7 +3,7 @@ import { createEmojiPicker } from '../../../Components/emojiPicker/emojiPicker.j
 import { resetAndBind } from '../../../js/Utils/bindEventListner.js';
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
-import { createBranchSelect, branchPresetsRoles } from '../../../js/Utils/branch-select.js';
+import { createDataModeToggle } from '../../../js/Utils/DataMode-select.js';
 import { createSaveButton } from '../../../js/Utils/saveButton.js';
 import { loadEmojiData } from '../../../js/loader/custom-loader.js';
 
@@ -26,33 +26,28 @@ export async function initializeRoleForm(passedApi) {
   const formContainer = getFormContainer();
   if (!formContainer) return;
   await loadRoleForm(formContainer);
-  updateDivider("bg-tasks");
+  updateDivider();
   renderRoleTable();
-  initTeamnames(passedApi);
+  initTeamnames();
 }
 
-export async function initTeamnames(passedApi) {
-  // 1️⃣ Load existing teamnames (or defaults/sample if missing)
+export async function initTeamnames() {
   try {
-    teamnames = await loadTeamnames(passedApi);
+    teamnames = await loadTeamnames(api);
   } catch (err) {
     console.error('⚠️ Failed to load teamnames, using defaults.', err);
   }
 
-  // 2️⃣ Fill current names into DOM
   for (const [key, value] of Object.entries(teamnames)) {
     const el = document.querySelector(`.teamname-editable[data-team="${key}"]`);
     if (el) el.textContent = value;
   }
 
-  // 3️⃣ Attach listeners with change detection
   const editableTeamNames = document.querySelectorAll('.teamname-editable');
 
   editableTeamNames.forEach(el => {
-
     let originalValue = '';
 
-    // remember value when user starts editing
     el.addEventListener('focus', () => {
       originalValue = el.textContent.trim();
     });
@@ -67,7 +62,7 @@ export async function initTeamnames(passedApi) {
       teamnames[team] = newName;
 
       try {
-        await saveTeamnames(passedApi, teamnames);
+        await saveTeamnames(api, teamnames);
       } catch (err) {
         console.error(`✗ Failed to save teamname "${team}"`, err);
       }
@@ -78,14 +73,16 @@ export async function initTeamnames(passedApi) {
     el.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault();
-        el.blur(); // triggers blur → save
+        el.blur();
       }
     });
   });
 }
 
-function updateDivider(className) {
+function updateDivider() {
   const divider = document.getElementById('horizontal-divider-box');
+  if (!divider) return;
+
   divider.innerHTML = '';
 
   const leftGap = document.createElement('div');
@@ -102,69 +99,80 @@ function updateDivider(className) {
   const helpBtn = createHelpButton('chapter-roles');
   helpBtn.setAttribute('aria-label', 'Hilfe öffnen für Rollen-Formular');
 
-  const branchSelect = createBranchSelect({
+  const dataModeToggle = createDataModeToggle({
     onChange: (val) => {
-      applyBranchPreset(val);
+      applyDataModeMode(val);
     }
   });
 
-  saveButtonHeader = createSaveButton({ onSave: () => storeAllRoles(api) });
+  saveButtonHeader = createSaveButton({ onSave: () => storeAllRoles() });
 
-  const windowBtns = createWindowButtons(); // your new min/max buttons
+  const windowBtns = createWindowButtons();
 
-  buttonContainer.append(saveButtonHeader.el, helpBtn, branchSelect, windowBtns);
-
+  buttonContainer.append(saveButtonHeader.el, helpBtn, dataModeToggle, windowBtns);
   divider.append(leftGap, h2, buttonContainer);
 }
 
 function setApi(passedApi) {
   api = passedApi;
-  if (!api) console.error("Api was not passed ==> " + api);
+  if (!api) console.error("⚠️ Api was not passed to role-form2.js");
 }
 
-function storeAllRoles(api) {
-
+function storeAllRoles() {
   const dirtyRoles = roleFormRoles.filter((role, idx) => roleChanges[idx]);
 
-  saveRoleData(api, dirtyRoles).then(() => {
-  }).catch(err => console.error("Failed to save roles:", err));
+  saveRoleData(api, dirtyRoles)
+    .then(() => {
+      console.log(`✓ Saved ${dirtyRoles.length} modified roles`);
+    })
+    .catch(err => console.error("✗ Failed to save roles:", err));
 
   saveButtonHeader?.setState('clean');
 }
 
-
 async function loadInitialData(api) {
   try {
-    await Promise.all([loadRoleData(api)]);
+    await loadRoleData(api);
   } catch (error) {
-    console.error('Error loading data:', error);
+    console.error('✗ Error loading data:', error);
   }
 }
 
-function applyBranchPreset(branch, api) {
-  const preset = branchPresetsRoles[branch];
-  if (!preset || !preset.teams) return;
+function applyDataModeMode(dataMode) {
+  // Use roleFormRoles which is already loaded and accessible
+  if (dataMode === 'sample') {
+    // Reset to original loaded data
+    roleFormRoles.forEach((role, index) => {
+      const nameInput = document.querySelector(`.name-role[data-index="${index}"]`);
+      if (nameInput) {
+        nameInput.value = role.name || '?';
+      }
 
-  const allRoles = loadRoleData(api)
-  Object.entries(preset.teams).forEach(([teamKey, teamRoles]) => {
-    const teamName = teamRoles[0];        // first entry = team name
-    const roleNames = teamRoles.slice(1); // remaining = roles
-
-    const teamInput = document.querySelector(`#team-${teamKey}-name`);
-    const roleInputs = document.querySelectorAll(`.role-input[data-team="${teamKey}"]`);
-
-    if (teamInput) teamInput.value = teamName;
-
-    roleInputs.forEach((input, i) => {
-      input.value = roleNames[i] || "";
+      const emojiBtn = document.querySelector(`.emoji-button[data-index="${index}"]`);
+      if (emojiBtn) {
+        emojiBtn.textContent = role.emoji || roleEmojis[index % roleEmojis.length];
+      }
     });
-  });
+  } else if (dataMode === 'client') {
+    // Clear all fields
+    roleFormRoles.forEach((_, index) => {
+      const nameInput = document.querySelector(`.name-role[data-index="${index}"]`);
+      if (nameInput) {
+        nameInput.value = '';
+      }
+
+      const emojiBtn = document.querySelector(`.emoji-button[data-index="${index}"]`);
+      if (emojiBtn) {
+        emojiBtn.textContent = '⊖';
+      }
+    });
+  }
 }
 
 function getFormContainer() {
   const formContainer = document.getElementById('form-container');
   if (!formContainer) {
-    console.error('Form container not found');
+    console.error('✗ Form container not found');
     return null;
   }
   formContainer.innerHTML = '';
@@ -177,13 +185,16 @@ async function loadRoleForm(formContainer) {
     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
     formContainer.innerHTML = await response.text();
   } catch (err) {
-    console.error(`Loading role form failed: ${err}`);
+    console.error(`✗ Loading role form failed: ${err}`);
   }
 }
 
 async function renderRoleTable() {
   const cells = document.querySelectorAll('.role-cell');
-  const templateHTML = await (await fetch('Components/forms/role-form/role-template.html')).text();
+  if (!cells.length) return;
+
+  const templateResponse = await fetch('Components/forms/role-form/role-template.html');
+  const templateHTML = await templateResponse.text();
 
   cells.forEach(cell => {
     const roleIndex = parseInt(cell.dataset.roleIndex, 10);
@@ -201,7 +212,7 @@ async function renderRoleTable() {
 
     const emojiBtn = roleDiv.querySelector('.emoji-button');
     emojiBtn.textContent = role.emoji || roleEmojis[roleIndex % roleEmojis.length];
-    emojiBtn.setAttribute('aria-label', `Rollen-Emoji für ${role.name || 'unnannte Rolle'}`);
+    emojiBtn.setAttribute('aria-label', `Rollen-Emoji für ${role.name || 'unbenannte Rolle'}`);
     emojiBtn.dataset.index = roleIndex;
 
     const nameInput = roleDiv.querySelector('.name-role');
@@ -212,10 +223,8 @@ async function renderRoleTable() {
 
     const { shouldShowDelete, shouldShowStore } = updateRoleButtonsVisibility(roleIndex);
 
-
-
     const storeBtn = roleDiv.querySelector('.store-button');
-    storeBtn.classList.toggle('hidden', true);
+    storeBtn.classList.toggle('hidden', !shouldShowStore);
     storeBtn.dataset.index = roleIndex;
 
     const deleteBtn = roleDiv.querySelector('.delete-button');
@@ -229,9 +238,7 @@ async function renderRoleTable() {
   });
 }
 
-
 function addEventListeners(roleDiv, roleIndex) {
-
   const emojiBtn = roleDiv.querySelector('.emoji-button');
   resetAndBind(emojiBtn, 'click', () => changeEmoji(roleIndex));
 
@@ -256,8 +263,6 @@ function addEventListeners(roleDiv, roleIndex) {
   });
 }
 
-
-
 function validateRoleName(index) {
   const input = document.querySelector(`.name-role[data-index="${index}"]`);
   const name = input.value.trim();
@@ -275,16 +280,14 @@ function validateRoleName(index) {
 
 function handleRoleInputKeydown(event, index) {
   if (event.key === 'Enter') {
-    event.target.blur();            // commit value
-    processRoleInput(index);        // write into allRoles
+    event.target.blur();
+    processRoleInput(index);
     const ok = validateRoleName(index);
     if (!ok) {
-      // focus back on the offending input
       event.target.focus();
       return;
     }
     markRoleAsChanged(index);
-    // only advance focus once name is valid
     setTimeout(() => focusNext(index), 0);
   }
 }
@@ -292,22 +295,17 @@ function handleRoleInputKeydown(event, index) {
 function markRoleAsChanged(index) {
   roleChanges[index] = true;
   saveButtonHeader?.setState('dirty');
-  focusNext(index);
 }
 
-
 function processRoleInput(index) {
-
   const inputElement = document.querySelector(`.name-role[data-index="${index}"]`);
   const newValue = inputElement.value.trim();
   roleFormRoles[index].name = newValue || '?';
 }
 
-
 function changeEmoji(index) {
   index = Number(index);
   const role = roleFormRoles[index];
-
   const emojiButton = document.querySelector(`.emoji-button[data-index="${index}"]`);
 
   const handleEmojiSelectionChange = (selectedEmoji) => {
@@ -317,6 +315,7 @@ function changeEmoji(index) {
       renderRoleTable();
     }
   };
+
   if (index !== 13) {
     createEmojiPicker(roleEmojis, emojiButton, index, handleEmojiSelectionChange);
   }
@@ -331,29 +330,27 @@ async function deleteRoleAndShowStoreButton(index) {
   storeRole(index);
 }
 
-
 async function storeRole(index) {
   const role = roleFormRoles[index];
   roleChanges[index] = false;
 
   const inputElement = document.querySelector(`.name-role[data-index="${index}"]`);
-
   const newName = inputElement.value.trim();
-
   role.name = newName || '?';
 
-  await saveRoleData(api);
+  await saveRoleData(api, roleFormRoles);
 }
 
 function updateRoleButtonsVisibility(index) {
-  index = Number(index); // ensure numeric comparison
+  index = Number(index);
 
   if (index === 13) return { shouldShowDelete: false, shouldShowStore: false };
+
   const role = roleFormRoles[index];
   const name = role.name?.trim();
-  const emoji = role.emoji;
-  const isValidName = name !== undefined && name.trim() !== '' && name.trim() !== '?';
-  const isValidEmoji = emoji !== undefined && emoji.trim() !== '' && emoji.trim() !== '⊖';
+  const emoji = role.emoji?.trim();
+  const isValidName = name && name !== '' && name !== '?';
+  const isValidEmoji = emoji && emoji !== '' && emoji !== '❓' && emoji !== '⊖';
 
   const isChanged = roleChanges[index];
   const isNameUnique = !roleFormRoles.some((r, i) => i !== index && r.name?.trim() === name);
@@ -361,16 +358,16 @@ function updateRoleButtonsVisibility(index) {
   const shouldShowDelete = isValidName || isValidEmoji;
   const shouldShowStore = isValidName && isValidEmoji && isChanged && isNameUnique;
 
-  return { shouldShowDelete, shouldShowStore }
+  return { shouldShowDelete, shouldShowStore };
 }
 
 function focusNext(roleIndex) {
   const container = document.getElementById('role-form-container');
+  if (!container) return;
 
   const nameInput = container.querySelector(`.name-role[data-index="${roleIndex}"]`);
   const emojiBtn = container.querySelector(`.emoji-button[data-index="${roleIndex}"]`);
   const saveButton = container.querySelector(`.store-button[data-index="${roleIndex}"]`);
-
 
   const { shouldShowDelete, shouldShowStore } = updateRoleButtonsVisibility(roleIndex);
   const role = roleFormRoles[roleIndex];
@@ -386,11 +383,9 @@ function focusNext(roleIndex) {
       return;
     }
     if (!isValidName) {
-      nameInput.focus();
+      nameInput?.focus();
     } else if (!isValidEmoji) {
-      emojiBtn.focus();
+      emojiBtn?.focus();
     }
   }
 }
-
-

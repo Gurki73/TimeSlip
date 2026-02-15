@@ -351,10 +351,141 @@
 
 .rule-new-warnings-list,
 #rule-new-warnings-list {
-  background-color: var(--bg-inactive);
-  color: orangered;
-  padding-bottom: 5px;
-  padding-left: 1.5rem;
+  display: none;
+}
+
+#rule-impact-charts {
+  margin: 0.5rem 0.75rem 0.75rem 0.75rem;
+  padding: 0.65rem;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--accent-inactive);
+  border-radius: 8px;
+}
+
+.impact-toggle {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--accent-inactive);
+  border-radius: 6px;
+  background: var(--bg-inactive);
+  color: var(--color-text);
+  padding: 0.35rem 0.5rem;
+  margin-bottom: 0.45rem;
+  cursor: pointer;
+}
+
+.impact-scroll {
+  max-height: 17rem;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.impact-panel {
+  margin-bottom: 0.85rem;
+}
+
+.impact-panel:last-child {
+  margin-bottom: 0;
+}
+
+.impact-title {
+  margin: 0 0 0.4rem 0;
+  color: var(--color-text);
+}
+
+.impact-team-title {
+  margin: 0.65rem 0 0.3rem 0;
+  font-size: 0.95rem;
+  color: var(--color-text);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.impact-vertical-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.55rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25rem 0.25rem 0.35rem 0.25rem;
+}
+
+.impact-vertical-item {
+  flex: 0 0 auto;
+  min-width: 3.9rem;
+  max-width: 3.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.impact-bars-vertical {
+  height: 8rem;
+  min-height: 8rem;
+  width: 2.2rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.2rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.35);
+  padding: 0 0.1rem;
+}
+
+.impact-bar {
+  min-height: 0.25rem;
+  border-radius: 3px;
+}
+
+.impact-bar-vertical {
+  width: 0.85rem;
+  padding: 0;
+  font-size: 0;
+  line-height: 0;
+}
+
+.impact-bar-baseline {
+  background: rgba(99, 99, 99, 0.75);
+  color: white;
+}
+
+.impact-bar-future {
+  background: rgba(190, 34, 34, 0.85);
+  color: #fff4f4;
+}
+
+.impact-delta {
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.72rem;
+  min-height: 0.8rem;
+}
+
+.impact-delta.is-better {
+  color: #146b2e;
+}
+
+.impact-delta.is-worse {
+  color: #8f1e1e;
+}
+
+.impact-delta.is-neutral {
+  color: var(--accent-inactive);
+}
+
+.impact-counts {
+  font-size: 0.66rem;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.impact-label-vertical {
+  width: 100%;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .rule-role-marker {

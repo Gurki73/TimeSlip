@@ -27,7 +27,7 @@ import '../Components/calendar/calendar.js';
 // import '../Components/Slider/slider.js';
 // import './Utils/HelpPageButton.js'
 import './Utils/minMaxFormComponent.js';
-// import './Utils/branch-select.js'
+// import './Utils/DataMode-select.js'
 // import './Utils/saveAllButton.js'
 import '../Components/customDatePicker/customDatePicker.js';
 

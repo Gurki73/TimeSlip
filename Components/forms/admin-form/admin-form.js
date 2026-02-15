@@ -3,7 +3,7 @@ import { loadEmojiData, normalizeEmojiData, saveEmojiData } from '../../../js/lo
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
 import { createSaveButton } from '../../../js/Utils/saveButton.js';
-import { createBranchSelect } from '../../../js/Utils/branch-select.js';
+import { createDataModeToggle } from '../../../js/Utils/DataMode-select.js';
 import { loadEmployeeData, loadDeletedEmployeeData, storeEmployeeChange } from '../../../js/loader/employee-loader.js';
 import { initRoleColorTab } from './colorTheme.js';
 
@@ -112,7 +112,7 @@ function updateDivider(className = 'bg-admin') {
 
   const helpBtn = createHelpButton('chapter-admin');
 
-  const branchSelect = createBranchSelect({
+  const dataModeToggle = createDataModeToggle({
     onChange: (val) => {
     }
   });
@@ -127,7 +127,7 @@ function updateDivider(className = 'bg-admin') {
   buttonContainer.append(
     saveButtonHeader.el,
     helpBtn,
-    branchSelect,
+    dataModeToggle,
     windowBtns
   );
 

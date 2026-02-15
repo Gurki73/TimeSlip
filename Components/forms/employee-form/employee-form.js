@@ -5,7 +5,7 @@ import { loadOfficeDaysData, officeDays } from '../../../js/loader/calendar-load
 import { keyToBools } from '../calendar-form/calendar-form-utils.js';
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
-import { createBranchSelect } from '../../../js/Utils/branch-select.js';
+import { createDataModeToggle } from '../../../js/Utils/DataMode-select.js';
 import { createDateRangePicker } from '../../customDatePicker/customDatePicker.js';
 import { loadEmojiData } from '../../../js/loader/custom-loader.js';
 import { createSaveButton } from '../../../js/Utils/saveButton.js';
@@ -35,13 +35,6 @@ let isDividerUpdating = false;
 let saveButtonHeader;
 
 export async function initializeEmployeeForm(passedApi) {
-
-  console.groupCollapsed(
-    "[EmployeeForm] initializeEmployeeForm called"
-  );
-  console.trace();
-  console.groupEnd();
-
 
   api = passedApi;
   if (!api) console.error("Api was not passed ==> " + api);
@@ -410,6 +403,7 @@ function gatherEmployeeData(api, action = "create") {
 function updateDivider(className) {
   if (isDividerUpdating) return;
   isDividerUpdating = true;
+
   const divider = document.getElementById('horizontal-divider-box');
   divider.innerHTML = '';
 
@@ -429,12 +423,26 @@ function updateDivider(className) {
 
   saveButtonHeader = createSaveButton({ onSave: () => storeAllEmployees(api) });
   saveButtonHeader.setState('blocked');
-  const windowBtns = createWindowButtons(); // your new min/max buttons
 
-  buttonContainer.append(saveButtonHeader.el, helpBtn, branchSelect, windowBtns);
+  const windowBtns = createWindowButtons(); // Min/Max buttons
+  const dataModeToggle = createDataModeToggle({
+    onChange: async () => {
+      await initializeRequestForm(api);
+    }
+  });
+
+  buttonContainer.append(
+    saveButtonHeader.el,
+    helpBtn,
+    dataModeToggle,
+    windowBtns
+  );
 
   divider.append(leftGap, h2, buttonContainer);
+
+  isDividerUpdating = false;
 }
+
 
 function storeAllEmployees(api) { }
 
@@ -1255,8 +1263,6 @@ function sanityCheckEmployee(employee) {
   employee.corrupt = false;
   employee.warning = '';
 
-  console.group(`[sanityCheck] Employee: ${employee.id || 'NO-ID'} | Name: "${employee.name}" | Emoji: "${employee.personalEmoji}"`);
-
   const failMandatory = sanityCheckEmployeeMandatory(employee);
   const failRoles = sanityCheckEmployeeRoles(employee);
   const failShifts = sanityCheckEmployeeShifts(employee);
@@ -1269,7 +1275,6 @@ function sanityCheckEmployee(employee) {
   if (failMandatory || failRoles || failShifts) {
     markEmployeeAsCorrupt(employee, warnings);
     console.warn(`[sanityCheck] FAIL: ${warnings.replace(/\n/g, '; ')}`);
-    console.groupEnd();
     return false;
   }
 

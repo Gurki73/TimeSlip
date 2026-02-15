@@ -1,7 +1,5 @@
-import { resetAndBind } from './bindEventListner.js';
-
-export function createBranchToggle({
-    id = 'branch-toggle',
+export function createDataModeToggle({
+    id = 'DataMode-toggle',
     defaultValue = 'sample',
     onChange
 } = {}) {
@@ -11,7 +9,7 @@ export function createBranchToggle({
 
     const wrapper = document.createElement('div');
     wrapper.id = id;
-    wrapper.classList.add('branch-radio-group');
+    wrapper.classList.add('DataMode-radio-group');
 
     const sampleRadio = document.createElement('input');
     sampleRadio.type = 'radio';
@@ -86,50 +84,3 @@ export function createBranchToggle({
     return wrapper;
 }
 
-export function createBranchSelect({ id = 'branch-select', defaultValue = 'onboarding', onChange } = {}) {
-
-    return createBranchToggle();
-
-}
-
-export const branchPresetsRoles = [];
-
-function initBranchSelectLogic(select, onChange) {
-    const LOCAL_STORAGE_KEY = 'customBranchWord';
-    let previousValue = select.value;
-
-    select.addEventListener('change', (event) => {
-        const newValue = event.target.value;
-
-        if (previousValue === 'custom' && newValue !== 'custom') {
-            showBranchWarning(
-                () => { previousValue = newValue; },
-                () => { select.value = previousValue; }
-            );
-        } else {
-            previousValue = newValue;
-        }
-
-        if (typeof onChange === 'function') onChange(newValue);
-    });
-}
-
-function showBranchWarning(onConfirm, onCancel) {
-    const dialog = document.getElementById('branch-warning-dialog');
-    dialog.classList.remove('hidden');
-
-    const confirmBtn = document.getElementById('dialog-confirm');
-    const cancelBtn = document.getElementById('dialog-cancel');
-
-    const closeDialog = () => dialog.classList.add('hidden');
-
-    confirmBtn.onclick = () => {
-        closeDialog();
-        onConfirm();
-    };
-
-    cancelBtn.onclick = () => {
-        closeDialog();
-        onCancel();
-    };
-}

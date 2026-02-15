@@ -6,7 +6,7 @@ import { loadRuleData } from '../../../js/loader/rule-loader.js';
 import { filterPublicHolidaysByYearAndState, getAllHolidaysForYear } from '../../../js/Utils/holidayUtils.js';
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
-import { createBranchSelect } from '../../../js/Utils/branch-select.js';
+import { createDataModeToggle } from '../../../js/Utils/DataMode-select.js';
 import { recalcWarnings, resetWarnings, setRuleCheckInfo } from "./request-warnings.js";
 import { createDateRangePicker } from '../../../Components/customDatePicker/customDatePicker.js';
 import { createSaveButton } from '../../../js/Utils/saveButton.js';
@@ -29,6 +29,8 @@ let calendarJumpTimer = null;
 let baselineViolations = new Map(); // Maps request ID -> violations count
 let baselineViolationDetails = new Map(); // Maps request ID -> warning lines
 let requestBeingEdited = null;
+let cachedRoles = [];
+let rules = [];
 
 const rankEmojis = {
   1: "📝",   // Hint / minor
@@ -83,6 +85,8 @@ export async function initializeRequestForm(passedApi) {
     console.warn("⚠️ Failed to load office days:", err);
     officeDays = [];
   }
+
+  cachedRoles = await loadRoleData(api);
 
   try {
     requestEmployees = await loadEmployeeData(api);
@@ -246,20 +250,20 @@ function switchVacationType(ev) {
   );
 
   newRequest.type = option.value;
-  recalcWarnings(saveButtonHeader);
+  recalcWarnings(saveButtonHeader, cachedRoles, allRequests, rules, requestEmployees);
 }
 
 function resetRequestWarnings() {
   resetNewRequest();
   resetRequestForm();
-  recalcWarnings(saveButtonHeader);
+  recalcWarnings(saveButtonHeader, cachedRoles, allRequests, rules, requestEmployees);
   updateDurationPreview();
 }
 
 function updateDivider(className) {
   const divider = document.getElementById('horizontal-divider-box');
   divider.innerHTML = '';
-  divider.className = className;  // <== assign background color for banner
+  divider.className = className;
 
   const leftGap = document.createElement('div');
   leftGap.className = 'left-gap';
@@ -274,28 +278,49 @@ function updateDivider(className) {
   const helpBtn = createHelpButton('chapter-requests');
   helpBtn.setAttribute('aria-label', 'Hilfe öffnen für Rollen-Formular');
 
-  saveButtonHeader = createSaveButton({ onSave: () => storeAllRequests(api) });
+  saveButtonHeader = createSaveButton({
+    onSave: () => storeAllRequests(api)
+  });
   saveButtonHeader.el.id = 'new-request-save-btn';
-  const windowBtns = createWindowButtons(); // your new min/max buttons
+
+  const windowBtns = createWindowButtons();
 
   const refreshBtn = document.createElement('button');
   refreshBtn.id = "refresh-request-form";
-  refreshBtn.classList.add('noto');
-  refreshBtn.classList.add('button');
+  refreshBtn.classList.add('noto', 'button');
   refreshBtn.textContent = '⟳';
-  refreshBtn.title = "Formular auffrischen"
-  refreshBtn.setAttribute('aria-label', 'Formular auffrische');
-  refreshBtn.addEventListener('click', async () => await initializeRequestForm(api));
+  refreshBtn.title = "Formular auffrischen";
+  refreshBtn.setAttribute('aria-label', 'Formular auffrischen');
+  refreshBtn.addEventListener('click', async () => {
+    await initializeRequestForm(api);
+  });
 
-  buttonContainer.append(saveButtonHeader.el, refreshBtn, helpBtn, branchSelect, windowBtns);
+  const dataModeToggle = createDataModeToggle({
+    onChange: (val) => {
+    }
+  });
+
+  buttonContainer.append(
+    saveButtonHeader.el,
+    refreshBtn,
+    helpBtn,
+    dataModeToggle,
+    windowBtns
+  );
 
   divider.append(leftGap, h2, buttonContainer);
 }
 
-function storeAllRequests(api) {
+async function storeAllRequests(api) {
+  try {
+    await runDraftRequestRuleCheck();
+  } catch (err) {
+    console.warn('Final draft rule check failed:', err);
+  }
+
   storeRequest(api);
-  if (localStorage.getItem('dataMode') !== 'sample') saveButtonHeader.saveButtonHeader.setState('blocked');
-  else saveButtonHeader.saveButtonHeader.setState('readonly');
+  if (localStorage.getItem('dataMode') !== 'sample') saveButtonHeader.setState('blocked');
+  else saveButtonHeader.setState('readonly');
 }
 
 function initDatePickers() {
@@ -311,7 +336,12 @@ function initDatePickers() {
   });
 }
 
+let isHandlingDate = false;
+
 function handleDateChange() {
+  if (isHandlingDate) return;
+  isHandlingDate = true;
+
   const start = document.querySelector("#request-start-picker")?.value;
   let end = document.querySelector("#request-end-picker")?.value;
 
@@ -359,7 +389,10 @@ function handleDateChange() {
 
   const event = new Event('change', { bubbles: true });
   document.getElementById('request-end-picker')?.dispatchEvent(event);
+
+  isHandlingDate = false;
 }
+
 
 function calculateDaysOff(startDate, endDate, federalState) {
   if (!startDate) return 0;
@@ -652,7 +685,7 @@ function switchRequester(ev) {
     document.getElementById('request-vacation-used').innerHTML = "xx";
     document.getElementById('request-overtime').innerHTML = 'xx';
 
-    recalcWarnings(saveButtonHeader);
+    recalcWarnings(saveButtonHeader, cachedRoles, allRequests, rules, requestEmployees);
     return;
   }
 
@@ -705,7 +738,7 @@ function formatDate(timestamp) {
 function updateRequestType(event) {
   const selectedType = event.target.value;
   checkAutoApprovalWarning(selectedType);
-  recalcWarnings(saveButtonHeader);
+  recalcWarnings(saveButtonHeader, cachedRoles, allRequests, rules, requestEmployees);
 }
 
 async function loadAndRenderRequests() {
@@ -740,6 +773,7 @@ async function loadAndRenderRequests() {
 
   await establishBaselineViolations();
   await updateRequestRuleWarnings(allRequests);
+  await computePendingRequestWhatIfDeltas(allRequests);
 
   initRequestsOnce(allRequests);
   renderRequestsTable(allRequests);
@@ -1216,6 +1250,10 @@ function getVacationIcon(type) {
 function getWarningsIcon(request) {
   if (!request || request.status === 'rejected') return '';
 
+  if (request.status === 'pending') {
+    return buildPendingWarningBadges(request);
+  }
+
   const delta = getDeltaViolations(request);
 
   if (delta > 1) {
@@ -1230,15 +1268,26 @@ function getWarningsIcon(request) {
 function getDeltaViolations(request) {
   if (!request || request.status === 'rejected') return 0;
 
+  if (request.status === 'pending' && Number.isFinite(request.whatIfDeltaViolations)) {
+    return Math.max(0, request.whatIfDeltaViolations);
+  }
+
   const baseline = baselineViolations.get(request.id) || 0;
   const current = request.violations || 0;
-
   return Math.max(0, current - baseline);
 }
 
 function getDeltaWarningsText(request, delta) {
   if (!request || request.status === 'rejected') return '';
   if (delta === 0) return 'Keine neuen Regelverstöße';
+
+  if (request.status === 'pending') {
+    const pendingLines = Array.isArray(request.whatIfNewLines) ? request.whatIfNewLines : [];
+    if (pendingLines.length > 0) {
+      return `Neue Regelverstöße bei Genehmigung: ${delta}\n${pendingLines.slice(0, 3).join('\n')}${pendingLines.length > 3 ? `\nWeitere: ${pendingLines.length - 3}` : ''}`;
+    }
+    return `${delta} zusätzliche Regelverstöße bei Genehmigung`;
+  }
 
   const baseline = baselineViolations.get(request.id) || 0;
   const baselineDetails = baselineViolationDetails.get(request.id) || [];
@@ -1254,9 +1303,57 @@ function getDeltaWarningsText(request, delta) {
   return `${delta} zusätzliche Regelverstöße bei Genehmigung`;
 }
 
+function buildPendingWarningBadges(request) {
+  const delta = getDeltaViolations(request);
+  const lines = getPendingWarningLines(request, delta);
+
+  if (delta <= 0 || lines.length === 0) {
+    return `
+      <div class="request-warning-list" aria-label="What-If Delta">
+        <span class="request-warning-badge request-warning-none noto">✓ keine Änderung</span>
+      </div>
+    `;
+  }
+
+  const maxLines = 6;
+  const visible = lines.slice(0, maxLines);
+  const badges = visible
+    .map(line => `<span class="request-warning-badge request-warning-add noto">${escapeHtml(line)}</span>`)
+    .join('');
+
+  const more = lines.length > maxLines
+    ? `<span class="request-warning-badge request-warning-more noto">+${lines.length - maxLines} weitere</span>`
+    : '';
+
+  return `<div class="request-warning-list" aria-label="What-If Delta">${badges}${more}</div>`;
+}
+
+function getPendingWarningLines(request, delta) {
+  const pendingLines = Array.isArray(request?.whatIfNewLines)
+    ? request.whatIfNewLines.filter(Boolean)
+    : [];
+
+  if (pendingLines.length > 0) {
+    return pendingLines;
+  }
+
+  if (delta > 0) {
+    return [`+${delta} zusätzliche Regelverstöße`];
+  }
+
+  return [];
+}
+
 function buildWarningIconMarkup(icon, text) {
   const safeText = escapeAttr(text || '');
   return `<span class="warning-icon noto" role="img" aria-label="${safeText}" title="${safeText}">${icon}</span>`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function escapeAttr(value) {
@@ -1306,7 +1403,7 @@ export function updateDurationPreview(savePTOchange = false) {
   const endVal = endInput?.value;
   const vacationType = document.getElementById("request-type-select")?.value;
 
-  recalcWarnings(saveButtonHeader);
+  recalcWarnings(saveButtonHeader, cachedRoles, allRequests, rules, requestEmployees);
   if (!currentEmployee) {
     const idRaw = document.getElementById("requester-select").value;
     const id = isNaN(idRaw) ? idRaw : Number(idRaw);
@@ -1355,12 +1452,12 @@ export function updateDurationPreview(savePTOchange = false) {
     durEl.textContent = message.msg;
     durElUnit.textContent = message.msgUnit;
   }
-  recalcWarnings(saveButtonHeader);
+  recalcWarnings(saveButtonHeader, cachedRoles, allRequests, rules, requestEmployees);
 }
 
 function checkAutoApprovalWarning(selectedType) {
 
-  recalcWarnings(saveButtonHeader);
+  recalcWarnings(saveButtonHeader, cachedRoles, allRequests, rules, requestEmployees);
 }
 
 function showError(message) {
@@ -1404,7 +1501,7 @@ function parsePreviewDate(previewText) {
 }
 
 function fireWarnings() {
-  recalcWarnings(saveButtonHeader);
+  recalcWarnings(saveButtonHeader, cachedRoles, allRequests, rules, requestEmployees);
 }
 
 async function updateRequestRuleWarnings(requests, options = {}) {
@@ -1412,7 +1509,6 @@ async function updateRequestRuleWarnings(requests, options = {}) {
 
   if (!Array.isArray(requests) || requests.length === 0) return;
 
-  let rules = [];
   try {
     rules = await loadRuleData(api);
   } catch (err) {
@@ -1438,7 +1534,7 @@ async function updateRequestRuleWarnings(requests, options = {}) {
       extraRequests
     });
   } else {
-    const ruleStats = executeRulechecker(range.start, range.end, requests, {
+    const ruleStats = await executeRulechecker(range.start, range.end, requests, {
       uiRules: rules,
       employees: requestEmployees,
       includePending: true,
@@ -1450,12 +1546,13 @@ async function updateRequestRuleWarnings(requests, options = {}) {
       baseline: ruleStats
     };
   }
-
-  applyRequestViolations(requests, ruleStatsDelta?.delta || ruleStatsDelta, { isBaseline });
+  const statsForViolations = ruleStatsDelta?.futureStats || ruleStatsDelta?.delta || ruleStatsDelta;
+  applyRequestViolations(requests, statsForViolations, { isBaseline });
 
   if (!isBaseline) {
     setRuleCheckInfo(buildRuleCheckInfo(ruleStatsDelta));
   }
+
 }
 
 export async function establishBaselineViolations() {
@@ -1474,44 +1571,26 @@ export async function establishBaselineViolations() {
 
 }
 
-function buildRuleCheckInfo(ruleStats) {
-  if (!ruleStats) return null;
-
-  const failures = ruleStats.failures || (ruleStats.delta?.failures) || [];
-
-  if (!Array.isArray(failures) || failures.length === 0) {
-    return { totalFailures: 0, lines: ["Keine Regelverstöße."] };
+function buildRuleCheckInfo(ruleStatsDelta) {
+  if (ruleStatsDelta?.baselineStats && ruleStatsDelta?.futureStats) {
+    return {
+      baselineStats: ruleStatsDelta.baselineStats,
+      futureStats: ruleStatsDelta.futureStats
+    };
   }
 
-  const totalFailures = failures.length;
-  const dailyByDate = new Map();
-  const weeklyBySpan = new Map();
-
-  failures.forEach(failure => {
-    if (failure.scope === 'daily' && failure.date) {
-      dailyByDate.set(failure.date, (dailyByDate.get(failure.date) || 0) + 1);
-      return;
-    }
-
-    if (failure.scope === 'weekly' && failure.weekStart && failure.weekEnd) {
-      const label = `KW ${failure.weekNumber} (${formatDateDMY(failure.weekStart)}–${formatDateDMY(failure.weekEnd)})`;
-      weeklyBySpan.set(label, (weeklyBySpan.get(label) || 0) + 1);
-    }
-  });
-
-  const lines = [];
-  dailyByDate.forEach((count, date) => {
-    lines.push(`${formatDateDMY(date)}: ${count} Regelverstöße`);
-  });
-  weeklyBySpan.forEach((count, label) => {
-    lines.push(`${label}: ${count} Regelverstöße`);
-  });
-
-  if (lines.length === 0) {
-    lines.push(`Regelverstöße gefunden: ${totalFailures}`);
+  if (ruleStatsDelta?.baseline && ruleStatsDelta?.delta) {
+    return ruleStatsDelta;
   }
 
-  return { totalFailures, lines };
+  if (ruleStatsDelta?.failures) {
+    return {
+      baseline: { failures: [] },
+      delta: { failures: ruleStatsDelta.failures }
+    };
+  }
+
+  return null;
 }
 
 function buildDraftRequestFromForm() {
@@ -1557,7 +1636,11 @@ function buildDraftRequestFromForm() {
 
 async function runDraftRequestRuleCheck() {
   const draft = buildDraftRequestFromForm();
-  if (!draft) return;
+  if (!draft) {
+    requestBeingEdited = null;
+    setRuleCheckInfo(null);
+    return;
+  }
 
   requestBeingEdited = draft;
 
@@ -1571,7 +1654,11 @@ async function runDraftRequestRuleCheck() {
     await updateRequestRuleWarnings(approvedRequests, { isBaseline: true });
   }
 
-  await updateRequestRuleWarnings(requests, { extraRequests: [draft] });
+  try {
+    await updateRequestRuleWarnings(requests, { extraRequests: [draft] });
+  } finally {
+    requestBeingEdited = null;
+  }
 }
 
 function scheduleDraftRuleCheck() {
@@ -1658,7 +1745,7 @@ function initRequestSanityListener() {
   sanityListenerInitialized = true;
 }
 
-function getRequestRange(requests) {
+export function getRequestRange(requests) {
   let min = null;
   let max = null;
 
@@ -1675,7 +1762,7 @@ function getRequestRange(requests) {
   return { start: min, end: max };
 }
 
-function normalizeDate(value) {
+export function normalizeDate(value) {
   if (!value) return null;
   const d = value instanceof Date ? new Date(value) : new Date(value);
   if (Number.isNaN(d.getTime())) return null;
@@ -1705,10 +1792,13 @@ function applyRequestViolations(requests, ruleStats, options = {}) {
   );
 
   const dailyByDate = new Map();
+
   dailyFailures.forEach(f => {
     const key = f.date;
     dailyByDate.set(key, (dailyByDate.get(key) || 0) + 1);
   });
+
+
   const dailyEntries = [...dailyByDate.entries()]
     .map(([date, count]) => ({ date, count }))
     .sort((a, b) => a.date.localeCompare(b.date));
@@ -1817,3 +1907,143 @@ function buildWarningTooltipText(total, lines) {
   }
   return out.join('\n');
 }
+
+async function computePendingRequestWhatIfDeltas(requests) {
+  if (!Array.isArray(requests) || requests.length === 0) return;
+
+  requests.forEach(clearPendingWhatIfData);
+
+  const approvedRequests = requests.filter(req =>
+    req &&
+    req.status === 'approved' &&
+    req.start &&
+    req.end
+  );
+
+  const pendingRequests = requests.filter(req =>
+    req &&
+    req.status === 'pending' &&
+    req.start &&
+    req.end
+  );
+
+  if (pendingRequests.length === 0) return;
+
+  if (!Array.isArray(rules) || rules.length === 0) {
+    try {
+      rules = await loadRuleData(api);
+    } catch (err) {
+      console.warn('Could not load rules for pending What-If deltas:', err);
+      return;
+    }
+  }
+
+  for (const pendingRequest of pendingRequests) {
+    try {
+      const stats = await computeRequestDelta(approvedRequests, pendingRequest, {
+        uiRules: rules,
+        employees: requestEmployees,
+        extraRequests: [pendingRequest]
+      });
+
+      const baselineSummary = summarizeViolationsForRequest(
+        pendingRequest,
+        stats?.baselineStats?.failures || []
+      );
+      const futureSummary = summarizeViolationsForRequest(
+        pendingRequest,
+        stats?.futureStats?.failures || []
+      );
+
+      const delta = Math.max(0, futureSummary.total - baselineSummary.total);
+      const addedLines = getAddedViolationLines(baselineSummary.lines, futureSummary.lines);
+
+      pendingRequest.whatIfBaselineViolations = baselineSummary.total;
+      pendingRequest.whatIfFutureViolations = futureSummary.total;
+      pendingRequest.whatIfDeltaViolations = delta;
+      pendingRequest.whatIfNewLines = addedLines;
+    } catch (err) {
+      console.warn('Pending What-If delta failed for request:', pendingRequest?.id, err);
+      pendingRequest.whatIfBaselineViolations = 0;
+      pendingRequest.whatIfFutureViolations = 0;
+      pendingRequest.whatIfDeltaViolations = 0;
+      pendingRequest.whatIfNewLines = [];
+    }
+  }
+}
+
+function summarizeViolationsForRequest(request, failures) {
+  const start = normalizeDate(request?.start);
+  const end = normalizeDate(request?.end);
+  if (!start || !end) {
+    return { total: 0, lines: [] };
+  }
+
+  const safeFailures = Array.isArray(failures) ? failures : [];
+  const dailyFailures = safeFailures.filter(f => f && f.scope === 'daily' && f.date);
+  const weeklyFailures = safeFailures.filter(f => f && f.scope === 'weekly' && f.weekStart && f.weekEnd);
+
+  const dailyByDate = new Map();
+  dailyFailures.forEach(f => {
+    const key = f.date;
+    dailyByDate.set(key, (dailyByDate.get(key) || 0) + 1);
+  });
+
+  const weeklyBySpan = new Map();
+  weeklyFailures.forEach(f => {
+    const key = `${f.weekStart}|${f.weekEnd}|${f.weekNumber ?? ''}`;
+    const current = weeklyBySpan.get(key);
+    if (!current) {
+      weeklyBySpan.set(key, {
+        count: 1,
+        weekStart: f.weekStart,
+        weekEnd: f.weekEnd,
+        weekNumber: f.weekNumber
+      });
+      return;
+    }
+    current.count += 1;
+  });
+
+  let total = 0;
+  const lines = [];
+
+  [...dailyByDate.entries()]
+    .map(([date, count]) => ({ date, count }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .forEach(entry => {
+      const d = normalizeDate(entry.date);
+      if (!d) return;
+      if (d < start || d > end) return;
+      total += entry.count;
+      lines.push(`${formatDateDMY(entry.date)}: ${entry.count} Regelverstöße`);
+    });
+
+  [...weeklyBySpan.values()]
+    .sort((a, b) => String(a.weekStart).localeCompare(String(b.weekStart)))
+    .forEach(entry => {
+      const ws = normalizeDate(entry.weekStart);
+      const we = normalizeDate(entry.weekEnd);
+      if (!ws || !we) return;
+      if (ws > end || we < start) return;
+      total += entry.count;
+      lines.push(`KW ${entry.weekNumber ?? '?'} (${formatDateDMY(entry.weekStart)}–${formatDateDMY(entry.weekEnd)}): ${entry.count} Regelverstöße`);
+    });
+
+  return { total, lines };
+}
+
+function getAddedViolationLines(baselineLines, futureLines) {
+  const before = new Set(Array.isArray(baselineLines) ? baselineLines : []);
+  const after = Array.isArray(futureLines) ? futureLines : [];
+  return after.filter(line => !before.has(line));
+}
+
+function clearPendingWhatIfData(request) {
+  if (!request || request.status !== 'pending') return;
+  request.whatIfBaselineViolations = 0;
+  request.whatIfFutureViolations = 0;
+  request.whatIfDeltaViolations = 0;
+  request.whatIfNewLines = [];
+}
+

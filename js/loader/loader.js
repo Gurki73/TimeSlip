@@ -22,6 +22,11 @@ export const states = [
 ];
 
 const validHomeKeys = ['auto', 'sample', 'client'];
+const LOAD_RETRY_COOLDOWN_MS = 10000;
+const MAX_SAMPLE_FALLBACK_DEPTH = 3;
+const inflightLoadMap = new Map();
+const failedLoadCooldownUntil = new Map();
+let sampleFallbackDepth = 0;
 
 const friendlyNames = {
     'employee.csv': 'Mitarbeiter Liste',
@@ -88,6 +93,24 @@ function showFailure(message) {
     setTimeout(() => popup.remove(), 3000);
 }
 
+function readCachedData(cacheKey) {
+    const cachedData = sessionStorage.getItem(cacheKey);
+    if (!cachedData) return null;
+
+    try {
+        return JSON.parse(cachedData);
+    } catch (err) {
+        console.warn('⚠ Invalid cache payload, clearing:', cacheKey, err);
+        sessionStorage.removeItem(cacheKey);
+        return null;
+    }
+}
+
+async function runFallback(fallbackFunc) {
+    if (typeof fallbackFunc !== 'function') return null;
+    return await fallbackFunc();
+}
+
 // --- Loader logic ---
 export async function loadFile(api, homeKey, relativePath, fallbackFunc = null, forceReload = true) {
     if (!api) throw new Error('API reference missing');
@@ -99,46 +122,77 @@ export async function loadFile(api, homeKey, relativePath, fallbackFunc = null, 
         effectiveKey = validHomeKeys.includes(homeKey) ? homeKey : 'auto';
     }
 
-    let fallbackDepth = 0;
-
     if (effectiveKey === 'sample') {
-        fallbackDepth++;
+        sampleFallbackDepth++;
 
-        if (fallbackDepth > 3) {
+        if (sampleFallbackDepth > MAX_SAMPLE_FALLBACK_DEPTH) {
             console.error('🔥 Possible infinite fallback loop detected');
             console.trace();
             throw new Error('Infinite fallback loop');
         }
 
         try {
-            return await fallbackFunc();
+            return await runFallback(fallbackFunc);
         } catch (err) {
             throw err; // IMPORTANT
         } finally {
-            fallbackDepth--;
+            sampleFallbackDepth--;
         }
     }
 
     const cacheKey = `${effectiveKey}:${relativePath}`;
     if (!forceReload && sessionStorage.getItem(cacheKey)) {
         console.warn(" RETURN CACHED DATA ONLY", relativePath);
-        return JSON.parse(sessionStorage.getItem(cacheKey));
+        return readCachedData(cacheKey);
     }
 
-    // 3️⃣ Load data
-    let data = await api.loadCSV(effectiveKey, relativePath);
-    if (data) {
-        sessionStorage.setItem(cacheKey, JSON.stringify(data));
-        return data;
+    const now = Date.now();
+    const blockedUntil = failedLoadCooldownUntil.get(cacheKey) || 0;
+    if (blockedUntil > now) {
+        const cooldownLeft = Math.ceil((blockedUntil - now) / 1000);
+        console.warn(`⏳ Read blocked for ${relativePath}. Retry in ${cooldownLeft}s.`);
+        const cached = readCachedData(cacheKey);
+        if (cached !== null) return cached;
+        return await runFallback(fallbackFunc);
     }
 
-    // 4️⃣ Use fallback function if provided
-    if (fallbackFunc) {
-        console.warn(`⚠ No data found at ${relativePath}, using fallback.`);
-        return await fallbackFunc();
+    if (inflightLoadMap.has(cacheKey)) {
+        return inflightLoadMap.get(cacheKey);
     }
 
-    return null;
+    const loadPromise = (async () => {
+        try {
+            // 3️⃣ Load data
+            const data = await api.loadCSV(effectiveKey, relativePath);
+            if (data) {
+                failedLoadCooldownUntil.delete(cacheKey);
+                sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                return data;
+            }
+
+            failedLoadCooldownUntil.set(cacheKey, Date.now() + LOAD_RETRY_COOLDOWN_MS);
+
+            // 4️⃣ Use fallback function if provided
+            if (fallbackFunc) {
+                console.warn(`⚠ No data found at ${relativePath}, using fallback.`);
+                return await runFallback(fallbackFunc);
+            }
+
+            return null;
+        } catch (err) {
+            failedLoadCooldownUntil.set(cacheKey, Date.now() + LOAD_RETRY_COOLDOWN_MS);
+            console.warn(`⚠ Read failed for ${relativePath}. Cooldown set for ${LOAD_RETRY_COOLDOWN_MS / 1000}s.`, err);
+            return await runFallback(fallbackFunc);
+        }
+    })();
+
+    inflightLoadMap.set(cacheKey, loadPromise);
+
+    try {
+        return await loadPromise;
+    } finally {
+        inflightLoadMap.delete(cacheKey);
+    }
 }
 
 // --- Unified save logic with automatic feedback ---
@@ -151,7 +205,7 @@ export async function saveFile(api, folderPath, fileName, content) {
         const savedPath = await api.saveCSV(folderPath, fileName, content);
 
         if (savedPath) {
-            const toggle = document.getElementById('branch-toggle');
+            const toggle = document.getElementById('DataMode-toggle');
             const oldMode = localStorage.getItem('dataMode');
 
             if (toggle && typeof toggle.setMode === 'function') {

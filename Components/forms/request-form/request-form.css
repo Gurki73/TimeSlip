@@ -435,7 +435,7 @@
 
 /* Container empty state */
 .request-form-warn.warning-empty {
-  opacity: 0.25 !important;
+  opacity: 0.85 !important;
   box-shadow: none;
 }
 
@@ -458,6 +458,54 @@
   color: #721c24; /* dark red text */
   border-radius: 5px;
   padding: 5px;
+}
+
+.rulecheck-info {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.3);
+}
+
+.rulecheck-title {
+  font-weight: 600;
+}
+
+.rulecheck-empty {
+  opacity: 0.75;
+}
+
+.rulecheck-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.rulecheck-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rulecheck-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.rulecheck-delta-plus {
+  color: #b42318;
+  font-weight: 700;
+}
+
+.rulecheck-delta-minus {
+  color: #027a48;
+  font-weight: 700;
+}
+
+.rulecheck-more {
+  opacity: 0.8;
+  font-style: italic;
 }
 
 .approverCell textarea {
@@ -525,6 +573,40 @@
 #decision-table td {
   text-align: center; /* optional: centers text lines */
   vertical-align: middle; /* fallback for non-flex content */
+}
+
+.request-warning-list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.request-warning-badge {
+  display: inline-block;
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.request-warning-none {
+  background: #e7f8ef;
+  border: 1px solid #2e8b57;
+  color: #2e8b57;
+}
+
+.request-warning-add {
+  background: #fdecea;
+  border: 1px solid #c0392b;
+  color: #8f1d14;
+}
+
+.request-warning-more {
+  background: #f4f5f7;
+  border: 1px solid #b8c0cc;
+  color: #4a5568;
 }
 
 .date-select-wrapper {

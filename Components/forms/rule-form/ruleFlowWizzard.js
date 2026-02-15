@@ -69,7 +69,6 @@ export function updateWizard(liveResult, lastUpdatedID) {
     });
 
     updateSaveButtonState();
-    console.groupEnd();
 }
 
 export function clearHighlights() {

@@ -66,7 +66,7 @@ function initializeFormState() {
     setEnabled(document.getElementById('requestStoreButton'), false);
 
     const warningContainer = document.querySelector(".request-form-warn");
-    if (warningContainer) warningContainer.style.opacity = 0.5;
+    if (warningContainer) warningContainer.style.opacity = 0.95;
 
     setStepActive("step1", false);
     setStepActive("step2", false);

@@ -1,6 +1,6 @@
 {
   "name": "mitarbeiterkalender",
-  "version": "1.5.0-Prototype",
+  "version": "1.5.1-Prototype",
   "description": "An- und Abwesentheits Planer App",
   "author": "Gurki73 <no-reply@example.com>",
   "main": "js/main.js",

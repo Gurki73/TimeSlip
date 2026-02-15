@@ -134,8 +134,8 @@ export async function saveBridgeDaysSimple(api, dataArray) {
 //#endregion
 
 
-export function setBranch(branch) {
-    switch (branch) {
+export function setDataMode(DataMode) {
+    switch (DataMode) {
         case 'gastro': prilimaryOfficeDays = gastro; break;
         case 'health': prilimaryOfficeDays = office; break;
         case 'office': prilimaryOfficeDays = office; break;
