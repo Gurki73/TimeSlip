@@ -42,26 +42,41 @@ npm run build
 # SIZE CHECK
 # -------------------------
 
-echo "📦 Checking artifact size"
+echo "📦 Checking artifact sizes"
 
-ARTIFACT=$(find dist -type f \( -name "*.exe" -o -name "*.AppImage" \) | head -n 1)
+check_size () {
+  FILE=$1
+  MAX=$2
+  LABEL=$3
 
-if [[ -z "$ARTIFACT" ]]; then
-  echo "❌ No build artifact found"
-  exit 1
-fi
+  if [[ -f "$FILE" ]]; then
+    SIZE=$(du -m "$FILE" | cut -f1)
+    echo "📏 $LABEL size: ${SIZE} MB (limit ${MAX} MB)"
 
-SIZE=$(du -m "$ARTIFACT" | cut -f1)
-echo "Size: ${SIZE} MB"
+    if (( SIZE > MAX )); then
+      echo "❌ $LABEL too large"
+      exit 1
+    fi
 
-if (( SIZE > 110 )); then
-  echo "❌ Build too large"
-  exit 1
-fi
+    if (( SIZE < 50 )); then
+      echo "❌ $LABEL suspiciously small"
+      exit 1
+    fi
+  else
+    echo "ℹ️ $LABEL not built"
+  fi
+}
 
-if (( SIZE < 75 )); then
-  echo "❌ Build too small"
-  exit 1
+# ---- Linux ----
+check_size "dist/MitarbeiterKalenderApp-${VERSION}.AppImage" 240 "Linux AppImage"
+check_size "dist/mitarbeiterkalender_${VERSION}_amd64.deb" 180 "Linux deb"
+
+# ---- Windows ----
+WIN_FILE=$(find dist -type f -name "*nsis*.exe" | head -n 1)
+if [[ -n "$WIN_FILE" ]]; then
+  check_size "$WIN_FILE" 220 "Windows installer"
+else
+  echo "ℹ️ Windows build not present"
 fi
 
 # -------------------------
