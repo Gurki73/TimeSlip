@@ -15,7 +15,7 @@ Options:
   -dry                 Perform a dry run (skip Butler uploads & version bump)
   --ask                Prompt to select version bump (patch, minor, major)
   --version=X.Y.Z      Override version bump (manual)
-  --platform=PLATFORM  Build only specified platform (linux, win)
+  --platform=PLATFORM  Build only specified platform (win, linux)
   -h, -?               Show this help message
 
 Examples:
@@ -23,7 +23,7 @@ Examples:
     npm run release -- -dry
     npm run release -- --ask
     npm run release -- --version=1.5.4
-    npm run release -- --platform=win
+    npm run release -- --platform=linux
 EOF
   exit 0
 }
@@ -83,7 +83,10 @@ echo "🏗 Building"
 case "$PLATFORM" in
   linux) npm run build ;;
   win) npm run build:win64 ;;
-  all) npm run build ;;
+  all) 
+    npm run build:win64  # Windows first
+    npm run build        # Linux
+    ;;
   *) echo "❌ Unknown platform '$PLATFORM'"; exit 1 ;;
 esac
 
@@ -154,19 +157,14 @@ echo "🏷 Version: $VERSION"
 # UPLOAD FUNCTION
 # -------------------------
 upload () {
-  LABEL=$1       # e.g., "Windows"
-  FILES=$2       # glob pattern of files to upload
-  CHANNEL=$3     # itch.io channel: win / linux / linux-deb
+  LABEL=$1
+  FILES=$2
+  CHANNEL=$3
 
   if compgen -G "$FILES" > /dev/null; then
     echo "🚀 Upload $LABEL → $CHANNEL"
 
     if ! $DRY_RUN; then
-      # Delete previous builds for this channel
-      echo "🗑️ Deleting old $LABEL builds on channel $CHANNEL"
-      butler push --delete $FILES "$ITCH_TARGET:$CHANNEL" --userversion "$VERSION"
-
-      # Upload the new files
       echo "📤 Uploading $LABEL build(s)"
       butler push $FILES "$ITCH_TARGET:$CHANNEL" --userversion "$VERSION"
     else
@@ -180,23 +178,14 @@ upload () {
 # -------------------------
 # UPLOADS
 # -------------------------
-upload () {
-  LABEL=$1
-  FILES=$2
-  CHANNEL=$3
+upload "Windows" "dist/*nsis*.exe" "win"
+upload "Linux AppImage" "dist/*.AppImage" "linux"
+upload "Linux deb" "dist/*.deb" "linux-deb"
 
-  if compgen -G "$FILES" > /dev/null; then
-    echo "🚀 Upload $LABEL → $CHANNEL"
+echo "✅ Release finished"
 
-    if ! $DRY_RUN; then
-      # NOTE: Butler no longer supports --delete
-      echo "📤 Uploading $LABEL build(s)"
-      butler push $FILES "$ITCH_TARGET:$CHANNEL" --userversion "$VERSION"
-    else
-      echo "🧪 Dry run – skipping upload of $LABEL"
-    fi
-  else
-    echo "ℹ️ Nothing to upload for $LABEL"
-  fi
-}
-
+if ! $DRY_RUN; then
+  echo "📤 Now run: git push --follow-tags"
+else
+  echo "🧪 Dry run complete – nothing was uploaded"
+fi
