@@ -4,6 +4,36 @@ export HOME="$HOME"
 
 cd "$(dirname "$0")/.."   # go to project root
 
+
+show_help() {
+  cat <<EOF
+Usage: ./release.sh [OPTIONS]
+
+Options:
+  -dry           Perform a dry run (skip Butler uploads)
+  --ask          Prompt to select version bump (patch, minor, major)
+  --version=X.Y.Z  Override version bump with specific version
+  --platform=PLATFORM  Build only the specified platform (linux, win)
+  -h, -?         Show this help message
+
+Examples:
+  ./release.sh             # normal release
+  ./release.sh -dry        # dry run
+  ./release.sh --ask       # choose version bump type
+  ./release.sh --platform=linux --version=1.5.4
+EOF
+  exit 0
+}
+
+# Handle help
+for arg in "$@"; do
+  case "$arg" in
+    -h|--help|-\?) show_help ;;
+    -v|--version) echo "Release script version 1.0.0"; exit 0 ;;
+  esac
+done
+
+
 # -------------------------
 # LOAD ENV
 # -------------------------
