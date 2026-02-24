@@ -1,10 +1,41 @@
 #!/usr/bin/env bash
 set -e
+export HOME="$HOME"
 
 cd "$(dirname "$0")/.."   # go to project root
 
-ITCH_TARGET="youritchuser/mitarbeiterkalender"
+# -------------------------
+# LOAD ENV
+# -------------------------
+if [[ -f .env ]]; then
+  export $(grep -v '^#' .env | xargs)
+fi
 
+ITCH_TARGET="${ITCH_TARGET}"
+
+if [[ -z "$ITCH_TARGET" ]]; then
+  echo "❌ ITCH_TARGET not set. Put it in .env"
+  exit 1
+fi
+
+# -------------------------
+# DRY RUN MODE
+# -------------------------
+DRY_RUN=false
+[[ "$1" == "-dry" ]] && DRY_RUN=true
+
+# -------------------------
+# CHECK BUTLER LOGIN
+# -------------------------
+
+if ! butler push --dry-run /dev/null "$ITCH_TARGET" 2>/dev/null; then
+    echo "❌ Not logged into butler. Run: butler login"
+    exit 1
+fi
+
+# -------------------------
+# GIT CLEAN CHECK
+# -------------------------
 echo "🔍 Git clean check"
 [ -z "$(git status --porcelain)" ] || { echo "❌ Git not clean"; exit 1; }
 
@@ -14,34 +45,28 @@ git pull
 # -------------------------
 # VERSION BUMP
 # -------------------------
+CURRENT_VERSION=$(node -p "require('./package.json').version")
 
-BUMP="patch"
-
-if [[ "$1" == "--ask" ]]; then
-  echo "Select version bump:"
-  select opt in patch minor major; do
-    BUMP=$opt
-    break
-  done
+if $DRY_RUN; then
+  echo "🧪 Dry run – keeping version $CURRENT_VERSION"
+  VERSION="$CURRENT_VERSION"
+else
+  echo "🔢 Version bump: $BUMP"
+  npm version $BUMP
+  VERSION=$(node -p "require('./package.json').version")
 fi
 
-echo "🔢 Version bump: $BUMP"
-npm version $BUMP
-
-VERSION=$(node -p "require('./package.json').version")
 echo "🏷 Version: $VERSION"
 
 # -------------------------
 # BUILD
 # -------------------------
-
 echo "🏗 Building"
 npm run build
 
 # -------------------------
 # SIZE CHECK
 # -------------------------
-
 echo "📦 Checking artifact sizes"
 
 check_size () {
@@ -67,30 +92,51 @@ check_size () {
   fi
 }
 
-# ---- Linux ----
-check_size "dist/MitarbeiterKalenderApp-${VERSION}.AppImage" 240 "Linux AppImage"
-check_size "dist/mitarbeiterkalender_${VERSION}_amd64.deb" 180 "Linux deb"
-
-# ---- Windows ----
+APPIMAGE="dist/MitarbeiterKalenderApp-${VERSION}.AppImage"
+DEB="dist/mitarbeiterkalender_${VERSION}_amd64.deb"
 WIN_FILE=$(find dist -type f -name "*nsis*.exe" | head -n 1)
+
+check_size "$APPIMAGE" 130 "Linux AppImage"
+check_size "$DEB" 130 "Linux deb"
+
 if [[ -n "$WIN_FILE" ]]; then
-  check_size "$WIN_FILE" 220 "Windows installer"
+  check_size "$WIN_FILE" 130 "Windows installer"
 else
   echo "ℹ️ Windows build not present"
 fi
 
 # -------------------------
-# UPLOAD
+# UPLOAD FUNCTION
 # -------------------------
+upload () {
+  LABEL=$1
+  FILES=$2
+  CHANNEL=$3
 
-echo "🚀 Upload Windows"
-butler push "dist/*nsis*.exe" $ITCH_TARGET:win --userversion $VERSION
+  if compgen -G "$FILES" > /dev/null; then
+    echo "🚀 Upload $LABEL → $CHANNEL"
 
-echo "🚀 Upload Linux AppImage"
-butler push "dist/*.AppImage" $ITCH_TARGET:linux --userversion $VERSION
+    if ! $DRY_RUN; then
+      butler push $FILES "$ITCH_TARGET:$CHANNEL" --userversion "$VERSION"
+    else
+      echo "🧪 Dry run – skipping upload"
+    fi
+  else
+    echo "ℹ️ Nothing to upload for $LABEL"
+  fi
+}
 
-echo "🚀 Upload Linux deb"
-butler push "dist/*.deb" $ITCH_TARGET:linux-deb --userversion $VERSION
+# -------------------------
+# UPLOADS
+# -------------------------
+upload "Windows" "dist/*nsis*.exe" "win"
+upload "Linux AppImage" "dist/*.AppImage" "linux"
+upload "Linux deb" "dist/*.deb" "linux-deb"
 
 echo "✅ Release finished"
-echo "📤 Now run: git push --follow-tags"
+
+if ! $DRY_RUN; then
+  echo "📤 Now run: git push --follow-tags"
+else
+  echo "🧪 Dry run complete – nothing was uploaded"
+fi

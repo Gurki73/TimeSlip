@@ -2,6 +2,7 @@
 dist/
 Installer/
 MitarbeiterKalender-Installer/
+.env 
 
 # Binary installers
 *.exe
