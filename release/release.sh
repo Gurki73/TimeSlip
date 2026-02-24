@@ -12,17 +12,18 @@ show_help() {
 Usage: ./release.sh [OPTIONS]
 
 Options:
-  -dry           Perform a dry run (skip Butler uploads)
-  --ask          Prompt to select version bump (patch, minor, major)
-  --version=X.Y.Z  Override version bump (manual)
+  -dry                 Perform a dry run (skip Butler uploads & version bump)
+  --ask                Prompt to select version bump (patch, minor, major)
+  --version=X.Y.Z      Override version bump (manual)
   --platform=PLATFORM  Build only specified platform (linux, win)
-  -h, -?         Show this help message
+  -h, -?               Show this help message
 
 Examples:
     npm run release -- -h
     npm run release -- -dry
     npm run release -- --ask
     npm run release -- --version=1.5.4
+    npm run release -- --platform=win
 EOF
   exit 0
 }
@@ -78,7 +79,13 @@ git pull
 # BUILD
 # -------------------------
 echo "🏗 Building"
-npm run build
+
+case "$PLATFORM" in
+  linux) npm run build ;;
+  win) npm run build:win64 ;;
+  all) npm run build ;;
+  *) echo "❌ Unknown platform '$PLATFORM'"; exit 1 ;;
+esac
 
 # -------------------------
 # SIZE CHECK
@@ -120,7 +127,7 @@ else
 fi
 
 # -------------------------
-# VERSION BUMP
+# VERSION BUMP (after successful build)
 # -------------------------
 if ! $DRY_RUN; then
   if [[ -n "$VERSION_OVERRIDE" ]]; then
@@ -147,16 +154,23 @@ echo "🏷 Version: $VERSION"
 # UPLOAD FUNCTION
 # -------------------------
 upload () {
-  LABEL=$1
-  FILES=$2
-  CHANNEL=$3
+  LABEL=$1       # e.g., "Windows"
+  FILES=$2       # glob pattern of files to upload
+  CHANNEL=$3     # itch.io channel: win / linux / linux-deb
 
   if compgen -G "$FILES" > /dev/null; then
     echo "🚀 Upload $LABEL → $CHANNEL"
+
     if ! $DRY_RUN; then
+      # Delete previous builds for this channel
+      echo "🗑️ Deleting old $LABEL builds on channel $CHANNEL"
+      butler push --delete $FILES "$ITCH_TARGET:$CHANNEL" --userversion "$VERSION"
+
+      # Upload the new files
+      echo "📤 Uploading $LABEL build(s)"
       butler push $FILES "$ITCH_TARGET:$CHANNEL" --userversion "$VERSION"
     else
-      echo "🧪 Dry run – skipping upload"
+      echo "🧪 Dry run – skipping upload of $LABEL"
     fi
   else
     echo "ℹ️ Nothing to upload for $LABEL"
