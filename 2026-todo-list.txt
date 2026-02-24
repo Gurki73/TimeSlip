@@ -17,9 +17,9 @@ check if role reasignments are rendered
 integrtate shift icon on closed days
 
 requests:
-- filter by employee name 
-- resolve folder with warnings into single warning. filter by requester roles exclude overstaffing ( except lead role )
-maybe delta test instead of simple results...
+✅ filter by employee name 
+✅ resolve folder with warnings into single warning. filter by requester roles exclude overstaffing ( except lead role )
+✅ maybe delta test instead of simple results...
 
 employees:
 - fit privacy warning in its conatianer
@@ -28,14 +28,14 @@ employees:
 - switch from label to something fitting for style ( regular shedule )
 
 roles:
-- fix endless loop stuck in loading ( maybe a silent failure or uncatched error only)
+✅ fix endless loop stuck in loading ( maybe a silent failure or uncatched error only)
 - check tranparence or opacity for table
 
 ruleset:
-- warnings as delta + heatmap for time 
-- and delta + votes for treams and roles 
+✅ warnings as delta + heatmap for time 
+✅ and delta + votes for treams and roles 
 - elipsses style for awake and asleep in sample model
-- check if awake and asleep are considered in rule checker
+✅ check if awake and asleep are considered in rule checker
 - add more mok data rules
 - check complex rules
 - add chip for weekdays ( color )
@@ -43,10 +43,10 @@ ruleset:
 - extend team marker ( maybe with ellipses if no space)
 
 calendar-settings:
-- animate chevron for all lists
+✅ animate chevron for all lists
 - fix filling of minimized shifts 
-- wxtend width of schoolholiday column
-- chnage font for start and end date of company holidays
+✅ extend width of schoolholiday column
+✅ change font for start and end date of company holidays
 - check opacity for collapsed lists 
 - add tool tip texts for icons "open" and "closed"
 - adjust height for company holidays 

@@ -377,9 +377,9 @@ function gatherEmployeeData(api, action = "create") {
     id: document.getElementById("employee-id")?.textContent || Date.now(),
     name: document.getElementById("employee-name")?.value || "Unnamed",
     personalEmoji: document.getElementById("employee-emoji-picker-btn")?.textContent || "👤",
-    mainRoleIndex: parseInt(document.getElementById("employee-details-role-main")?.value),
-    secondaryRoleIndex: parseInt(document.getElementById("employee-details-role-secondary")?.value) || 0,
-    tertiaryRoleIndex: parseInt(document.getElementById("employee-details-role-trinary")?.value) || 0,
+    mainRoleIndex: getRoleIndexFromSelect("employee-details-role-main", 0),
+    secondaryRoleIndex: getRoleIndexFromSelect("employee-details-role-secondary", 0),
+    tertiaryRoleIndex: getRoleIndexFromSelect("employee-details-role-trinary", 0),
     roleSplitMain: parseFloat(document.getElementById("role1-value")?.value) || 1,
     roleSplitSecondary: parseFloat(document.getElementById("role2-value")?.value) || 0,
     roleSplitTertiary: parseFloat(document.getElementById("role3-value")?.value) || 0,
@@ -851,7 +851,8 @@ function initEventListenerRoleSelect() {
       selectEl.parentNode.replaceChild(newSelectEl, selectEl);
 
       newSelectEl.addEventListener("change", (e) => {
-        const newValue = e.target.value;
+        const selected = e.target.options?.[e.target.selectedIndex];
+        const newValue = selected?.dataset?.colorIndex ?? e.target.value;
         handleRoleChange(type, newValue);
         saveButtonHeader.setState('dirty');
       });
@@ -1003,13 +1004,87 @@ function clearDropdown(dropdown) {
   dropdown.innerHTML = '';
 }
 
+function toRoleIndex(value, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) ? parsed : fallback;
+}
+
+function getRoleIndexFromSelect(selectId, fallback = 0) {
+  const select = document.getElementById(selectId);
+  if (!select) return fallback;
+
+  const selected = select.options?.[select.selectedIndex];
+  if (!selected) return fallback;
+
+  const fromData = toRoleIndex(selected.dataset?.colorIndex, NaN);
+  if (Number.isInteger(fromData)) return fromData;
+
+  return toRoleIndex(select.value, fallback);
+}
+
+function getRoleColorIndex(role) {
+  if (!role || typeof role !== 'object') return -1;
+  const rawIndex =
+    role.colorIndex ??
+    role.roleColorIndex ??
+    role.rolecolorindex ??
+    role.roleIndex ??
+    role.index;
+  return toRoleIndex(rawIndex, -1);
+}
+
+function getRoleDisplayName(role) {
+  if (!role || typeof role !== 'object') return '';
+  const rawName = role.name ?? role.roleName ?? role.rolename;
+  return typeof rawName === 'string' ? rawName.trim() : '';
+}
+
+function getRoleDisplayEmoji(role) {
+  if (!role || typeof role !== 'object') return '';
+  const rawEmoji = role.emoji ?? role.roleEmoji ?? role.icon;
+  return typeof rawEmoji === 'string' ? rawEmoji.trim() : '';
+}
+
+function getNormalizedRoleOptions() {
+  const byIndex = new Map();
+
+  (cachedRoles || []).forEach((role) => {
+    const idx = getRoleColorIndex(role);
+    if (idx < 0) return;
+    byIndex.set(idx, {
+      name: getRoleDisplayName(role),
+      emoji: getRoleDisplayEmoji(role),
+      colorIndex: idx
+    });
+  });
+
+  const all = [];
+  for (let idx = 0; idx <= 13; idx++) {
+    const fromData = byIndex.get(idx) || {};
+    const fallbackName =
+      idx === 0 ? 'Keine'
+        : idx === 13 ? 'Azubi'
+          : `Aufgabe ${idx}`;
+    const fallbackEmoji =
+      idx === 0 ? '🚫'
+        : idx === 13 ? '✏️'
+          : '🧩';
+
+    const safeName = fromData.name && fromData.name !== '?' ? fromData.name : fallbackName;
+    const safeEmoji = fromData.emoji || fallbackEmoji;
+    all.push({ name: safeName, emoji: safeEmoji, colorIndex: idx });
+  }
+
+  return all;
+}
+
 function fillMainRoleDropdown(employee) {
   if (!employee) {
     console.error("[employee-form] details main: no employee passed");
     return null;
   }
 
-  let roleOptions = [...cachedRoles];
+  let roleOptions = getNormalizedRoleOptions();
 
   const emoji = document.getElementById('employee-details-icon-main');
   const slider = document.getElementById('employee-form-role1');
@@ -1026,13 +1101,13 @@ function fillMainRoleDropdown(employee) {
   emoji.classList.remove('invalid-field');
   dropDown.classList.remove('invalid-field');
 
-  if (!employee.mainRoleIndex) employee.mainRoleIndex = 0;
+  employee.mainRoleIndex = toRoleIndex(employee.mainRoleIndex, 0);
   if (employee.mainRoleIndex === 0) {
     emoji.classList.add('invalid-field');
     dropDown.classList.add('invalid-field');
   }
 
-  if (!roleOptions.find(r => r.colorIndex === 13)) {
+  if (!roleOptions.find(r => Number(r.colorIndex) === 13)) {
     roleOptions.push({ name: "Azubi", emoji: "✏️", colorIndex: 13 });
   }
 
@@ -1046,7 +1121,9 @@ function fillMainRoleDropdown(employee) {
     return;
   }
 
-  if (selectedRole !== 0) roleOptions = roleOptions.filter(r => r.colorIndex !== 0);
+  if (Number(selectedRole.colorIndex) !== 0) {
+    roleOptions = roleOptions.filter(r => Number(r.colorIndex) !== 0);
+  }
 
   const roleColor = getComputedStyle(document.body)
     .getPropertyValue(`--role-${employee.mainRoleIndex}-color`)
@@ -1065,7 +1142,8 @@ function fillMainRoleDropdown(employee) {
 
 function createRoleOption(role, selectedValue) {
   const option = document.createElement("option");
-  option.value = role.colorIndex;
+  option.value = String(role.colorIndex ?? 0);
+  option.dataset.colorIndex = String(role.colorIndex);
   option.textContent = `${role.emoji} ⇨ ${role.name} `;
   option.classList.add("employee-details-role-selector", "noto");
 
@@ -1074,7 +1152,7 @@ function createRoleOption(role, selectedValue) {
     .trim();
   if (roleColor) option.style.backgroundColor = roleColor;
 
-  option.selected = Number(role.colorIndex) === selectedValue;
+  option.selected = Number(role.colorIndex) === Number(selectedValue);
   return option;
 }
 function fillSecondaryRoleDropdown(employee) {
@@ -1083,7 +1161,7 @@ function fillSecondaryRoleDropdown(employee) {
     return null;
   }
 
-  let roleOptions = [...cachedRoles];
+  let roleOptions = getNormalizedRoleOptions();
 
   const emoji = document.getElementById('employee-details-icon-secondary');
   const slider = document.getElementById('employee-form-role2');
@@ -1100,16 +1178,17 @@ function fillSecondaryRoleDropdown(employee) {
   emoji.classList.remove('invalid-field');
   dropDown.classList.remove('invalid-field');
 
-  if (!employee.secondaryRoleIndex) employee.secondaryRoleIndex = 0;
+  employee.secondaryRoleIndex = toRoleIndex(employee.secondaryRoleIndex, 0);
+  employee.mainRoleIndex = toRoleIndex(employee.mainRoleIndex, 0);
 
   if (employee.mainRoleIndex === 13) {
     dropDown.classList.remove('invalid-field');
     emoji.classList.remove('invalid-field');
 
-    roleOptions = roleOptions.filter(r => r.colorIndex !== 0 && r.colorIndex !== 13);
+    roleOptions = roleOptions.filter(r => Number(r.colorIndex) !== 0 && Number(r.colorIndex) !== 13);
 
     if (!employee.secondaryRoleIndex || employee.secondaryRoleIndex === 0) {
-      employee.secondaryRoleIndex = roleOptions[0]?.colorIndex || 1;
+      employee.secondaryRoleIndex = toRoleIndex(roleOptions[0]?.colorIndex, 1);
     }
   } else {
     if (employee.mainRoleIndex === 13 && employee.secondaryRoleIndex === 0) {
@@ -1118,14 +1197,14 @@ function fillSecondaryRoleDropdown(employee) {
     }
   }
 
-  roleOptions = roleOptions.filter(r => r.colorIndex !== employee.mainRoleIndex);
+  roleOptions = roleOptions.filter(r => Number(r.colorIndex) !== Number(employee.mainRoleIndex));
 
-  if (!roleOptions.find(r => r.colorIndex === 0)) {
+  if (!roleOptions.find(r => Number(r.colorIndex) === 0)) {
     roleOptions.unshift({ name: "Keine", emoji: "🚫", colorIndex: 0 });
   }
 
   if (employee.mainRoleIndex !== 13) {
-    roleOptions = roleOptions.filter(r => r.colorIndex !== 13);
+    roleOptions = roleOptions.filter(r => Number(r.colorIndex) !== 13);
   }
 
   const selectedRole = roleOptions.find(
@@ -1209,7 +1288,7 @@ function fillRoleDropdowns(employee) {
 function fillTrinaryRoleDropdown(employee) {
   if (!employee) return null;
 
-  let roleOptions = [...cachedRoles];
+  let roleOptions = getNormalizedRoleOptions();
   const emoji = document.getElementById('employee-details-icon-trinary');
   const slider = document.getElementById('employee-form-role3');
   const sliderLabel = document.getElementById('role3-value');
@@ -1217,15 +1296,19 @@ function fillTrinaryRoleDropdown(employee) {
 
   if (!emoji || !slider || !sliderLabel || !dropDown) return employee;
 
+  employee.mainRoleIndex = toRoleIndex(employee.mainRoleIndex, 0);
+  employee.secondaryRoleIndex = toRoleIndex(employee.secondaryRoleIndex, 0);
+  employee.tertiaryRoleIndex = toRoleIndex(employee.tertiaryRoleIndex, 0);
+
   clearDropdown(dropDown);
 
-  roleOptions = roleOptions.filter(r => r.colorIndex !== employee.mainRoleIndex);
-  roleOptions = roleOptions.filter(r => r.colorIndex !== employee.secondaryRoleIndex);
+  roleOptions = roleOptions.filter(r => Number(r.colorIndex) !== Number(employee.mainRoleIndex));
+  roleOptions = roleOptions.filter(r => Number(r.colorIndex) !== Number(employee.secondaryRoleIndex));
 
-  if (!roleOptions.find(r => r.colorIndex === 0)) {
+  if (!roleOptions.find(r => Number(r.colorIndex) === 0)) {
     roleOptions.unshift({ name: "Keine", emoji: "🚫", colorIndex: 0 });
   }
-  roleOptions = roleOptions.filter(r => r.colorIndex !== 13);
+  roleOptions = roleOptions.filter(r => Number(r.colorIndex) !== 13);
 
   const selectedRole = roleOptions.find(ro => Number(ro.colorIndex) === Number(employee.tertiaryRoleIndex)) || roleOptions[0];
 

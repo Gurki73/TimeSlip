@@ -267,6 +267,7 @@ export async function initializeCalendarForm(passedApi) {
 function updateShiftState(shiftsData, officeDays) {
 
   const weekDays = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+  const normalizeShiftId = (id) => (id === 'full' ? 'day' : id);
 
   weekDays.forEach((day, index) => {
     const officeKey = officeDays[index] || "never";
@@ -276,7 +277,9 @@ function updateShiftState(shiftsData, officeDays) {
     if (!dayShifts) return;
 
     dayShifts.forEach(shift => {
-      switch (shift.id) {
+      const shiftId = normalizeShiftId(shift.id);
+
+      switch (shiftId) {
         case "early":
           shift.active = officeOpen.early;
           break;
@@ -938,6 +941,7 @@ function populateCompanyHolidaysList(companyHolidays = []) {
   const listNode = tplList.content.cloneNode(true);
   const listBody = listNode.querySelector('.list-body');
   const listControls = listNode.querySelector('.list-controls');
+
   const inputContainer = document.createElement('div');
   inputContainer.classList.add('company-holiday-input', 'noto', 'flex-col');
 
@@ -948,7 +952,6 @@ function populateCompanyHolidaysList(companyHolidays = []) {
   const endInputId = `end-date-picker-${timestamp}`;
   const previewStartId = `preview-start`;
   const previewEndId = `preview-end`;
-  const saveBtnId = `save-company-holiday-btn-${timestamp}`;
 
   const tpl = document.getElementById('date-range-template');
   const node = tpl.content.cloneNode(true);
@@ -985,80 +988,89 @@ function populateCompanyHolidaysList(companyHolidays = []) {
     onChange: () => { }
   });
 
-
   if (!companyHolidays.length) {
     const empty = document.createElement('span');
     empty.textContent = "Keine Betriebsferien hinterlegt";
     listBody.appendChild(empty);
-  } else {
-    companyHolidays.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
-    companyHolidays.forEach(period => {
-      const tplItem = document.getElementById('tpl-list-item');
-      const fragment = tplItem.content.cloneNode(true);
-      const itemNode = fragment.querySelector('.data-row');
-      if (!itemNode) return;
-
-      itemNode.classList.add('is-closed');
-
-      const labelText = itemNode.querySelector('.label-text');
-      const rowRight = itemNode.querySelector('.row-right');
-
-      itemNode.querySelector('.row-checkbox')?.remove();
-
-      const start = new Date(period.startDate);
-      const end = new Date(period.endDate);
-      const startStr = start.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
-      const endStr = end.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
-
-      if (startStr !== endStr) itemNode.classList.add('multi-day');
-
-      const label = document.createElement('div');
-      label.classList.add('company-holiday-label');
-
-      const startLabel = document.createElement('span');
-      startLabel.innerHTML = `<span class="noto">🔜</span> ${startStr}`;
-      label.appendChild(startLabel);
-
-      const delBtn = document.createElement('button');
-      delBtn.classList.add('noto', 'delete-btn');
-      delBtn.title = "Löschen";
-      delBtn.setAttribute('aria-label', 'Betriebsferien löschen');
-      delBtn.textContent = '🗑️';
-      delBtn.addEventListener('click', () => removeCompanyHoliday(period));
-      label.appendChild(delBtn);
-
-      if (startStr !== endStr) {
-        label.appendChild(document.createElement('br'));
-
-        const endLabel = document.createElement('span');
-        endLabel.innerHTML = `<span class="noto">🔚</span> ${endStr}`;
-        label.appendChild(endLabel);
-
-        const editBtn = document.createElement('button');
-        editBtn.classList.add('noto', 'edit-btn');
-        editBtn.title = "Bearbeiten";
-        editBtn.setAttribute('aria-label', 'Betriebsferien bearbeiten');
-        editBtn.textContent = '✏️';
-        editBtn.addEventListener('click', () => editCompanyHoliday(period));
-        label.appendChild(editBtn);
-      }
-
-      labelText.innerHTML = "";
-      labelText.appendChild(label);
-
-      const lockIcon = document.createElement('span');
-      lockIcon.classList.add('noto');
-      lockIcon.setAttribute('aria-label', 'geschlossen');
-      lockIcon.textContent = '🔒';
-      lockIcon.style.fontSize = '1.75rem';
-      lockIcon.style.lineHeight = '1';
-
-      rowRight.innerHTML = "";
-      rowRight.appendChild(lockIcon);
-
-      listBody.appendChild(itemNode);
-    });
+    return;
   }
+
+  companyHolidays.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+
+  companyHolidays.forEach(period => {
+    const tplItem = document.getElementById('tpl-list-item');
+    const fragment = tplItem.content.cloneNode(true);
+    const itemNode = fragment.querySelector('.data-row');
+    if (!itemNode) return;
+
+    itemNode.classList.add('is-closed');
+
+    const labelText = itemNode.querySelector('.label-text');
+    const rowRight = itemNode.querySelector('.row-right');
+
+    itemNode.querySelector('.row-checkbox')?.remove();
+
+    const start = new Date(period.startDate);
+    const end = new Date(period.endDate);
+
+    const startStr = start.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+    const endStr = end.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+
+    const isMultiDay = startStr !== endStr;
+    if (isMultiDay) itemNode.classList.add('multi-day');
+
+    const label = document.createElement('div');
+    label.classList.add('company-holiday-label');
+
+    const startLabel = document.createElement('span');
+    startLabel.innerHTML = `<span class="noto">🔜</span> <span class="compHoliday">${startStr}</span>`;
+    label.appendChild(startLabel);
+
+    if (isMultiDay) {
+      label.appendChild(document.createElement('br'));
+
+      const endLabel = document.createElement('span');
+      endLabel.innerHTML = `<span class="noto">🔚</span> ${endStr}`;
+      label.appendChild(endLabel);
+    }
+
+    labelText.innerHTML = "";
+    labelText.appendChild(label);
+
+    const lockIcon = document.createElement('span');
+    lockIcon.classList.add('noto');
+    lockIcon.setAttribute('aria-label', 'geschlossen');
+    lockIcon.textContent = '🔒';
+    lockIcon.style.fontSize = '1.75rem';
+    lockIcon.style.lineHeight = '1';
+
+    const actions = document.createElement('div');
+    actions.classList.add('company-holiday-actions');
+
+    const delBtn = document.createElement('button');
+    delBtn.classList.add('noto', 'delete-btn');
+    delBtn.title = "Löschen";
+    delBtn.setAttribute('aria-label', 'Betriebsferien löschen');
+    delBtn.textContent = '🗑️';
+    delBtn.addEventListener('click', () => removeCompanyHoliday(period));
+    actions.appendChild(delBtn);
+
+    if (isMultiDay) {
+      const editBtn = document.createElement('button');
+      editBtn.classList.add('noto', 'edit-btn');
+      editBtn.title = "Bearbeiten";
+      editBtn.setAttribute('aria-label', 'Betriebsferien bearbeiten');
+      editBtn.textContent = '✏️';
+      editBtn.addEventListener('click', () => editCompanyHoliday(period));
+      actions.appendChild(editBtn);
+    }
+
+    rowRight.innerHTML = "";
+    rowRight.appendChild(actions);
+    rowRight.appendChild(lockIcon);
+
+    listBody.appendChild(itemNode);
+  });
 }
 
 

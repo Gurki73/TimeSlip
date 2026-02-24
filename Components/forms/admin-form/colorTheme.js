@@ -175,7 +175,7 @@ function initRoleGrid() {
       const name = teamnames[teamKey] || teamKey;
       if (teamNameEl) teamNameEl.textContent = name;
       if (roleNameEl) roleNameEl.textContent = `Aufgabe #${roleIndex}`;
-      if (pickerDisc) pickerDisc.style.background = getCssVar(varKey);
+      if (pickerDisc) pickerDisc.style.background = "";
 
       // Set current state for picker
       currentTeamKey = teamKey;
@@ -361,10 +361,6 @@ function handlePickerClick(e, picker, cursor) {
   if (currentVarKey && currentTeamKey) {
     const clamped = clampToTeam(hex, currentTeamKey);
     setThemeVar(currentVarKey, clamped);
-
-    // Update UI
-    picker.style.background = clamped;
-
     // Update active cell if exists
     const activeCell = document.querySelector(".role-active");
     if (activeCell) {
@@ -396,8 +392,6 @@ function handlePickerClick(e, picker, cursor) {
       if (currentVarKey && currentTeamKey) {
         const clamped = clampToTeam(moveHex, currentTeamKey);
         setThemeVar(currentVarKey, clamped);
-
-        picker.style.background = clamped;
 
         const activeCell = document.querySelector(".role-active");
         if (activeCell) {
@@ -455,6 +449,8 @@ function redrawPicker(picker, ctx, hue) {
   ctx.fillStyle = blackGrad;
   ctx.fillRect(0, 0, w, h);
 
+  // Ensure no stale inline background color overrides the gradient image.
+  picker.style.background = "";
   // Update picker background
   picker.style.backgroundImage = `url(${ctx.canvas.toDataURL()})`;
 }
@@ -794,3 +790,5 @@ function averageHue([min, max]) {
     ? Math.round((min + max) / 2)
     : Math.round(((min + max + 360) / 2) % 360);
 }
+
+

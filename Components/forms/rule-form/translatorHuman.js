@@ -317,7 +317,7 @@ export function generateFullHumanSentence(rule = {}, roles = []) {
     }
 
     const mainPart = rule.main || rule;
-    const condPart = rule.condition || null;
+    const condPart = rule.secondary || rule.condition || null;
     const exceptionType = mainPart.exception?.id || rule.exception?.id || "E0";
     const mainText = generateHumanSentence(mainPart, roles);
     const condText =
@@ -436,13 +436,14 @@ function translateToHuman(rule = {}, roles = []) {
 
 function identifyTeams(rule) {
     const roles = [];
+    const condition = rule.secondary || rule.condition || null;
 
     if (rule.main?.group?.details?.roles) {
         roles.push(...rule.main.group.details.roles);
     }
 
-    if (rule.condition?.group?.details?.roles) {
-        roles.push(...rule.condition.group.details.roles);
+    if (condition?.group?.details?.roles) {
+        roles.push(...condition.group.details.roles);
     }
 
     const teams = [];
@@ -467,15 +468,16 @@ function enrichRule(rule, idx, roles) {
 
     let isRatio = false;
     if (isComplex) {
+        const condition = rule.secondary || rule.condition || {};
         const hasConditionDependency =
-            has(rule, ['condition', 'dependency', 'id']);
+            !!condition?.dependency?.id;
 
         if (!hasConditionDependency) {
             errors.push('mandatory dependency missing (complex rule)');
         } else {
             isRatio =
                 rule.main?.dependency?.id !== 'D0' ||
-                rule.condition.dependency.id !== 'd0';
+                condition.dependency.id !== 'd0';
         }
     }
 

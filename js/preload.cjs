@@ -111,6 +111,7 @@ if (!window.api) {
     // other API functions
     getRequestFiles: () => ipcRenderer.invoke("get-request-files"),
     getRuleFiles: () => ipcRenderer.invoke("get-rule-files"),
+    deleteRule: (relativePath) => ipcRenderer.invoke('rules:delete', relativePath),
     getRecoveredPath: () => ipcRenderer.invoke('get-recovered-path'),
     readFile: (filePath) => ipcRenderer.invoke("read-file", filePath),
     healthCheck: (url) => ipcRenderer.invoke('health-check', url),

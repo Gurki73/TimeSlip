@@ -82,16 +82,46 @@ export async function loadSampleRoleData(showSample) {
     }
 
     else {
+        const samplePaths = ['samples/role.csv', 'samples/role-data/role.csv'];
         try {
-            const response = await fetch('samples/role.csv');
-            if (!response.ok) throw new Error('Sample CSV fetch failed');
-            const data = await response.text();
-            return parseCSV(data);
+            for (const samplePath of samplePaths) {
+                const response = await fetch(samplePath);
+                if (!response.ok) continue;
+
+                const data = await response.text();
+                const parsed = parseCSV(data);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    return parsed;
+                }
+            }
+
+            console.warn('⚠️ Sample role CSV not found, using embedded fallback sample roles.');
+            return parseCSV(getEmbeddedSampleRoleCSV());
         } catch (error) {
-            console.error('❌ Error loading sample role data:', error);
-            throw error;
+            console.error('❌ Error loading sample role data, using embedded fallback:', error);
+            return parseCSV(getEmbeddedSampleRoleCSV());
         }
     }
+}
+
+function getEmbeddedSampleRoleCSV() {
+    return [
+        'name,colorIndex,emoji',
+        '?,0,⊖',
+        'Koch,1,👨‍🍳',
+        'Spüler,2,🧼',
+        '?,3,⊖',
+        'Kellner,4,💪',
+        'Barkeeper,5,🍹',
+        'Lieferfahrer,6,🚚',
+        'Einkauf,7,🛒',
+        'Manager,8,🧑‍💼',
+        'Empfang,9,📞',
+        '?,10,⊖',
+        '?,11,⊖',
+        '?,12,⊖',
+        'Azubi,13,✏️'
+    ].join('\n');
 }
 
 // ----------------- Parse -----------------

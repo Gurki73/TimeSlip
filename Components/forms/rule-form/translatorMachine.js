@@ -83,6 +83,10 @@ function createAlwaysTrue() {
     }
 }
 
+function pickSecondaryCondition(rule) {
+    return rule?.secondary || rule?.condition || null;
+}
+
 function translateToMachineRules(inputRule, id) {
     const rules = [];
 
@@ -93,9 +97,10 @@ function translateToMachineRules(inputRule, id) {
     }
 
     // check for ONLY (W3)
+    const secondary = pickSecondaryCondition(inputRule);
     const hasOnly =
         inputRule?.main?.repeat?.id === 'W3' ||
-        inputRule?.secondary?.repeat?.id === 'W3';
+        secondary?.repeat?.id === 'W3';
 
     if (!hasOnly) {
         return rules;
@@ -127,7 +132,8 @@ function translateToMachine(inputRule, id = 'test') {
         }
     };
 
-    const secondary = inputRule.secondary ? normalizeCondition(inputRule.secondary) : null;
+    const secondarySource = pickSecondaryCondition(inputRule);
+    const secondary = secondarySource ? normalizeCondition(secondarySource) : null;
     const safeCreateCondition = (cond) => createCondition(cond ?? null);
 
     let conditionLink = '';
@@ -174,6 +180,10 @@ function translateToMachine(inputRule, id = 'test') {
 
 function createNegativeOnlyRule(inputRule, id) {
     const cloned = structuredClone(inputRule);
+    const secondary = pickSecondaryCondition(cloned);
+    if (secondary && !cloned.secondary) {
+        cloned.secondary = structuredClone(secondary);
+    }
 
     // determine which condition has ONLY
     const target =

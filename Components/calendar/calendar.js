@@ -1164,6 +1164,7 @@ function createKWCell(week) {
 
 function getEmployeesForShift(type, day, index, monthRequests, options = {}) {
   const results = [];
+  const normalizedType = type === 'full' ? 'day' : type;
   const usePresenceState = options && options.usePresenceState !== undefined
     ? options.usePresenceState
     : true;
@@ -1180,7 +1181,10 @@ function getEmployeesForShift(type, day, index, monthRequests, options = {}) {
   });
 
   calendarEmployees.forEach(employee => {
-    if (employee.workDays[index] === 'never') return;
+    const employeeShiftRaw = employee.workDays[index] || 'never';
+    const employeeShift = String(employeeShiftRaw).trim().toLowerCase();
+
+    if (employeeShift === 'never') return;
 
     const checkResult = checkEmployeeRequested(employee, monthRequests, day);
     const showEmployee =
@@ -1189,9 +1193,10 @@ function getEmployeesForShift(type, day, index, monthRequests, options = {}) {
 
     if (!showEmployee) return;
 
-    const matchesShift =
-      employee.workDays[index] === type ||
-      (employee.workDays[index] === 'full' && officeDays[index] !== 'full');
+    const matchesShift = normalizedType === 'day'
+      ? (employeeShift === 'day' || employeeShift === 'full')
+      : (employeeShift === normalizedType ||
+        (employeeShift === 'full' && officeDays[index] !== 'full'));
 
     if (matchesShift) {
       results.push({ employee, checkResult });
@@ -1760,8 +1765,8 @@ function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts) 
 
   if (usedShifts.isDay) {
     const { matches: matchesDay } =
-      getShiftMatchesAndAttendance('full', day, index, monthRequests, shiftStatusForDay.day);
-    const attendanceDay = computeShiftAttendance('full', day, index, monthRequests, shiftStatusForDay.day, { usePresenceState: false });
+      getShiftMatchesAndAttendance('day', day, index, monthRequests, shiftStatusForDay.day);
+    const attendanceDay = computeShiftAttendance('day', day, index, monthRequests, shiftStatusForDay.day, { usePresenceState: false });
 
     shiftAttendanceByType.day = attendanceDay;
     shiftMatchesByType.day = matchesDay;

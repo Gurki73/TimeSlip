@@ -256,6 +256,8 @@ function ruleToBlueprint(rule, { keepId }) {
 */
 
 export function ruleToBlueprint(rule, { keepId }) {
+    const secondary = rule.secondary || rule.condition || {};
+
     return {
         id: keepId ? rule.id : undefined,
         main: {
@@ -267,11 +269,11 @@ export function ruleToBlueprint(rule, { keepId }) {
             exception: { type: rule.main.exception?.type }
         },
         secondary: {
-            repeat: { type: rule.condition?.repeat?.type },
-            timeframe: { type: rule.condition?.timeframe?.type },
-            amount: { type: rule.condition?.amount?.type },
-            group: { type: rule.condition?.group?.type },
-            dependency: { type: rule.condition?.dependency?.type }
+            repeat: { type: secondary.repeat?.type },
+            timeframe: { type: secondary.timeframe?.type },
+            amount: { type: secondary.amount?.type },
+            group: { type: secondary.group?.type },
+            dependency: { type: secondary.dependency?.type }
         }
     };
 }

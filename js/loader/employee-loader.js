@@ -22,7 +22,7 @@ export async function loadEmployeeData(api, attempt = 1) {
         const fileData = await loadFile(api, homeKey, `${folderPath}/${fileName}`, loadSampleEmployeeData, true);
 
         const loadedEmployeeData = typeof fileData === 'string'
-            ? parseCSV(fileData,)
+            ? parseCSV(fileData)
             : Array.isArray(fileData)
                 ? fileData
                 : [];
@@ -34,7 +34,7 @@ export async function loadEmployeeData(api, attempt = 1) {
         if (attempt < MAX_RETRIES) {
             console.warn(`⏳ Retrying in ${RETRY_DELAY_MS / 1000}s...`);
             await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
-            await loadEmployeeData(api, attempt + 1);
+            return await loadEmployeeData(api, attempt + 1);
         } else {
             console.error('⚠️ Max retries reached. return empty array');
             return [];
@@ -70,7 +70,7 @@ export async function loadDeletedEmployeeData(api, attempt = 1) {
         if (attempt < MAX_RETRIES) {
             console.warn(`⏳ Retrying in ${RETRY_DELAY_MS / 1000}s...`);
             await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
-            await loadEmployeeData(api, attempt + 1);
+            return await loadDeletedEmployeeData(api, attempt + 1);
         } else {
             console.error('⚠️ Max retries reached. return empty array');
             return [];
@@ -107,6 +107,20 @@ function parseCSV(data) {
         .map(row => row.trim())
         .filter(Boolean);
 
+    const normalizeEmployeeShiftKey = (value) => {
+        const raw = (value || '').trim();
+        if (!raw) return 'never';
+
+        const lower = raw.toLowerCase();
+        if (lower === 'full') return 'day'; // legacy employee CSV value
+
+        const allowed = new Set(['never', 'early', 'day', 'late', 'school']);
+        if (allowed.has(lower)) return lower;
+
+        console.warn(`[employee-loader] Unknown shift token in employee CSV: "${raw}"`);
+        return 'never';
+    };
+
     return rows.slice(1).map(row => {
         const [
             id, name, personalEmoji, mainRoleIndex, secondaryRoleIndex, tertiaryRoleIndex,
@@ -115,6 +129,9 @@ function parseCSV(data) {
             roleSplitMain, roleSplitSecondary, roleSplitTertiary,
             startDate, endDate, birthday, birthMonth
         ] = row.split(',');
+
+        const normalizedShifts = [mon, tue, wed, thu, fri, sat, sun].map(normalizeEmployeeShiftKey);
+        const [shiftMon, shiftTue, shiftWed, shiftThu, shiftFri, shiftSat, shiftSun] = normalizedShifts;
 
         return {
             id: parseInt(id) || null,
@@ -126,7 +143,7 @@ function parseCSV(data) {
             availableDaysOff: parseFloat(availableDaysOff) || 0,
             remainingDaysOff: parseFloat(remainingDaysOff) || 0,
             overtime: parseFloat(overtime) || 0,
-            workDays: [mon, tue, wed, thu, fri, sat, sun].map(d => d || 'never'),
+            workDays: normalizedShifts,
             roleSplitMain: parseFloat(roleSplitMain) || 0,
             roleSplitSecondary: parseFloat(roleSplitSecondary) || 0,
             roleSplitTertiary: parseFloat(roleSplitTertiary) || 0,
@@ -134,7 +151,15 @@ function parseCSV(data) {
             endDate: endDate || '',
             birthday: birthday || '',
             birthMonth: birthMonth || '',
-            shifts: { mon, tue, wed, thu, fri, sat, sun }
+            shifts: {
+                mon: shiftMon,
+                tue: shiftTue,
+                wed: shiftWed,
+                thu: shiftThu,
+                fri: shiftFri,
+                sat: shiftSat,
+                sun: shiftSun
+            }
         };
     });
 }

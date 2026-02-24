@@ -5,7 +5,7 @@ import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
 import { createDataModeToggle } from '../../../js/Utils/DataMode-select.js';
 import { createSaveButton } from '../../../js/Utils/saveButton.js';
-import { loadEmojiData } from '../../../js/loader/custom-loader.js';
+import { loadEmojiData, normalizeEmojiData } from '../../../js/loader/custom-loader.js';
 
 let roleChanges = Array(12).fill(false);
 const roleEmojis = ["🛠️", "📚", "💻",];
@@ -17,11 +17,7 @@ let saveButtonHeader;
 export async function initializeRoleForm(passedApi) {
   setApi(passedApi);
   await loadInitialData(api);
-  const emojiData = await loadEmojiData(api);
-  if (emojiData?.roleEmojis?.length) {
-    roleEmojis.length = 0;
-    roleEmojis.push(...emojiData.roleEmojis);
-  }
+  await refreshRoleEmojiPool();
   roleFormRoles = await getAllRoles(api);
   const formContainer = getFormContainer();
   if (!formContainer) return;
@@ -29,6 +25,28 @@ export async function initializeRoleForm(passedApi) {
   updateDivider();
   renderRoleTable();
   initTeamnames();
+}
+
+async function refreshRoleEmojiPool() {
+  try {
+    const emojiData = await loadEmojiData(api);
+    const normalized = normalizeEmojiData(emojiData);
+
+    const configuredRoleEmojis = Array.isArray(normalized?.roles) && normalized.roles.length
+      ? normalized.roles
+      : Array.isArray(emojiData?.roleEmojis) && emojiData.roleEmojis.length
+        ? emojiData.roleEmojis
+        : Array.isArray(emojiData?.assignments?.tasks) && emojiData.assignments.tasks.length
+          ? emojiData.assignments.tasks
+          : [];
+
+    if (configuredRoleEmojis.length) {
+      roleEmojis.length = 0;
+      roleEmojis.push(...configuredRoleEmojis);
+    }
+  } catch (err) {
+    console.warn('⚠️ Failed to load role emoji config. Using fallback defaults.', err);
+  }
 }
 
 export async function initTeamnames() {
@@ -317,7 +335,12 @@ function changeEmoji(index) {
   };
 
   if (index !== 13) {
-    createEmojiPicker(roleEmojis, emojiButton, index, handleEmojiSelectionChange);
+    try {
+      createEmojiPicker(roleEmojis, emojiButton, index, handleEmojiSelectionChange);
+    } catch (err) {
+      console.error(`⚠ Failed to create emoji picker for role index ${index}:`, err);
+      emojiButton.textContent = role.emoji || '⊖';
+    }
   }
 }
 

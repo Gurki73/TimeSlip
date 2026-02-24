@@ -51,8 +51,7 @@ export async function savePublicHolidaysSimple(api, data) {
 let prilimaryOfficeDays = [];
 let lastOnboardingState = null;
 
-const defaultOfficeDays = ['full', 'full', 'full', 'full', 'full', 'never', 'never'];
-const gastro = ['never', 'afternoon', 'full', 'full', 'full', 'full', 'full'];
+const defaultOfficeDays = ["early", "never", "never", "two", "full", "full", "day"];
 
 export async function loadOfficeDaysData(api, isOnboarding = false) {
     if (isOnboarding) {

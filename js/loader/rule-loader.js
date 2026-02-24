@@ -70,7 +70,7 @@ export async function loadRuleData(api, attempt = 1) {
         continue;
       }
 
-      const fixed = sanitizeRule(result.value);
+      const fixed = sanitizeRule(result.value, filePath);
       if (!fixed || !fixed.main) {
         console.warn('[rule-loader] sanitize rejected', filePath);
         continue;
@@ -129,7 +129,7 @@ export async function loadSampleRuleData() {
           console.warn('⚠️ sample parse failed', rel, parsed.error);
           continue;
         }
-        sampleRules.push(sanitizeRule(parsed.value));
+        sampleRules.push(sanitizeRule(parsed.value, `rules/${normalized}`));
       } catch (e) {
         console.warn('⚠️ sample rule missing', rel, e);
       }
@@ -171,7 +171,7 @@ function hash(str) {
   return h;
 }
 
-export function sanitizeRule(raw) {
+export function sanitizeRule(raw, sourcePath = null) {
   if (!raw || typeof raw !== 'object') return null;
 
   const now = Date.now();
@@ -190,6 +190,8 @@ export function sanitizeRule(raw) {
     main: raw.main || {},
     condition: raw.condition || {}
   };
+
+  if (sourcePath) r._sourcePath = String(sourcePath);
 
   // Ensure each block exists with minimal defaults
   r.main.repeat = r.main.repeat || { type: 'W0', details: { bottom: 1, top: 1 } };
@@ -287,14 +289,27 @@ export async function saveRuleData(api, ruleObj) {
   }
 }
 
-export async function deleteRule(api, id) {
+export async function deleteRule(api, idOrPath) {
   try {
     const safeId = id => String(id).replace(/[^a-zA-Z0-9_\-]/g, '_').replace(/_+/g, '_');
-    const full = `${RULE_FOLDER}/${safeId(id)}.json`;
+    const input = String(idOrPath ?? '').trim();
+    const isRelativeRulePath = /(^|\/)rules\/.+\.json$/i.test(input);
+    const isBareRuleFile = /^rule_.+\.json$/i.test(input);
+    const full = isRelativeRulePath
+      ? input
+      : isBareRuleFile
+        ? `${RULE_FOLDER}/${input}`
+        : `${RULE_FOLDER}/${safeId(input)}.json`;
     if (!api) throw new Error('no api');
+    if (typeof api.deleteRule === 'function') {
+      const res = await api.deleteRule(full);
+      if (res && typeof res === 'object') return res;
+      return { success: Boolean(res), error: res ? null : 'delete failed' };
+    }
     if (typeof api.invoke === 'function') {
       const res = await api.invoke('rules:delete', full);
-      return res;
+      if (res && typeof res === 'object') return res;
+      return { success: Boolean(res), error: res ? null : 'delete failed' };
     }
     return { success: false, error: 'delete not implemented in api' };
   } catch (err) {

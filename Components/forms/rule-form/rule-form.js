@@ -8,7 +8,7 @@ import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
 import { createDataModeToggle } from '../../../js/Utils/DataMode-select.js';
 import { getShiftSymbol } from '../../../js/Utils/globalIcons.js';
-import { blocks, createRuleFromBlueprint, ruleToBlueprint } from "./buildingBlocks.js";
+import { blocks, createRuleFromBlueprint } from "./buildingBlocks.js";
 import { translateCurrentRule, translateExistingRules, renderRoleSpan, generateFullHumanSentence } from "./translatorHuman.js";
 import { updateRulesPreview } from "./translatorMachine.js";
 import { loadRuleData, saveRuleData, deleteRule as deleteRuleFromDisk, getAllRules } from '../../../js/loader/rule-loader.js';
@@ -243,33 +243,8 @@ function updateSaveButtonState() {
 
 // ============= RULE TESTING =============
 async function onTestRuleClick(e) {
-    e.preventDefault();
-
-    lastTestReport = null;
-    updateSaveButtonState();
-
-    const draft = ruleForEditing;
-    const activeRules = ruleSet;
-    const futureContext = await buildFutureRuleContext();
-
-    try {
-        const report = await runRuleTest(draft, activeRules, futureContext || {});
-
-        // Calculate impact if we have future context
-        if (futureContext?.attendanceByDate) {
-            await enrichReportWithImpact(report, draft, activeRules, futureContext);
-        }
-
-        lastTestReport = report;
-        testPassed = Boolean(report?.ok);
-        updateSaveButtonState();
-        renderRuleCheckReport(report);
-
-        announceStatus(report?.ok ? "Regeltest erfolgreich." : "Regeltest fehlgeschlagen.");
-    } catch (err) {
-        console.error("Rule test failed:", err);
-        announceStatus("Regeltest fehlgeschlagen.");
-    }
+    if (e?.preventDefault) e.preventDefault();
+    await runCurrentRuleValidation({ showStatus: true });
 }
 
 async function enrichReportWithImpact(report, draft, activeRules, futureContext) {
@@ -337,6 +312,38 @@ async function buildFutureRuleContext() {
         attendanceEnd: end,
         roleCount: Array.isArray(cachedRoles) ? cachedRoles.length : null
     };
+}
+
+async function runCurrentRuleValidation({ showStatus = false } = {}) {
+    lastTestReport = null;
+    updateSaveButtonState();
+
+    const draft = ruleForEditing;
+    const activeRules = Array.isArray(ruleSet) ? ruleSet : [];
+    const futureContext = await buildFutureRuleContext();
+
+    try {
+        const report = await runRuleTest(draft, activeRules, futureContext || {});
+
+        if (futureContext?.attendanceByDate) {
+            await enrichReportWithImpact(report, draft, activeRules, futureContext);
+        }
+
+        lastTestReport = report;
+        testPassed = Boolean(report?.ok);
+        updateSaveButtonState();
+        renderRuleCheckReport(report);
+
+        if (showStatus) {
+            announceStatus(report?.ok ? "Regeltest erfolgreich." : "Regeltest fehlgeschlagen.");
+        }
+
+        return report;
+    } catch (err) {
+        console.error("Rule validation failed:", err);
+        if (showStatus) announceStatus("Regeltest fehlgeschlagen.");
+        return null;
+    }
 }
 
 // ============= REPORT RENDERING =============
@@ -450,25 +457,14 @@ function createTeamRolePanel(rows) {
     heading.textContent = 'Delta nach Rollen, gruppiert nach Teams';
     panel.appendChild(heading);
 
-    const byTeam = new Map();
-
-    rows.forEach((row) => {
-        if (!byTeam.has(row.teamKey)) byTeam.set(row.teamKey, { label: row.teamLabel, rows: [] });
-        byTeam.get(row.teamKey).rows.push(row);
+    const sortedRows = [...rows].sort((a, b) => {
+        const teamDiff = TEAM_KEY_ORDER.indexOf(a.teamKey) - TEAM_KEY_ORDER.indexOf(b.teamKey);
+        if (teamDiff !== 0) return teamDiff;
+        return Number(a.roleId) - Number(b.roleId);
     });
 
-    TEAM_KEY_ORDER.forEach((teamKey) => {
-        const group = byTeam.get(teamKey);
-        if (!group || !group.rows.length) return;
-
-        const teamHeading = document.createElement('h5');
-        teamHeading.className = 'impact-team-title';
-        teamHeading.textContent = group.label;
-        panel.appendChild(teamHeading);
-
-        const sortedRows = group.rows.sort((a, b) => Number(a.roleId) - Number(b.roleId));
-        panel.appendChild(createVerticalChart(sortedRows));
-    });
+    // Single horizontal row with all team-role bars.
+    panel.appendChild(createVerticalChart(sortedRows));
 
     return panel;
 }
@@ -523,17 +519,94 @@ function createVerticalBarItem(row, maxValue) {
 }
 
 // ============= RULE OPERATIONS =============
-function saveRule() {
-    console.log("Saving rule…");
+function buildRuleForSave() {
+    const source = ruleForEditing || {};
+    const toSerializable = (value) => {
+        try {
+            return JSON.parse(JSON.stringify(value ?? {}));
+        } catch (error) {
+            console.warn('Rule serialization fallback used:', error);
+            return {};
+        }
+    };
+    const pickCondition = (ruleObj) => {
+        const current = ruleObj?.secondary ?? {};
+        const fallback = ruleObj?.condition ?? {};
+        const keys = ['repeat', 'timeframe', 'amount', 'group', 'dependency'];
+        const merged = {};
+
+        keys.forEach((key) => {
+            merged[key] = toSerializable(current[key] ?? fallback[key] ?? {});
+        });
+
+        return merged;
+    };
+    const main = toSerializable(source.main);
+    const secondary = pickCondition(source);
+    const now = Date.now();
+
+    return {
+        ...source,
+        id: String(source.id || (crypto.randomUUID?.() ?? now)),
+        created: source.created || now,
+        updated: now,
+        main,
+        secondary,
+        condition: secondary
+    };
 }
 
-function onSaveRuleClick(event) {
-    event.preventDefault();
-    if (!testPassed) {
-        announceStatus("Regel muss zuerst erfolgreich getestet werden.");
+async function saveRule() {
+    const payload = buildRuleForSave();
+
+    if (isClientMode()) {
+        const result = await saveRuleData(api, payload);
+        if (!result?.success) {
+            const message = Array.isArray(result?.errors) ? result.errors.join(', ') : (result?.error || 'Unbekannter Fehler');
+            throw new Error(`Save failed: ${message}`);
+        }
+        ruleSet = await loadRuleData(api);
+    } else {
+        updateRuleInMemory(payload);
+    }
+
+    translateExistingRules(ruleSet, cachedRoles, teamnames);
+    scrollRulesToBottomIfAllowed(true);
+    resetInput();
+    testPassed = false;
+    lastTestReport = null;
+    clearImpactCharts();
+    updateSaveButtonState();
+}
+
+async function onSaveRuleClick(event) {
+    if (event?.preventDefault) event.preventDefault();
+
+    const sanity = runLiveSanity(ruleForEditing);
+    if (!sanity?.ok) {
+        announceStatus("Bitte erst alle Pflichtfelder ausfüllen.");
+        await runCurrentRuleValidation({ showStatus: false });
         return;
     }
-    saveRule();
+
+    const report = await runCurrentRuleValidation({ showStatus: false });
+    if (!report?.ok) {
+        announceStatus("Regeltest fehlgeschlagen.");
+        return;
+    }
+
+    const delta = Number(report?.details?.impact?.delta?.total ?? 0);
+    if (delta > 0) {
+        const ok = await confirmAction(
+            `Diese neue Regel erhöht Regel-Verstöße um ${delta}. Sind Sie sicher?\n\nAbbrechen / Bestätigen`
+        );
+        if (!ok) {
+            announceStatus("Speichern abgebrochen.");
+            return;
+        }
+    }
+
+    await saveRule();
     announceStatus("Regel gespeichert.");
 }
 
@@ -567,7 +640,7 @@ function updateDivider(className) {
         onChange: (val) => console.log('DataMode changed to:', val)
     });
 
-    saveButtonHeader = createSaveButton({ onSave: () => onSaveRuleClick });
+    saveButtonHeader = createSaveButton({ onSave: onSaveRuleClick });
     const windowBtns = createWindowButtons();
 
     buttonContainer.append(saveButtonHeader.el, helpBtn, dataModeToggle, windowBtns);
@@ -1288,6 +1361,98 @@ export function populateFormFromRule(rule, { setEditorState = true } = {}) {
         inputs.forEach(input => input.dispatchEvent(new Event('input', { bubbles: true })));
     };
 
+    const toArray = (value) => {
+        if (Array.isArray(value)) return value;
+        if (value == null) return [];
+        return [value];
+    };
+
+    const extractDetails = (block) => {
+        if (!block || typeof block !== 'object') return {};
+        return (block.details && typeof block.details === 'object') ? block.details : block;
+    };
+
+    const fillSelectInCell = (key, desired) => {
+        const cell = getCell(key);
+        if (!cell) return;
+        const select = cell.querySelector('select');
+        if (!select) return;
+
+        select.value = findSelectValue(select, desired, select.value);
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    const fillCheckboxesInCell = (key, selectedValues) => {
+        const cell = getCell(key);
+        if (!cell) return;
+        const checkboxes = Array.from(cell.querySelectorAll('input[type="checkbox"]'));
+        if (!checkboxes.length) return;
+
+        const selectedSet = new Set(toArray(selectedValues).map(value => String(value)));
+        checkboxes.forEach((checkbox) => {
+            const boxValue = checkbox.dataset.index ?? checkbox.dataset.colorIndex ?? checkbox.value;
+            checkbox.checked = selectedSet.has(String(boxValue));
+        });
+
+        checkboxes[0].dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    const fillTimeframeCell = (key, timeframeObj) => {
+        const details = extractDetails(timeframeObj);
+        const shifts = toArray(details.shifts);
+        const days = toArray(details.days);
+
+        if (shifts.length) {
+            fillSelectInCell(key, shifts[0]);
+            return;
+        }
+
+        if (days.length) {
+            fillCheckboxesInCell(key, days);
+        }
+    };
+
+    const fillGroupCell = (key, groupObj) => {
+        const details = extractDetails(groupObj);
+        const roles = toArray(details.roles);
+        if (!roles.length) return;
+
+        const cell = getCell(key);
+        if (!cell) return;
+
+        const select = cell.querySelector('select');
+        if (select) {
+            fillSelectInCell(key, roles[0]);
+            return;
+        }
+
+        fillCheckboxesInCell(key, roles);
+    };
+
+    const fillDependencyCell = (key, dependencyObj) => {
+        const details = extractDetails(dependencyObj);
+        const cell = getCell(key);
+        if (!cell) return;
+
+        const roleSelect = cell.querySelector('select');
+        if (roleSelect) {
+            const roles = toArray(details.roles);
+            if (roles.length) {
+                roleSelect.value = findSelectValue(roleSelect, roles[0], roleSelect.value);
+                roleSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+
+        const inputs = cell.querySelectorAll('input[type="number"]');
+        if (!inputs.length) return;
+
+        const bottom = details.bottom ?? dependencyObj?.bottom ?? null;
+        const top = details.top ?? dependencyObj?.top ?? null;
+        if (inputs.length >= 1 && bottom != null) inputs[0].value = bottom;
+        if (inputs.length >= 2 && top != null) inputs[1].value = top;
+        inputs.forEach(input => input.dispatchEvent(new Event('input', { bubbles: true })));
+    };
+
     // Main selects
     setSelect('W', pickTypeId(rule.main.repeat, 'W0', false), 'W0');
     setSelect('T', pickTypeId(rule.main.timeframe, 'T0', false), 'T0');
@@ -1305,12 +1470,26 @@ export function populateFormFromRule(rule, { setEditorState = true } = {}) {
 
     // Fill details
     fillNumberCell('W', rule.main.repeat);
+    fillTimeframeCell('T', rule.main.timeframe);
     fillNumberCell('A', rule.main.amount);
+    fillGroupCell('G', rule.main.group);
+    fillDependencyCell('D', rule.main.dependency);
     fillNumberCell('w', condition.repeat);
+    fillTimeframeCell('t', condition.timeframe);
     fillNumberCell('a', condition.amount);
+    fillGroupCell('g', condition.group);
+    fillDependencyCell('d', condition.dependency);
 
     if (setEditorState) {
-        ruleForEditing = { ...rule };
+        const clone = typeof structuredClone === 'function'
+            ? structuredClone(rule)
+            : JSON.parse(JSON.stringify(rule));
+        const mergedCondition = clone.secondary || clone.condition || {};
+        ruleForEditing = {
+            ...clone,
+            secondary: mergedCondition,
+            condition: mergedCondition
+        };
         translateCurrentRule(ruleForEditing, cachedRoles);
         scrollRulesToBottomIfAllowed();
     }
@@ -1324,11 +1503,10 @@ export function copyRule(ruleView) {
     }
 
     console.info('Copy rule into editor:', rule.id);
-    const blueprint = ruleToBlueprint(rule, { keepId: false });
-    const editorRule = createRuleFromBlueprint(blueprint);
-
-    populateFormFromRule(rule, { setEditorState: false });
-    ruleForEditing = editorRule;
+    populateFormFromRule(rule, { setEditorState: true });
+    ruleForEditing.id = '';
+    ruleForEditing.created = null;
+    ruleForEditing.updated = null;
     translateCurrentRule(ruleForEditing, cachedRoles);
     scrollRulesToBottomIfAllowed();
 }
@@ -1341,13 +1519,7 @@ export function editRule(ruleView) {
     }
 
     console.info('Edit rule:', rule.id);
-    const blueprint = ruleToBlueprint(rule, { keepId: true });
-    const editorRule = createRuleFromBlueprint(blueprint);
-
-    populateFormFromRule(rule, { setEditorState: false });
-    ruleForEditing = editorRule;
-    translateCurrentRule(ruleForEditing, cachedRoles);
-    scrollRulesToBottomIfAllowed();
+    populateFormFromRule(rule, { setEditorState: true });
 }
 
 function buildDeleteRuleMessage(ruleView) {
@@ -1378,13 +1550,79 @@ export async function deleteRule(ruleView) {
     const ok = await confirmAction(buildDeleteRuleMessage(ruleView));
     if (!ok) return;
 
-    if (isClientMode()) {
-        return await deleteRuleFromDisk(api, ruleView.id);
+    const target = ruleView?.rule ?? ruleView;
+    const targetId = target?.id ?? ruleView?.id;
+    if (!targetId) {
+        console.warn('Delete failed: missing rule id', ruleView);
+        return;
     }
 
-    const target = ruleView?.rule ?? ruleView;
-    if (target) target._deleted = true;
-    console.warn('Rule blacklisted in sample mode:', ruleView.id);
+    if (isClientMode()) {
+        const deleteRef = target?._sourcePath || targetId;
+        const rawResult = await deleteRuleFromDisk(api, deleteRef);
+        const result = (rawResult && typeof rawResult === 'object')
+            ? rawResult
+            : { success: Boolean(rawResult), error: rawResult ? null : 'Unbekannter Fehler beim Löschen' };
+
+        if (!result.success) {
+            const message = result.error || 'Unbekannter Fehler beim Löschen';
+            console.warn(`Delete failed for "${targetId}":`, message);
+            announceStatus(`Regel konnte nicht gelöscht werden: ${message}`);
+            return result;
+        }
+
+        const previousRules = Array.isArray(ruleSet) ? [...ruleSet] : [];
+        const filteredRules = previousRules.filter((rule) => {
+            const sameId = String(rule?.id) === String(targetId);
+            const sameSource = target?._sourcePath && rule?._sourcePath && String(rule._sourcePath) === String(target._sourcePath);
+            return !(sameId || sameSource);
+        });
+
+        // Optimistic UI refresh: remove deleted entry immediately.
+        ruleSet = filteredRules;
+        translateExistingRules(ruleSet, cachedRoles, teamnames);
+        scrollRulesToBottomIfAllowed(true);
+        clearImpactCharts();
+        updateSaveButtonState();
+        announceStatus('Regel gelöscht.');
+
+        // Background reload from disk. Guard against transient empty-list glitches.
+        try {
+            const reloadedRules = await loadRuleData(api);
+            if (Array.isArray(reloadedRules)) {
+                const looksTransientEmpty =
+                    filteredRules.length > 0 &&
+                    reloadedRules.length === 0;
+
+                if (looksTransientEmpty) {
+                    console.warn('[rule-form] Ignoring transient empty rules reload after delete.');
+                } else {
+                    ruleSet = reloadedRules;
+                    translateExistingRules(ruleSet, cachedRoles, teamnames);
+                    scrollRulesToBottomIfAllowed(true);
+                }
+            }
+        } catch (reloadError) {
+            console.warn('[rule-form] Reload after delete failed, keeping optimistic list.', reloadError);
+        }
+
+        return result;
+    }
+
+    const beforeCount = ruleSet.length;
+    ruleSet = ruleSet.filter(rule => String(rule?.id) !== String(targetId));
+    const deleted = beforeCount !== ruleSet.length;
+    if (!deleted) {
+        console.warn('Rule not found in sample mode:', targetId);
+        return;
+    }
+
+    translateExistingRules(ruleSet, cachedRoles, teamnames);
+    scrollRulesToBottomIfAllowed(true);
+    clearImpactCharts();
+    updateSaveButtonState();
+    announceStatus('Regel gelöscht (Sample-Modus).');
+    console.warn('Rule removed in sample mode:', targetId);
 }
 
 // ============= DATA MODE =============
@@ -1551,6 +1789,16 @@ function resolveRoleLabel(roleId) {
 
     if (!role) return `Rolle #${roleId}`;
     return `${role.emoji || '•'} ${role.name || `Rolle #${roleId}`}`.trim();
+}
+
+function updateRuleInMemory(rule) {
+    if (!rule || !rule.id) return;
+    const idx = ruleSet.findIndex(item => String(item?.id) === String(rule.id));
+    if (idx >= 0) {
+        ruleSet[idx] = { ...ruleSet[idx], ...rule };
+        return;
+    }
+    ruleSet.push(rule);
 }
 
 // Stub functions that need implementation

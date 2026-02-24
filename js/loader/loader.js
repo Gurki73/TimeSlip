@@ -23,7 +23,7 @@ export const states = [
 
 const validHomeKeys = ['auto', 'sample', 'client'];
 const LOAD_RETRY_COOLDOWN_MS = 10000;
-const MAX_SAMPLE_FALLBACK_DEPTH = 3;
+const MAX_SAMPLE_FALLBACK_DEPTH = 6;
 const inflightLoadMap = new Map();
 const failedLoadCooldownUntil = new Map();
 let sampleFallbackDepth = 0;

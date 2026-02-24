@@ -1,15 +1,18 @@
 {
   "name": "mitarbeiterkalender",
-  "version": "1.5.1-Prototype",
+  "version": "1.5.1-prototype.0",
   "description": "An- und Abwesentheits Planer App",
   "author": "Gurki73 <no-reply@example.com>",
   "main": "js/main.js",
   "type": "module",
   "scripts": {
     "start": "electron .",
+    "clean": "rimraf dist",
+    "prebuild": "npm run clean",
     "build": "electron-builder",
     "build:win": "electron-builder --win",
-    "build:win64": "electron-builder --win --x64"
+    "build:win64": "electron-builder --win --x64",
+    "release": "bash ./release/release.sh"
   },
   "devDependencies": {
     "electron": "^33.3.1",

@@ -271,7 +271,8 @@ export async function runRequestRuleCheck(startDate, endDate, requests, options 
         uiRules = await loadRuleData(loaderApi);
     }
 
-    const ruleset = machineRuleset || (Array.isArray(uiRules) ? updateRulesPreview(uiRules) : null);
+    const activeUiRules = Array.isArray(uiRules) ? getActiveRules(uiRules) : null;
+    const ruleset = machineRuleset || (Array.isArray(activeUiRules) ? updateRulesPreview(activeUiRules) : null);
     if (!ruleset) {
         return {
             ok: false,
