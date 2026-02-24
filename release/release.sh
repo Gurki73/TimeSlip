@@ -180,14 +180,23 @@ upload () {
 # -------------------------
 # UPLOADS
 # -------------------------
-upload "Windows" "dist/*nsis*.exe" "win"
-upload "Linux AppImage" "dist/*.AppImage" "linux"
-upload "Linux deb" "dist/*.deb" "linux-deb"
+upload () {
+  LABEL=$1
+  FILES=$2
+  CHANNEL=$3
 
-echo "✅ Release finished"
+  if compgen -G "$FILES" > /dev/null; then
+    echo "🚀 Upload $LABEL → $CHANNEL"
 
-if ! $DRY_RUN; then
-  echo "📤 Now run: git push --follow-tags"
-else
-  echo "🧪 Dry run complete – nothing was uploaded"
-fi
+    if ! $DRY_RUN; then
+      # NOTE: Butler no longer supports --delete
+      echo "📤 Uploading $LABEL build(s)"
+      butler push $FILES "$ITCH_TARGET:$CHANNEL" --userversion "$VERSION"
+    else
+      echo "🧪 Dry run – skipping upload of $LABEL"
+    fi
+  else
+    echo "ℹ️ Nothing to upload for $LABEL"
+  fi
+}
+
