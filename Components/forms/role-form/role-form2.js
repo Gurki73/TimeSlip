@@ -344,13 +344,15 @@ function changeEmoji(index) {
   }
 }
 
-async function deleteRoleAndShowStoreButton(index) {
-  roleFormRoles[index].emoji = '❓';
-  roleFormRoles[index].name = "?";
-  roleChanges[index] = true;
+function deleteRoleAndShowStoreButton(index) {
+  index = Number(index);
+  const role = roleFormRoles[index];
+  if (!role) return;
+
+  role.emoji = '❓';
+  role.name = '?';
+  markRoleAsChanged(index);
   renderRoleTable();
-  await new Promise(requestAnimationFrame);
-  storeRole(index);
 }
 
 async function storeRole(index) {

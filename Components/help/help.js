@@ -28,29 +28,28 @@ const helpRoles = [
 
 
 const helpEmployees = [
-    { emoji: "🐸", name: "Tiana", nickname: "Tia", roles: [8, 2, 4, 12] },  // Manager
-    { emoji: "🛁", name: "Jutah", nickname: "Jubaba", roles: [8, 1, 9, 10] },// grandma / old-Manager
-    { emoji: "🧸", name: "Kevin", nickname: "Kevin", roles: [2, 6] },       // holiday-job
-    { emoji: "🧽", name: "Robert", nickname: "Bob", roles: [13, 1, 9] },    // apprentice Chef
-    { emoji: "🐝", name: "Ned", nickname: "BigBee", roles: [13, 8, 7] },    // apprentice Manager
-    { emoji: "🛵", name: "Philip", nickname: "Fry", roles: [6, 4, 5] },     // delivery
-    { emoji: "🧹", name: "Christina", nickname: "Kiky", roles: [6, 4, 2] }, // delivery
-    { emoji: "🍜", name: "Grover", nickname: "Grobi", roles: [4] },         // waiter
-    { emoji: "🐀", name: "Rainer", nickname: "Remi", roles: [2, 1] },       // chef (chaotisch)
-    { emoji: "💀", name: "Peter", nickname: "Weasel", roles: [5, 4, 7] },   // Barkeeper (Mentor)
-    { emoji: "🤖", name: "Walter", nickname: "Walle", roles: [2, 7] },      // cleaning / dishwasher
-    { emoji: "☎️", name: "Schrute", nickname: "Dwight", roles: [9, 5] },    // Reception 
-    { emoji: "🐕", name: "Bernd", nickname: "Stromburg", roles: [9, 8, 4] },// Reception 
-    { emoji: "🪁", name: "Karin", nickname: "Karen", roles: [11] },         // regular (conflict )
-    { emoji: "☕", name: "Lorelei", nickname: "Gilly", roles: [11] },       // regular (friend mentor)
-    { emoji: "🍄", name: "Miller", nickname: "Joel", roles: [7, 1, 2] },    // single Father
-    { emoji: "🍔", name: "Belcher", nickname: "Bob", roles: [9, 1, 4] },    // chef (conflicct doubling names)
-    { emoji: "👟", name: "Alfred", nickname: "Al", roles: [4, 5, 6] },      // (struggling family father)
-    { emoji: "⛓️", name: "Argus", nickname: "Filch", roles: [2, 6, 4] },    // dishwasher/ cleaning
-    { emoji: "🌋", name: "Gregor", nickname: "Ramsey", roles: [1] },        // chef
-    { emoji: "🧁", name: "Stephanie", nickname: "Step", roles: [1, 9, 5] }, // step Mom 
-    { emoji: "🚁", name: "Helga", nickname: "Heli", roles: [7, 2, 5] },     // Helicopter mom
+    { emoji: "🐸", name: "Tiana", nickname: "Tia", roles: [8, 2, 4] },
+    { emoji: "🛁", name: "Jubaba", nickname: "Jubaba", roles: [8, 1, 9, 10] },
+    { emoji: "🏠", name: "Kevin", nickname: "Kevin", roles: [2, 6] },
+    { emoji: "🧽", name: "BobAzubi", nickname: "Bob (Azubi)", roles: [13, 1, 9] },
+    { emoji: "🐝", name: "BigBee", nickname: "BigBee", roles: [13, 8, 7] },
+    { emoji: "🚀", name: "Fry", nickname: "Fry", roles: [6, 4, 5] },
+    { emoji: "🧹", name: "Kiky", nickname: "Kiky", roles: [6, 4, 2] },
+    { emoji: "🍜", name: "Grobi", nickname: "Grobi", roles: [4] },
+    { emoji: "🐀", name: "Remi", nickname: "Remi", roles: [2, 1] },
+    { emoji: "💀", name: "Weasel", nickname: "Weasel", roles: [5, 4, 7] },
+    { emoji: "🤖", name: "Walle", nickname: "Walle", roles: [2, 7] },
+    { emoji: "👒", name: "Sanji", nickname: "Sanji", roles: [4, 1, 5] },
+    { emoji: "🐕", name: "Stromberg", nickname: "Stromberg", roles: [9, 8, 4] },
+    { emoji: "🍄", name: "Joel", nickname: "Joel", roles: [4, 1, 2] },
+    { emoji: "🍔", name: "BobStellvertrter", nickname: "Bob", roles: [9, 1, 4] },
+    { emoji: "👟", name: "Al", nickname: "Al", roles: [4, 5, 6] },
+    { emoji: "⛓️", name: "Filch", nickname: "Filch", roles: [2, 6, 4] },
+    { emoji: "🌋", name: "Ramsey", nickname: "Ramsey", roles: [1] },
+    { emoji: "🧁", name: "Step", nickname: "Step", roles: [4, 9, 5] },
+    { emoji: "🚁", name: "Heli", nickname: "Heli", roles: [7, 2, 5] },
 ];
+
 
 const HELP_CHAPTERS = {
     intro: { title: "Einführung", color: "welcome" },

@@ -5,6 +5,7 @@ let employees = [];
 
 const MAX_RETRIES = 1;
 const RETRY_DELAY_MS = 1500;
+const SAMPLE_REFERENCE_DATE = "2026-02-26";
 
 export async function loadEmployeeData(api, attempt = 1) {
     if (!api) {
@@ -92,7 +93,14 @@ async function loadSampleEmployeeData() {
                     ? data
                     : [];
 
-        return filterActiveEmployees(parsedData);
+        return filterActiveEmployees(
+            parsedData.map(e => ({
+                ...e,
+                startDate: shiftDateByReference(e.startDate),
+                endDate: shiftDateByReference(e.endDate)
+            }))
+        );
+
     } catch (error) {
         console.error('❌ Error loading sample employee data:', error);
         return []; // safe empty array fallback
@@ -364,5 +372,26 @@ export function checkEmployeesEndingToday(employees) {
     return employees.filter(emp => emp.endDate === todayStr);
 }
 
+function shiftDateByReference(originalDateStr) {
+    if (!originalDateStr) return "";
+    if (originalDateStr === "2099-12-31") return originalDateStr;
+    if (originalDateStr === "0000-00-00") return "";
 
+    const toLocalDate = (str) => {
+        const [y, m, d] = str.split("-").map(Number);
+        return new Date(y, m - 1, d);
+    };
 
+    const reference = toLocalDate(SAMPLE_REFERENCE_DATE);
+    const original = toLocalDate(originalDateStr);
+
+    if (isNaN(original)) return originalDateStr;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const delta = original.getTime() - reference.getTime();
+    const shifted = new Date(today.getTime() + delta);
+
+    return shifted.toISOString().split("T")[0];
+}

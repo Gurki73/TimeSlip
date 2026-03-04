@@ -19,7 +19,7 @@ let teams = {
 
 const teamFile = 'teamnames.csv';
 const defaultTeams = ['Team Blau', 'Team Grün', 'Team Rot', 'Team Schwarz'];
-const sampleTeams = ['KüchenCrew', 'GästeFront', 'Büro', 'ungenutzt'];
+const sampleTeams = ['KüchenCrew', 'GästeFront', 'Büro', 'Sauber'];
 
 let teamnames = {
     blue: defaultTeams[0],
