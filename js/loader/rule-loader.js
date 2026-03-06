@@ -249,8 +249,20 @@ export function validateRule(rule) {
   if (!Array.isArray(rule.main.group.roles)) errors.push('group.roles must be array');
   // dependency denom/numer sanity
   const dep = rule.main.dependency;
-  if (dep && (dep.denominator === 0 || dep.denominator == null)) {
-    errors.push('dependency denominator must be non-zero');
+  if (dep) {
+    const rawDenominator =
+      dep.denominator ??
+      dep?.details?.denominator ??
+      dep.bottom ??
+      dep?.details?.bottom ??
+      null;
+
+    if (rawDenominator != null) {
+      const denominator = Number(rawDenominator);
+      if (!Number.isFinite(denominator) || denominator === 0) {
+        errors.push('dependency denominator must be non-zero');
+      }
+    }
   }
   return { valid: errors.length === 0, errors };
 }

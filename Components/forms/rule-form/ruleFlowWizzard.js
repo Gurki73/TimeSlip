@@ -63,16 +63,16 @@ export function updateWizard(liveResult, lastUpdatedID) {
         }
 
         highlight(ids.th);
-        highlight(ids.td);
+        highlight(ids.td); 
 
-        console.log(`Highlighted mandatory block "${key}"`);
+        // console.log(`Highlighted mandatory block "${key}"`);
     });
 
     updateSaveButtonState();
 }
 
 export function clearHighlights() {
-    Object.keys(BLOCKS).forEach(key => {
+    Object.      keys(BLOCKS).forEach(key => {
         const ids = idsFor(key);
         if (!ids) return;
 
@@ -144,7 +144,7 @@ export function toggleExceptionTable(isActive) {
 ============================ */
 
 function highlight(key) {
-    const el = getCell(key);
+    const el = document.getElementById(key);
     if (el) el.setAttribute("data-highlight", "true");
 }
 

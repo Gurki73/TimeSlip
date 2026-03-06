@@ -22,15 +22,15 @@
    SHIFTS
    ------------------------ */
 .shift-early::before {
-  content: "🐓"; /* Frühschicht */
+  content: "🐓"; /* Betriebsbeginn */
 }
 
 .shift-day::before {
-  content: "☕"; /* Tagschicht */
+  content: "☕"; /* Kernarbeitszeit */
 }
 
 .shift-late::before {
-  content: "🌙"; /* Spätschicht */
+  content: "🌙"; /* Betriebsende */
 }
 
 /* ------------------------

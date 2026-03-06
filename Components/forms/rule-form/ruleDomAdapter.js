@@ -22,6 +22,14 @@ export function resetOptions(table = "main", isEnabled = true) {
     const selects = document.querySelectorAll(`#rule-${table}-th select`);
     selects.forEach(select => {
         Array.from(select.options).forEach(option => {
+            const isPlaceholder = option.dataset.placeholder === 'true' || option.value === '';
+            if (isPlaceholder) {
+                option.dataset.isEnabled = 'false';
+                option.disabled = true;
+                option.style.opacity = '';
+                option.style.cursor = '';
+                return;
+            }
             option.dataset.isEnabled = isEnabled;
             option.disabled = !isEnabled;
             // optional: remove styling override so we can reapply
@@ -45,6 +53,14 @@ export function applyValidationState(validationMap) {
         if (!select) return;
 
         Array.from(select.options).forEach(option => {
+            const isPlaceholder = option.dataset.placeholder === 'true' || option.value === '';
+            if (isPlaceholder) {
+                option.dataset.isEnabled = 'false';
+                option.disabled = true;
+                option.style.opacity = 0.35;
+                option.style.cursor = 'not-allowed';
+                return;
+            }
             const isEnabled = allowedValues.includes(option.value);
             option.dataset.isEnabled = isEnabled;
             option.disabled = !isEnabled;

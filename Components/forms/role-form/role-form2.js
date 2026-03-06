@@ -17,8 +17,9 @@ let saveButtonHeader;
 export async function initializeRoleForm(passedApi) {
   setApi(passedApi);
   await loadInitialData(api);
+  const loadedRoles = await getAllRoles(api);
+  roleFormRoles = Array.isArray(loadedRoles) ? loadedRoles : [];
   await refreshRoleEmojiPool();
-  roleFormRoles = await getAllRoles(api);
   const formContainer = getFormContainer();
   if (!formContainer) return;
   await loadRoleForm(formContainer);

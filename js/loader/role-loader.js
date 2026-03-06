@@ -19,7 +19,7 @@ let teams = {
 
 const teamFile = 'teamnames.csv';
 const defaultTeams = ['Team Blau', 'Team Grün', 'Team Rot', 'Team Schwarz'];
-const sampleTeams = ['KüchenCrew', 'GästeFront', 'Büro', 'Sauber'];
+const sampleTeams = ['KüchenCrew', 'GästeFront', 'Büro', 'Sauberkeit'];
 
 let teamnames = {
     blue: defaultTeams[0],
@@ -48,10 +48,20 @@ export async function loadRoleData(api) {
 
     try {
         const fileData = await loadFile(api, homeKey, relativePath, loadSampleRoleData);
-        const parsedData = parseCSV(fileData);
-        return parsedData;
+        const parsedData = parseCSV(fileData || '');
+        return Array.isArray(parsedData) ? parsedData : [];
     } catch (error) {
-        // ... rest of error handling
+        console.warn('⚠️ Failed to load role data, using sample fallback:', error);
+        try {
+            const fallbackData = await loadSampleRoleData(true);
+            const parsedFallback = parseCSV(fallbackData || '');
+            return Array.isArray(parsedFallback) ? parsedFallback : [];
+        } catch (fallbackError) {
+            console.error('❌ Role fallback load failed:', fallbackError);
+            roles = [];
+            allRoles = [];
+            return [];
+        }
     }
 }
 
@@ -126,7 +136,23 @@ function getEmbeddedSampleRoleCSV() {
 
 // ----------------- Parse -----------------
 export function parseCSV(data) {
-    const rows = data.split('\n').map(row => row.trim()).filter(Boolean);
+    if (Array.isArray(data)) {
+        allRoles = data.map((role, index) => {
+            const normalizedName = typeof role?.name === 'string' ? role.name : '?';
+            const normalizedEmoji = typeof role?.emoji === 'string' ? role.emoji : '⊖';
+            const rawColorIndex = role?.colorIndex ?? role?.index ?? index;
+            return {
+                name: normalizedName,
+                colorIndex: String(rawColorIndex),
+                emoji: normalizedEmoji
+            };
+        });
+        roles = allRoles.filter(role => role.name && role.name !== '?');
+        return roles;
+    }
+
+    const safeData = typeof data === 'string' ? data : '';
+    const rows = safeData.split('\n').map(row => row.trim()).filter(Boolean);
 
     allRoles = rows.slice(1).map(row => {
         const [name, colorIndex, emoji] = row.split(',').map(cell => cell.trim());
@@ -179,7 +205,7 @@ export async function loadTeamnames(api) {
 
         // if we’re explicitly in “sample” mode, return sample data
         if (dataMode === 'sample') {
-            console.info('→ Using sample teamnames (KüchenCrew, GästeFront, Büro, ungenutzt)');
+            console.info('→ Using sample teamnames (KüchenCrew, GästeFront, Büro, und Sauberkeit)');
             return parseTeamnames(sampleTeams.join('\n'));
         }
 

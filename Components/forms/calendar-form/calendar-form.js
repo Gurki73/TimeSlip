@@ -60,39 +60,39 @@ const weekdaysData = [
 
 let shiftsData = {
   mon: [
-    { id: 'early', label: 'Frühschicht', active: true },
-    { id: 'day', label: 'Tagschicht', active: true },
-    { id: 'late', label: 'Spätschicht', active: false }
+    { id: 'early', label: 'Betriebsbeginn', active: true },
+    { id: 'day', label: 'Kernarbeitszeit', active: true },
+    { id: 'late', label: 'Betriebsende', active: false }
   ],
   tue: [
-    { id: 'early', label: 'Frühschicht', active: true },
-    { id: 'day', label: 'Tagschicht', active: true },
-    { id: 'late', label: 'Spätschicht', active: false }
+    { id: 'early', label: 'Betriebsbeginn', active: true },
+    { id: 'day', label: 'Kernarbeitszeit', active: true },
+    { id: 'late', label: 'Betriebsende', active: false }
   ],
   wed: [
-    { id: 'early', label: 'Frühschicht', active: true },
-    { id: 'day', label: 'Tagschicht', active: true },
-    { id: 'late', label: 'Spätschicht', active: false }
+    { id: 'early', label: 'Betriebsbeginn', active: true },
+    { id: 'day', label: 'Kernarbeitszeit', active: true },
+    { id: 'late', label: 'Betriebsende', active: false }
   ],
   thu: [
-    { id: 'early', label: 'Frühschicht', active: true },
-    { id: 'day', label: 'Tagschicht', active: true },
-    { id: 'late', label: 'Spätschicht', active: false }
+    { id: 'early', label: 'Betriebsbeginn', active: true },
+    { id: 'day', label: 'Kernarbeitszeit', active: true },
+    { id: 'late', label: 'Betriebsende', active: false }
   ],
   fri: [
-    { id: 'early', label: 'Frühschicht', active: true },
-    { id: 'day', label: 'Tagschicht', active: true },
-    { id: 'late', label: 'Spätschicht', active: false }
+    { id: 'early', label: 'Betriebsbeginn', active: true },
+    { id: 'day', label: 'Kernarbeitszeit', active: true },
+    { id: 'late', label: 'Betriebsende', active: false }
   ],
   sat: [
-    { id: 'early', label: 'Frühschicht', active: false },
-    { id: 'day', label: 'Tagschicht', active: false },
-    { id: 'late', label: 'Spätschicht', active: false }
+    { id: 'early', label: 'Betriebsbeginn', active: false },
+    { id: 'day', label: 'Kernarbeitszeit', active: false },
+    { id: 'late', label: 'Betriebsende', active: false }
   ],
   sun: [
-    { id: 'early', label: 'Frühschicht', active: false },
-    { id: 'day', label: 'Tagschicht', active: false },
-    { id: 'late', label: 'Spätschicht', active: false }
+    { id: 'early', label: 'Betriebsbeginn', active: false },
+    { id: 'day', label: 'Kernarbeitszeit', active: false },
+    { id: 'late', label: 'Betriebsende', active: false }
   ]
 };
 

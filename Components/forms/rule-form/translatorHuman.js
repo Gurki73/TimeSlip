@@ -435,24 +435,30 @@ function translateToHuman(rule = {}, roles = []) {
 }
 
 function identifyTeams(rule) {
-    const roles = [];
+    const roleIds = [];
     const condition = rule.secondary || rule.condition || null;
 
     if (rule.main?.group?.details?.roles) {
-        roles.push(...rule.main.group.details.roles);
+        roleIds.push(...rule.main.group.details.roles);
     }
 
     if (condition?.group?.details?.roles) {
-        roles.push(...condition.group.details.roles);
+        roleIds.push(...condition.group.details.roles);
     }
+
+    const normalizedRoles = [...new Set(
+        roleIds
+            .map((id) => Number(id))
+            .filter((id) => Number.isInteger(id) && id >= 0)
+    )];
 
     const teams = [];
 
-    if ([1, 2, 3].some(r => roles.includes(r))) teams.push(1);
-    if ([4, 5, 6].some(r => roles.includes(r))) teams.push(2);
-    if ([7, 8, 9].some(r => roles.includes(r))) teams.push(3);
-    if ([10, 11, 12].some(r => roles.includes(r))) teams.push(4);
-    if ([13].some(r => roles.includes(r))) teams.push(5);
+    if ([1, 2, 3].some(r => normalizedRoles.includes(r))) teams.push(TEAM.BLUE);
+    if ([4, 5, 6].some(r => normalizedRoles.includes(r))) teams.push(TEAM.GREEN);
+    if ([7, 8, 9].some(r => normalizedRoles.includes(r))) teams.push(TEAM.RED);
+    if ([10, 11, 12].some(r => normalizedRoles.includes(r))) teams.push(TEAM.BLACK);
+    if ([13].some(r => normalizedRoles.includes(r))) teams.push(TEAM.AZUBI);
 
     return teams;
 }
@@ -510,7 +516,7 @@ function explodeByTeam(enrichedRules) {
 
     enrichedRules.forEach(r => {
         if (r.teams.length === 0) {
-            result.push({ ...r, categoryTeam: '0' });
+            result.push({ ...r, categoryTeam: TEAM.NONE });
         } else {
             r.teams.forEach(team => {
                 result.push({ ...r, categoryTeam: team });

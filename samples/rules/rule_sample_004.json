@@ -1,7 +1,7 @@
 {
-  "id": "b6b3d253-9295-47fd-86ac-b5f62b0b5c1d",
-  "created": 1772689123808,
-  "updated": 1772689123808,
+  "id": "5d3746ed-f067-408e-86d3-640dea3305d2",
+  "created": 1772765536183,
+  "updated": 1772765536183,
   "isAsleep": false,
   "main": {
     "repeat": {
@@ -39,12 +39,12 @@
     },
     "amount": {
       "type": "amount",
-      "id": "A5",
+      "id": "A1",
       "required": true,
-      "default": false,
-      "label": "minimal",
+      "default": true,
+      "label": "ungefähr",
       "details": {
-        "bottom": 1,
+        "bottom": 2,
         "top": 2
       },
       "isMain": true,
@@ -58,7 +58,9 @@
       "label": "Aufgabe",
       "default": true,
       "details": {
-        "roles": [1]
+        "roles": [
+          "4"
+        ]
       },
       "isMain": true,
       "isCondition": false,
@@ -66,17 +68,16 @@
     },
     "dependency": {
       "type": "dependency",
-      "id": "D0",
-      "label": "anwesend",
-      "default": true,
+      "id": "D3",
+      "label": "hilft",
       "details": {
         "roles": [
-          "0"
+          "1"
         ]
       },
       "isMain": true,
       "isCondition": false,
-      "roles": []
+      "roles": ["1"]
     }
   },
   "condition": {

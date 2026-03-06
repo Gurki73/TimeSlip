@@ -7,9 +7,101 @@ import { updateFeedback } from '../../js/Utils/statusbar.js';
 
 const employeeEmojiCache = new Map(); // employee.id => NodeList
 const roleEmojiCache = new Map();     // role.colorIndex => NodeList
+const ROLE_LOAD_RETRIES = 3;
+const ROLE_LOAD_RETRY_DELAY_MS = 220;
+const ROLE_INDEX_MAX = 13;
 
 let legendEmployees = [];
 let lengendRoles = [];
+let calendarReadyListenerBound = false;
+
+function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function buildFallbackRoleByIndex(colorIndex) {
+    if (colorIndex === 0) return { colorIndex: '0', name: 'Keine', emoji: '🚫' };
+    if (colorIndex === 13) return { colorIndex: '13', name: 'Azubi', emoji: '✏️' };
+    return { colorIndex: String(colorIndex), name: `Aufgabe ${colorIndex}`, emoji: '🧩' };
+}
+
+function buildLegendFallbackRoles() {
+    const roles = [];
+    for (let idx = 0; idx <= ROLE_INDEX_MAX; idx++) {
+        roles.push(buildFallbackRoleByIndex(idx));
+    }
+    return roles;
+}
+
+function normalizeLegendRoles(rawRoles) {
+    if (!Array.isArray(rawRoles)) return [];
+
+    const byIndex = new Map();
+    rawRoles
+        .map((role, idx) => {
+            const colorIndex = Number(role?.colorIndex ?? role?.index ?? idx);
+            if (!Number.isInteger(colorIndex) || colorIndex < 0) return null;
+
+            return {
+                colorIndex: String(colorIndex),
+                name: String(role?.name ?? '?').trim(),
+                emoji: String(role?.emoji ?? '⊖').trim()
+            };
+        })
+        .filter(Boolean)
+        .forEach((role) => {
+            byIndex.set(Number(role.colorIndex), role);
+        });
+
+    const normalized = [];
+    for (let idx = 0; idx <= ROLE_INDEX_MAX; idx++) {
+        const role = byIndex.get(idx);
+        if (!role) {
+            normalized.push(buildFallbackRoleByIndex(idx));
+            continue;
+        }
+
+        const hasRealName = role.name && !['?', 'name'].includes(role.name.toLowerCase());
+        const hasRealEmoji = role.emoji && role.emoji !== '⊖';
+        if (!hasRealName || !hasRealEmoji) {
+            normalized.push({
+                ...buildFallbackRoleByIndex(idx),
+                name: hasRealName ? role.name : buildFallbackRoleByIndex(idx).name,
+                emoji: hasRealEmoji ? role.emoji : buildFallbackRoleByIndex(idx).emoji
+            });
+            continue;
+        }
+
+        normalized.push(role);
+    }
+
+    return normalized;
+}
+
+async function loadLegendRoles(api) {
+    let lastResult = [];
+
+    for (let attempt = 1; attempt <= ROLE_LOAD_RETRIES; attempt++) {
+        const loaded = await loadRoleData(api);
+        const normalized = normalizeLegendRoles(loaded);
+        lastResult = normalized;
+
+        if (normalized.length > 0) {
+            if (attempt > 1) {
+                console.info(`[legend] roles loaded after retry #${attempt}`);
+            }
+            return normalized;
+        }
+
+        if (attempt < ROLE_LOAD_RETRIES) {
+            await wait(ROLE_LOAD_RETRY_DELAY_MS);
+        }
+    }
+
+    console.warn('[legend] role list is empty after retries, using fallback role set');
+    updateFeedback('⚠ Aufgaben nicht lesbar. Fallback-Rollen aktiv.');
+    return lastResult.length ? lastResult : buildLegendFallbackRoles();
+}
 
 export async function initializeLegend(api) {
     const legendContainer = document.getElementById('legend');
@@ -27,27 +119,35 @@ export async function initializeLegend(api) {
     renderCollapsibleSection(legendContainer, '🎨 ⇨ Aufgaben', renderRoles, 'lade Aufgaben...');
     renderCollapsibleSection(legendContainer, '😊 ⇨ Mitarbeiter', renderEmployees, 'lade Mitarbeiter...');
 
-    let roles, employees;
+    let roles = [];
+    let employees = [];
 
     try {
-        [roles, employees] = await Promise.all([
-            loadRoleData(api),
-            loadEmployeeData(api)
-        ]);
+        roles = await loadLegendRoles(api);
     } catch (err) {
-        console.error('❌ Failed to load legend data:', err);
-        return; // stop here if data failed
+        console.error('❌ Failed to load legend roles:', err);
+        roles = buildLegendFallbackRoles();
     }
 
-    lengendRoles = roles;
-    legendEmployees = employees;
+    try {
+        employees = await loadEmployeeData(api);
+    } catch (err) {
+        console.error('❌ Failed to load legend employees:', err);
+        employees = [];
+    }
+
+    lengendRoles = Array.isArray(roles) ? roles : [];
+    legendEmployees = Array.isArray(employees) ? employees : [];
 
     const roleContent = document.getElementById('legend-roles');
     const employeeContent = document.getElementById('legend-employees');
 
-    document.addEventListener('calendar-ready', (event) => {
-        rebuildEmojiCaches();
-    });
+    if (!calendarReadyListenerBound) {
+        document.addEventListener('calendar-ready', () => {
+            rebuildEmojiCaches();
+        });
+        calendarReadyListenerBound = true;
+    }
 
     renderRoles(roleContent);
     renderEmployees(employeeContent);
@@ -170,7 +270,6 @@ export function renderEmployees(container, employeesToRender = legendEmployees) 
     list.classList.add('legend-list');
 
     const calendarContainer = document.getElementById('calendar-month-sheet');
-    if (!calendarContainer) return;
 
     employeesToRender.forEach(employee => {
         if (!employee.name || employee.name === '?' || employee.name === 'name' || employee.personalEmoji === '🗑️') return;
@@ -202,10 +301,11 @@ export function renderEmployees(container, employeesToRender = legendEmployees) 
 
         // --- Cache emojis for this employee ---
         let emojisInCalendar = employeeEmojiCache.get(employee.id);
-        if (!emojisInCalendar) {
+        if (!emojisInCalendar && calendarContainer) {
             emojisInCalendar = calendarContainer.querySelectorAll(`.emp-${employee.id}`);
             employeeEmojiCache.set(employee.id, emojisInCalendar);
         }
+        if (!emojisInCalendar) emojisInCalendar = [];
 
         // --- Disable unassigned items ---
         if (!emojisInCalendar.length) {
@@ -239,10 +339,10 @@ export function renderRoles(container) {
     list.classList.add('legend-list');
 
     const calendarContainer = document.getElementById('calendar-month-sheet');
-    if (!calendarContainer) return;
 
     lengendRoles.forEach(role => {
-        if (role.emoji === "⊖" || ['keine', '?', 'name'].includes(role.name)) return;
+        const roleName = String(role?.name || '').toLowerCase();
+        if (role.emoji === "⊖" || ['keine', '?', 'name'].includes(roleName)) return;
 
         const listItem = document.createElement('li');
         listItem.classList.add('legend-item');
@@ -260,20 +360,21 @@ export function renderRoles(container) {
         arrow.classList.add('legend-arrow');
         arrow.innerText = '⇨';
 
-        const roleName = document.createElement('span');
-        roleName.classList.add('legend-name');
-        roleName.innerText = role.name;
+        const roleNameEl = document.createElement('span');
+        roleNameEl.classList.add('legend-name');
+        roleNameEl.innerText = role.name;
 
         listItem.appendChild(emoji);
         listItem.appendChild(arrow);
-        listItem.appendChild(roleName);
+        listItem.appendChild(roleNameEl);
 
         // --- Cache emojis for this role ---
         let emojisInCalendar = roleEmojiCache.get(role.colorIndex);
-        if (!emojisInCalendar) {
+        if (!emojisInCalendar && calendarContainer) {
             emojisInCalendar = calendarContainer.querySelectorAll(`.role-${role.colorIndex}`);
             roleEmojiCache.set(role.colorIndex, emojisInCalendar);
         }
+        if (!emojisInCalendar) emojisInCalendar = [];
 
         // --- Disable unassigned items ---
         if (!emojisInCalendar.length) {
@@ -305,4 +406,3 @@ function updateWelcomeGreeting() {
     const greeting = getHolidayGreetingForToday();
     if (greeting) header.innerHTML = greeting;
 }
-

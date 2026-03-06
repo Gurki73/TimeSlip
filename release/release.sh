@@ -97,6 +97,9 @@ case "$PLATFORM" in
   *) echo "❌ Unknown platform"; exit 1 ;;
 esac
 
+echo "📦 Files in dist:"
+ls -lh dist || echo "dist folder missing"
+
 # -------------------------
 # SIZE CHECK
 # -------------------------
@@ -117,7 +120,9 @@ check_size () {
 
 APPIMAGE="dist/MitarbeiterKalenderApp-${VERSION}.AppImage"
 DEB="dist/mitarbeiterkalender_${VERSION}_amd64.deb"
-WIN_FILE=$(find dist -name "*nsis*.exe" | head -n 1)
+WIN_FILE=$(find dist -iname "*.exe" | head -n 1)
+
+echo "🪟 Windows installer detected: $WIN_FILE"
 
 check_size "$APPIMAGE" 130 "AppImage"
 check_size "$DEB" 130 "deb"
@@ -131,15 +136,17 @@ upload () {
   FILES=$2
   CHANNEL=$3
 
+  echo "🔎 Checking $LABEL files: $FILES"
+
   if compgen -G "$FILES" > /dev/null; then
     echo "🚀 $LABEL → $CHANNEL"
     $DRY_RUN || butler push $FILES "$ITCH_TARGET:$CHANNEL" --userversion "$VERSION"
   else
-    echo "ℹ️ No $LABEL"
+    echo "ℹ️ No $LABEL files found"
   fi
 }
 
-[[ "$PLATFORM" != "linux" ]] && upload "Windows" "dist/*nsis*.exe" "win"
+[[ "$PLATFORM" != "linux" ]] && upload "Windows" "dist/*.exe" "win"
 [[ "$PLATFORM" != "win"   ]] && upload "AppImage" "dist/*.AppImage" "linux"
 [[ "$PLATFORM" != "win"   ]] && upload "deb" "dist/*.deb" "linux-deb"
 

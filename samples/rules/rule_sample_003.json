@@ -1,62 +1,122 @@
 {
-  "id": "rule_to_fail",
-  "created": 1699990000102,
-  "updated": 1699990000102,
+  "id": "afeefa50-79d8-429e-8045-013ebf92c3cf",
+  "created": 1772765099431,
+  "updated": 1772765099431,
   "isAsleep": false,
-
   "main": {
     "repeat": {
       "type": "repeat",
       "id": "W1",
-      "details": { "bottom": 0, "top": 0 }
+      "label": "jeden",
+      "details": {
+        "bottom": 1,
+        "top": 2
+      },
+      "isMain": true,
+      "isCondition": false
     },
-
     "timeframe": {
       "type": "timeframe",
       "id": "T2",
+      "label": "Tag",
       "details": {
-        "days": [2,3]
-      }
+        "days": [
+          "Fr",
+          "Sa"
+        ],
+        "shifts": [
+          "4",
+          "5"
+        ]
+      },
+      "isMain": true,
+      "isCondition": false,
+      "days": []
     },
-
+    "exception": {
+      "type": "none",
+      "id": "E0",
+      "label": "",
+      "example": "Keine Ausnahme",
+      "default": true,
+      "details": {},
+      "operator": "NONE",
+      "isMain": true,
+      "isCondition": false
+    },
     "amount": {
       "type": "amount",
-      "id": "A8",
+      "id": "A1",
+      "required": true,
+      "default": true,
+      "label": "ungefähr",
       "details": {
-        "bottom": 20,
-        "top": 20
-      }
+        "bottom": 1,
+        "top": 2
+      },
+      "isMain": true,
+      "isCondition": false,
+      "bottom": 1,
+      "top": 1
     },
-
     "group": {
       "type": "group",
       "id": "G0",
+      "label": "Aufgabe",
+      "default": true,
       "details": {
-        "roles": [5]
-      }
+        "roles": [
+          "5"
+        ]
+      },
+      "isMain": true,
+      "isCondition": false,
+      "roles": []
     },
-
     "dependency": {
       "type": "dependency",
       "id": "D0",
+      "label": "anwesend",
+      "default": true,
       "details": {
-        "roles": [],
-        "bottom": 0,
-        "top": 0
-      }
-    },
-
-    "exception": {
-      "type": "exception",
-      "id": "E0"
+        "roles": [
+          "0"
+        ]
+      },
+      "isMain": true,
+      "isCondition": false,
+      "roles": []
     }
   },
-
   "condition": {
-    "repeat": { "type": "repeat", "id": "w0", "details": {} },
-    "timeframe": { "type": "timeframe", "id": "t0", "details": {} },
-    "amount": { "type": "amount", "id": "a0", "details": {} },
-    "group": { "type": "group", "id": "g0", "details": { "roles": [] } },
-    "dependency": { "type": "dependency", "id": "d0", "details": {} }
+    "repeat": {
+      "type": "repeat",
+      "id": "w0",
+      "label": "",
+      "default": true,
+      "details": {
+        "bottom": 1,
+        "top": 2
+      },
+      "isMain": false,
+      "isCondition": true
+    },
+    "timeframe": {
+      "type": "timeframe",
+      "id": "t0",
+      "label": "",
+      "default": true,
+      "details": {},
+      "isMain": false,
+      "isCondition": true
+    },
+    "amount": {
+      "bottom": 1,
+      "top": 1
+    },
+    "group": {
+      "roles": []
+    },
+    "dependency": {}
   }
 }

@@ -52,6 +52,7 @@ const RULE_FUTURE_WINDOW_MONTHS = 6;
 const SCROLL_THRESHOLD = 40;
 const WEEKDAY_SHORT = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 const TEAM_KEY_ORDER = ['blue', 'green', 'red', 'black', 'azubi', 'none'];
+const ROLE_INDEX_MAX = 13;
 
 // ============= STATE =============
 let rulesScrollbox;
@@ -100,6 +101,69 @@ const announceStatus = (message) => {
 
 const showSuccess = (msg) => console.log("✅", msg);
 const showFailure = (msg) => console.log("❌", msg);
+
+function buildFallbackRoleByIndex(colorIndex) {
+    if (colorIndex === 0) return { colorIndex: '0', name: 'Keine', emoji: '🚫' };
+    if (colorIndex === 13) return { colorIndex: '13', name: 'Azubi', emoji: '✏️' };
+    return { colorIndex: String(colorIndex), name: `Aufgabe ${colorIndex}`, emoji: '🧩' };
+}
+
+function normalizeRuleRoles(rawRoles) {
+    if (!Array.isArray(rawRoles)) return [];
+
+    const byIndex = new Map();
+    rawRoles
+        .map((role, idx) => {
+            const colorIndex = Number(role?.colorIndex ?? role?.index ?? idx);
+            if (!Number.isInteger(colorIndex) || colorIndex < 0 || colorIndex > ROLE_INDEX_MAX) return null;
+            return {
+                colorIndex: String(colorIndex),
+                name: String(role?.name ?? '?').trim(),
+                emoji: String(role?.emoji ?? '⊖').trim()
+            };
+        })
+        .filter(Boolean)
+        .forEach((role) => byIndex.set(Number(role.colorIndex), role));
+
+    const normalized = [];
+    for (let idx = 0; idx <= ROLE_INDEX_MAX; idx++) {
+        const role = byIndex.get(idx);
+        if (!role) {
+            normalized.push(buildFallbackRoleByIndex(idx));
+            continue;
+        }
+
+        const hasRealName = role.name && !['?', 'name'].includes(role.name.toLowerCase());
+        const hasRealEmoji = role.emoji && role.emoji !== '⊖';
+        if (!hasRealName || !hasRealEmoji) {
+            const fallback = buildFallbackRoleByIndex(idx);
+            normalized.push({
+                ...fallback,
+                name: hasRealName ? role.name : fallback.name,
+                emoji: hasRealEmoji ? role.emoji : fallback.emoji
+            });
+            continue;
+        }
+
+        normalized.push(role);
+    }
+
+    return normalized;
+}
+
+async function loadRuleRolesWithRetry(maxRetries = 3, delayMs = 220) {
+    let lastRoles = [];
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        const loaded = await loadRoleData(api);
+        const normalized = normalizeRuleRoles(loaded);
+        lastRoles = normalized;
+        if (normalized.length > 0) return normalized;
+        if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+    }
+    return lastRoles.length > 0 ? lastRoles : normalizeRuleRoles([]);
+}
 
 const getScopedElementById = (id) => {
     const tableContainer = document.getElementById('table-container');
@@ -167,15 +231,18 @@ export async function initializeRuleForm(passedApi) {
 
 async function loadInitialData() {
     ruleOfficeDays = await loadOfficeDaysData(api);
-    cachedRoles = await loadRoleData(api);
+    cachedRoles = await loadRuleRolesWithRetry();
     ruleSet = await loadRuleData(api);
     teamnames = await loadTeamnames(api);
 
     if (!Array.isArray(cachedRoles)) {
         console.warn("Roles is not an array, initializing empty array");
-        cachedRoles = [];
+        cachedRoles = normalizeRuleRoles([]);
     }
-    if (cachedRoles.length < 1) await loadRoleData(api);
+    if (cachedRoles.length < 1) {
+        cachedRoles = await loadRuleRolesWithRetry();
+        if (!Array.isArray(cachedRoles)) cachedRoles = normalizeRuleRoles([]);
+    }
 }
 
 function initializeUI() {
@@ -199,16 +266,9 @@ function initializeUI() {
 }
 
 function initializeRuleEditor() {
-    ruleForEditing = createRuleFromBlueprint(DEFAULT_BLUEPRINT);
-    translateCurrentRule(ruleForEditing, cachedRoles);
-
     initializeInputFunctions();
-    handleTopCellRoles('G0');
-    handleTopCellNumberInput('A1');
-    handleTopCellDependency('D0');
-
     initEventDelegation();
-    drawRuleLine();
+    startNewRule({ announce: false });
 }
 
 // ============= EVENT HANDLERS =============
@@ -341,6 +401,7 @@ async function runCurrentRuleValidation({ showStatus = false } = {}) {
         return report;
     } catch (err) {
         console.error("Rule validation failed:", err);
+        renderRuleFeedbackLines(['❌ Regeltest ist fehlgeschlagen. Bitte Eingaben prüfen.']);
         if (showStatus) announceStatus("Regeltest fehlgeschlagen.");
         return null;
     }
@@ -351,9 +412,87 @@ function renderRuleCheckReport(report) {
     const list = document.getElementById('rule-new-warnings-list');
     if (list) list.innerHTML = '';
     clearImpactCharts();
+
+    const lines = [];
+    const errors = Array.isArray(report?.errors) ? report.errors : [];
+    const warnings = Array.isArray(report?.warnings) ? report.warnings : [];
+    const hasErrors = errors.length > 0;
+
+    if (report) {
+        if (report.ok && !hasErrors) {
+            lines.push('✅ Die neue Regel ist gültig.');
+        } else {
+            lines.push('❌ Die neue Regel ist nicht gültig.');
+        }
+    }
+
+    errors.forEach((entry) => {
+        lines.push(`❌ ${translateRuleCheckMessage(entry)}`);
+    });
+    warnings.forEach((entry) => {
+        lines.push(`⚠️ ${translateRuleCheckMessage(entry)}`);
+    });
+
+    if (report?.details?.impact) {
+        renderImpactReport(lines, report.details.impact);
+    }
+
+    renderRuleFeedbackLines(lines);
+
     if (report?.details?.impact) {
         renderImpactCharts(report.details.impact);
     }
+}
+
+function translateRuleCheckMessage(raw) {
+    const text = String(raw || '').trim();
+    if (!text) return 'Unbekannter Prüfhinweis.';
+
+    const [code, restRaw] = text.split(':');
+    const rest = (restRaw || '').trim();
+
+    switch (code) {
+        case 'RULE_MISSING':
+            return 'Kein Regelentwurf vorhanden.';
+        case 'MISSING_BLOCKS':
+            return rest ? `Pflichtblöcke fehlen: ${rest}.` : 'Pflichtblöcke fehlen.';
+        case 'FORBIDDEN_COMBOS':
+            return rest ? `Ungültige Kombinationen: ${rest}.` : 'Ungültige Kombinationen erkannt.';
+        case 'RULE_TRANSLATION_EMPTY':
+            return 'Die Regel konnte nicht in eine prüfbare Maschinenregel übersetzt werden.';
+        case 'DUPLICATE_RULES':
+            return rest ? `${rest} doppelte Regel(n) erkannt.` : 'Doppelte Regeln erkannt.';
+        case 'POTENTIAL_CONFLICTS':
+            return rest ? `${rest} potenzielle Konflikte erkannt.` : 'Potenzielle Konflikte erkannt.';
+        case 'DELTA_NEW_RULES':
+            return rest ? `${rest} neue Maschinenregel(n) würden ergänzt.` : 'Neue Maschinenregeln würden ergänzt.';
+        case 'DELTA_DUPLICATES':
+            return rest ? `${rest} Duplikate in der Delta-Betrachtung.` : 'Duplikate in der Delta-Betrachtung.';
+        case 'DELTA_CONFLICTS':
+            return rest ? `${rest} Konflikte in der Delta-Betrachtung.` : 'Konflikte in der Delta-Betrachtung.';
+        case 'FUTURE_VIOLATIONS':
+            return rest ? `Langzeitprüfung: ${rest} mögliche Verstöße im Zukunftsfenster.` : 'Langzeitprüfung meldet mögliche Verstöße.';
+        default:
+            return text;
+    }
+}
+
+function renderRuleFeedbackLines(lines = []) {
+    const list = document.getElementById('rule-new-warnings-list');
+    const title = document.querySelector('.rule-new-warnings-list');
+    if (!list) return;
+
+    list.innerHTML = '';
+
+    const entries = Array.isArray(lines)
+        ? lines.map(line => String(line || '').trim()).filter(Boolean)
+        : [];
+
+    entries.forEach((line) => addListItem(list, line));
+
+    const show = entries.length > 0;
+    list.style.display = show ? 'block' : 'none';
+    if (title) title.style.display = show ? 'block' : 'none';
 }
 
 function renderImpactReport(items, impact) {
@@ -583,7 +722,7 @@ async function onSaveRuleClick(event) {
     if (event?.preventDefault) event.preventDefault();
 
     const sanity = runLiveSanity(ruleForEditing);
-    if (!sanity?.ok) {
+    if (sanity?.blocking) {
         announceStatus("Bitte erst alle Pflichtfelder ausfüllen.");
         await runCurrentRuleValidation({ showStatus: false });
         return;
@@ -606,8 +745,17 @@ async function onSaveRuleClick(event) {
         }
     }
 
-    await saveRule();
-    announceStatus("Regel gespeichert.");
+    try {
+        renderRuleFeedbackLines(['⏳ Speichere neue Regel ...']);
+        await saveRule();
+        renderRuleFeedbackLines([]);
+        announceStatus("Regel gespeichert.");
+    } catch (error) {
+        const detail = error?.message ? String(error.message) : 'Unbekannter Fehler.';
+        renderRuleFeedbackLines([`❌ Speichern fehlgeschlagen: ${detail}`]);
+        announceStatus("Regel konnte nicht gespeichert werden.");
+        throw error;
+    }
 }
 
 function scrollRulesToBottomIfAllowed(force = false) {
@@ -640,22 +788,41 @@ function updateDivider(className) {
         onChange: (val) => console.log('DataMode changed to:', val)
     });
 
+    const newRuleBtn = document.createElement('button');
+    newRuleBtn.type = 'button';
+    newRuleBtn.className = 'noto';
+    newRuleBtn.textContent = '➕';
+    newRuleBtn.title = 'Neue Regel erstellen';
+    newRuleBtn.setAttribute('aria-label', 'Neue Regel erstellen');
+    newRuleBtn.addEventListener('click', () => startNewRule({ announce: true }));
+
     saveButtonHeader = createSaveButton({ onSave: onSaveRuleClick });
     const windowBtns = createWindowButtons();
 
-    buttonContainer.append(saveButtonHeader.el, helpBtn, dataModeToggle, windowBtns);
+    buttonContainer.append(newRuleBtn, saveButtonHeader.el, helpBtn, dataModeToggle, windowBtns);
     divider.append(leftGap, h2, buttonContainer);
 }
 
 // ============= INPUT HANDLING =============
 function initializeInputFunctions() {
+    ensureEmptyDefaultOptions();
+
     INPUT_BINDINGS.forEach(({ key, handler }) => {
         const select = getSelect(key);
         if (!select) {
             console.warn(`[rule-form] Select not found for key "${key}"`);
             return;
         }
-        select.addEventListener('change', event => handler(event.target.value));
+        select.addEventListener('change', event => {
+            const value = event.target.value;
+
+            if (!value) {
+                clearRuleCellAndDraftBlock(key);
+                return;
+            }
+
+            handler(value);
+        });
     });
 }
 
@@ -745,7 +912,7 @@ export function handleInput(inputObj) {
     applyInputDetails(target, key, inputObj);
 
     const liveSanityResult = runLiveSanity(ruleForEditing);
-    updateWizard(liveSanityResult, inputObj.id);
+    applyLiveSanityUIState(liveSanityResult, inputObj.id);
 
     translateCurrentRule(ruleForEditing, cachedRoles);
 
@@ -755,6 +922,19 @@ export function handleInput(inputObj) {
     }
 
     drawRuleLine();
+}
+
+function applyLiveSanityUIState(liveSanityResult, lastUpdatedID = '') {
+    const sanity = liveSanityResult || runLiveSanity(ruleForEditing || {});
+    updateWizard(sanity, lastUpdatedID);
+
+    if (localStorage.getItem('dataMode') === 'sample') {
+        saveButtonHeader?.setState('readonly');
+        return sanity;
+    }
+
+    saveButtonHeader?.setState(sanity.blocking ? 'blocked' : 'dirty');
+    return sanity;
 }
 
 function applyInputDetails(target, key, inputObj) {
@@ -773,7 +953,11 @@ function applyInputDetails(target, key, inputObj) {
             }
             break;
         case "group":
-            if (inputObj.value?.length) target.details.roles = inputObj.value;
+            if (Array.isArray(inputObj.value)) {
+                target.details.roles = inputObj.value;
+            } else if (inputObj.value != null && inputObj.value !== '') {
+                target.details.roles = [inputObj.value];
+            }
             break;
         case "dependency":
             if (inputObj.words) target.details.roles = inputObj.words;
@@ -786,11 +970,15 @@ function applyInputDetails(target, key, inputObj) {
 }
 
 function resetInput() {
-
     resetRule();
     toggleExceptionTable(false);
     document.querySelectorAll('.rule-table thead select').forEach(select => {
-        select.selectedIndex = 0;
+        const placeholder = Array.from(select.options).find(option => option.value === '');
+        if (placeholder) {
+            select.value = '';
+        } else {
+            select.selectedIndex = 0;
+        }
         select.dispatchEvent(new Event('change'));
     });
 }
@@ -1053,6 +1241,9 @@ function handleTopCellRoles(id) {
     } else {
         console.warn('Role cell not found for id:', id);
     }
+
+    // Ensure top-level group selection is reflected immediately in live sanity.
+    handleInput({ id, inputID: 'topCell', value: [] });
 }
 
 function handleMultiRoleSelection(id, roleElement, roleLabel, validRoles) {
@@ -1079,6 +1270,7 @@ function handleSingleRoleSelection(id, roleElement, validRoles) {
         singleRoleOption.style.backgroundColor = roleColor;
         singleRoleOption.textContent = `${role.emoji} ⇨ ${role.name}`;
         singleRoleOption.title = role.name;
+        singleRoleOption.dataset.name = role.name;
         singleRoleOption.value = role.colorIndex;
         singleRoleSelection.appendChild(singleRoleOption);
     });
@@ -1101,6 +1293,7 @@ function handleSingleRoleSelection(id, roleElement, validRoles) {
     });
 
     roleElement.appendChild(singleRoleSelection);
+    singleRoleSelection.dispatchEvent(new Event('change'));
 }
 
 function handleTopCellException(id) {
@@ -1805,18 +1998,78 @@ function updateRuleInMemory(rule) {
 // Add this near the other rule operations
 function resetRule() {
     ruleForEditing = createRuleFromBlueprint(DEFAULT_BLUEPRINT);
-    translateCurrentRule(ruleForEditing, cachedRoles);
+    ensureEmptyDefaultOptions();
 
-    // Reset all select elements to default
-    INPUT_BINDINGS.forEach(({ key }) => {
-        const select = getSelect(key);
-        if (select) {
-            select.value = select.options[0]?.value;
-            select.dispatchEvent(new Event('change'));
-        }
-    });
+    // Start new editor with empty mandatory blocks.
+    ['A', 'G', 'D', 'a', 'g', 'd'].forEach(clearRuleCellAndDraftBlock);
 
     toggleExceptionTable(false);
+    translateCurrentRule(ruleForEditing, cachedRoles);
+    drawRuleLine();
+}
+
+function startNewRule({ announce = false } = {}) {
+    clearRuleWarnings();
+    resetInput();
+    clearImpactCharts();
+    testPassed = false;
+    lastTestReport = null;
+    updateSaveButtonState();
+    applyLiveSanityUIState();
+    if (announce) announceStatus('Neue Regel gestartet.');
+}
+
+function clearRuleWarnings() {
+    const list = document.getElementById('rule-new-warnings-list');
+    const title = document.querySelector('.rule-new-warnings-list');
+
+    if (list) {
+        list.innerHTML = '';
+        list.style.display = 'none';
+    }
+
+    if (title) {
+        title.style.display = 'none';
+    }
+
+    clearImpactCharts(); // also remove charts
+}
+
+
+function ensureEmptyDefaultOptions() {
+    const placeholderKeys = ['A', 'G', 'D', 'a', 'g', 'd'];
+    placeholderKeys.forEach((key) => {
+        const select = getSelect(key);
+        if (!select) return;
+
+        let emptyOption = Array.from(select.options).find((option) => option.value === '');
+        if (!emptyOption) {
+            emptyOption = document.createElement('option');
+            emptyOption.value = '';
+            emptyOption.textContent = '...';
+            emptyOption.dataset.placeholder = 'true';
+            select.insertBefore(emptyOption, select.firstChild);
+        }
+
+        emptyOption.disabled = true;
+        emptyOption.selected = true;
+    });
+}
+
+function clearRuleCellAndDraftBlock(key) {
+    const cell = getCell(key);
+    if (cell) cell.innerHTML = '';
+
+    if (!ruleForEditing || typeof ruleForEditing !== 'object') return;
+
+    const scope = key === key.toUpperCase() ? 'main' : 'secondary';
+    const blockKey = BLOCK_KEY_MAP[key.toUpperCase()];
+    if (!scope || !blockKey || !ruleForEditing[scope]) return;
+
+    delete ruleForEditing[scope][blockKey];
+    applyLiveSanityUIState(null, key);
+    translateCurrentRule(ruleForEditing, cachedRoles);
+    drawRuleLine();
 }
 
 export async function awakeRule(ruleView) {

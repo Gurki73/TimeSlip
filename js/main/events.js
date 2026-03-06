@@ -192,7 +192,7 @@ export function registerEventHandlers(mainWindow) {
     ipcMain.handle("get-rule-files", async () => {
         return dataLoader.getFilesFromClientSubfolder(
             'rules',
-            /^rule_.*\.json$/   // adapt to your naming scheme
+            /\.json$/i
         );
     });
 

@@ -46,15 +46,15 @@ export function runLiveSanity(ruleDraft) {
     const mainKeys = ['W', 'T', 'A', 'G', 'D', 'E'];
     mainKeys.forEach(key => {
         if (!mandatory[key]) return;
-        const block = ruleDraft.main?.[key];
-        if (!isBlockSelected(block)) missingMandatory.push(key);
+        const block = getDraftBlock(ruleDraft, key);
+        if (!isBlockSelected(block, key)) missingMandatory.push(key);
     });
 
     const secondaryKeys = ['w', 't', 'a', 'g', 'd'];
     secondaryKeys.forEach(key => {
         if (!mandatory[key]) return;
-        const block = ruleDraft.secondary?.[key];
-        if (!isBlockSelected(block)) missingMandatory.push(key);
+        const block = getDraftBlock(ruleDraft, key);
+        if (!isBlockSelected(block, key)) missingMandatory.push(key);
     });
 
     const forbidden = scanForForbidden(ruleDraft);
@@ -64,13 +64,36 @@ export function runLiveSanity(ruleDraft) {
     return { blocking, missingMandatory, forbidden };
 }
 
-function isBlockSelected(block) {
+function isBlockSelected(block, shortKey = '') {
     if (!block) return false;
-    if (!block.id) return false;
+    if (block.id == null) return false;
+
+    const upperKey = String(shortKey).toUpperCase();
+    if (upperKey === 'G' || upperKey === 'D') return true;
 
     const id = String(block.id);
     if (id.length < 2) return false;
     return id[1] !== '0';
+}
+
+function getDraftBlock(ruleDraft, shortKey) {
+    if (!ruleDraft || !shortKey) return null;
+
+    const blockMap = {
+        W: 'repeat',
+        T: 'timeframe',
+        A: 'amount',
+        G: 'group',
+        D: 'dependency',
+        E: 'exception'
+    };
+
+    const mappedKey = blockMap[String(shortKey).toUpperCase()];
+    if (!mappedKey) return null;
+
+    const isMain = String(shortKey) === String(shortKey).toUpperCase();
+    const scope = isMain ? 'main' : 'secondary';
+    return ruleDraft?.[scope]?.[mappedKey] ?? null;
 }
 
 
@@ -83,23 +106,26 @@ function deriveMandatory(ruleDraft) {
     mandatory.D = true;
 
     // --- Exceptions E ---
-    if (ruleDraft.main?.E && ruleDraft.main.E.value !== 'E0') {
+    const mainException = getDraftBlock(ruleDraft, 'E');
+    const hasSecondaryCondition = Boolean(mainException && mainException.id !== 'E0');
+    if (hasSecondaryCondition) {
         mandatory.A = true;
         mandatory.G = true;
         mandatory.D = true;
     }
 
     // --- T/W dynamic dependency ---
-    const WSelected = ruleDraft.main?.W ? ruleDraft.main.W.id[1] !== '0' : false;
-    const wSelected = ruleDraft.secondary?.w ? ruleDraft.secondary.w.id[1] !== '0' : false;
+    const WSelected = isBlockSelected(getDraftBlock(ruleDraft, 'W'), 'W');
+    const wSelected = isBlockSelected(getDraftBlock(ruleDraft, 'w'), 'w');
 
     mandatory.T = WSelected; // T mandatory if W selected
-    mandatory.t = wSelected; // t mandatory if w selected
+    mandatory.t = hasSecondaryCondition && wSelected; // t mandatory if secondary W selected
 
-    // --- Optional: mirror secondary blocks if main is mandatory ---
-    if (mandatory.A) mandatory.a = true;
-    if (mandatory.G) mandatory.g = true;
-    if (mandatory.D) mandatory.d = true;
+    // Secondary blocks are only mandatory when exception table is active.
+    mandatory.w = hasSecondaryCondition;
+    mandatory.a = hasSecondaryCondition;
+    mandatory.g = hasSecondaryCondition;
+    mandatory.d = hasSecondaryCondition;
 
     return mandatory;
 }
