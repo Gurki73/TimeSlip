@@ -1,0 +1,115 @@
+{
+  "id": "00711932-cfb0-40f3-806e-87091bb19ccd",
+  "created": 1772775390406,
+  "updated": 1772775390406,
+  "isAsleep": false,
+  "main": {
+    "repeat": {
+      "type": "repeat",
+      "id": "W0",
+      "label": "",
+      "default": true,
+      "details": {
+        "bottom": 1,
+        "top": 2
+      },
+      "isMain": true,
+      "isCondition": false
+    },
+    "timeframe": {
+      "type": "timeframe",
+      "id": "T0",
+      "label": "",
+      "default": true,
+      "details": {},
+      "isMain": true,
+      "isCondition": false,
+      "days": []
+    },
+    "exception": {
+      "type": "none",
+      "id": "E0",
+      "label": "",
+      "example": "Keine Ausnahme",
+      "default": true,
+      "details": {},
+      "operator": "NONE",
+      "isMain": true,
+      "isCondition": false
+    },
+    "amount": {
+      "type": "amount",
+      "id": "A5",
+      "required": true,
+      "default": false,
+      "label": "minimal",
+      "details": {
+        "bottom": 1,
+        "top": 2
+      },
+      "isMain": true,
+      "isCondition": false,
+      "bottom": 1,
+      "top": 1
+    },
+    "group": {
+      "type": "group",
+      "id": "G2",
+      "label": "Alternative",
+      "details": {
+        "roles": [
+          "8",
+          "9"
+        ]
+      },
+      "isMain": true,
+      "isCondition": false,
+      "roles": []
+    },
+    "dependency": {
+      "type": "dependency",
+      "id": "D0",
+      "label": "anwesend",
+      "default": true,
+      "details": {
+        "roles": [
+          "0"
+        ]
+      },
+      "isMain": true,
+      "isCondition": false,
+      "roles": []
+    }
+  },
+  "condition": {
+    "repeat": {
+      "type": "repeat",
+      "id": "w0",
+      "label": "",
+      "default": true,
+      "details": {
+        "bottom": 1,
+        "top": 2
+      },
+      "isMain": false,
+      "isCondition": true
+    },
+    "timeframe": {
+      "type": "timeframe",
+      "id": "t0",
+      "label": "",
+      "default": true,
+      "details": {},
+      "isMain": false,
+      "isCondition": true
+    },
+    "amount": {
+      "bottom": 1,
+      "top": 1
+    },
+    "group": {
+      "roles": []
+    },
+    "dependency": {}
+  }
+}

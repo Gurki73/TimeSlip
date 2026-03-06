@@ -355,6 +355,8 @@
 }
 
 #rule-impact-charts {
+  display:flex;
+  flex-direction: row;
   margin: 0.5rem 0.75rem 0.75rem 0.75rem;
   padding: 0.65rem;
   background: rgba(255, 255, 255, 0.6);

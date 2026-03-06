@@ -1,5 +1,5 @@
 1) default role isnt saved in rule.json
-✅ 2) pipeline doesnt load up windows installer (only linux )
+✅  2) pipeline doesnt load up windows installer (only linux )
 ✅ 3) new rule doesnt hide last warnings
 ✅ 4) are you sure is in english instead of german
 5) needs and helps dont work in dependencies (role and count )
@@ -7,7 +7,7 @@
 7) warnings in claendar only show cryptic msg
 8) statistics should side by side instead of a colum
 9) sumary of violation should be rendered inside statistics not inside warnings
-10) we need more mok rules to show/explain more concepts
+✅ 10) we need more mok rules to show/explain more concepts
 
 Legend:
 ☐  open           🚧 in work      ✅ finished ❌ cannceld
