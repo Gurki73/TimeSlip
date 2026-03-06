@@ -22,6 +22,7 @@
     "icon": "assets/icons/icon.ico",
     "appId": "com.MitarbeiterKalender.app",
     "productName": "MitarbeiterKalenderApp",
+    "publish": null,
     "linux": {
       "target": [
         "AppImage",

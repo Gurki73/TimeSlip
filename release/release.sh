@@ -89,13 +89,13 @@ echo "🏗 Building"
 
 case "$PLATFORM" in
   win)
-    electron-builder --win --x64
+    electron-builder --win --x64 --publish never
     ;;
   linux)
-    electron-builder --linux
+    electron-builder --linux --publish never
     ;;
   all)
-    electron-builder --win --x64 --linux
+    electron-builder --win --x64 --linux --publish never
     ;;
 esac
 

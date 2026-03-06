@@ -1,5 +1,5 @@
 1) default role isnt saved in rule.json
-2) pipeline doesnt load up windows installer (only linux )
+✅ 2) pipeline doesnt load up windows installer (only linux )
 ✅ 3) new rule doesnt hide last warnings
 ✅ 4) are you sure is in english instead of german
 5) needs and helps dont work in dependencies (role and count )
