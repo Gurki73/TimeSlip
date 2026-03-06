@@ -88,13 +88,15 @@ rm -rf dist
 echo "🏗 Building"
 
 case "$PLATFORM" in
-  win) npm run build:win64 ;;
-  linux) npm run build ;;
-  all)
-    npm run build:win64
-    npm run build
+  win)
+    electron-builder --win --x64
     ;;
-  *) echo "❌ Unknown platform"; exit 1 ;;
+  linux)
+    electron-builder --linux
+    ;;
+  all)
+    electron-builder --win --x64 --linux
+    ;;
 esac
 
 echo "📦 Files in dist:"
