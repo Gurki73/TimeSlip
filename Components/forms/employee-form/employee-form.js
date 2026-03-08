@@ -238,7 +238,7 @@ export function initPrivacyWarningToggle() {
 
 function renderNewEmployeeForm() {
   window.employeeFormDataNew = true;
-  document.getElementById('employee-form-details').classList.remove('employee-opaque');
+  setEmployeeDetailsVisibility(true);
   saveButtonHeader.setState('clean');
   const today = new Date();
   const tenYearsLater = new Date();
@@ -399,6 +399,117 @@ function gatherEmployeeData(api, action = "create") {
   }
   storeEmployeeChange(api, employeeData, action);
 }
+function setEmployeeDetailsVisibility(visible) {
+  const details = document.getElementById('employee-form-details');
+  if (!details) return;
+  details.classList.toggle('employee-opaque', !visible);
+}
+
+function resetEmployeeDetailsPanels() {
+  setEmployeeDetailsVisibility(false);
+  currentEmployeeId = null;
+  employeeFormDataNew = false;
+
+  const setValue = (id, value = '') => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if ('value' in el) {
+      el.value = value;
+      return;
+    }
+    el.textContent = value;
+  };
+
+  setValue('employee-name', '');
+  setValue('employee-id', '');
+  setValue('employee-form-vacation-total', '');
+  setValue('employee-form-vacation-left', '');
+  setValue('employee-form-vacation-used', '');
+  setValue('employee-form-overtime-input', '');
+  setValue('employee-form-start-work', '');
+  setValue('employee-form-end-work', '');
+  setValue('employee-preview-start', '--.--.--');
+  setValue('employee-preview-end', '--.--.--');
+  setValue('employee-form-birthday-day', '');
+  setValue('employee-form-birthday-month', '');
+
+  const emojiBtn = document.getElementById('employee-emoji-picker-btn');
+  if (emojiBtn) {
+    emojiBtn.textContent = '⊖';
+    emojiBtn.setAttribute('data-role', '0');
+  }
+
+  ['main', 'secondary', 'trinary'].forEach((type) => {
+    const icon = document.getElementById(`employee-details-icon-${type}`);
+    if (icon) {
+      icon.textContent = '⊖';
+      icon.style.backgroundColor = '';
+    }
+    const select = document.getElementById(`employee-details-role-${type}`);
+    if (select) {
+      select.innerHTML = '';
+    }
+  });
+
+  const weekdays = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+  weekdays.forEach((day) => {
+    const select = document.getElementById(`employee-form-shift-${day}`);
+    if (!select) return;
+    if (Array.from(select.options).some(opt => opt.value === 'never')) {
+      select.value = 'never';
+    } else if (select.options.length > 0) {
+      select.selectedIndex = 0;
+    } else {
+      select.value = '';
+    }
+    updateSelectColor(select);
+  });
+
+  if (saveButtonHeader) {
+    saveButtonHeader.setState('blocked');
+  }
+}
+
+function collectEmployeePayloadFromForm() {
+  const fallbackEmployee = getEmployeeById(currentEmployeeId) || {};
+  const idFromForm = document.getElementById('employee-id')?.textContent?.trim();
+  const id = idFromForm || String(fallbackEmployee.id || Date.now());
+
+  const weekdays = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+  const workDays = weekdays.map((day) => {
+    const value = document.getElementById(`employee-form-shift-${day}`)?.value;
+    return value || 'never';
+  });
+
+  return {
+    id,
+    name: document.getElementById('employee-name')?.value?.trim() || '',
+    personalEmoji: document.getElementById('employee-emoji-picker-btn')?.textContent?.trim() || '⊖',
+    mainRoleIndex: getRoleIndexFromSelect('employee-details-role-main', 0),
+    secondaryRoleIndex: getRoleIndexFromSelect('employee-details-role-secondary', 0),
+    tertiaryRoleIndex: getRoleIndexFromSelect('employee-details-role-trinary', 0),
+    roleSplitMain: Number(document.getElementById('employee-form-role1')?.value ?? fallbackEmployee.roleSplitMain ?? 0),
+    roleSplitSecondary: Number(document.getElementById('employee-form-role2')?.value ?? fallbackEmployee.roleSplitSecondary ?? 0),
+    roleSplitTertiary: Number(document.getElementById('employee-form-role3')?.value ?? fallbackEmployee.roleSplitTertiary ?? 0),
+    availableDaysOff: Number(document.getElementById('employee-form-vacation-total')?.value ?? fallbackEmployee.availableDaysOff ?? 0),
+    remainingDaysOff: Number(document.getElementById('employee-form-vacation-left')?.value ?? fallbackEmployee.remainingDaysOff ?? 0),
+    overtime: Number(document.getElementById('employee-form-overtime-input')?.value ?? fallbackEmployee.overtime ?? 0),
+    workDays,
+    shifts: {
+      mon: workDays[0],
+      tue: workDays[1],
+      wed: workDays[2],
+      thu: workDays[3],
+      fri: workDays[4],
+      sat: workDays[5],
+      sun: workDays[6]
+    },
+    startDate: document.getElementById('employee-form-start-work')?.value || fallbackEmployee.startDate || '',
+    endDate: document.getElementById('employee-form-end-work')?.value || fallbackEmployee.endDate || '',
+    birthday: document.getElementById('employee-form-birthday-day')?.value || fallbackEmployee.birthday || '',
+    birthMonth: document.getElementById('employee-form-birthday-month')?.value || fallbackEmployee.birthMonth || ''
+  };
+}
 
 function updateDivider(className) {
   if (isDividerUpdating) return;
@@ -444,7 +555,19 @@ function updateDivider(className) {
 }
 
 
-function storeAllEmployees(api) { }
+async function storeAllEmployees(api) {
+  const employeeData = collectEmployeePayloadFromForm();
+  if (!employeeData) return;
+
+  const action = employeeFormDataNew || !cachedEmployees.some(emp => String(emp.id) === String(employeeData.id))
+    ? 'create'
+    : 'update';
+
+  await storeEmployeeChange(api, employeeData, action);
+  cachedEmployees = await loadEmployeeData(api);
+  renderEmployeeList();
+  resetEmployeeDetailsPanels();
+}
 
 function deleteEmoji(emoji) {
   const index = employeeEmojiOptions.indexOf(emoji);
@@ -770,7 +893,7 @@ function updateSelectColor(selectElement) {
 }
 
 function selectEmployee(employee) {
-  document.getElementById('employee-form-details').classList.remove('employee-opaque');
+  setEmployeeDetailsVisibility(true);
   saveButtonHeader.setState('clean');
   const form = document.getElementById("employee-form-details");
   if (!form) {
@@ -1594,4 +1717,5 @@ function createButtonLock(timeoutMs = 5000) {
     }
   };
 }
+
 

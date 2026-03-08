@@ -1,122 +1,102 @@
-☐ 1) default role isnt saved in rule.json
-✅  2) pipeline doesnt load up windows installer (only linux )
-✅ 3) new rule doesnt hide last warnings
-✅ 4) are you sure is in english instead of german
-☐ 5) needs and helps dont work in dependencies (role and count )
-✅ 6) teamname black isnt loaded (updated in categories )
-☐ 7) warnings in claendar only show cryptic msg
-🚧 8) statistics should side by side instead of a colum
-🚧 9) sumary of violation should be rendered inside statistics not inside warnings
-✅ 10) we need more mok rules to show/explain more concepts
-
 Legend:
 ☐  open           🚧 in work      ✅ finished   ❌ cannceld
 🔥 ship-blocker   🧩 beta-value   🧠 post-beta  👀 review-needed
 
 legend:
-- fic 180° chevron
+☐ fix 180° chevron
 navigation
-- make highlight bliking
 
 welcome page
-👀 exit hint fn keys
-maxamize minimize on load, inject form max min heights
+☐ maxamize minimize on load, inject form max min heights
 
 calendar:
-highlight day or range for requests or warnings
-check if role reasignments are rendered
-integrtate shift icon on closed days
+☐ highlight day or range for requests or warnings
+☐ check if role reasignments are rendered
+☐ integrtate shift icon on closed days
 
 requests:
-✅ filter by employee name 
-✅ resolve folder with warnings into single warning. filter by requester roles exclude overstaffing ( except lead role )
-✅ maybe delta test instead of simple results...
 
 employees:
-- fit privacy warning in its conatianer
-- add sample mode style to delete button in pay-updateRuleModel
-- explain warnings for corrupt shift assignments
-- switch from label to something fitting for style ( regular shedule )
+☐ fit privacy warning in its conatianer
+☐ add sample mode style to delete button in pay-updateRuleModel
+☐ explain warnings for corrupt shift assignments
+☐ switch from label to something fitting for style ( regular shedule )
 
 roles:
-✅ fix endless loop stuck in loading ( maybe a silent failure or uncatched error only)
-- check tranparence or opacity for table
+☐ check tranparence or opacity for table
 
 ruleset:
-✅ warnings as delta + heatmap for time 
-✅ and delta + votes for treams and roles 
-- elipsses style for awake and asleep in sample model
-✅ check if awake and asleep are considered in rule checker
-- add more mok data rules
-- check complex rules
-- add chip for weekdays ( color )
-- add chip for shift ( icon + color)
-- extend team marker ( maybe with ellipses if no space)
+👀 elipsses style for awake and asleep in sample model
+☐ check complex rules
+☐ add chip for weekdays ( color )
+☐ add chip for shift ( icon + color)
+☐ extend team marker ( maybe with ellipses if no space)
+☐ add old new to heatmap
+ruleset-checker:
+☐ roles are checked for day-shift instead of hall day
+☐ same roles are warned twice
+
 
 calendar-settings:
-✅ animate chevron for all lists
-- fix filling of minimized shifts 
-✅ extend width of schoolholiday column
-✅ change font for start and end date of company holidays
-- check opacity for collapsed lists 
-- add tool tip texts for icons "open" and "closed"
-- adjust height for company holidays 
-- (include bridge days in company holiday)
-- (auto remove available days off for employees depending an regular shedule ) 
+☐ fix filling of minimized shifts
+☐ open/close icons dont match status for weekdays 
+☐ check opacity for collapsed lists 
+☐ add tool tip texts for icons "open" and "closed" (icons are pseudo elements, workarround needed)
+☐ adjust height for company holidays 
+☐ (include bridge days in company holiday)
+☐ (auto remove available days off for employees depending an regular shedule ) 
 
 admin tools:
-- fix home button
 admin tools.emojies: 
-- add a input for add an emojies
-- test saving emojies
-- fix animation (z-index?) for animation
-- improove hint for left and right mouse buttons
+☐ add a input for add an emojies
+☐ test saving emojies
+☐ fix animation (z-index?) for animation
+☐ improove hint for left and right mouse buttons
 admin tools.color:
-- custom color picker looses gradient when picking, roles
-- use actual role names and icons in preview
-- use actual team names in role preview
-- center table and picker in form
-- fix the tabulators
-- finish layout for calandar color cusmasation
-- finish th layout for button and background  colors
-- maybe a dialog simular to screen settings in window with a countdown keep changes?
+☐ custom color picker looses gradient when picking, roles
+☐ use actual role names and icons in preview
+☐ use actual team names in role preview
+☐ center table and picker in form
+☐ fix the tabulators
+☐ finish layout for calandar color cusmasation
+☐ finish th layout for button and background  colors
+☐ maybe a dialog simular to screen settings in window with a countdown keep changes?
 admin tools.auto save
-- disable are you sure dialogs
-- replace dirty state with autosave in shared state save button
+☐ disable are you sure dialogs
+☐ replace dirty state with autosave in shared state save button
 admin tools.clear cache... 
-- move to the end 
-- use german language for dialog buttons ok and cannceld
-- (maaybe show current cache?)
+☐ use german language for dialog buttons ok and cannceld
+☐ (maybe show current cache?)
 admin tool.ruleset-settings
-- gather ideas
-- build prilimary UI
+☐ gather ideas
+☐ build prilimary UI
 admin tools.calendar settings
-- reuse options from main menu
-- build lay out 
-- disable sample mode 
-- discuss if needed anymore
+☐ reuse options from main menu
+☐ build lay out 
+☐ disable sample mode 
+☐ discuss if needed anymore
 admin tools. revive delted employees
-- add sample
-- move more to left
-- add phönix for mass revive
-- fix end date picker
+☐ add sample
+☐ move more to left
+☐ add phönix for mass revive
+☐ fix end date picker
 admin tools.donate
-- add an offline alternatove
-- make a begging text
+☐ add an offline alternatove
+☐ make a begging text
 
 minx:
-- allow state dirty for sample save button(?)
-- update version from 1.x.x to 2.0.0 dev to prototype
-- publish as prototype on itch.icon
-- make basic marketing article for itch.icon
-- plan you-tube tutorial
+☐ allow state dirty for sample save button(?)
+☐ update version from 1.x.x to 2.0.0 dev to prototype
+☐ publish as prototype on itch.icon
+☐ make basic marketing article for itch.icon
+☐ plan you-tube tutorial
 
 help page:
-- write done the thoughts about  heros journey and save the calculations
-- update Glossary
-- build a skeleton for screenshots
-- highlight in nav when hover/click in help
+☐ write done the thoughts about  heros journey and save the calculations
+☐ update Glossary
+☐ build a skeleton for screenshots
+☐ highlight in nav when hover/click in help
 
-“Collapsed list opacity: make adjustable via color/appearance settings.
-Should respect different screen brightness, resolution, and client monitors.
-Currently hardcoded; consider adding a cached local setting for transparency once prototype is stable.”
+☐ “Collapsed list opacity: make adjustable via color/appearance settings.
+☐ Should respect different screen brightness, resolution, and client monitors.
+☐ Currently hardcoded; consider adding a cached local setting for transparency once prototype is stable.”

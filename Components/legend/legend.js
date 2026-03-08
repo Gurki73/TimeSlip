@@ -36,8 +36,7 @@ function buildLegendFallbackRoles() {
 function normalizeLegendRoles(rawRoles) {
     if (!Array.isArray(rawRoles)) return [];
 
-    const byIndex = new Map();
-    rawRoles
+    const normalized = rawRoles
         .map((role, idx) => {
             const colorIndex = Number(role?.colorIndex ?? role?.index ?? idx);
             if (!Number.isInteger(colorIndex) || colorIndex < 0) return null;
@@ -48,35 +47,11 @@ function normalizeLegendRoles(rawRoles) {
                 emoji: String(role?.emoji ?? '⊖').trim()
             };
         })
-        .filter(Boolean)
-        .forEach((role) => {
-            byIndex.set(Number(role.colorIndex), role);
-        });
-
-    const normalized = [];
-    for (let idx = 0; idx <= ROLE_INDEX_MAX; idx++) {
-        const role = byIndex.get(idx);
-        if (!role) {
-            normalized.push(buildFallbackRoleByIndex(idx));
-            continue;
-        }
-
-        const hasRealName = role.name && !['?', 'name'].includes(role.name.toLowerCase());
-        const hasRealEmoji = role.emoji && role.emoji !== '⊖';
-        if (!hasRealName || !hasRealEmoji) {
-            normalized.push({
-                ...buildFallbackRoleByIndex(idx),
-                name: hasRealName ? role.name : buildFallbackRoleByIndex(idx).name,
-                emoji: hasRealEmoji ? role.emoji : buildFallbackRoleByIndex(idx).emoji
-            });
-            continue;
-        }
-
-        normalized.push(role);
-    }
+        .filter(role => role && role.name !== '?' && role.emoji !== '⊖'); // <-- filter placeholders
 
     return normalized;
 }
+
 
 async function loadLegendRoles(api) {
     let lastResult = [];
@@ -341,9 +316,7 @@ export function renderRoles(container) {
     const calendarContainer = document.getElementById('calendar-month-sheet');
 
     lengendRoles.forEach(role => {
-        const roleName = String(role?.name || '').toLowerCase();
-        if (role.emoji === "⊖" || ['keine', '?', 'name'].includes(roleName)) return;
-
+        // No need for extra filtering
         const listItem = document.createElement('li');
         listItem.classList.add('legend-item');
         listItem.dataset.roleIndex = role.colorIndex;
@@ -367,32 +340,6 @@ export function renderRoles(container) {
         listItem.appendChild(emoji);
         listItem.appendChild(arrow);
         listItem.appendChild(roleNameEl);
-
-        // --- Cache emojis for this role ---
-        let emojisInCalendar = roleEmojiCache.get(role.colorIndex);
-        if (!emojisInCalendar && calendarContainer) {
-            emojisInCalendar = calendarContainer.querySelectorAll(`.role-${role.colorIndex}`);
-            roleEmojiCache.set(role.colorIndex, emojisInCalendar);
-        }
-        if (!emojisInCalendar) emojisInCalendar = [];
-
-        // --- Disable unassigned items ---
-        if (!emojisInCalendar.length) {
-            listItem.style.opacity = '0.35';
-            listItem.style.pointerEvents = 'none';
-            listItem.style.cursor = 'not-allowed';
-            listItem.title = 'Keine Zuweisungen';
-        }
-
-        // --- Click handler with reusable highlight ---
-        let lastClick = 0;
-        listItem.addEventListener('click', () => {
-            const now = Date.now();
-            if (now - lastClick < 300) return; // debounce 300ms
-            lastClick = now;
-
-            highlightItems(emojisInCalendar, 'role-big', 4000);
-        });
 
         list.appendChild(listItem);
     });

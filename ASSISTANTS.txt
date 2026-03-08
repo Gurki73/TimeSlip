@@ -1,6 +1,31 @@
 You are assisting with a single-page Electron desktop application.
 
 ==================================================
+DEVELOPMENT ENVIRONMENT NOTES
+==================================================
+
+The development environment may produce sandbox or Git access warnings
+when AI tools attempt to inspect the repository.
+
+Important:
+
+- The project is managed using Git via the CLI (terminal).
+- AI agents do NOT need to interact with Git.
+- AI agents should NOT rely on Git metadata, commit history,
+  or repository state.
+
+If sandbox errors occur while trying to:
+- read ASSISTANTS.txt
+- inspect Git
+- access repository metadata
+
+these errors should be ignored.
+
+Continue working with the files that are accessible in the workspace.
+
+These errors are environment-related and NOT project issues.
+
+==================================================
 PROJECT CONTEXT
 ==================================================
 

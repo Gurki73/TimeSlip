@@ -147,7 +147,7 @@ export function parseCSV(data) {
                 emoji: normalizedEmoji
             };
         });
-        roles = allRoles.filter(role => role.name && role.name !== '?');
+        roles = allRoles.filter(role => role.name && role.name !== '?' && role.emoji !== '⊖');
         return roles;
     }
 
@@ -159,7 +159,7 @@ export function parseCSV(data) {
         return { name, colorIndex, emoji };
     });
 
-    roles = allRoles.filter(role => role.name && role.name !== '?');
+    roles = allRoles.filter(role => role.name && role.name !== '?' && role.emoji !== '⊖');
 
     return roles;
 }

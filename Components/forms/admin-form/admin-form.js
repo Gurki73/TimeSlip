@@ -10,11 +10,11 @@ import { initRoleColorTab } from './colorTheme.js';
 export const adminTools = [
   { id: 'color-customization', name: 'Eigene Farben', icon: 'paint-palette-art-svgrepo-com.svg', enabled: true },
   { id: 'emoji-customization', name: 'Symbol Auswahl', icon: 'smiley-happy-svgrepo-com.svg', enabled: true },
-  { id: 'auto-save-toggle', name: 'Automatisch Speichern', icon: 'rocket-svgrepo-com.svg', enabled: true },
-  { id: 'clear-cache', name: 'Puffer leeren', icon: 'safe-svgrepo-com.svg', enabled: true },
   { id: 'rules-settings', name: 'Regel Toleranzen', icon: 'knowledge-graph-svgrepo-com.svg', enabled: true },
   { id: 'calendar-settings', name: 'Kalendar Anpassung', icon: 'calendar-svgrepo-com.svg', enabled: true },
   { id: 'deleted-employees', name: 'Mitarbeiter Wiederherstellen', icon: 'reshot-icon-trash-SX6L89TFAM.svg', enabled: true },
+  { id: 'auto-save-toggle', name: 'Automatisch Speichern', icon: 'rocket-svgrepo-com.svg', enabled: true },
+  { id: 'clear-cache', name: 'Puffer leeren', icon: 'safe-svgrepo-com.svg', enabled: true },
   { id: 'buy-coffee', name: 'Spenden Unterstützen', icon: 'BuyMeACoffee.png', enabled: true }
 ];
 
@@ -119,7 +119,7 @@ function updateDivider(className = 'bg-admin') {
 
   const windowBtns = createWindowButtons();
   const homeBtn = createHomeButton({
-    canLeave: () => save?.getState?.() !== 'dirty'
+    canLeave: () => saveButtonHeader?.getState?.() !== 'dirty'
   });
 
   buttonContainer.append(homeBtn);
@@ -143,12 +143,21 @@ function createHomeButton({ canLeave }) {
   btn.addEventListener('click', e => {
     e.preventDefault();
 
-    if (canLeave?.() === false) {
+    console.log('Home button clicked');
+
+    if (canLeave && canLeave() === false) {
       const ok = confirm('Ungespeicherte Änderungen verwerfen?');
       if (!ok) return;
     }
 
-    loadToolPage("Components\forms\admin-form\admin-form.html");
+    const container = document.getElementById('form-container');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div id="tool-grid" class="tool-grid"></div>
+    `;
+
+    initializeAdminForm(adminApi);
   });
 
   return btn;

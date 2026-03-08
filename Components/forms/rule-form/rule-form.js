@@ -869,6 +869,12 @@ async function saveRule() {
     lastTestReport = null;
     clearImpactCharts();
     updateSaveButtonState();
+
+    if (localStorage.getItem('dataMode') === 'sample') {
+        saveButtonHeader?.setState('readonly');
+    } else {
+        saveButtonHeader?.setState('blocked');
+    }
 }
 
 async function onSaveRuleClick(event) {
@@ -1113,8 +1119,25 @@ function applyInputDetails(target, key, inputObj) {
             }
             break;
         case "dependency":
-            if (inputObj.words) target.details.roles = inputObj.words;
-            if (inputObj.details?.bottom != null) target.details.bottom = inputObj.details.bottom;
+            if (inputObj.words) {
+                target.details.roles = Array.isArray(inputObj.words) ? inputObj.words : [inputObj.words];
+            }
+            if (inputObj.number1 != null) {
+                const numericBottom = Number(inputObj.number1);
+                if (Number.isFinite(numericBottom)) {
+                    target.details.bottom = numericBottom;
+                    // Backward-compatible aliases used by older translators/readers.
+                    target.details.number = numericBottom;
+                    target.details.count = numericBottom;
+                    target.details.amount = numericBottom;
+                }
+            }
+            if (inputObj.number2 != null) {
+                const numericTop = Number(inputObj.number2);
+                if (Number.isFinite(numericTop)) {
+                    target.details.top = numericTop;
+                }
+            }
             break;
         case "exception":
             if (inputObj.words) target.details.rules = inputObj.words;
@@ -1203,7 +1226,7 @@ function createRoleSelect(id) {
             option.style.backgroundColor = roleColor;
             option.innerHTML = `${role.emoji} ⇨ ${role.name}`;
             option.title = role.name;
-            option.value = index;
+            option.value = String(role.colorIndex ?? index);
             select.appendChild(option);
         });
 
@@ -2292,6 +2315,8 @@ export async function goAsleep(ruleView) {
     updateRuleInMemory(rule);
     console.info('Rule put to sleep (sample mode)');
 }
+
+
 
 
 

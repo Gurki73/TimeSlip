@@ -36,6 +36,25 @@ let cachedZodiacStyle = "none";
 let cachedShiftSymbols = "letters";
 let calendarDataReady = false;
 let calendarRenderSeq = 0;
+let roleNameByIndex = new Map();
+
+function rebuildRoleNameCache(roles = []) {
+  roleNameByIndex = new Map();
+  if (!Array.isArray(roles)) return;
+
+  roles.forEach((role, idx) => {
+    const name = String(role?.name || '').trim();
+    if (!name || name === '?') return;
+
+    const colorIndex = Number(role?.colorIndex);
+    if (Number.isInteger(colorIndex) && colorIndex >= 0) {
+      roleNameByIndex.set(colorIndex, name);
+    }
+    if (!roleNameByIndex.has(idx)) {
+      roleNameByIndex.set(idx, name);
+    }
+  });
+}
 
 async function loadCalendarData(api) {
   if (!api) {
@@ -60,6 +79,7 @@ async function loadCalendarData(api) {
     ]);
 
     calendarRoles = _roles;
+    rebuildRoleNameCache(calendarRoles);
     currentState = await loadStateData(api);
     officeDays = _officeDaysData;
     calendarEmployees = _employees;
@@ -974,7 +994,7 @@ function applyRuleWarnings(ruleStats) {
     const names = subjectRoles
       .map((roleIdx) => Number(roleIdx))
       .filter((roleIdx) => Number.isInteger(roleIdx) && roleIdx >= 0)
-      .map((roleIdx) => calendarRoles?.[roleIdx]?.name || `Rolle ${roleIdx + 1}`);
+      .map((roleIdx) => roleNameByIndex.get(roleIdx) || `Rolle ${roleIdx + 1}`);
 
     if (!names.length) return 'Rollen';
     if (names.length === 1) return names[0];
@@ -1866,4 +1886,6 @@ function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts) 
 
   return { shifts, summedAttendance, shiftAttendanceByType };
 }
+
+
 

@@ -94,6 +94,9 @@ export async function loadSampleRuleList() {
     "rule_sample_001.json",
     "rule_sample_002.json",
     "rule_sample_003.json",
+    "rule_sample_004.json",
+    "rule_sample_005.json",
+    "rule_sample_006.json",
   ]);
 }
 

@@ -973,6 +973,7 @@ function buildDeltaReport(newRules, existingRules) {
 
 function buildRequestsByDate(requests, startDate, endDate, employees, options = {}) {
     const { includePending = true, shiftMode = 'all' } = options;
+    const ALL_SHIFTS = ['early', 'day', 'late'];
     const result = {};
     if (!Array.isArray(requests)) return result;
 
@@ -994,9 +995,10 @@ function buildRequestsByDate(requests, startDate, endDate, employees, options = 
 
     const normalizeShift = (shiftValue) => {
         if (shiftValue === 'early' || shiftValue === 'day' || shiftValue === 'late') return [shiftValue];
-        if (shiftValue === true || shiftValue === 'half') return ['day'];
+        if (shiftValue === true || shiftValue === 'full' || shiftValue === 'all') return ALL_SHIFTS;
+        if (shiftValue === 'half') return ['day'];
         if (shiftMode === 'day') return ['day'];
-        return ['early', 'day', 'late'];
+        return ALL_SHIFTS;
     };
 
     requests.forEach(req => {
@@ -1127,3 +1129,5 @@ export async function computeRequestDelta(requests, newRequest, options = {}) {
     console.log("delta:", delta);
     return { baselineStats, futureStats, delta };
 }
+
+
