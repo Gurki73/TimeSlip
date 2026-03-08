@@ -969,6 +969,25 @@ function applyRuleWarnings(ruleStats) {
   if (!ruleStats || !Array.isArray(ruleStats.failures)) return;
 
   const seen = new Set();
+  const getRoleLabel = (failure) => {
+    const subjectRoles = Array.isArray(failure?.subjectRoles) ? failure.subjectRoles : [];
+    const names = subjectRoles
+      .map((roleIdx) => Number(roleIdx))
+      .filter((roleIdx) => Number.isInteger(roleIdx) && roleIdx >= 0)
+      .map((roleIdx) => calendarRoles?.[roleIdx]?.name || `Rolle ${roleIdx + 1}`);
+
+    if (!names.length) return 'Rollen';
+    if (names.length === 1) return names[0];
+    return names.join(', ');
+  };
+
+  const buildViolationTooltip = (failure) => {
+    const typeLabel = failure.type === 'TOO_MANY' ? 'zu viele' : 'zu wenig';
+    const roleLabel = getRoleLabel(failure);
+    const actual = Number.isFinite(failure.total) ? failure.total : '?';
+    const expected = Number.isFinite(failure.limit) ? failure.limit : '?';
+    return `Regel ${failure.ruleId}: ${typeLabel} ${roleLabel}, ist = ${actual}, soll = ${expected}`;
+  };
 
   ruleStats.failures.forEach(failure => {
     const key = [
@@ -986,7 +1005,7 @@ function applyRuleWarnings(ruleStats) {
       const icon = document.createElement('span');
       icon.classList.add('violation-icon');
       icon.textContent = failure.type === 'TOO_MANY' ? '⚠️' : '🚨';
-      icon.title = `Regel ${failure.ruleId}: ${failure.type} (${failure.total} vs ${failure.limit})`;
+      icon.title = buildViolationTooltip(failure);
       container.appendChild(icon);
     }
 
@@ -996,13 +1015,11 @@ function applyRuleWarnings(ruleStats) {
       const icon = document.createElement('span');
       icon.classList.add('violation-icon');
       icon.textContent = failure.type === 'TOO_MANY' ? '⚠️' : '🚨';
-      icon.title = `Regel ${failure.ruleId}: ${failure.type} (${failure.total} vs ${failure.limit})`;
+      icon.title = buildViolationTooltip(failure);
       warningEl.appendChild(icon);
     }
   });
 }
-
-
 function getUsedShiftsInWeek(officeDays) {
   let isEarly = false, isDay = false, isLate = false;
 
@@ -1849,3 +1866,4 @@ function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts) 
 
   return { shifts, summedAttendance, shiftAttendanceByType };
 }
+

@@ -394,6 +394,17 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // ----------- F-Key Handling -----------
 
+  document.addEventListener("DOMContentLoaded", () => {
+    const hint = document.getElementById("fn-key-hint");
+    const closeBtn = hint?.querySelector(".fn-hint-close");
+
+    closeBtn?.addEventListener("click", () => {
+      console.log("Fn key hint dismissed by user.");
+      hint.classList.add("visually-hidden");
+    }, { once: true });
+  });
+
+
   document.addEventListener('keydown', (event) => {
     // If user presses Fn-locked keys, this may not trigger at all (hardware side)
     switch (event.key) {

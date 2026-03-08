@@ -1,17 +1,17 @@
-1) default role isnt saved in rule.json
+☐ 1) default role isnt saved in rule.json
 ✅  2) pipeline doesnt load up windows installer (only linux )
 ✅ 3) new rule doesnt hide last warnings
 ✅ 4) are you sure is in english instead of german
-5) needs and helps dont work in dependencies (role and count )
+☐ 5) needs and helps dont work in dependencies (role and count )
 ✅ 6) teamname black isnt loaded (updated in categories )
-7) warnings in claendar only show cryptic msg
-8) statistics should side by side instead of a colum
-9) sumary of violation should be rendered inside statistics not inside warnings
+☐ 7) warnings in claendar only show cryptic msg
+🚧 8) statistics should side by side instead of a colum
+🚧 9) sumary of violation should be rendered inside statistics not inside warnings
 ✅ 10) we need more mok rules to show/explain more concepts
 
 Legend:
-☐  open           🚧 in work      ✅ finished ❌ cannceld
-🔥 ship-blocker   🧩 beta-value   🧠 post-beta
+☐  open           🚧 in work      ✅ finished   ❌ cannceld
+🔥 ship-blocker   🧩 beta-value   🧠 post-beta  👀 review-needed
 
 legend:
 - fic 180° chevron
@@ -19,7 +19,7 @@ navigation
 - make highlight bliking
 
 welcome page
- ❌ exit hint fn keys
+👀 exit hint fn keys
 maxamize minimize on load, inject form max min heights
 
 calendar:

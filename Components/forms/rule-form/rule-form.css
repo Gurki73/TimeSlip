@@ -354,12 +354,46 @@
   display: none;
 }
 
+#rule-new-warnings-list {
+  margin: 0.3rem 0.75rem 0.6rem 0.75rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--accent-inactive);
+  border-radius: 8px;
+  list-style: none;
+}
+
+#rule-new-warnings-list.is-success {
+  background: var(--role-4-color);
+  border-color: var(--accent-active);
+}
+
+#rule-new-warnings-list.is-alert {
+  background: var(--role-5-color);
+  border-color: var(--color-request-border);
+}
+
+.rule-feedback-item {
+  color: var(--text-color);
+  margin: 0.15rem 0;
+}
+
+.rule-feedback-item.is-error {
+  background: var(--role-8-color);
+}
+
+.rule-feedback-item.is-warning {
+  background: var(--role-5-color);
+}
+
+.rule-feedback-item.is-success {
+  background: var(--role-4-color);
+}
+
 #rule-impact-charts {
-  display:flex;
-  flex-direction: row;
-  margin: 0.5rem 0.75rem 0.75rem 0.75rem;
-  padding: 0.65rem;
-  background: rgba(255, 255, 255, 0.6);
+  display: block;
+  margin: 0.25rem 0.75rem 0.75rem 0.75rem;
+  padding: 0.6rem;
+  background: var(--bg-soft-white);
   border: 1px solid var(--accent-inactive);
   border-radius: 8px;
 }
@@ -369,128 +403,183 @@
   text-align: left;
   border: 1px solid var(--accent-inactive);
   border-radius: 6px;
-  background: var(--bg-inactive);
-  color: var(--color-text);
-  padding: 0.35rem 0.5rem;
+  background: var(--button-inactive-color);
+  color: var(--text-color);
+  padding: 0.35rem 0.55rem;
   margin-bottom: 0.45rem;
   cursor: pointer;
 }
 
 .impact-scroll {
-  max-height: 17rem;
+  max-height: 20rem;
   overflow-y: auto;
-  padding-right: 0.2rem;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(14rem, 1fr));
+  gap: 0.5rem;
 }
 
 .impact-panel {
-  margin-bottom: 0.85rem;
-}
-
-.impact-panel:last-child {
-  margin-bottom: 0;
+  background: var(--bg-white);
+  border: 1px solid var(--accent-muted);
+  border-radius: 8px;
+  padding: 0.5rem;
+  min-height: 12rem;
 }
 
 .impact-title {
   margin: 0 0 0.4rem 0;
-  color: var(--color-text);
+  color: var(--text-color);
 }
 
-.impact-team-title {
-  margin: 0.65rem 0 0.3rem 0;
-  font-size: 0.95rem;
-  color: var(--color-text);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+.impact-summary-list {
+  margin: 0;
+  padding-left: 1rem;
+  color: var(--text-color);
+  font-size: 0.85rem;
 }
 
-.impact-vertical-chart {
+.impact-summary-list li {
+  margin: 0.2rem 0;
+}
+
+.impact-summary-scopes {
   display: flex;
-  align-items: flex-end;
-  gap: 0.55rem;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 0.25rem 0.25rem 0.35rem 0.25rem;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.35rem;
 }
 
-.impact-vertical-item {
-  flex: 0 0 auto;
-  min-width: 3.9rem;
-  max-width: 3.9rem;
-  display: flex;
-  flex-direction: column;
+.impact-scope-chip {
+  border: 1px solid var(--accent-inactive);
+  border-radius: 999px;
+  padding: 0.05rem 0.4rem;
+  font-size: 0.75rem;
+  color: var(--text-color);
+  background: var(--bg-soft-white);
+}
+
+.impact-scope-chip.is-up {
+  background: var(--role-8-color);
+}
+
+.impact-scope-chip.is-down {
+  background: var(--role-4-color);
+}
+
+.impact-scope-chip.is-flat {
+  background: var(--role-10-color);
+}
+
+.impact-heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(2.2rem, 1fr));
+  gap: 0.25rem;
+}
+
+.impact-heatmap-cell {
+  position: relative;
+  display: grid;
+  gap: 0.1rem;
+  justify-items: center;
+  align-content: center;
+  min-height: 6rem;
+  border: 1px solid var(--accent-muted);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--bg-soft-white);
+}
+
+.impact-heatmap-fill {
+  position: absolute;
+  inset: 0;
+}
+
+.impact-heatmap-day,
+.impact-heatmap-count,
+.impact-heatmap-delta {
+  position: relative;
+  z-index: 1;
+  color: var(--text-color);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.impact-heatmap-delta.is-up {
+  background: var(--role-8-color);
+}
+
+.impact-heatmap-delta.is-down {
+  background: var(--role-4-color);
+}
+
+.impact-heatmap-delta.is-flat {
+  background: var(--role-10-color);
+}
+
+.impact-team-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.impact-team-row {
+  display: grid;
+  grid-template-columns: minmax(5rem, 7.5rem) 1fr;
+  gap: 0.4rem;
   align-items: center;
-  gap: 0.15rem;
 }
 
-.impact-bars-vertical {
-  height: 8rem;
-  min-height: 8rem;
-  width: 2.2rem;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 0.2rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.35);
-  padding: 0 0.1rem;
-}
-
-.impact-bar {
-  min-height: 0.25rem;
-  border-radius: 3px;
-}
-
-.impact-bar-vertical {
-  width: 0.85rem;
-  padding: 0;
-  font-size: 0;
-  line-height: 0;
-}
-
-.impact-bar-baseline {
-  background: rgba(99, 99, 99, 0.75);
-  color: white;
-}
-
-.impact-bar-future {
-  background: rgba(190, 34, 34, 0.85);
-  color: #fff4f4;
-}
-
-.impact-delta {
-  text-align: center;
-  font-weight: 700;
-  font-size: 0.72rem;
-  min-height: 0.8rem;
-}
-
-.impact-delta.is-better {
-  color: #146b2e;
-}
-
-.impact-delta.is-worse {
-  color: #8f1e1e;
-}
-
-.impact-delta.is-neutral {
-  color: var(--accent-inactive);
-}
-
-.impact-counts {
-  font-size: 0.66rem;
-  color: var(--color-text);
-  white-space: nowrap;
-}
-
-.impact-label-vertical {
-  width: 100%;
-  text-align: center;
-  font-size: 0.72rem;
-  color: var(--color-text);
+.impact-team-name {
+  color: var(--text-color);
+  font-size: 0.85rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.rule-role-marker {
+.impact-team-bars {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.impact-team-bar-row {
+  display: grid;
+  grid-template-columns: 2rem 1fr 1.8rem;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.impact-team-bar-label,
+.impact-team-bar-value {
+  color: var(--text-color);
+  font-size: 0.74rem;
+}
+
+.impact-team-bar {
+  height: 0.85rem;
+  border: 1px solid var(--accent-muted);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--bg-soft-white);
+}
+
+.impact-team-bar-fill {
+  height: 100%;
+  min-width: 0.25rem;
+}
+
+.impact-empty {
+  color: var(--text-color);
+  font-size: 0.82rem;
+}
+
+@media (max-width: 1100px) {
+  .impact-grid {
+    grid-template-columns: 1fr;
+  }
+}.rule-role-marker {
   display: inline-flex;
   gap: 0.25rem;
   align-items: center;
@@ -722,3 +811,5 @@ table th option[data-is-enabled="false"] {
 .role-color-11 { --role-color: var(--role-11-color) }
 .role-color-12 { --role-color: var(--role-12-color) }
 .role-color-13 { --role-color: var(--role-13-color) }
+
+

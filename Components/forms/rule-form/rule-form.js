@@ -413,31 +413,37 @@ function renderRuleCheckReport(report) {
     if (list) list.innerHTML = '';
     clearImpactCharts();
 
-    const lines = [];
+    const feedbackEntries = [];
     const errors = Array.isArray(report?.errors) ? report.errors : [];
     const warnings = Array.isArray(report?.warnings) ? report.warnings : [];
-    const hasErrors = errors.length > 0;
-
-    if (report) {
-        if (report.ok && !hasErrors) {
-            lines.push('✅ Die neue Regel ist gültig.');
-        } else {
-            lines.push('❌ Die neue Regel ist nicht gültig.');
-        }
-    }
+    const hasIssues = errors.length > 0 || warnings.length > 0;
 
     errors.forEach((entry) => {
-        lines.push(`❌ ${translateRuleCheckMessage(entry)}`);
+        feedbackEntries.push({
+            level: 'error',
+            text: translateRuleCheckMessage(entry)
+        });
     });
     warnings.forEach((entry) => {
-        lines.push(`⚠️ ${translateRuleCheckMessage(entry)}`);
+        feedbackEntries.push({
+            level: 'warning',
+            text: translateRuleCheckMessage(entry)
+        });
     });
 
-    if (report?.details?.impact) {
-        renderImpactReport(lines, report.details.impact);
+    if (report?.ok && !hasIssues) {
+        feedbackEntries.push({
+            level: 'success',
+            text: 'Keine Warnung – neue Regel ist gültig'
+        });
+    } else if (!report?.ok && !hasIssues) {
+        feedbackEntries.push({
+            level: 'error',
+            text: 'Neue Regel ist nicht gültig.'
+        });
     }
 
-    renderRuleFeedbackLines(lines);
+    renderRuleFeedbackLines(feedbackEntries);
 
     if (report?.details?.impact) {
         renderImpactCharts(report.details.impact);
@@ -483,44 +489,51 @@ function renderRuleFeedbackLines(lines = []) {
     if (!list) return;
 
     list.innerHTML = '';
+    list.classList.remove('is-success', 'is-alert');
 
     const entries = Array.isArray(lines)
-        ? lines.map(line => String(line || '').trim()).filter(Boolean)
+        ? lines
+            .map((entry) => normalizeFeedbackEntry(entry))
+            .filter(Boolean)
         : [];
 
-    entries.forEach((line) => addListItem(list, line));
+    entries.forEach((entry) => addListItem(list, entry));
 
     const show = entries.length > 0;
+    const hasOnlySuccess = show && entries.every((entry) => entry.level === 'success');
+    if (show) {
+        list.classList.add(hasOnlySuccess ? 'is-success' : 'is-alert');
+    }
+
     list.style.display = show ? 'block' : 'none';
-    if (title) title.style.display = show ? 'block' : 'none';
-}
-
-function renderImpactReport(items, impact) {
-    const before = impact.before?.totalFailures ?? 0;
-    const after = impact.after?.totalFailures ?? 0;
-    const delta = impact.delta?.total ?? 0;
-    const sign = delta > 0 ? '+' : '';
-    const trendIcon = delta < 0 ? '🟢' : delta > 0 ? '🔴' : '⚪';
-
-    items.push('—');
-    items.push(`📊 Langzeitwirkung (${impact.window?.start} → ${impact.window?.end})`);
-    items.push(`Vorher: ${before} Verstöße`);
-    items.push(`Nachher: ${after} Verstöße`);
-    items.push(`${trendIcon} Delta: ${sign}${delta}`);
-    items.push(`➕ Neue Verstöße: ${impact.added}`);
-    items.push(`➖ Gelöste Verstöße: ${impact.removed}`);
-    items.push(`🔁 Geänderte Schwere: ${impact.changed}`);
-
-    if (impact.delta?.byScope) {
-        Object.entries(impact.delta.byScope).forEach(([scope, value]) => {
-            items.push(`   ${scope}: ${value > 0 ? '+' : ''}${value}`);
-        });
+    if (title) {
+        title.style.display = show ? 'block' : 'none';
+        title.textContent = 'Warnungen zur neuen Regel';
     }
 }
 
-function addListItem(list, text) {
+function normalizeFeedbackEntry(entry) {
+    if (entry == null) return null;
+    if (typeof entry === 'string') {
+        const text = entry.trim();
+        if (!text) return null;
+        return { text, level: 'info' };
+    }
+
+    const text = String(entry?.text || '').trim();
+    if (!text) return null;
+
+    const level = ['success', 'warning', 'error', 'info'].includes(entry?.level)
+        ? entry.level
+        : 'info';
+
+    return { text, level };
+}
+
+function addListItem(list, entry) {
     const li = document.createElement('li');
-    li.textContent = text;
+    li.className = `rule-feedback-item is-${entry.level}`;
+    li.textContent = entry.text;
     list.appendChild(li);
 }
 
@@ -550,15 +563,18 @@ function renderImpactCharts(impact) {
     scrollContainer.className = 'impact-scroll';
     root.appendChild(scrollContainer);
 
+    const panelGrid = document.createElement('div');
+    panelGrid.className = 'impact-grid';
+    scrollContainer.appendChild(panelGrid);
+
+    panelGrid.appendChild(createImpactSummaryPanel(impact));
+
     const weekdayRows = Array.isArray(impact.breakdown.weekday) ? impact.breakdown.weekday : [];
-    if (weekdayRows.length) {
-        scrollContainer.appendChild(createImpactChartPanel('Delta nach Wochentag (Baseline vs Zukunft)', weekdayRows));
-    }
+    const weekdayRoleRows = Array.isArray(impact.breakdown.weekdayRoles) ? impact.breakdown.weekdayRoles : [];
+    panelGrid.appendChild(createHeatmapPanel(weekdayRows, weekdayRoleRows));
 
     const roleRows = Array.isArray(impact.breakdown.teamRoles) ? impact.breakdown.teamRoles : [];
-    if (roleRows.length) {
-        scrollContainer.appendChild(createTeamRolePanel(roleRows));
-    }
+    panelGrid.appendChild(createTeamPolesPanel(roleRows));
 
     toggle.addEventListener('click', () => {
         const expanded = toggle.getAttribute('aria-expanded') === 'true';
@@ -573,88 +589,225 @@ function renderImpactCharts(impact) {
     }
 }
 
-function createImpactChartPanel(title, rows) {
-    const panel = document.createElement('div');
-    panel.className = 'impact-panel';
+function createImpactSummaryPanel(impact) {
+    const panel = createImpactPanel('Zusammenfassung');
+    const list = document.createElement('ul');
+    list.className = 'impact-summary-list';
 
+    const before = Number(impact?.before?.totalFailures ?? 0);
+    const after = Number(impact?.after?.totalFailures ?? 0);
+    const delta = Number(impact?.delta?.total ?? 0);
+    const sign = delta > 0 ? '+' : '';
+    const windowStart = impact?.window?.start || 'n/a';
+    const windowEnd = impact?.window?.end || 'n/a';
+
+    [
+        `Deltas: gesamt ${sign}${delta}, neu ${impact?.added ?? 0}, gelöst ${impact?.removed ?? 0}`,
+        `Zeitraum: ${windowStart} bis ${windowEnd}`,
+        `Hauptmetriken: Alt ${before}, Neu ${after}, Geändert ${impact?.changed ?? 0}`
+    ].forEach((line) => {
+        const li = document.createElement('li');
+        li.textContent = line;
+        list.appendChild(li);
+    });
+
+    const scopeDelta = impact?.delta?.byScope && typeof impact.delta.byScope === 'object'
+        ? impact.delta.byScope
+        : {};
+    const scopeKeys = Object.keys(scopeDelta);
+    if (scopeKeys.length) {
+        const scopeWrap = document.createElement('div');
+        scopeWrap.className = 'impact-summary-scopes';
+        scopeKeys.forEach((scope) => {
+            const chip = document.createElement('span');
+            const value = Number(scopeDelta[scope] || 0);
+            chip.className = `impact-scope-chip ${value > 0 ? 'is-up' : value < 0 ? 'is-down' : 'is-flat'}`;
+            chip.textContent = `${scope}: ${value > 0 ? '+' : ''}${value}`;
+            scopeWrap.appendChild(chip);
+        });
+        panel.appendChild(scopeWrap);
+    }
+
+    panel.appendChild(list);
+    return panel;
+}
+
+function createHeatmapPanel(weekdayRows, weekdayRoleRows) {
+    const panel = createImpactPanel('Wochentags-Auslastung');
+    const grid = document.createElement('div');
+    grid.className = 'impact-heatmap-grid';
+
+    const maxDensity = Math.max(1, ...weekdayRows.map((row) => Number(row?.after ?? 0)));
+    weekdayRows.forEach((row, idx) => {
+        const cell = document.createElement('div');
+        cell.className = 'impact-heatmap-cell';
+
+        const roleMix = weekdayRoleRows[idx]?.afterRoles || [];
+        const density = Number(row?.after ?? 0);
+        const intensity = Math.max(0.18, density / maxDensity);
+
+        const fill = document.createElement('div');
+        fill.className = 'impact-heatmap-fill';
+        fill.style.opacity = String(intensity);
+        fill.style.backgroundImage = buildRoleMixGradient(roleMix);
+        cell.appendChild(fill);
+
+        const label = document.createElement('span');
+        label.className = 'impact-heatmap-day';
+        label.textContent = row?.label || WEEKDAY_SHORT[idx] || '?';
+        cell.appendChild(label);
+
+        const value = document.createElement('span');
+        value.className = 'impact-heatmap-count';
+        value.textContent = `${density}`;
+        cell.appendChild(value);
+
+        const delta = Number(row?.delta ?? 0);
+        const deltaEl = document.createElement('span');
+        deltaEl.className = `impact-heatmap-delta ${delta > 0 ? 'is-up' : delta < 0 ? 'is-down' : 'is-flat'}`;
+        deltaEl.textContent = `${delta > 0 ? '+' : ''}${delta}`;
+        cell.appendChild(deltaEl);
+
+        grid.appendChild(cell);
+    });
+
+    panel.appendChild(grid);
+    return panel;
+}
+
+function createTeamPolesPanel(rows) {
+    const panel = createImpactPanel('Engpass-Analyse');
+    const teams = aggregateTeamRows(rows);
+    if (!teams.length) {
+        const empty = document.createElement('p');
+        empty.className = 'impact-empty';
+        empty.textContent = 'Keine Teamdaten für den Zeitraum vorhanden.';
+        panel.appendChild(empty);
+        return panel;
+    }
+
+    const maxTeamTotal = Math.max(1, ...teams.map((team) => Math.max(team.beforeTotal, team.afterTotal)));
+    const list = document.createElement('div');
+    list.className = 'impact-team-list';
+
+    teams.forEach((team) => {
+        const row = document.createElement('div');
+        row.className = 'impact-team-row';
+
+        const name = document.createElement('span');
+        name.className = 'impact-team-name';
+        name.textContent = team.teamLabel;
+        row.appendChild(name);
+
+        const bars = document.createElement('div');
+        bars.className = 'impact-team-bars';
+        bars.appendChild(createTeamStackedBar('Alt', team.beforeByRole, team.beforeTotal, maxTeamTotal));
+        bars.appendChild(createTeamStackedBar('Neu', team.afterByRole, team.afterTotal, maxTeamTotal));
+        row.appendChild(bars);
+
+        list.appendChild(row);
+    });
+
+    panel.appendChild(list);
+    return panel;
+}
+
+function createImpactPanel(title) {
+    const panel = document.createElement('article');
+    panel.className = 'impact-panel';
     const heading = document.createElement('h4');
     heading.className = 'impact-title noto';
     heading.textContent = title;
     panel.appendChild(heading);
-
-    panel.appendChild(createVerticalChart(rows));
-
     return panel;
 }
 
-function createTeamRolePanel(rows) {
-    const panel = document.createElement('div');
-    panel.className = 'impact-panel';
+function buildRoleMixGradient(roleMix) {
+    const validMix = Array.isArray(roleMix)
+        ? roleMix.filter((entry) => Number(entry?.weight) > 0)
+        : [];
+    if (!validMix.length) {
+        return 'linear-gradient(90deg, var(--accent-muted) 0%, var(--accent-muted) 100%)';
+    }
 
-    const heading = document.createElement('h4');
-    heading.className = 'impact-title noto';
-    heading.textContent = 'Delta nach Rollen, gruppiert nach Teams';
-    panel.appendChild(heading);
+    const totalWeight = validMix.reduce((sum, entry) => sum + Number(entry.weight || 0), 0);
+    if (totalWeight <= 0) {
+        return 'linear-gradient(90deg, var(--accent-muted) 0%, var(--accent-muted) 100%)';
+    }
 
-    const sortedRows = [...rows].sort((a, b) => {
-        const teamDiff = TEAM_KEY_ORDER.indexOf(a.teamKey) - TEAM_KEY_ORDER.indexOf(b.teamKey);
-        if (teamDiff !== 0) return teamDiff;
-        return Number(a.roleId) - Number(b.roleId);
+    let cursor = 0;
+    const stops = [];
+    validMix.forEach((entry) => {
+        const ratio = Number(entry.weight || 0) / totalWeight;
+        const next = Math.min(100, cursor + (ratio * 100));
+        const color = `var(--role-${Number(entry.roleId)}-color)`;
+        stops.push(`${color} ${cursor.toFixed(2)}% ${next.toFixed(2)}%`);
+        cursor = next;
     });
 
-    // Single horizontal row with all team-role bars.
-    panel.appendChild(createVerticalChart(sortedRows));
-
-    return panel;
+    return `linear-gradient(90deg, ${stops.join(', ')})`;
 }
 
-function createVerticalChart(rows) {
-    const chart = document.createElement('div');
-    chart.className = 'impact-vertical-chart';
+function aggregateTeamRows(rows) {
+    const byTeam = new Map();
+    (Array.isArray(rows) ? rows : []).forEach((row) => {
+        const teamKey = row?.teamKey || 'none';
+        if (!byTeam.has(teamKey)) {
+            byTeam.set(teamKey, {
+                teamKey,
+                teamLabel: row?.teamLabel || resolveTeamLabel(teamKey),
+                beforeTotal: 0,
+                afterTotal: 0,
+                beforeByRole: [],
+                afterByRole: []
+            });
+        }
 
-    const maxValue = Math.max(1, ...rows.map(row => Math.max(row.before || 0, row.after || 0)));
-    rows.forEach((row) => {
-        chart.appendChild(createVerticalBarItem(row, maxValue));
+        const entry = byTeam.get(teamKey);
+        const roleId = Number(row?.roleId);
+        const before = Number(row?.before || 0);
+        const after = Number(row?.after || 0);
+
+        if (before > 0) {
+            entry.beforeByRole.push({ roleId, weight: before });
+            entry.beforeTotal += before;
+        }
+        if (after > 0) {
+            entry.afterByRole.push({ roleId, weight: after });
+            entry.afterTotal += after;
+        }
     });
 
-    return chart;
+    return Array.from(byTeam.values())
+        .filter((entry) => entry.beforeTotal > 0 || entry.afterTotal > 0)
+        .sort((a, b) => TEAM_KEY_ORDER.indexOf(a.teamKey) - TEAM_KEY_ORDER.indexOf(b.teamKey));
 }
 
-function createVerticalBarItem(row, maxValue) {
-    const item = document.createElement('div');
-    item.className = 'impact-vertical-item';
-
-    const deltaEl = document.createElement('span');
-    const numericDelta = Number(row?.delta) || 0;
-    const sign = numericDelta > 0 ? '+' : '';
-    deltaEl.className = `impact-delta ${numericDelta < 0 ? 'is-better' : numericDelta > 0 ? 'is-worse' : 'is-neutral'}`;
-    deltaEl.textContent = `${sign}${numericDelta}`;
-
-    const bars = document.createElement('div');
-    bars.className = 'impact-bars-vertical';
-
-    const baselineBar = document.createElement('div');
-    baselineBar.className = 'impact-bar impact-bar-vertical impact-bar-baseline';
-    baselineBar.style.height = `${Math.max(4, (Math.max(0, row?.before || 0) / maxValue) * 100)}%`;
-    baselineBar.title = `Baseline: ${row?.before || 0}`;
-
-    const futureBar = document.createElement('div');
-    futureBar.className = 'impact-bar impact-bar-vertical impact-bar-future';
-    futureBar.style.height = `${Math.max(4, (Math.max(0, row?.after || 0) / maxValue) * 100)}%`;
-    futureBar.title = `Future: ${row?.after || 0}`;
-
-    bars.append(baselineBar, futureBar);
-
-    const counts = document.createElement('span');
-    counts.className = 'impact-counts';
-    counts.textContent = `B${row?.before || 0} | F${row?.after || 0}`;
+function createTeamStackedBar(label, roleMix, total, maxTotal) {
+    const row = document.createElement('div');
+    row.className = 'impact-team-bar-row';
 
     const labelEl = document.createElement('span');
-    labelEl.className = 'impact-label-vertical';
-    labelEl.textContent = row?.label || 'n/a';
+    labelEl.className = 'impact-team-bar-label';
+    labelEl.textContent = label;
+    row.appendChild(labelEl);
 
-    item.append(deltaEl, bars, counts, labelEl);
-    return item;
+    const bar = document.createElement('div');
+    bar.className = 'impact-team-bar';
+
+    const fill = document.createElement('div');
+    fill.className = 'impact-team-bar-fill';
+    fill.style.width = `${Math.max(4, (Math.max(0, total) / Math.max(1, maxTotal)) * 100)}%`;
+    fill.style.backgroundImage = buildRoleMixGradient(roleMix);
+    bar.appendChild(fill);
+    row.appendChild(bar);
+
+    const value = document.createElement('span');
+    value.className = 'impact-team-bar-value';
+    value.textContent = `${total}`;
+    row.appendChild(value);
+
+    return row;
 }
 
 // ============= RULE OPERATIONS =============
@@ -1858,6 +2011,7 @@ function computeScopeDelta(baselineByScope = {}, candidateByScope = {}) {
 function buildImpactBreakdown(baselineFailures = [], candidateFailures = []) {
     return {
         weekday: buildWeekdayBreakdown(baselineFailures, candidateFailures),
+        weekdayRoles: buildWeekdayRoleBreakdown(baselineFailures, candidateFailures),
         teamRoles: buildTeamRoleBreakdown(baselineFailures, candidateFailures)
     };
 }
@@ -1873,6 +2027,17 @@ function buildWeekdayBreakdown(baselineFailures = [], candidateFailures = []) {
     });
 }
 
+function buildWeekdayRoleBreakdown(baselineFailures = [], candidateFailures = []) {
+    const beforeRoles = countFailureRoleWeightsByWeekday(baselineFailures);
+    const afterRoles = countFailureRoleWeightsByWeekday(candidateFailures);
+
+    return WEEKDAY_SHORT.map((label, idx) => ({
+        label,
+        beforeRoles: beforeRoles[idx],
+        afterRoles: afterRoles[idx]
+    }));
+}
+
 function countFailuresByWeekday(failures = []) {
     const counts = Array(7).fill(0);
     failures.forEach((failure) => {
@@ -1881,6 +2046,46 @@ function countFailuresByWeekday(failures = []) {
         counts[idx] += 1;
     });
     return counts;
+}
+
+function countFailureRoleWeightsByWeekday(failures = []) {
+    const weekdayMaps = Array.from({ length: 7 }, () => new Map());
+
+    failures.forEach((failure) => {
+        const idx = resolveFailureWeekdayIndex(failure);
+        if (idx < 0 || idx > 6) return;
+
+        const roleIds = normalizeRoleIdList(failure?.subjectRoles);
+        const roles = roleIds.length ? roleIds : [0];
+        const weight = 1 / roles.length;
+
+        roles.forEach((roleId) => {
+            const map = weekdayMaps[idx];
+            map.set(roleId, (map.get(roleId) || 0) + weight);
+        });
+    });
+
+    return weekdayMaps.map((map) => {
+        const rows = Array.from(map.entries())
+            .map(([roleId, weight]) => ({ roleId: Number(roleId), weight: Number(weight) }))
+            .filter((entry) => Number.isFinite(entry.weight) && entry.weight > 0)
+            .sort((a, b) => a.roleId - b.roleId);
+
+        return rows;
+    });
+}
+
+function normalizeRoleIdList(subjectRoles) {
+    const ids = Array.isArray(subjectRoles) ? subjectRoles : [];
+    const unique = new Set();
+
+    ids.forEach((roleIdRaw) => {
+        const roleId = Number(roleIdRaw);
+        if (!Number.isInteger(roleId) || roleId < 0 || roleId > ROLE_INDEX_MAX) return;
+        unique.add(roleId);
+    });
+
+    return [...unique];
 }
 
 function resolveFailureWeekdayIndex(failure) {
@@ -1931,16 +2136,8 @@ function countFailuresByTeamRole(failures = []) {
     const map = new Map();
 
     failures.forEach((failure) => {
-        const roleIds = Array.isArray(failure?.subjectRoles) ? failure.subjectRoles : [];
-        const uniqueRoles = [...new Set(
-            roleIds
-                .map(roleId => Number(roleId))
-                .filter(roleId => Number.isInteger(roleId) && roleId >= 0)
-        )];
-
-        if (!uniqueRoles.length) {
-            return;
-        }
+        const uniqueRoles = normalizeRoleIdList(failure?.subjectRoles);
+        if (!uniqueRoles.length) return;
 
         uniqueRoles.forEach((roleId) => {
             const teamKey = mapRoleToTeamKey(roleId);
@@ -2026,6 +2223,7 @@ function clearRuleWarnings() {
     if (list) {
         list.innerHTML = '';
         list.style.display = 'none';
+        list.classList.remove('is-success', 'is-alert');
     }
 
     if (title) {
@@ -2094,3 +2292,9 @@ export async function goAsleep(ruleView) {
     updateRuleInMemory(rule);
     console.info('Rule put to sleep (sample mode)');
 }
+
+
+
+
+
+
