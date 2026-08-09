@@ -1,7 +1,7 @@
 // js\resizer.js
 
 const formHeightLookup = {
-  'welcome-page': { bottomRem: 16 },
+  'welcome-page': { bottomRem: 10 },
   'role-form': { bottomRem: 24.5 },
   'rule-form': { bottomRem: 52 },
   'calendar-form': { bottomRem: 44 },

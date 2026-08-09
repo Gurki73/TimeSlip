@@ -315,7 +315,12 @@ body.resizing {
   justify-content: center;
 }
 
+.welcome-page {
+  min-width: 100%;
+}
+
 #form-container {
+  min-width: 100%;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -586,10 +591,14 @@ body.resizing {
 }
 
 .cards-container {
+  min-width: 100%;
   display: flex;
-  flex-direction: row;
-  justify-content: space-evenly;
+  flex-wrap: wrap;              /* allows wrapping on smaller screens */
+  justify-content: center;      /* center the whole group */
+  align-items: stretch;
+  gap: 2rem;                    /* spacing between cards */
 }
+
 
 /* Color-coded variants */
 .layout-card.calendar {

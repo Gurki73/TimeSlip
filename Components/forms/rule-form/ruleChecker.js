@@ -6,6 +6,7 @@ import { ensureCalendarReady, computeAttendanceForRange } from '../../calendar/c
 import { loadRuleData } from '../../../js/loader/rule-loader.js';
 
 const SHIFTS_PER_DAY = 3;
+const ROLE_COUNT = 14;
 
 const BASE_MANDATORY = {
     W: false,
@@ -130,40 +131,55 @@ function deriveMandatory(ruleDraft) {
     return mandatory;
 }
 
-
-function createEmptyWeekCube(roleCount) {
+function createEmptyWeekCube() {
     return Array.from({ length: 7 }, () =>
         Array.from({ length: SHIFTS_PER_DAY }, () =>
-            Array(roleCount).fill(0)
+            Array(ROLE_COUNT).fill(0)
         )
     );
 }
 
 function sumRuleInCube(condition, cube) {
     let total = 0;
-
-    // Make sure subjectRoles is always an array
+    // console.log("[RuleCheck] Evaluating cube", cube);
     const subjectRoles = Array.isArray(condition.subjectRoles)
         ? condition.subjectRoles
         : condition.subjectRoles
-            ? [condition.subjectRoles]  // wrap single string
-            : [];                       // fallback empty array
+            ? [condition.subjectRoles]
+            : [];
 
     const timeframeSlots = Array.isArray(condition.timeframeSlots)
         ? condition.timeframeSlots
-        : []; // fallback empty array
+        : [];
 
     timeframeSlots.forEach(day => {
+
+        let roleTotals = {};
+
         for (let s = 0; s < SHIFTS_PER_DAY; s++) {
             subjectRoles.forEach(role => {
-                total += cube[day][s][role] || 0;
+
+                const value = cube?.[day]?.[s]?.[role] ?? 0;
+
+                total += value;
+                roleTotals[role] = (roleTotals[role] || 0) + value;
+
             });
         }
+
+        /* focus debug output
+        console.log("[RuleCheck][DayRoleTotals]", {
+            day,
+            chef: roleTotals[1] ?? 0,
+            reception: roleTotals[9] ?? 0,
+            allRoles: roleTotals,
+            runningTotal: total
+        });
+        */
     });
 
     return total;
 }
-
 
 function evaluateCondition(condition, cube) {
     const total = sumRuleInCube(condition, cube);
@@ -246,14 +262,13 @@ function getISOWeekNumber(date) {
 }
 
 function collectDayAttendance(requests, dayFacts) {
-    const attendance = {};
+
+    const attendance = Array.from({ length: ROLE_COUNT }, () => [0, 0, 0]);
 
     if (!dayFacts?.isOfficeOpen) return attendance;
 
     requests.forEach(({ roleIndex, shift }) => {
         if (!dayFacts.openShifts[shift]) return;
-
-        attendance[roleIndex] ??= [0, 0, 0];
 
         const idx = shift === 'early' ? 0 : shift === 'day' ? 1 : 2;
         attendance[roleIndex][idx]++;
@@ -285,7 +300,6 @@ export async function runRequestRuleCheck(startDate, endDate, requests, options 
         uiRules = null,
         employees = [],
         includePending = true,
-        roleCount: roleCountOverride = null,
         dayFactsByDate = null,
         shiftMode = 'all',
         attendanceByDate = null,
@@ -313,12 +327,6 @@ export async function runRequestRuleCheck(startDate, endDate, requests, options 
         };
     }
 
-    const roleCount = Number.isFinite(roleCountOverride)
-        ? roleCountOverride
-        : Array.isArray(employees) && employees.length
-            ? Math.max(...employees.map(e => Number(e.mainRoleIndex ?? 0))) + 1
-            : 14;
-
     const requestsByDate = buildRequestsByDate(
         requests,
         start,
@@ -332,7 +340,7 @@ export async function runRequestRuleCheck(startDate, endDate, requests, options 
         context: {
             requestsByDate,
             dayFactsByDate,
-            roleCount,
+            roleCount: ROLE_COUNT,
             attendanceByDate
         }
     };
@@ -372,8 +380,8 @@ export function normalizeDateInput(dateInput) {
     return d;
 }
 
-function createEmptyAttendanceMatrix(roleCount) {
-    return Array.from({ length: roleCount }, () => [0, 0, 0]);
+function createEmptyAttendanceMatrix() {
+    return Array.from({ length: ROLE_COUNT }, () => [0, 0, 0]);
 }
 
 function normalizeDayFacts(dayFacts) {
@@ -388,8 +396,7 @@ function buildAttendanceByDate(
     startDate,
     endDate,
     requestsByDate,
-    dayFactsByDate,
-    roleCount
+    dayFactsByDate
 ) {
     const attendanceByDate = {};
     let cursor = new Date(startDate);
@@ -399,7 +406,7 @@ function buildAttendanceByDate(
         const key = dateKey(cursor);
         const dayFacts = normalizeDayFacts(dayFactsByDate?.[key]);
         const requests = requestsByDate?.[key] || [];
-        const attendance = createEmptyAttendanceMatrix(roleCount);
+        const attendance = createEmptyAttendanceMatrix();
 
         const dayAttendance = collectDayAttendance(requests, dayFacts);
         Object.entries(dayAttendance).forEach(([roleId, shifts]) => {
@@ -420,8 +427,7 @@ function buildAttendanceByDate(
 function buildWeeklyCubesFromAttendance(
     startDate,
     endDate,
-    attendanceByDate,
-    roleCount
+    attendanceByDate
 ) {
     const weeks = [];
     let cursor = startOfISOWeek(startDate);
@@ -429,7 +435,7 @@ function buildWeeklyCubesFromAttendance(
 
     while (cursor <= endDate && guard++ < 60) {
         const weekStart = new Date(cursor);
-        const cube = createEmptyWeekCube(roleCount);
+        const cube = createEmptyWeekCube();
 
         for (let d = 0; d < 7; d++) {
             const date = addDays(weekStart, d);
@@ -437,7 +443,9 @@ function buildWeeklyCubesFromAttendance(
             const attendance = attendanceByDate[key];
             if (!Array.isArray(attendance)) continue;
 
-            for (let role = 0; role < roleCount; role++) {
+            // console.log("[RuleCheck] dayAttendance", key, attendance);
+
+            for (let role = 0; role < ROLE_COUNT; role++) {
                 for (let s = 0; s < SHIFTS_PER_DAY; s++) {
                     cube[d][s][role] += attendance?.[role]?.[s] ?? 0;
                 }
@@ -461,7 +469,7 @@ function extractContext(ruleset) {
     const context = ruleset?.context || ruleset?._context || {};
 
     return {
-        roleCount: Number.isFinite(context.roleCount) ? context.roleCount : 14,
+        roleCount: ROLE_COUNT,
         requestsByDate: context.requestsByDate || {},
         dayFactsByDate: context.dayFactsByDate || {},
         attendanceByDate: context.attendanceByDate || null,
@@ -498,18 +506,18 @@ function createSolverRulesFromMachineRules(normalizedRules) {
     return { static: rules, flexible: [] };
 }
 
-function aggregateAttendanceByShift(attendanceByDate, roleCount) {
+function aggregateAttendanceByShift(attendanceByDate) {
     if (!attendanceByDate || typeof attendanceByDate !== 'object') return null;
     const shiftTotals = {
-        early: createEmptyAttendanceMatrix(roleCount),
-        day: createEmptyAttendanceMatrix(roleCount),
-        late: createEmptyAttendanceMatrix(roleCount)
+        early: createEmptyAttendanceMatrix(ROLE_COUNT),
+        day: createEmptyAttendanceMatrix(ROLE_COUNT),
+        late: createEmptyAttendanceMatrix(ROLE_COUNT)
     };
     const shiftByIndex = ['early', 'day', 'late'];
 
     Object.values(attendanceByDate).forEach(dayMatrix => {
         if (!Array.isArray(dayMatrix)) return;
-        for (let roleId = 0; roleId < roleCount; roleId++) {
+        for (let roleId = 0; roleId < ROLE_COUNT; roleId++) {
             for (let shiftIdx = 0; shiftIdx < SHIFTS_PER_DAY; shiftIdx++) {
                 const shiftName = shiftByIndex[shiftIdx];
                 const mainCount = dayMatrix?.[roleId]?.[shiftIdx] ?? 0;
@@ -560,7 +568,7 @@ export function executeRuleset(
     }
 
     const context = extractContext(ruleset);
-    const roleCount = context.roleCount;
+    // role count is fixed via ROLE_COUNT.
 
     const attendanceByDate = context.attendanceByDate ||
         buildAttendanceByDate(
@@ -568,10 +576,10 @@ export function executeRuleset(
             end,
             context.requestsByDate,
             context.dayFactsByDate,
-            roleCount
+            ROLE_COUNT
         );
 
-    const weeks = buildWeeklyCubesFromAttendance(start, end, attendanceByDate, roleCount);
+    const weeks = buildWeeklyCubesFromAttendance(start, end, attendanceByDate);
     const failures = [];
     const skipped = [];
     let solverResult = null;
@@ -583,7 +591,7 @@ export function executeRuleset(
                 solverResult = runSolver(context.solverInput);
             } else {
                 const fallbackAttendanceByShift = context.attendanceByShift ||
-                    aggregateAttendanceByShift(attendanceByDate, roleCount);
+                    aggregateAttendanceByShift(attendanceByDate);
                 const fallbackSolverRules = context.solverRules || createSolverRulesFromMachineRules(normalizedRules);
                 const hasRules = Array.isArray(fallbackSolverRules?.static) && fallbackSolverRules.static.length > 0;
 
@@ -611,6 +619,18 @@ export function executeRuleset(
 
     weeks.forEach(week => {
         normalizedRules.weekly.forEach(rule => {
+            const slots = rule?.dominantCondition?.timeframeSlots || [];
+            const slotsAreNumbers = slots.every(slot => typeof slot === 'number');
+            if (!slotsAreNumbers) {
+                skipped.push({
+                    ruleId: rule.id,
+                    scope: 'weekly',
+                    weekNumber: week.weekNumber,
+                    reason: 'UNSUPPORTED_TIMEFRAME_SLOTS'
+                });
+                return;
+            }
+
             const violations = evaluateRule(rule, week.cube);
             if (!violations.length) return;
 
@@ -629,13 +649,12 @@ export function executeRuleset(
             });
         });
     });
-
     let cursor = new Date(start);
     let guard = 0;
     while (cursor <= end && guard++ < 370) {
         const dayIndex = (cursor.getDay() + 6) % 7;
         const key = dateKey(cursor);
-        const dayAttendance = attendanceByDate[key] || createEmptyAttendanceMatrix(roleCount);
+        const dayAttendance = attendanceByDate[key] || createEmptyAttendanceMatrix(ROLE_COUNT);
 
         normalizedRules.daily.forEach(rule => {
             const slots = rule?.dominantCondition?.timeframeSlots || [];
@@ -652,8 +671,8 @@ export function executeRuleset(
 
             if (slots.length > 0 && !slots.includes(dayIndex)) return;
 
-            const dayCube = createEmptyWeekCube(roleCount);
-            for (let role = 0; role < roleCount; role++) {
+            const dayCube = createEmptyWeekCube(ROLE_COUNT);
+            for (let role = 0; role < ROLE_COUNT; role++) {
                 for (let s = 0; s < SHIFTS_PER_DAY; s++) {
                     dayCube[dayIndex][s][role] = dayAttendance?.[role]?.[s] ?? 0;
                 }
@@ -710,7 +729,7 @@ export function executeRuleset(
             startDate: dateKey(start),
             endDate: dateKey(end),
             useSolver,
-            roleCount
+            roleCount: ROLE_COUNT
         },
         solver: solverResult
     };
@@ -726,8 +745,7 @@ export function runRuleChecks({
     includeInactive = false,
     attendanceByDate = null,
     attendanceStart = null,
-    attendanceEnd = null,
-    roleCount: roleCountOverride = null
+    attendanceEnd = null
 } = {}) {
     const errors = [];
     const warnings = [];
@@ -784,16 +802,13 @@ export function runRuleChecks({
     const futureStart = normalizeDateInput(attendanceStart);
     const futureEnd = normalizeDateInput(attendanceEnd);
     if (attendanceByDate && futureStart && futureEnd && futureStart <= futureEnd) {
-        const derivedRoleCount = Number.isFinite(roleCountOverride)
-            ? roleCountOverride
-            : deriveRoleCountFromAttendance(attendanceByDate) ?? 14;
 
         const rulesetForCheck = {
             ...previewRuleset,
             context: {
                 ...(previewRuleset?.context || {}),
                 attendanceByDate,
-                roleCount: derivedRoleCount
+                roleCount: ROLE_COUNT
             }
         };
 
@@ -819,11 +834,6 @@ export function runRuleChecks({
     };
 }
 
-function deriveRoleCountFromAttendance(attendanceByDate) {
-    if (!attendanceByDate || typeof attendanceByDate !== 'object') return null;
-    const first = Object.values(attendanceByDate).find(v => Array.isArray(v));
-    return Array.isArray(first) ? first.length : null;
-}
 
 function scanForForbidden(ruleDraft) {
     const forbidden = [];
@@ -1129,5 +1139,8 @@ export async function computeRequestDelta(requests, newRequest, options = {}) {
     console.log("delta:", delta);
     return { baselineStats, futureStats, delta };
 }
+
+
+
 
 

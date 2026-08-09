@@ -35,6 +35,24 @@ const INPUT_BINDINGS = [
     { key: 'd', handler: handleTopCellDependency },
 ];
 
+const MAIN_BLOCK_LABELS = {
+    R: 'Wiederholungen',
+    T: 'Zeitraum',
+    A: 'Anzahl',
+    G: 'Aufgaben',
+    D: 'Abhängigkeiten',
+    E: 'Ausnahmen'
+};
+
+const SECONDARY_BLOCK_LABELS = {
+    r: 'Wiederholungen',
+    t: 'Zeitraum',
+    a: 'Anzahl',
+    g: 'Aufgaben',
+    d: 'Abhängigkeiten'
+};
+
+
 const SVG_NS = "http://www.w3.org/2000/svg";
 const BLOCK_KEY_MAP = { W: "repeat", T: "timeframe", A: "amount", G: "group", D: "dependency", E: "exception" };
 
@@ -450,6 +468,14 @@ function renderRuleCheckReport(report) {
     }
 }
 
+function formatGermanList(items) {
+    if (!items.length) return '';
+    if (items.length === 1) return items[0];
+    if (items.length === 2) return `${items[0]} und ${items[1]}`;
+    return `${items.slice(0, -1).join(', ')} und ${items[items.length - 1]}`;
+}
+
+
 function translateRuleCheckMessage(raw) {
     const text = String(raw || '').trim();
     if (!text) return 'Unbekannter Prüfhinweis.';
@@ -460,8 +486,40 @@ function translateRuleCheckMessage(raw) {
     switch (code) {
         case 'RULE_MISSING':
             return 'Kein Regelentwurf vorhanden.';
-        case 'MISSING_BLOCKS':
-            return rest ? `Pflichtblöcke fehlen: ${rest}.` : 'Pflichtblöcke fehlen.';
+        case 'MISSING_BLOCKS': {
+            if (!rest) return 'Pflichtblöcke fehlen.';
+
+            const codes = rest.split(',').map(s => s.trim()).filter(Boolean);
+
+            const mainMissing = [];
+            const secondaryMissing = [];
+
+            codes.forEach(code => {
+                if (MAIN_BLOCK_LABELS[code]) {
+                    mainMissing.push(MAIN_BLOCK_LABELS[code]);
+                } else if (SECONDARY_BLOCK_LABELS[code]) {
+                    secondaryMissing.push(SECONDARY_BLOCK_LABELS[code]);
+                }
+            });
+
+            const parts = [];
+
+            if (mainMissing.length) {
+                parts.push(
+                    `In der Hauptbedingung fehlen ${formatGermanList(mainMissing)}`
+                );
+            }
+
+            if (secondaryMissing.length) {
+                parts.push(
+                    `In der Neben-Bedingung fehlen ${formatGermanList(secondaryMissing)}`
+                );
+            }
+
+            return parts.length
+                ? parts.join('. ') + '.'
+                : 'Pflichtblöcke fehlen.';
+        }
         case 'FORBIDDEN_COMBOS':
             return rest ? `Ungültige Kombinationen: ${rest}.` : 'Ungültige Kombinationen erkannt.';
         case 'RULE_TRANSLATION_EMPTY':
@@ -471,7 +529,7 @@ function translateRuleCheckMessage(raw) {
         case 'POTENTIAL_CONFLICTS':
             return rest ? `${rest} potenzielle Konflikte erkannt.` : 'Potenzielle Konflikte erkannt.';
         case 'DELTA_NEW_RULES':
-            return rest ? `${rest} neue Maschinenregel(n) würden ergänzt.` : 'Neue Maschinenregeln würden ergänzt.';
+            return rest ? `${rest} neue Maschinenregel würden ergänzt.` : 'Neue Maschinenregeln würden ergänzt.';
         case 'DELTA_DUPLICATES':
             return rest ? `${rest} Duplikate in der Delta-Betrachtung.` : 'Duplikate in der Delta-Betrachtung.';
         case 'DELTA_CONFLICTS':
@@ -571,7 +629,7 @@ function renderImpactCharts(impact) {
 
     const weekdayRows = Array.isArray(impact.breakdown.weekday) ? impact.breakdown.weekday : [];
     const weekdayRoleRows = Array.isArray(impact.breakdown.weekdayRoles) ? impact.breakdown.weekdayRoles : [];
-    panelGrid.appendChild(createHeatmapPanel(weekdayRows, weekdayRoleRows));
+    panelGrid.appendChild(createWeekdayImpactPanel(weekdayRows, weekdayRoleRows));
 
     const roleRows = Array.isArray(impact.breakdown.teamRoles) ? impact.breakdown.teamRoles : [];
     panelGrid.appendChild(createTeamPolesPanel(roleRows));
@@ -587,6 +645,62 @@ function renderImpactCharts(impact) {
     if (scrollContainer.children.length > 0) {
         container.insertBefore(root, document.getElementById('table-container'));
     }
+}
+function createWeekdayImpactPanel(weekdayRows, weekdayRoleRows) {
+    const panel = createImpactPanel('Wochentags-Impact');
+    const list = document.createElement('div');
+    list.className = 'impact-weekday-list';
+
+    if (!Array.isArray(weekdayRows) || !weekdayRows.length) {
+        const empty = document.createElement('p');
+        empty.className = 'impact-empty';
+        empty.textContent = 'Keine Wochentagsdaten vorhanden.';
+        panel.appendChild(empty);
+        return panel;
+    }
+
+    // global normalization across the whole week
+    const maxTotal = Math.max(
+        1,
+        ...weekdayRows.map(r => Math.max(
+            Number(r?.before ?? 0),
+            Number(r?.after ?? 0)
+        ))
+    );
+
+    weekdayRows.forEach((row, idx) => {
+        const container = document.createElement('div');
+        container.className = 'impact-weekday-row';
+
+        const name = document.createElement('span');
+        name.className = 'impact-weekday-name';
+        name.textContent = row?.label || WEEKDAY_SHORT[idx] || '?';
+        container.appendChild(name);
+
+        const bars = document.createElement('div');
+        bars.className = 'impact-weekday-bars';
+
+        const beforeTotal = Number(row?.before ?? 0);
+        const afterTotal = Number(row?.after ?? 0);
+
+        const beforeRoles = weekdayRoleRows[idx]?.beforeRoles || [];
+        const afterRoles = weekdayRoleRows[idx]?.afterRoles || [];
+
+        bars.appendChild(
+            createTeamStackedBar('Alt', beforeRoles, beforeTotal, maxTotal)
+        );
+
+        bars.appendChild(
+            createTeamStackedBar('Neu', afterRoles, afterTotal, maxTotal)
+        );
+
+        container.appendChild(bars);
+
+        list.appendChild(container);
+    });
+
+    panel.appendChild(list);
+    return panel;
 }
 
 function createImpactSummaryPanel(impact) {

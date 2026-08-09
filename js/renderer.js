@@ -520,7 +520,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   initTheme();
   syncInitialSettingsToMain();
-  formInitializers.welcome();
+  loadFormLikeElectron('welcome');
   showFnKeyHintIfLaptop();
 
   // --- Restore zoom factor ---
@@ -528,8 +528,29 @@ window.addEventListener('DOMContentLoaded', async () => {
     const savedZoom = await window.cacheAPI.getCacheValue('zoomFactor') || 1;
     document.body.style.zoom = savedZoom;
   })();
-  injectWindowButtonsIntoWelcomeHeader();
+  // injectWindowButtonsIntoWelcomeHeader();
 });
+
+
+async function loadFormLikeElectron(formName) {
+  const formContainer = document.getElementById('form-container');
+  if (!formContainer) return;
+
+  if (Object.keys(formInitializers).length === 0) {
+    await loadFormModules();
+  }
+
+  const initializer = formInitializers[formName];
+  if (!initializer) return;
+
+  formContainer.innerHTML = '';
+  initializer(window.api);
+
+  resizeByPreferredForm(formName);
+  requestAnimationFrame(() => {
+    injectWindowButtonsIntoWelcomeHeader();
+  });
+}
 
 
 export async function globalRefresh(mode = localStorage.getItem('dataMode') || 'default') {

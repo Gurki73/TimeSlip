@@ -368,23 +368,27 @@ function fillRulesetFromUiRules(targetRuleset, storedRuleset) {
             const dominant = machineRule.dominantCondition;
             const slots = dominant.timeframeSlots;
             const op = dominant.timeframeLogicOperator;
+            const hasSpecialSlots = slots.some(s => SPECIAL_UNIVERSE.includes(s));
+            const hasStringSlots = slots.some(s => typeof s === 'string');
 
-            // ---- special / shiftly ----
-            if (slots.some(s => SPECIAL_UNIVERSE.includes(s))) {
+            // Keep scope buckets mutually exclusive.
+            // Shift/special rules must not leak into daily/weekly day-based checks.
+            if (hasSpecialSlots) {
                 targetRuleset.special.push(machineRule);
+                return;
             }
-            else if (slots.some(s => typeof s === "string")) {
+            if (hasStringSlots) {
                 targetRuleset.shiftly.push(machineRule);
+                return;
             }
-
 
             // ---- weekly ----
-            if (op === "OR" || op === "EXACT") {
+            if (op === 'OR' || op === 'EXACT') {
                 targetRuleset.weekly.push(machineRule);
             }
 
             // ---- daily ----
-            if (op === "AND") {
+            if (op === 'AND') {
                 targetRuleset.daily.push(machineRule);
             }
         });
@@ -408,3 +412,4 @@ function normalizeCondition(condition) {
         }
     };
 }
+

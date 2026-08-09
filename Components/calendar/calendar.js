@@ -833,12 +833,18 @@ function buildCheckerAttendance(shiftAttendanceByType, roleCount) {
   const shiftIndex = { early: 0, day: 1, late: 2 };
 
   Object.entries(shiftAttendanceByType || {}).forEach(([shift, attendance]) => {
-    const idx = shiftIndex[shift];
-    if (idx == null || !Array.isArray(attendance)) return;
+    // Map both 'day' and 'full' to day shift index (1)
+    let idx;
+    if (shift === 'early') idx = 0;
+    else if (shift === 'day' || shift === 'full') idx = 1;  // Both map to day shift
+    else if (shift === 'late') idx = 2;
+    else return; // Skip unknown shift types
+
+    if (!Array.isArray(attendance)) return;
 
     for (let role = 0; role < roleCount; role++) {
       const mainCount = attendance?.[role]?.[0] ?? 0;
-      result[role][idx] = mainCount;
+      result[role][idx] += mainCount; // Use += to accumulate if multiple sources
     }
   });
 
@@ -955,15 +961,25 @@ export async function computeAttendanceForRange(startDate, endDate, options = {}
 
     const monthRequests = getMonthRequests(year, monthIndex);
     const shiftAttendanceByType = {};
-
+    console.log("shiftStatusForDay", shiftStatusForDay);
+    console.log("shiftAttendanceByType", shiftAttendanceByType);
     if (shiftStatusForDay.early) {
-      shiftAttendanceByType.early = computeShiftAttendance('early', day, weekdayIndex, monthRequests, shiftStatusForDay.early, { usePresenceState: false });
+      shiftAttendanceByType.early = computeShiftAttendance('early', day, weekdayIndex, monthRequests, shiftStatusForDay.early, {
+        usePresenceState: false,
+        targetDate: date
+      });
     }
     if (shiftStatusForDay.day) {
-      shiftAttendanceByType.day = computeShiftAttendance('day', day, weekdayIndex, monthRequests, shiftStatusForDay.day, { usePresenceState: false });
+      shiftAttendanceByType.day = computeShiftAttendance('day', day, weekdayIndex, monthRequests, shiftStatusForDay.day, {
+        usePresenceState: false,
+        targetDate: date
+      });
     }
     if (shiftStatusForDay.late) {
-      shiftAttendanceByType.late = computeShiftAttendance('late', day, weekdayIndex, monthRequests, shiftStatusForDay.late, { usePresenceState: false });
+      shiftAttendanceByType.late = computeShiftAttendance('late', day, weekdayIndex, monthRequests, shiftStatusForDay.late, {
+        usePresenceState: false,
+        targetDate: date
+      });
     }
 
     attendanceByDate[fullDate] = buildCheckerAttendance(shiftAttendanceByType, roleCount);
@@ -1144,7 +1160,7 @@ function createDayShift(day, index, monthRequests, isOpen, reassignments = null,
   return { shiftElement: dayShift, attendance };
 }
 
-function checkEmployeeRequested(employee, monthRequests, day) {
+function checkEmployeeRequested(employee, monthRequests, day, options = {}) {
   if (!Array.isArray(monthRequests)) {
     return { overlap: false, vacationType: null, shift: null, status: "none" };
   }
@@ -1153,7 +1169,12 @@ function checkEmployeeRequested(employee, monthRequests, day) {
     if (Number(employee.id) === Number(req.employeeID)) {
       const startDate = new Date(req.start);
       const endDate = new Date(req.end);
-      const requestDate = new Date(currentYear, currentMonthIndex, day);
+      const targetDate = options?.targetDate instanceof Date
+        ? options.targetDate
+        : null;
+      const requestDate = targetDate
+        ? new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate())
+        : new Date(currentYear, currentMonthIndex, day);
 
       if (requestDate >= startDate && requestDate <= endDate) {
         return {
@@ -1223,7 +1244,7 @@ function getEmployeesForShift(type, day, index, monthRequests, options = {}) {
 
     if (employeeShift === 'never') return;
 
-    const checkResult = checkEmployeeRequested(employee, monthRequests, day);
+    const checkResult = checkEmployeeRequested(employee, monthRequests, day, options);
     const showEmployee =
       checkResult.status === 'pending' ||
       checkResult.overlap !== presenceState;
@@ -1886,6 +1907,8 @@ function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts) 
 
   return { shifts, summedAttendance, shiftAttendanceByType };
 }
+
+
 
 
 

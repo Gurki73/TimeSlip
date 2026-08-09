@@ -187,6 +187,9 @@ async function loadToolPage(htmlFile) {
     if (htmlFile === 'deleted-employees.html') {
       initDeletedEmployees(adminApi);
     }
+    if (htmlFile === 'auto-save-toggle.html') {
+      initAutoSaveToggle(adminApi);
+    }
 
 
   } catch (err) {
@@ -196,6 +199,17 @@ async function loadToolPage(htmlFile) {
         <p>Error: ${err}</p>
       </div>`;
   }
+}
+
+function initAutoSaveToggle(adminApi) {
+  const checkbox = document.getElementById('skipMinorConfirmations');
+
+  checkbox.checked = localStorage.getItem('skipMinorConfirmations') === 'true';
+
+  checkbox.addEventListener('change', () => {
+    localStorage.setItem('skipMinorConfirmations', checkbox.checked);
+  });
+
 }
 
 async function initRoleColorTabSafe(api) {

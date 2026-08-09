@@ -152,6 +152,7 @@ function solveShift({ timeframe, attendance, rules, options = {} }) {
         };
     }
 
+    /*
     console.info(`${logPrefix} Start solveShift`, {
         roleCount: attendance.length,
         maxSteps,
@@ -161,6 +162,7 @@ function solveShift({ timeframe, attendance, rules, options = {} }) {
     });
 
     console.info(`${logPrefix} INPUT attendance:`, JSON.parse(JSON.stringify(attendance)))
+    */
 
     /*
     ⚠️ SOLVER DISCLAIMER:
@@ -171,7 +173,7 @@ function solveShift({ timeframe, attendance, rules, options = {} }) {
     */
 
     const staticDemand = buildStaticDemand(rules.static, timeframe);
-    console.info(`${logPrefix} Static demand built.`);
+    // console.info(`${logPrefix} Static demand built.`);
     const feasibility = feasibilityCheck(attendance, staticDemand);
     const infeasibleRoles = feasibility.filter(r => !r.feasible);
 
@@ -194,7 +196,7 @@ function solveShift({ timeframe, attendance, rules, options = {} }) {
     let steps = 0;
     let stopReason = 'stuck';
     const seenSnapshots = new Set();
-    console.info(`${logPrefix} Solver loop start (maxSteps=${maxSteps}, allowEmergency=${allowEmergency}).`);
+    // console.info(`${logPrefix} Solver loop start (maxSteps=${maxSteps}, allowEmergency=${allowEmergency}).`);
 
     const attemptMove = (targetRole, effectiveDemand) => {
         for (let fromRank = 0; fromRank < 3; fromRank++) {
@@ -226,7 +228,7 @@ function solveShift({ timeframe, attendance, rules, options = {} }) {
                             to: { roleId: targetRole.roleId, rank: toRank },
                             reason: targetRole.deficit > 0 ? 'deficit' : 'surplus'
                         });
-                        console.info(`${logPrefix} Move committed: from role ${donorRoleId} rank ${fromRank} -> role ${targetRole.roleId} rank ${toRank}.`);
+                        // console.info(`${logPrefix} Move committed: from role ${donorRoleId} rank ${fromRank} -> role ${targetRole.roleId} rank ${toRank}.`);
                         return true;
                     }
                 }
@@ -246,7 +248,7 @@ function solveShift({ timeframe, attendance, rules, options = {} }) {
 
         const flexDemand = shrinkFlexDemand(rules.flexible, attendanceClone, timeframe);
         const effectiveDemand = mergeDemand(staticDemand, flexDemand);
-        console.info(`${logPrefix} Demand snapshot (step ${steps}):`, { staticDemand, flexDemand, effectiveDemand });
+        // console.info(`${logPrefix} Demand snapshot (step ${steps}):`, { staticDemand, flexDemand, effectiveDemand });
 
         const roleStatus = computeRoleFlexibility(attendanceClone, effectiveDemand);
         const targetRole = rankRolesByPriority(roleStatus).find(r => r.deficit > 0 || r.surplus > 0);
@@ -271,18 +273,20 @@ function solveShift({ timeframe, attendance, rules, options = {} }) {
         mergeDemand(staticDemand, shrinkFlexDemand(rules.flexible, attendanceClone, timeframe))
     );
 
-    console.info(`${logPrefix} Stop reason: ${stopReason}.`);
-    if (!moves.length) console.info(`${logPrefix} No safe moves found.`);
+    //console.info(`${logPrefix} Stop reason: ${stopReason}.`);
+    /*
+     if (!moves.length) console.info(`${logPrefix} No safe moves found.`);
     else console.info(`${logPrefix} Committed ${moves.length} safe moves.`);
+    */
 
     const effectiveDemand = mergeDemand(staticDemand, shrinkFlexDemand(rules.flexible, attendanceClone, timeframe));
-    console.info(`${logPrefix} Final demand snapshot:`, { staticDemand, effectiveDemand });
+    // console.info(`${logPrefix} Final demand snapshot:`, { staticDemand, effectiveDemand });
     const warnings = finalRoleStatus
         .filter(r => r.deficit > 0)
         .map(r => `Role ${r.roleId} remains underfilled: missing ${r.deficit}`);
 
-    console.info(`${logPrefix} FINAL attendance:`, attendanceClone);
-    console.info(`${logPrefix} MOVES:`, moves);
+    //console.info(`${logPrefix} FINAL attendance:`, attendanceClone);
+    // console.info(`${logPrefix} MOVES:`, moves);
 
     return {
         status: stopReason === 'solved' || moves.length > 0 ? 'ok' : 'unsolved',

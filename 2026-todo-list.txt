@@ -1,3 +1,80 @@
+Definition of “Beta Ready”
+we are ready for beta when:
+- No obvious UI glitches
+- No mismatched icon states
+- No double validation warnings
+- No broken rendering
+- No manual save confusion
+- Calendar visually communicates state clearly
+
+🚀 Beta Blocker List (Prototype → Beta)
+🔥 A. Core Navigation & Layout Stability
+
+☐ Fix 180° chevron navigation bug
+→ Ensure correct rotation state and consistency across all collapsible elements.
+
+☐ Fix maximize/minimize height injection on load
+→ Properly calculate and inject min/max heights.
+✅ Eliminate layout jump on first render.
+
+☐ Fix collapsed list opacity behavior
+→ Remove hardcoded opacity.
+→ Ensure consistent readability in collapsed state.
+
+☐ Unify opacity & brightness handling (65–67)
+→ Make collapsed transparency configurable (cached local setting).
+→ Ensure visibility across different monitor brightness levels.
+→ Remove hardcoded values.
+
+🔥 B. Calendar & Request Visual Feedback (Core UX)
+
+☐ Calendar day / range highlighting
+→ Highlight request ranges.
+→ Highlight warning ranges.
+→ Ensure no visual conflicts.
+
+☐ Request highlighting (new vs listed)
+→ Add visual distinction for newly created requests.
+→ Add consistent highlight when selected from list.
+
+☐ Fix open/close weekday icon mismatch
+→ Ensure icon state always reflects actual status.
+
+☐ Fix role reassignments rendering in calendar
+→ Confirm reassigned roles render correctly in all views.
+
+🔥 C. Validation & Ruleset Integrity
+
+☐ Fix ruleset-checker logic issues (19–20)
+→ Correct role check (day-shift vs hall-day).
+→ Prevent duplicate warnings for same role.
+
+☐ Explain corrupt shift assignment warnings
+→ Add clear explanation text.
+→ Avoid “technical sounding” errors.
+
+🔥 D. Visual Consistency & Admin Stability
+
+☐ Fix roles table transparency
+→ Remove unintended opacity / layering inconsistencies.
+
+☐ Fix custom color picker gradient loss (roles)
+→ Preserve gradient when selecting colors.
+
+☐ Fix tabulators layout issues
+→ Stabilize alignment and rendering.
+
+🔥 E. Data Integrity & Saving System
+
+☐ Replace dirty-state system with autosave (40–41)
+🚧 Remove confirmation dialogs.
+→ Ensure shared state save button triggers autosave properly.
+
+☐ Fix end date picker bug
+→ Validate correct date boundaries.
+→ Prevent invalid end-date states.
+
+---------------------------------------------------------------
 Legend:
 ☐  open           🚧 in work      ✅ finished   ❌ cannceld
 🔥 ship-blocker   🧩 beta-value   🧠 post-beta  👀 review-needed
@@ -8,6 +85,7 @@ navigation
 
 welcome page
 2. ☐ maxamize minimize on load, inject form max min heights
+2.1 hide fn hint isnt working
 
 calendar:
 3. ☐ highlight day or range for requests or warnings
