@@ -265,7 +265,8 @@ function generateCompanyHolidayCSV(companyHolidayArray) {
             ? p.endDate
             : new Date(p.endDate);
 
-        return `${start.toISOString().slice(0, 10)},${end.toISOString().slice(0, 10)}`;
+        const fmt = (d) => { const dt = (d instanceof Date) ? d : new Date(d); return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}` };
+        return `${fmt(start)},${fmt(end)}`;
     });
 
     return [csvHeader, ...csvBody].join('\n');

@@ -565,14 +565,13 @@ function createStandardList(cfg) {
 
 function onShiftToggle(day, shiftId, isActive) {
   calendarState[day][shiftId] = isActive;
+  setShiftDataActive(day, shiftId, isActive);
+
   const dayState = calendarState[day];
   const anyActive = dayState.early || dayState.day || dayState.late;
-  const weekdayCheckbox = document.getElementById(`chk-${day}`);
 
-  if (weekdayCheckbox) {
-    weekdayCheckbox.checked = anyActive;
-    updateWeekdayIcon(day, anyActive);
-  }
+  updateWeekdayIcon(day, anyActive);
+  updateMiniMatrixCell(day, shiftId, isActive);
 
   if (typeof handleCalendarSettingChange === 'function') {
     handleCalendarSettingChange(`${day}-${shiftId}`, isActive);
@@ -580,29 +579,125 @@ function onShiftToggle(day, shiftId, isActive) {
   console.table(calendarState);
 }
 
+function updateMiniMatrixCell(day, shiftId, isActive) {
+  // Find the mini matrix row for this day
+  const miniRows = document.querySelectorAll('.shift-row-mini');
+  const dayIndex = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].indexOf(day);
+
+  if (dayIndex === -1) return;
+
+  // The mini matrix has 7 rows (one per day) + 1 header row
+  // Each row has 3 cells (early, day, late)
+  const miniRow = miniRows[dayIndex + 1]; // +1 to skip header
+  if (!miniRow) return;
+
+  const shiftIndexes = { early: 0, day: 1, late: 2 };
+  const cellIndex = shiftIndexes[shiftId];
+  if (cellIndex === undefined) return;
+
+  const cell = miniRow.children[cellIndex];
+  if (!cell) return;
+
+  // Update the cell's classes
+  const shiftColorClass = { early: 'is-early', day: 'is-day', late: 'is-late' }[shiftId] || '';
+
+  // Remove all relevant classes
+  cell.classList.remove('is-early', 'is-day', 'is-late', 'is-closed');
+
+  if (isActive) {
+    cell.classList.add(shiftColorClass);
+  } else {
+    cell.classList.add('is-closed');
+  }
+
+  // Update the icon
+  const icon = cell.querySelector('.lock-icon-mini');
+  if (icon) {
+    icon.classList.toggle('unlocked', isActive);
+    icon.classList.toggle('locked', !isActive);
+    icon.textContent = isActive ? '🔑' : '🔒';
+    applyOpenClosedTooltip(icon, isActive);
+  }
+}
+
 function onWeekdayToggle(day, isActive) {
   calendarState[day] = { early: isActive, day: isActive, late: isActive };
 
-  ['early', 'day', 'late'].forEach(shiftId => {
-    const shiftCheckbox = document.querySelector(`input[data-day="${day}"][data-shift="${shiftId}"]`);
-    if (shiftCheckbox) {
-      shiftCheckbox.checked = isActive;
-      const icon = shiftCheckbox.nextElementSibling;
-      if (icon) {
-        icon.classList.toggle('unlocked', isActive);
-        icon.classList.toggle('locked', !isActive);
-      }
-    }
+  shiftIds.forEach(shiftId => {
+    updateShiftCell(day, shiftId, isActive);
     handleCalendarSettingChange(`${day}-${shiftId}`, isActive);
   });
 
   updateWeekdayIcon(day, isActive);
 }
 
+function getShiftColorClass(shiftId) {
+  return { early: 'is-early', day: 'is-day', late: 'is-late' }[shiftId] || '';
+}
+
+function getWeekdayColorClass(day, isOpen) {
+  if (!isOpen) return 'is-closed';
+  if (day === 'sat') return 'is-weekend';
+  if (day === 'sun') return 'is-sunday';
+  return 'is-regular';
+}
+
+function setShiftDataActive(day, shiftId, isActive) {
+  const shiftEntry = shiftsData[day]?.find(shift => shift.id === shiftId);
+  if (shiftEntry) {
+    shiftEntry.active = isActive;
+  }
+}
+
+function updateShiftCell(day, shiftId, isActive) {
+  calendarState[day][shiftId] = isActive;
+  setShiftDataActive(day, shiftId, isActive);
+
+  const shiftCheckbox = document.querySelector(`input[data-day="${day}"][data-shift="${shiftId}"]`);
+  if (shiftCheckbox) {
+    shiftCheckbox.checked = isActive;
+
+    const cell = shiftCheckbox.closest('.shift-cell');
+    if (cell) {
+      cell.classList.remove('is-early', 'is-day', 'is-late', 'is-closed');
+      cell.classList.add(isActive ? getShiftColorClass(shiftId) : 'is-closed');
+    }
+
+    const icon = shiftCheckbox.nextElementSibling;
+    if (icon) {
+      icon.classList.toggle('unlocked', isActive);
+      icon.classList.toggle('locked', !isActive);
+      applyOpenClosedTooltip(icon, isActive);
+    }
+  }
+
+  updateMiniMatrixCell(day, shiftId, isActive);
+}
+
 function updateWeekdayIcon(day, active) {
-  const weekdayRow = document.querySelector(`[data-weekday="${day}"]`);
+  const weekday = weekdaysData.find(item => item.id === day);
+  if (weekday) {
+    weekday.isOpen = active;
+  }
+
+  const weekdayCheckbox = document.getElementById(`chk-${day}`);
+  if (weekdayCheckbox) {
+    weekdayCheckbox.checked = active;
+  }
+
+  const weekdayRow = document.querySelector(`[data-weekday="${day}"]`) || weekdayCheckbox?.closest('.data-row');
   if (!weekdayRow) return;
+
   weekdayRow.classList.toggle('is-active', active);
+  weekdayRow.classList.remove('is-regular', 'is-weekend', 'is-sunday', 'is-closed');
+  weekdayRow.classList.add(getWeekdayColorClass(day, active));
+
+  const icon = weekdayRow.querySelector('.status-icon, .lock-icon');
+  if (icon) {
+    icon.classList.toggle('unlocked', active);
+    icon.classList.toggle('locked', !active);
+    applyOpenClosedTooltip(icon, active);
+  }
 }
 
 function createListItem(item, colorClass = "is-closed") {
@@ -613,6 +708,9 @@ function createListItem(item, colorClass = "is-closed") {
   const row = node.querySelector('.data-row');
 
   row.dataset.key = item.id || '';
+  if (item.type === 'weekday') {
+    row.dataset.weekday = item.id || '';
+  }
 
   row.classList.add(colorClass);
 
@@ -629,7 +727,7 @@ function createListItem(item, colorClass = "is-closed") {
   if (item.emoji) {
     const emojiSpan = document.createElement('span');
     emojiSpan.classList.add('emoji', 'noto');
-    emojiSpan.textContent = item.emoji + ' ';
+    emojiSpan.textContent = item.emoji;
     labelText.appendChild(emojiSpan);
   }
 
@@ -662,17 +760,21 @@ function createListItem(item, colorClass = "is-closed") {
 
     checkbox.addEventListener('change', (e) => {
       const isOpen = e.target.checked;
-      if (icon) {
-        icon.classList.toggle('unlocked', isOpen);
-        icon.classList.toggle('locked', !isOpen);
-      }
-
-      row.classList.toggle('is-regular', isOpen);
-      row.classList.toggle('is-closed', !isOpen);
 
       if (typeof handleCalendarSettingChange === 'function') {
         handleCalendarSettingChange(row.dataset.key, isOpen);
-        onWeekdayToggle(row.dataset.key, isOpen);
+        if (item.type === 'weekday') {
+          onWeekdayToggle(row.dataset.key, isOpen);
+        } else {
+          if (icon) {
+            icon.classList.toggle('unlocked', isOpen);
+            icon.classList.toggle('locked', !isOpen);
+            applyOpenClosedTooltip(icon, isOpen);
+          }
+
+          row.classList.toggle('is-regular', isOpen);
+          row.classList.toggle('is-closed', !isOpen);
+        }
       }
     });
   }
@@ -709,13 +811,15 @@ function populateWeekdaysList() {
 
   let i = 0;
   weekdaysData.forEach(day => {
-    let colorClass = 'is-regular';
-    if (i === 5) colorClass = "is-weekend";
-    if (i === 6) colorClass = "is-sunday";
-    i++;
-
+    console.log(shiftsData[day.id]);
+    // day.isOpen = !shiftsData[day.id].some(shift => shift.early || shift.day || shift.late);
+    day.isOpen = shiftsData[day.id].some(shift => shift.active);
+    let colorClass = day.isOpen ? 'is-regular' : 'is-closed';
+    if (i === 5) colorClass = day.isOpen ? 'is-weekend' : 'is-closed';
+    if (i === 6) colorClass = day.isOpen ? 'is-sunday' : 'is-closed';
     const li = createListItem(day, colorClass); // pass color hint
     body.appendChild(li);
+    i++;
   });
 }
 
@@ -739,12 +843,20 @@ function populatePublicHolidayList(publicHolidays) {
   }
 
   publicHolidays.forEach(holiday => {
+
     const dateObj = new Date(holiday.date);
-    const weekday = dateObj.toLocaleDateString('de-DE', { weekday: 'short' }).replace('.', '');
+    const weekday = dateObj
+      .toLocaleDateString('de-DE', { weekday: 'short' })
+      .replace('.', '');
+
     const day = String(dateObj.getDate()).padStart(2, '0');
     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
     const formattedDate = `${weekday}. ${day}.${month}`;
-    const checkIsOpen = publicHolidayState[holiday.id] ?? false;
+
+    const state = publicHolidayState.find(
+      state => state.id === holiday.id
+    );
+    const checkIsOpen = state?.isOpen ?? false;
     const colorClass = checkIsOpen ? getDateColorClass(holiday.date) : 'is-closed';
     const listItem = createListItem({
       id: holiday.id,
@@ -789,8 +901,8 @@ async function saveCompanyHoliday(startInputId = 'preview-start', endInputId = '
   const fixedEndDate = endDate < startDate ? startDate : endDate;
 
   companyHolidays.push({
-    startDate: startDate.toISOString().slice(0, 10),
-    endDate: fixedEndDate.toISOString().slice(0, 10)
+    startDate: (function (d) { const dt = new Date(d); return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}` })(startDate),
+    endDate: (function (d) { const dt = new Date(d); return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}` })(fixedEndDate)
   });
 
   companyHolidays.sort(
@@ -898,7 +1010,7 @@ function populateBridgeDaysList(bridgeDays) {
 
   if (!bridgeDays || bridgeDays.length < 1) {
     const noBridge = document.createElement('span');
-    noBridge.textContent = "Keine Brückentage erkannt";
+    noBridge.textContent = "   Keine Brückentage erkannt";
     body.appendChild(noBridge);
     return;
   }
@@ -909,7 +1021,7 @@ function populateBridgeDaysList(bridgeDays) {
     const dayNum = String(dateObj.getDate()).padStart(2, '0');
     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
     const formattedDate = `${weekday}. ${dayNum}.${month}`;
-    const colorClass = day.isOpen ? getDateColorClass(day.date) : 'isClosed';
+    const colorClass = day.isOpen ? getDateColorClass(day.date) : 'is-closed';
     const bridgeLabel = day.after
       ? `<span class ="noto"> ${day.emoji} ⇾</span> ${day.name}`
       : `<span class ="noto"> ⇽ ${day.emoji} </span> ${day.name}`;
@@ -1289,7 +1401,7 @@ function findBridgeDays(holidays, weekdays, persistedBridgeDays = []) {
     if (!weekendDays.includes(nextDayIndex) && weekendDays.includes(dayAfterNext)) {
       const bridgeDate = new Date(holidayDate);
       bridgeDate.setDate(bridgeDate.getDate() + 1);
-      const bridgeDateStr = bridgeDate.toISOString().slice(0, 10);
+      const bridgeDateStr = (function (d) { const dt = new Date(d); return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}` })(bridgeDate);
       if (!holidays.some(h => h.date === bridgeDateStr) && !result.some(b => b.date === bridgeDateStr)) {
         result.push({
           date: bridgeDateStr,
@@ -1307,7 +1419,7 @@ function findBridgeDays(holidays, weekdays, persistedBridgeDays = []) {
     if (!weekendDays.includes(prevDayIndex) && weekendDays.includes(dayBeforePrev)) {
       const bridgeDate = new Date(holidayDate);
       bridgeDate.setDate(bridgeDate.getDate() - 1);
-      const bridgeDateStr = bridgeDate.toISOString().slice(0, 10);
+      const bridgeDateStr = (function (d) { const dt = new Date(d); return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}` })(bridgeDate);
       if (!holidays.some(h => h.date === bridgeDateStr) && !result.some(b => b.date === bridgeDateStr)) {
         result.push({
           date: bridgeDateStr,
@@ -1452,6 +1564,7 @@ function createMatrixCell(day, shift, isExpanded) {
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
+    checkbox.id = `chk-${day}-${shift.id}`;
     checkbox.checked = isShiftOpen;
     checkbox.dataset.day = day;
     checkbox.dataset.shift = shift.id;
@@ -1459,6 +1572,7 @@ function createMatrixCell(day, shift, isExpanded) {
 
     const icon = document.createElement('span');
     icon.className = 'lock-icon ' + (shift.active ? 'unlocked' : 'locked');
+    icon.title = shift.active ? '🔑 Geöffnet' : '🔒 Geschlossen';
 
     cell.appendChild(checkbox);
     cell.appendChild(icon);
@@ -1497,7 +1611,10 @@ function createMatrixCell(day, shift, isExpanded) {
     }
 
     const icon = document.createElement('span');
-    icon.className = 'lock-icon-mini ' + (isShiftOpen ? 'unlocked' : 'locked');
+    icon.classList.add('lock-icon-mini');
+    icon.classList.add('noto');
+    icon.innerHTML = isShiftOpen ? '🔑' : '🔒';
+    icon.title = shift.active ? '🔑 Geöffnet' : '🔒 Geschlossen';
     cell.appendChild(icon);
   }
   return cell;
@@ -1645,7 +1762,7 @@ function applyCollapseState(toggleBtn, expanded) {
 
   const content = collapsibleRoot.querySelector(".rule-collapsible-content");
   if (content) {
-    const opacity = expanded ? 1 : 0.35;
+    const opacity = expanded ? 1 : 0.65;
     content.style.opacity = opacity;
   }
   collapsibleRoot.querySelectorAll('.data-row').forEach(row => {
@@ -2252,8 +2369,8 @@ function getDefaultHolidayDates() {
 
   return {
     blocked: false,
-    startDate: start.toISOString().slice(0, 10),
-    endDate: end.toISOString().slice(0, 10)
+    startDate: (function (d) { const dt = new Date(d); return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}` })(start),
+    endDate: (function (d) { const dt = new Date(d); return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}` })(end)
   };
 }
 

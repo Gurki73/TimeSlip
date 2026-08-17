@@ -34,17 +34,17 @@
 </template>
 
 <template id="tpl-list-item">
-  <div class="data-row" role="listitem" data-key="">
+  <div class="data-row" role="listitem" data-key="" data-bg="">
     <label class="row-left">
-      <input type="checkbox" class="row-checkbox" />
-      <span class="label-text"></span>
+      <span class="status-icon lock-icon" aria-hidden="true"></span>
     </label>
     <div class="row-middle">
+      <span class="extra-icon" aria-hidden="true"></span>
       <span class="meta-line"></span>
     </div>
     <div class="row-right">
-      <span class="status-icon lock-icon" aria-hidden="true"></span>
-      <span class="extra-icon" aria-hidden="true"></span>
+      <input type="checkbox" class="row-checkbox" />
+      <span class="label-text"></span>
     </div>
   </div>
 </template>

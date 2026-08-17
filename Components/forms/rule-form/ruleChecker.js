@@ -4,6 +4,7 @@ import { updateRulesPreview } from './translatorMachine.js';
 import { getRequestRange } from '../request-form/request-form.js';
 import { ensureCalendarReady, computeAttendanceForRange } from '../../calendar/calendar.js';
 import { loadRuleData } from '../../../js/loader/rule-loader.js';
+import { loadRoleData } from '../../../js/loader/role-loader.js';
 
 const SHIFTS_PER_DAY = 3;
 const ROLE_COUNT = 14;
@@ -33,12 +34,16 @@ const FORBIDDEN_PAIRS = {
     ['W4', 'T1'], ['W4', 'T2'], ['W4', 'T5']],
 };
 
+let cachedRoleNames = null;
+
 /**
  * @typedef {Object} LiveSanityResult
  * @property {boolean} blocking - true if mandatory fields are missing
  * @property {string[]} missingMandatory - list of missing mandatory block keys
  * @property {string[]} forbidden - list of block keys that are forbidden
  */
+
+
 
 export function runLiveSanity(ruleDraft) {
     const mandatory = deriveMandatory(ruleDraft);
@@ -142,11 +147,24 @@ function createEmptyWeekCube() {
 function sumRuleInCube(condition, cube) {
     let total = 0;
     // console.log("[RuleCheck] Evaluating cube", cube);
-    const subjectRoles = Array.isArray(condition.subjectRoles)
+    // Normalize subject roles to numeric indices. Accept numbers, numeric strings,
+    // and strings containing digits (e.g. "R10") so multi-digit roles are handled.
+    const rawSubjectRoles = Array.isArray(condition.subjectRoles)
         ? condition.subjectRoles
         : condition.subjectRoles
             ? [condition.subjectRoles]
             : [];
+
+    const subjectRoles = rawSubjectRoles
+        .map(r => {
+            if (r == null) return null;
+            if (typeof r === 'number' && Number.isFinite(r)) return Number(r);
+            const m = String(r).match(/-?\d+/);
+            if (!m) return null;
+            const n = Number(m[0]);
+            return Number.isFinite(n) ? n : null;
+        })
+        .filter(roleIdx => Number.isInteger(roleIdx) && roleIdx >= 0 && roleIdx < ROLE_COUNT);
 
     const timeframeSlots = Array.isArray(condition.timeframeSlots)
         ? condition.timeframeSlots
@@ -244,8 +262,34 @@ function addDays(date, n) {
     return d;
 }
 
+function parseDateLocal(dateInput) {
+    if (dateInput instanceof Date) return new Date(dateInput);
+    if (typeof dateInput === 'string') {
+        const match = dateInput.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (match) {
+            const [, year, month, day] = match;
+            return new Date(Number(year), Number(month) - 1, Number(day));
+        }
+    }
+    return normalizeDateInput(dateInput);
+}
+
+function buildDayLabels(weekStart, dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']) {
+    const start = parseDateLocal(weekStart);
+    if (!start || Number.isNaN(start.getTime())) return dayNames;
+
+    return dayNames.map((dayName, idx) => {
+        const date = addDays(start, idx);
+        return `${dayName} [${date.getDate()}]`;
+    });
+}
+
 function dateKey(date) {
-    return date.toISOString().slice(0, 10);
+    const d = new Date(date);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
 }
 
 function getISOWeekNumber(date) {
@@ -268,10 +312,12 @@ function collectDayAttendance(requests, dayFacts) {
     if (!dayFacts?.isOfficeOpen) return attendance;
 
     requests.forEach(({ roleIndex, shift }) => {
+        const rIdx = Number(roleIndex);
+        if (!Number.isInteger(rIdx) || rIdx < 0 || rIdx >= ROLE_COUNT) return;
         if (!dayFacts.openShifts[shift]) return;
 
         const idx = shift === 'early' ? 0 : shift === 'day' ? 1 : 2;
-        attendance[roleIndex][idx]++;
+        attendance[rIdx][idx]++;
     });
 
     return attendance;
@@ -303,12 +349,15 @@ export async function runRequestRuleCheck(startDate, endDate, requests, options 
         dayFactsByDate = null,
         shiftMode = 'all',
         attendanceByDate = null,
+        roles = [],
+        roleNames = null,
         useSolver = true
     } = options;
 
     if (!uiRules) {
         const loaderApi = (typeof window !== 'undefined' && window.api) ? window.api : null;
         uiRules = await loadRuleData(loaderApi);
+        cachedRoleNames = await loadRoleData(loaderApi).then(roles => roles.map(role => role.name));
     }
 
     const activeUiRules = Array.isArray(uiRules) ? getActiveRules(uiRules) : null;
@@ -341,7 +390,8 @@ export async function runRequestRuleCheck(startDate, endDate, requests, options 
             requestsByDate,
             dayFactsByDate,
             roleCount: ROLE_COUNT,
-            attendanceByDate
+            attendanceByDate,
+            roleNames: resolveRoleNames({ roleNames, roles, employees })
         }
     };
 
@@ -384,6 +434,26 @@ function createEmptyAttendanceMatrix() {
     return Array.from({ length: ROLE_COUNT }, () => [0, 0, 0]);
 }
 
+function normalizeAttendanceByDate(attendanceByDate) {
+    if (!attendanceByDate || typeof attendanceByDate !== 'object') return attendanceByDate;
+    const normalized = {};
+    Object.entries(attendanceByDate).forEach(([key, dayMatrix]) => {
+        const row = Array.from({ length: ROLE_COUNT }, (_, i) => [0, 0, 0]);
+        if (Array.isArray(dayMatrix)) {
+            for (let r = 0; r < Math.min(dayMatrix.length, ROLE_COUNT); r++) {
+                const cell = dayMatrix[r];
+                if (Array.isArray(cell)) {
+                    row[r][0] = Number.isFinite(cell[0]) ? Number(cell[0]) : 0;
+                    row[r][1] = Number.isFinite(cell[1]) ? Number(cell[1]) : 0;
+                    row[r][2] = Number.isFinite(cell[2]) ? Number(cell[2]) : 0;
+                }
+            }
+        }
+        normalized[key] = row;
+    });
+    return normalized;
+}
+
 function normalizeDayFacts(dayFacts) {
     if (dayFacts && typeof dayFacts === 'object') return dayFacts;
     return {
@@ -424,6 +494,7 @@ function buildAttendanceByDate(
     return attendanceByDate;
 }
 
+/*
 function buildWeeklyCubesFromAttendance(
     startDate,
     endDate,
@@ -464,6 +535,7 @@ function buildWeeklyCubesFromAttendance(
 
     return weeks;
 }
+*/
 
 function extractContext(ruleset) {
     const context = ruleset?.context || ruleset?._context || {};
@@ -474,6 +546,7 @@ function extractContext(ruleset) {
         dayFactsByDate: context.dayFactsByDate || {},
         attendanceByDate: context.attendanceByDate || null,
         attendanceByShift: context.attendanceByShift || null,
+        roleNames: normalizeRoleNames(context.roleNames) || getRoleNamesFromRoles(context.roles),
         solverRules: context.solverRules || ruleset?.solverRules || null,
         solverInput: context.solverInput || null
     };
@@ -568,7 +641,9 @@ export function executeRuleset(
     }
 
     const context = extractContext(ruleset);
-    // role count is fixed via ROLE_COUNT.
+    if (cachedRoleNames && !context.roleNames) {
+        context.roleNames = cachedRoleNames;
+    }
 
     const attendanceByDate = context.attendanceByDate ||
         buildAttendanceByDate(
@@ -579,7 +654,10 @@ export function executeRuleset(
             ROLE_COUNT
         );
 
-    const weeks = buildWeeklyCubesFromAttendance(start, end, attendanceByDate);
+    // Normalize any externally provided attendanceByDate so each day has ROLE_COUNT rows
+    const normalizedAttendanceByDate = normalizeAttendanceByDate(attendanceByDate);
+
+    const weeks = buildWeeklyCubesFromAttendance(start, end, normalizedAttendanceByDate, context.roleNames);
     const failures = [];
     const skipped = [];
     let solverResult = null;
@@ -591,7 +669,7 @@ export function executeRuleset(
                 solverResult = runSolver(context.solverInput);
             } else {
                 const fallbackAttendanceByShift = context.attendanceByShift ||
-                    aggregateAttendanceByShift(attendanceByDate);
+                    aggregateAttendanceByShift(normalizedAttendanceByDate);
                 const fallbackSolverRules = context.solverRules || createSolverRulesFromMachineRules(normalizedRules);
                 const hasRules = Array.isArray(fallbackSolverRules?.static) && fallbackSolverRules.static.length > 0;
 
@@ -654,7 +732,7 @@ export function executeRuleset(
     while (cursor <= end && guard++ < 370) {
         const dayIndex = (cursor.getDay() + 6) % 7;
         const key = dateKey(cursor);
-        const dayAttendance = attendanceByDate[key] || createEmptyAttendanceMatrix(ROLE_COUNT);
+        const dayAttendance = normalizedAttendanceByDate[key] || createEmptyAttendanceMatrix(ROLE_COUNT);
 
         normalizedRules.daily.forEach(rule => {
             const slots = rule?.dominantCondition?.timeframeSlots || [];
@@ -733,6 +811,19 @@ export function executeRuleset(
         },
         solver: solverResult
     };
+
+    const weeksLog = buildWeeklyCubesFromAttendance(start, end, normalizedAttendanceByDate);
+
+    // 🔍 AUTO-LOG WEEK 2 FOR DEBUGGING
+    if (weeksLog.length >= 2) {
+        logWeek2Simple(weeksLog); // Quick compact version
+        // OR for detailed view:
+        // autoLogWeek2(weeks, {
+        //     roleNames: Array.from({ length: ROLE_COUNT }, (_, i) => `Role${i}`),
+        //     shiftNames: ['Early', 'Day', 'Late'],
+        //     showZeros: false
+        // });
+    }
 }
 
 export function runRuleTest(ruleDraft, existingRules = [], options = {}) {
@@ -1048,7 +1139,7 @@ export async function computeRequestDelta(requests, newRequest, options = {}) {
         return null; // fully silent after limit
     }
 
-    const { extraRequests = [], uiRules, employees } = options;
+    const { extraRequests = [], uiRules, employees, roles = [], roleNames = null } = options;
 
     if (!Array.isArray(requests)) {
         console.warn("[computeRequestDelta] requests is not an array:", requests);
@@ -1091,6 +1182,8 @@ export async function computeRequestDelta(requests, newRequest, options = {}) {
     const baselineStats = await executeRulechecker(range.start, range.end, requests, {
         uiRules,
         employees,
+        roles,
+        roleNames,
         includePending: true,
         attendanceByDate: baselineAttendanceByDate
     });
@@ -1100,6 +1193,8 @@ export async function computeRequestDelta(requests, newRequest, options = {}) {
     const futureStats = await executeRulechecker(range.start, range.end, futureRequests, {
         uiRules,
         employees,
+        roles,
+        roleNames,
         includePending: true,
         attendanceByDate: futureAttendanceByDate
     });
@@ -1138,6 +1233,528 @@ export async function computeRequestDelta(requests, newRequest, options = {}) {
     console.log("future failures:", futureStats.failures);
     console.log("delta:", delta);
     return { baselineStats, futureStats, delta };
+}
+
+// Add this function to your file (after createEmptyWeekCube function)
+
+/**
+ * Log the attendance cube in a beautiful, collapsible format for debugging
+ * @param {Array} cube - 7x3x14 cube array [day][shift][role]
+ * @param {string} label - Optional label for the log
+ * @param {Object} options - Logging options
+ */
+export function logCube(cube, label = 'Attendance Cube', options = {}) {
+    const {
+        roleNames = normalizeRoleNames(cachedRoleNames) || null, // Use cached by default
+        shiftNames = ['Early', 'Day', 'Late'],
+        dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        showZeros = false,
+        maxRolesToShow = 14
+    } = options;
+
+    if (!cube || !Array.isArray(cube) || cube.length !== 7) {
+        console.warn('[logCube] Invalid cube structure - expected 7 days');
+        return;
+    }
+
+    const SHIFTS_PER_DAY = cube[0]?.length || 3;
+    const ROLE_COUNT = cube[0]?.[0]?.length || 14;
+
+    // Build role labels
+    const roleLabels = roleNames || Array.from({ length: ROLE_COUNT }, (_, i) => `Role ${i}`);
+
+    console.groupCollapsed(`📊 ${label} (${cube.length} days × ${SHIFTS_PER_DAY} shifts × ${ROLE_COUNT} roles)`);
+
+    // Calculate statistics
+    let totalAssignments = 0;
+    let dayTotals = [];
+    let shiftTotals = Array(SHIFTS_PER_DAY).fill(0);
+    let roleTotals = Array(ROLE_COUNT).fill(0);
+    let emptyDays = [];
+    let maxDayTotal = 0;
+    let minDayTotal = Infinity;
+
+    cube.forEach((day, dayIdx) => {
+        let dayTotal = 0;
+        day.forEach((shift, shiftIdx) => {
+            if (Array.isArray(shift)) {
+                shift.forEach((value, roleIdx) => {
+                    const val = Number(value) || 0;
+                    totalAssignments += val;
+                    dayTotal += val;
+                    shiftTotals[shiftIdx] += val;
+                    if (roleIdx < ROLE_COUNT) {
+                        roleTotals[roleIdx] += val;
+                    }
+                });
+            }
+        });
+        dayTotals.push(dayTotal);
+        if (dayTotal === 0) emptyDays.push(dayIdx);
+        maxDayTotal = Math.max(maxDayTotal, dayTotal);
+        minDayTotal = Math.min(minDayTotal, dayTotal);
+    });
+
+    // Summary
+    console.log('📈 Summary:', {
+        'Total Assignments': totalAssignments,
+        'Average per Day': (totalAssignments / 7).toFixed(2),
+        'Max Day Total': maxDayTotal,
+        'Min Day Total': minDayTotal === Infinity ? 0 : minDayTotal,
+        'Empty Days': emptyDays.length ? emptyDays.map(d => dayNames[d] || `Day${d}`).join(', ') : 'None',
+        'Total Shifts': shiftTotals.map((s, i) => `${shiftNames[i] || `Shift${i}`}: ${s}`).join(' | ')
+    });
+
+    // Per day breakdown (collapsible)
+    cube.forEach((day, dayIdx) => {
+        const dayTotal = dayTotals[dayIdx];
+        const isDayEmpty = dayTotal === 0;
+        const dayName = dayNames[dayIdx] || `Day ${dayIdx}`;
+
+        const groupLabel = `${dayName} | Total: ${dayTotal} assignments ${isDayEmpty ? '⚠️ EMPTY' : ''}`;
+        console.groupCollapsed(groupLabel);
+
+        // Per shift breakdown within day
+        day.forEach((shift, shiftIdx) => {
+            const shiftName = shiftNames[shiftIdx] || `Shift ${shiftIdx}`;
+            const shiftTotal = Array.isArray(shift) ? shift.reduce((sum, v) => sum + (Number(v) || 0), 0) : 0;
+
+            if (shiftTotal === 0 && !showZeros) {
+                console.log(`  ${shiftName}: ${shiftTotal} assignments (empty)`);
+                return;
+            }
+
+            // Show roles with non-zero values
+            const roleEntries = [];
+            if (Array.isArray(shift)) {
+                shift.forEach((value, roleIdx) => {
+                    const val = Number(value) || 0;
+                    if (val > 0 || showZeros) {
+                        const roleLabel = roleLabels[roleIdx] || `Role ${roleIdx}`;
+                        roleEntries.push(`${roleLabel}: ${val}`);
+                    }
+                });
+            }
+
+            if (roleEntries.length === 0) {
+                console.log(`  ${shiftName}: ${shiftTotal} assignments (all zero)`);
+            } else {
+                console.log(`  ${shiftName} (${shiftTotal} assignments):`, {
+                    roles: roleEntries.join(', ')
+                });
+                // Show as table for easier reading
+                if (roleEntries.length > 0 && roleEntries.length <= 10) {
+                    console.log('    ──────────────────────────');
+                    roleEntries.forEach(entry => console.log(`    ${entry}`));
+                }
+            }
+        });
+
+        // Matrix view for compact reading
+        if (dayTotal > 0) {
+            console.log('📋 Compact Matrix:');
+            const matrix = day.map((shift, shiftIdx) => {
+                const shiftName = (shiftNames[shiftIdx] || `S${shiftIdx}`).padEnd(6);
+                const roles = Array.isArray(shift) ?
+                    shift.map((v, i) => {
+                        const val = Number(v) || 0;
+                        return val > 0 || showZeros ? `${val}` : '·';
+                    }).join(' ') : '';
+                return `${shiftName} | ${roles}`;
+            });
+            console.log(matrix.join('\n'));
+        }
+
+        // Show total breakdown
+        console.log(`📊 Day Total: ${dayTotal} assignments (${((dayTotal / totalAssignments) * 100).toFixed(1)}% of total)`);
+
+        console.groupEnd();
+    });
+
+    // Role totals summary
+    console.log('📊 Role Totals:');
+    const roleSummary = roleTotals.map((total, idx) => {
+        const roleLabel = roleLabels[idx] || `Role ${idx}`;
+        const percentage = totalAssignments > 0 ? ((total / totalAssignments) * 100).toFixed(1) : '0.0';
+        const bar = '█'.repeat(Math.round((total / (Math.max(...roleTotals) || 1)) * 20));
+        return `${roleLabel.padEnd(10)}: ${total.toString().padStart(4)} (${percentage}%) ${bar}`;
+    });
+    console.log(roleSummary.join('\n'));
+
+    // Shift totals summary
+    console.log('📊 Shift Totals:');
+    shiftTotals.forEach((total, idx) => {
+        const shiftName = shiftNames[idx] || `Shift ${idx}`;
+        const percentage = totalAssignments > 0 ? ((total / totalAssignments) * 100).toFixed(1) : '0.0';
+        const bar = '█'.repeat(Math.round((total / (Math.max(...shiftTotals) || 1)) * 20));
+        console.log(`  ${shiftName.padEnd(10)}: ${total.toString().padStart(4)} (${percentage}%) ${bar}`);
+    });
+
+    // Day totals summary
+    console.log('📊 Day Totals:');
+    dayTotals.forEach((total, idx) => {
+        const dayName = dayNames[idx] || `Day ${idx}`;
+        const percentage = totalAssignments > 0 ? ((total / totalAssignments) * 100).toFixed(1) : '0.0';
+        const bar = '█'.repeat(Math.round((total / (Math.max(...dayTotals) || 1)) * 20));
+        const status = total === 0 ? ' ⚠️ EMPTY' : '';
+        console.log(`  ${dayName.padEnd(10)}: ${total.toString().padStart(4)} (${percentage}%) ${bar}${status}`);
+    });
+
+    // Sanity checks
+    console.group('✅ Sanity Checks');
+    const checks = [];
+
+    // Check if any day has all zeros
+    if (emptyDays.length > 0) {
+        checks.push(`⚠️ ${emptyDays.length} days have zero assignments`);
+    }
+
+    // Check for NaN or undefined
+    let hasInvalidValues = false;
+    cube.forEach((day, di) => {
+        day.forEach((shift, si) => {
+            if (Array.isArray(shift)) {
+                shift.forEach((val, ri) => {
+                    if (typeof val !== 'number' || isNaN(val)) {
+                        hasInvalidValues = true;
+                        checks.push(`❌ Invalid value at day ${di}, shift ${si}, role ${ri}: ${val}`);
+                    }
+                });
+            }
+        });
+    });
+
+    // Check total consistency
+    const recalculatedTotal = dayTotals.reduce((a, b) => a + b, 0);
+    if (recalculatedTotal !== totalAssignments) {
+        checks.push(`⚠️ Total mismatch: ${totalAssignments} vs recalculated ${recalculatedTotal}`);
+    }
+
+    if (checks.length === 0) {
+        console.log('✅ All sanity checks passed!');
+    } else {
+        checks.forEach(check => console.log(check));
+    }
+    console.groupEnd();
+
+    // Corrupt data warning
+    if (emptyDays.length > 0 || hasInvalidValues) {
+        console.warn('⚠️ Potential data corruption detected in cube!');
+    }
+
+    console.groupEnd();
+}
+
+// Enhanced version for comparing two cubes
+export function compareCubes(cube1, cube2, label1 = 'Cube 1', label2 = 'Cube 2') {
+    console.groupCollapsed(`🔍 Comparing ${label1} vs ${label2}`);
+
+    if (!cube1 || !cube2) {
+        console.warn('One or both cubes are invalid');
+        console.groupEnd();
+        return;
+    }
+
+    // Check if structures match
+    const structureMatch = cube1.length === cube2.length &&
+        cube1[0]?.length === cube2[0]?.length &&
+        cube1[0]?.[0]?.length === cube2[0]?.[0]?.length;
+
+    if (!structureMatch) {
+        console.warn('⚠️ Cube structures do not match!');
+        console.log('Cube1 dimensions:', cube1.length, 'x', cube1[0]?.length, 'x', cube1[0]?.[0]?.length);
+        console.log('Cube2 dimensions:', cube2.length, 'x', cube2[0]?.length, 'x', cube2[0]?.[0]?.length);
+        console.groupEnd();
+        return;
+    }
+
+    const differences = [];
+    let totalDiff = 0;
+
+    cube1.forEach((day, dayIdx) => {
+        day.forEach((shift, shiftIdx) => {
+            shift.forEach((val, roleIdx) => {
+                const v1 = Number(val) || 0;
+                const v2 = Number(cube2[dayIdx]?.[shiftIdx]?.[roleIdx]) || 0;
+                if (v1 !== v2) {
+                    differences.push({
+                        day: dayIdx,
+                        shift: shiftIdx,
+                        role: roleIdx,
+                        cube1: v1,
+                        cube2: v2,
+                        diff: v2 - v1
+                    });
+                    totalDiff += Math.abs(v2 - v1);
+                }
+            });
+        });
+    });
+
+    console.log('📊 Comparison Summary:');
+    console.log('  Total differences:', differences.length);
+    console.log('  Total absolute difference:', totalDiff);
+
+    if (differences.length > 0) {
+        console.group('📋 Difference Details');
+        const diffGroups = {};
+        differences.forEach(d => {
+            const key = `Day ${d.day}, Shift ${d.shift}`;
+            if (!diffGroups[key]) diffGroups[key] = [];
+            diffGroups[key].push(d);
+        });
+
+        Object.entries(diffGroups).forEach(([key, diffs]) => {
+            console.groupCollapsed(key);
+            diffs.forEach(d => {
+                console.log(`  Role ${d.role}: ${d.cube1} → ${d.cube2} (${d.diff > 0 ? '+' : ''}${d.diff})`);
+            });
+            console.groupEnd();
+        });
+        console.groupEnd();
+    } else {
+        console.log('✅ Cubes are identical!');
+    }
+
+    // Log both cubes for reference
+    console.log('📊 Individual cubes:');
+    logCube(cube1, label1);
+    logCube(cube2, label2);
+
+    console.groupEnd();
+    return { differences, totalDiff };
+}
+
+// Add this function to your file near the top with other utilities
+
+/**
+ * Auto-log week 2 cube for debugging - call this after building weekly cubes
+ * @param {Array} weeks - Array of week objects with cube data
+ * @param {Object} options - Logging options
+ */
+export function autoLogWeek2(weeks, options = {}) {
+    if (!Array.isArray(weeks) || weeks.length < 2) {
+        console.warn('[autoLogWeek2] Less than 2 weeks available, cannot log week 2');
+        return;
+    }
+
+    const week2 = weeks[1];
+    if (!week2 || !week2.cube) {
+        console.warn('[autoLogWeek2] Week 2 data is invalid');
+        return;
+    }
+
+    // Use cached role names if available
+    const defaultRoleNames = normalizeRoleNames(cachedRoleNames) ||
+        Array.from({ length: ROLE_COUNT }, (_, i) => `Role ${i}`);
+
+    const {
+        roleNames = defaultRoleNames,
+        shiftNames = ['Early', 'Day', 'Late'],
+        dayNames = week2.dayLabels || buildDayLabels(week2.weekStart)
+    } = options;
+
+    console.log(`📅 AUTO-LOG: Week 2 (Week ${week2.weekNumber || '?'}) - ${week2.weekStart || 'start'} to ${week2.weekEnd || 'end'}`);
+
+    logCube(week2.cube, `Week 2 - ${week2.weekStart || 'start'} to ${week2.weekEnd || 'end'}`, {
+        roleNames,
+        shiftNames,
+        dayNames,
+        ...options
+    });
+
+    // Quick summary for week 2 vs other weeks
+    const totalAssignmentsWeek2 = week2.cube.flat(2).reduce((sum, val) => sum + (Number(val) || 0), 0);
+    console.log(`📊 Week 2 Total Assignments: ${totalAssignmentsWeek2}`);
+
+    if (weeks.length > 2) {
+        const week1Total = weeks[0].cube.flat(2).reduce((sum, val) => sum + (Number(val) || 0), 0);
+        const week3Total = weeks[2].cube.flat(2).reduce((sum, val) => sum + (Number(val) || 0), 0);
+        console.log('📊 Comparison:', {
+            'Week 1': week1Total,
+            'Week 2': totalAssignmentsWeek2,
+            'Week 3': week3Total || 'N/A',
+            'Week 2 vs Week 1': week1Total > 0 ? `${((totalAssignmentsWeek2 - week1Total) / week1Total * 100).toFixed(1)}% change` : 'N/A'
+        });
+    }
+}
+
+export function buildWeeklyCubesFromAttendance(
+    startDate,
+    endDate,
+    attendanceByDate,
+    roleNames = null
+) {
+    const weeks = [];
+    let cursor = startOfISOWeek(startDate);
+    let guard = 0;
+
+    // Use cached role names if available, otherwise use provided or default
+    const defaultRoleNames = normalizeRoleNames(roleNames) ||
+        normalizeRoleNames(cachedRoleNames) ||
+        Array.from({ length: ROLE_COUNT }, (_, i) => `Role ${i}`);
+
+    while (cursor <= endDate && guard++ < 60) {
+        const weekStart = new Date(cursor);
+        const cube = createEmptyWeekCube();
+
+        for (let d = 0; d < 7; d++) {
+            const date = addDays(weekStart, d);
+            const key = dateKey(date);
+            const attendance = attendanceByDate[key];
+            if (!Array.isArray(attendance)) continue;
+
+            const dayIndex = (date.getDay() + 6) % 7;
+
+            for (let role = 0; role < ROLE_COUNT; role++) {
+                for (let s = 0; s < SHIFTS_PER_DAY; s++) {
+                    cube[dayIndex][s][role] += attendance?.[role]?.[s] ?? 0;
+                }
+            }
+        }
+
+        weeks.push({
+            weekNumber: getISOWeekNumber(weekStart),
+            weekStart: dateKey(weekStart),
+            weekEnd: dateKey(addDays(weekStart, 6)),
+            dayLabels: buildDayLabels(weekStart),
+            cube
+        });
+
+        cursor = addDays(cursor, 7);
+    }
+
+    // AUTO-LOG WEEK 2 with role names - use cached role names
+    if (weeks.length >= 2) {
+        try {
+            setTimeout(() => {
+                autoLogWeek2(weeks, {
+                    roleNames: defaultRoleNames,
+                    shiftNames: ['Early', 'Day', 'Late'],
+                    showZeros: false,
+                    maxRolesToShow: 14
+                });
+            }, 0);
+        } catch (error) {
+            console.warn('[buildWeeklyCubesFromAttendance] Failed to auto-log week 2:', error);
+        }
+    }
+    return weeks;
+}
+
+function normalizeRoleNames(roleNames) {
+    if (!Array.isArray(roleNames) || roleNames.length === 0) return null;
+
+    const normalized = Array.from({ length: ROLE_COUNT }, (_, idx) => {
+        const label = roleNames[idx];
+        // Handle both string and object formats
+        if (typeof label === 'string' && label.trim()) {
+            return label.trim();
+        } else if (label && typeof label === 'object' && label.name) {
+            return String(label.name).trim() || `Role ${idx}`;
+        }
+        return `Role ${idx}`;
+    });
+
+    // Return null if all are just "Role X" placeholders (meaning no real names)
+    const hasRealNames = normalized.some((name, idx) => name !== `Role ${idx}`);
+    return hasRealNames ? normalized : null;
+}
+
+function getRoleNamesFromRoles(roles) {
+    console.log('[getRoleNamesFromRoles] roles:', roles);
+    if (!Array.isArray(roles) || roles.length === 0) return null;
+
+    const roleMap = {};
+    roles.forEach((role, idx) => {
+        const roleIndex = Number(role?.colorIndex ?? role?.roleIndex ?? role?.index ?? idx);
+        const roleName = String(role?.name || role?.roleName || '').trim();
+        if (Number.isInteger(roleIndex) && roleIndex >= 0 && roleIndex < ROLE_COUNT && roleName && roleName !== '?') {
+            roleMap[roleIndex] = roleName;
+        }
+    });
+
+    if (Object.keys(roleMap).length === 0) return null;
+
+    const roleNames = [];
+    for (let i = 0; i < ROLE_COUNT; i++) {
+        roleNames.push(roleMap[i] || `Role ${i}`);
+    }
+
+    return roleNames;
+}
+
+function getRoleNamesFromEmployees(employees) {
+    if (!Array.isArray(employees) || employees.length === 0) return null;
+
+    const roleMap = {};
+    employees.forEach(emp => {
+        const roleIndex = Number(emp?.mainRoleIndex ?? emp?.roleIndex);
+        const roleName = String(emp?.roleName || emp?.mainRole || emp?.role || '').trim();
+        if (Number.isInteger(roleIndex) && roleIndex >= 0 && roleIndex < ROLE_COUNT && roleName && roleName !== '?') {
+            roleMap[roleIndex] = roleName;
+        }
+    });
+
+    if (Object.keys(roleMap).length === 0) return null;
+
+    const roleNames = [];
+    for (let i = 0; i < ROLE_COUNT; i++) {
+        roleNames.push(roleMap[i] || `Role ${i}`);
+    }
+
+    return roleNames;
+}
+
+function resolveRoleNames({ roleNames = null, roles = [], employees = [] } = {}) {
+    return normalizeRoleNames(roleNames) ||
+        getRoleNamesFromRoles(roles) ||
+        getRoleNamesFromEmployees(employees) ||
+        Array.from({ length: ROLE_COUNT }, (_, i) => `Role ${i}`);
+}
+
+// Alternative: Add a simple one-liner logging function specifically for week 2
+export function logWeek2Simple(weeks) {
+    if (!Array.isArray(weeks) || weeks.length < 2) {
+        console.warn('Week 2 not available for logging');
+        return;
+    }
+
+    const week2 = weeks[1];
+    if (!week2?.cube) {
+        console.warn('Week 2 cube is invalid');
+        return;
+    }
+
+    console.group(`📊 WEEK 2 CUBE (${week2.weekStart} to ${week2.weekEnd})`);
+
+    // Show day by day totals
+    const dayNames = week2.dayLabels || buildDayLabels(week2.weekStart);
+
+    console.log('Day totals:', week2.cube.map((day, i) => {
+        const total = day.flat().reduce((sum, v) => sum + (Number(v) || 0), 0);
+        return `${dayNames[i] || `Day ${i}`}: ${total}`;
+    }).join(' | '));
+
+    // Show shift totals
+    const shiftTotals = [0, 0, 0];
+    week2.cube.forEach(day => {
+        day.forEach((shift, i) => {
+            shiftTotals[i] += shift.reduce((sum, v) => sum + (Number(v) || 0), 0);
+        });
+    });
+    console.log('Shift totals:', shiftTotals.map((t, i) => `Shift${i}: ${t}`).join(' | '));
+
+    // Quick matrix view (compact)
+    console.log('\nMatrix (Day x Shift):');
+    week2.cube.forEach((day, di) => {
+        const row = day.map(shift =>
+            shift.reduce((sum, v) => sum + (Number(v) || 0), 0)
+        );
+        console.log(`${dayNames[di] || `Day ${di}`}: [${row.join(', ')}]`);
+    });
+
+    console.groupEnd();
 }
 
 

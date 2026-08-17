@@ -191,7 +191,7 @@
   display: flex;
   align-items: center;
   justify-content: left;
-  gap: 0.5rem; /* spacing between checkbox/label and lock icon */
+  gap: 0.1rem; /* spacing between checkbox/label and lock icon */
   background-color: var(--calendar-day-closed-bg);
   transition: background-color 0.3s ease;
   padding: 4px 8px;
@@ -496,21 +496,22 @@
 }
 
 .row-middle {
-  max-width: 2rem;
-  min-width: 2px;
-  width: 2px;
+  max-width: 0.1rem;
+  min-width: 0.1rem;
+  width: rem;
 }
 
 .rule-collapsible[aria-expanded="true"] {
-  width: max-content; /* auto based on text */
-  max-width: 15rem; /* prevent too wide */
+  min-width: 20rem;
+  width: 20rem;
+  max-width: 20rem; /* prevent too wide */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .rule-collapsible[aria-expanded="false"] {
-  width: clamp(4rem, 6rem, 6rem);
+  width: clamp(8.5rem, 8.5rem, 8.5rem);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -586,9 +587,12 @@
 
 /* left area (checkbox + label) */
 .row-left {
+  width:0.9rem;
+  min-width: 0.9rem;
+  max-width: 0.9rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.05rem;
   font-size: 0.95rem;
 }
 .row-checkbox {
@@ -601,10 +605,11 @@
 }
 
 .row-right {
+  min-width: 12rem;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.35rem;
+  gap: 0.15rem;
 
   min-width: max-content;   /* allow content to define width */
   max-width: none;         /* remove the limiter */
@@ -858,18 +863,26 @@
   background-color: #d93025;
 }
 
+.shift-cell-mini.is-early {
+  background-color: var(--calendar-shift-early-bg);
+}
+
+.shift-cell-mini.is-day {
+  background-color: var(--calendar-shift-day-bg);
+}
+
+.shift-cell-mini.is-late {
+  background-color: var(--calendar-shift-late-bg);
+}
+
+.shift-cell-mini.is-closed {
+  background-color: var(--calendar-day-closed-bg);
+}
+
 .lock-icon-mini {
-  width: 12px;
-  height: 12px;
+  width: 1rem;
+  height: 1rem;
   display: inline-block;
-}
-
-.lock-icon-mini.unlocked::before {
-  content: "🔓";
-}
-
-.lock-icon-mini.locked::before {
-  content: "🔒";
 }
 
 #rule-collapsible-weekdays[aria-expanded="false"] {
@@ -1031,4 +1044,24 @@
 
 .compHoliday {
   min-width: 9rem;
+}
+
+.data-row {
+  background-color: var(--calendar-day-regular-bg);
+}
+
+.data-row[data-bg="closed"] {
+  background-color: var(--calendar-day-closed-bg);
+}
+
+.data-row[data-bg="regular"] {
+  background-color: var(--calendar-day-regular-bg);
+}
+
+.data-row[data-bg="weekend"] {
+  background-color: var(--calendar-day-weekend-bg);
+}
+
+.data-row[data-bg="holiday"] {
+  background-color: var(--calendar-day-holiday-bg);
 }

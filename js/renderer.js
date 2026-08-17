@@ -394,14 +394,15 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // ----------- F-Key Handling -----------
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const hint = document.getElementById("fn-key-hint");
-    const closeBtn = hint?.querySelector(".fn-hint-close");
+  document.addEventListener('click', (event) => {
+    const closeBtn = event.target.closest('#fn-hint-close');
+    if (!closeBtn) return;
 
-    closeBtn?.addEventListener("click", () => {
+    const hint = closeBtn.closest('#fn-key-hint');
+    if (hint) {
       console.log("Fn key hint dismissed by user.");
       hint.classList.add("visually-hidden");
-    }, { once: true });
+    }
   });
 
 

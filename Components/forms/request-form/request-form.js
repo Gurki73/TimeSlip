@@ -11,7 +11,7 @@ import { recalcWarnings, resetWarnings, setRuleCheckInfo } from "./request-warni
 import { createDateRangePicker } from '../../../Components/customDatePicker/customDatePicker.js';
 import { createSaveButton } from '../../../js/Utils/saveButton.js';
 import { executeRulechecker, computeRequestDelta } from '../rule-form/ruleChecker.js';
-import { ensureCalendarReady, computeAttendanceForRange } from '../../calendar/calendar.js';
+import { ensureCalendarReady, computeAttendanceForRange, highlightRangeInCalendar, clearCalendarHighlights } from '../../calendar/calendar.js';
 
 let requestYear = 2000;
 let api;
@@ -122,10 +122,19 @@ export async function initializeRequestForm(passedApi) {
   if (yearFilter) {
     yearFilter.value = requestYear;
     yearFilter.title = "Jahr für Antragsliste wählen";
+
+    updateRequestYearIndicator();
+
     yearFilter.addEventListener('change', async () => {
-      const selectedYear = parseInt(yearFilter.value, 10) || new Date().getFullYear();
+      const selectedYear =
+        parseInt(yearFilter.value, 10) || new Date().getFullYear();
+
       localStorage.setItem('RequestListDate', selectedYear);
+
       requestYear = selectedYear;
+
+      updateRequestYearIndicator();
+
       await loadAndRenderRequests();
       updateFilterButtons();
     });
@@ -332,7 +341,15 @@ function initDatePickers() {
     previewStart: "#request-preview-start",
     previewEnd: "#request-preview-end",
     previewDuration: "#request-durration",
-    onChange: handleDateChange
+    onChange: handleDateChange,
+    // Add onClear callback if your date picker supports it
+    onClear: () => {
+      clearCalendarHighlights();
+      if (highlightTimer) {
+        clearTimeout(highlightTimer);
+        highlightTimer = null;
+      }
+    }
   });
 }
 
@@ -353,6 +370,9 @@ function handleDateChange() {
     durationEl.textContent = "";
     halfDayCheckbox.checked = false;
     halfDayCheckbox.disabled = true;
+    // Clear any existing highlights
+    clearCalendarHighlights();
+    isHandlingDate = false;
     return;
   }
 
@@ -380,6 +400,24 @@ function handleDateChange() {
   unitEl.textContent = effectiveDays === 1
     ? "Tag"
     : "Tage";
+
+  // 🔥 HIGHLIGHT THE RANGE IN CALENDAR
+  if (start && end) {
+    // Clear any existing highlight timer
+    if (highlightTimer) {
+      clearTimeout(highlightTimer);
+      clearCalendarHighlights();
+    }
+
+    // Highlight the range
+    highlightRangeInCalendar(start, end);
+
+    // Auto-clear after 12 seconds (optional)
+    highlightTimer = setTimeout(() => {
+      clearCalendarHighlights();
+      highlightTimer = null;
+    }, 12000);
+  }
 
   fireWarnings();
 
@@ -1144,12 +1182,32 @@ function formatDateDMY(dateStr) {
   return `${dd}.${mm}.${yyyy}`;
 }
 
+let highlightTimer = null;
+
 async function handleTableClick(e) {
   const jumpButton = e.target.closest(".request-date-jump");
   if (jumpButton) {
     const start = jumpButton.dataset.start;
     const end = jumpButton.dataset.end;
+
+    // Clear any existing highlight timer
+    if (highlightTimer) {
+      clearTimeout(highlightTimer);
+      clearCalendarHighlights();
+    }
+
+    // Schedule the calendar jump
     scheduleCalendarJump(start, end, { focus: "start" });
+
+    // Highlight the range in calendar
+    highlightRangeInCalendar(start, end);
+
+    // Set timer to clear highlights after 12 seconds
+    highlightTimer = setTimeout(() => {
+      clearCalendarHighlights();
+      highlightTimer = null;
+    }, 12000);
+
     return;
   }
 
@@ -1170,6 +1228,36 @@ async function handleTableClick(e) {
     const id = target.dataset.id;
     await storeApproval(api, id, null, "rejected", year);
     await loadAndRenderRequests();
+  }
+}
+
+function updateRequestYearIndicator() {
+  const yearInput = document.getElementById('request-year');
+  if (!yearInput) return;
+
+  const selectedYear = parseInt(yearInput.value, 10);
+  const currentYear = new Date().getFullYear();
+
+  yearInput.classList.remove(
+    'request-year-past',
+    'request-year-current',
+    'request-year-future'
+  );
+
+  if (isNaN(selectedYear)) {
+    yearInput.title = "Jahr für Antragsliste wählen";
+    return;
+  }
+
+  if (selectedYear < currentYear) {
+    yearInput.classList.add('request-year-past');
+    yearInput.title = "Liegt in der Vergangenheit";
+  } else if (selectedYear > currentYear) {
+    yearInput.classList.add('request-year-future');
+    yearInput.title = "Liegt in der Zukunft";
+  } else {
+    yearInput.classList.add('request-year-current');
+    yearInput.title = "Aktuelles Jahr";
   }
 }
 
@@ -1531,12 +1619,14 @@ async function updateRequestRuleWarnings(requests, options = {}) {
     ruleStatsDelta = await computeRequestDelta(requests, requestBeingEdited, {
       uiRules: rules,
       employees: requestEmployees,
+      roles: cachedRoles,
       extraRequests
     });
   } else {
     const ruleStats = await executeRulechecker(range.start, range.end, requests, {
       uiRules: rules,
       employees: requestEmployees,
+      roles: cachedRoles,
       includePending: true,
       attendanceByDate
     });
@@ -1771,7 +1861,11 @@ export function normalizeDate(value) {
 }
 
 function dateKey(date) {
-  return date.toISOString().slice(0, 10);
+  const d = new Date(date);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 function applyRequestViolations(requests, ruleStats, options = {}) {
@@ -1943,6 +2037,7 @@ async function computePendingRequestWhatIfDeltas(requests) {
       const stats = await computeRequestDelta(approvedRequests, pendingRequest, {
         uiRules: rules,
         employees: requestEmployees,
+        roles: cachedRoles,
         extraRequests: [pendingRequest]
       });
 

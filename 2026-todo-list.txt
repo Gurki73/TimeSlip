@@ -10,7 +10,7 @@ we are ready for beta when:
 🚀 Beta Blocker List (Prototype → Beta)
 🔥 A. Core Navigation & Layout Stability
 
-☐ Fix 180° chevron navigation bug
+✅ Fix 180° chevron navigation bug
 → Ensure correct rotation state and consistency across all collapsible elements.
 
 ☐ Fix maximize/minimize height injection on load
@@ -74,108 +74,120 @@ we are ready for beta when:
 → Validate correct date boundaries.
 → Prevent invalid end-date states.
 
+
+🟢 Beta / do soon -> Core things that directly affect whether the prototype feels trustworthy.
+Tasks:1, 2, 2.1, 3, 4, 5, 6, 7, 8, 10, 12, 19, 20, 21, 22, 23, 32, 36, 40, 41, 53
+🟡 Useful but later -> Good UX improvements, polish, or functionality that isn't essential for the first beta.
+Tasks: 9, 11, 13, 15, 16, 17, 18, 24, 25, 26, 28, 29, 30, 31, 33, 34, 35, 37, 38, 42, 43, 46, 47, 50, 51, 52, 54, 55, 56, 62, 63, 64
+🔵 Debugging / developer tooling -> Things whose primary value is helping us understand/debug the system, rather than being a customer-facing feature.
+Tasks: 14, 44, 45
+🟣 Future Gurki / ideas-> Interesting ideas that shouldn't distract us from getting the core application stable.
+27, 39, 48, 49, 57, 58, 59, 60, 61
+🔴 Probably delete / reconsider -> Things that currently look duplicated, questionable, or whose purpose needs to be challenged before implementation.
+Tasks: 65, 66, 67
+
 ---------------------------------------------------------------
 Legend:
 ☐  open           🚧 in work      ✅ finished   ❌ cannceld
 🔥 ship-blocker   🧩 beta-value   🧠 post-beta  👀 review-needed
 
 legend:
-1.  ☐ fix 180° chevron
+🟢 1.  ✅ fix 180° chevron
 navigation
 
 welcome page
-2. ☐ maxamize minimize on load, inject form max min heights
-2.1 hide fn hint isnt working
+🟢 2.  ✅ maxamize minimize on load, inject form max min heights
+🟢 2.1 ✅ hide fn hint isnt working
 
 calendar:
-3. ☐ highlight day or range for requests or warnings
-4. ☐ check if role reasignments are rendered
-5. ☐ integrtate shift icon on closed days
+🟢 3. ✅ highlight day or range for requests or warnings
+🟢 4. ☐ check if role reasignments are rendered
+🟢 5. ✅ integrtate shift icon on closed days
 
 requests:
-6. ☐ add higlight period for new requests
-7. ☐ add highlight period for listed request
+🟢 6. ✅ add higlight period for new requests
+🟢 7. ✅ add highlight period for listed request
 employees:
-8. ☐ fit privacy warning in its conatianer
-9. ☐ add sample mode style to delete button in pay-updateRuleModel
-10. ☐ explain warnings for corrupt shift assignments
-11. ☐ switch from label to something fitting for style ( regular shedule )
+🟢8. ✅ fit privacy warning in its conatianer
+🟡9. ☐ add sample mode style to delete button in pay-updateRuleModel
+🟢10. ☐ explain warnings for corrupt shift assignments
+🟡11. ☐ switch from label to something fitting for style ( regular shedule )
 
 roles:
-12. ☐ check tranparence or opacity for table
+🟢 12. ☐ check tranparence or opacity for table
 
 ruleset:
-13. 👀 elipsses style for awake and asleep in sample model
-14. ☐ check complex rules
-15. ☐ add chip for weekdays ( color )
-16. ☐ add chip for shift ( icon + color)
-17. ☐ extend team marker ( maybe with ellipses if no space)
-18. ☐ add old new to heatmap
+🟡13. 👀 elipsses style for awake and asleep in sample model
+🔵14. ☐ check complex rules
+🟡15. ☐ add chip for weekdays ( color )
+🟡16. ☐ add chip for shift ( icon + color)
+🟡17. ☐ extend team marker ( maybe with ellipses if no space)
+🟡18. ☐ add old new to heatmap
 ruleset-checker:
-19. ☐ roles are checked for day-shift instead of hall day
-20. ☐ same roles are warned twice
+🟢 19. ☐ roles are checked for day-shift instead of hall day
+🟢 20. ☐ same roles are warned twice
 
 
 calendar-settings:
-21. ☐ fix filling of minimized shifts
-22. ☐ open/close icons dont match status for weekdays 
-23. ☐ check opacity for collapsed lists 
-24. ☐ add tool tip texts for icons "open" and "closed" (icons are pseudo elements, workarround needed)
-25. ☐ adjust height for company holidays 
-26. ☐ (include bridge days in company holiday)
-27. ☐ (auto remove available days off for employees depending an regular shedule ) 
+🟢21. ✅ fix filling of minimized shifts
+🟢22. ☐ open/close icons dont match status for weekdays 
+🟢23. ✅ check opacity for collapsed lists 
+🟡24. ☐ add tool tip texts for icons "open" and "closed" (icons are pseudo elements, workarround needed)
+🟡25. ☐ adjust height for company holidays 
+🟡26. ☐ (include bridge days in company holiday)
+🟣27. ☐ (auto remove available days off for employees depending an regular shedule ) 
 
 admin tools:
 admin tools.emojies: 
-28. ☐ add a input for add an emojies
-29. ☐ test saving emojies
-30. ☐ fix animation (z-index?) for animation
-31. ☐ improove hint for left and right mouse buttons
+🟡28. ☐ add a input for add an emojies
+🟡29. ☐ test saving emojies
+🟡30. ☐ fix animation (z-index?) for animation
+🟡31. ☐ improove hint for left and right mouse buttons
 admin tools.color:
-32. ☐ custom color picker looses gradient when picking, roles
-33. ☐ use actual role names and icons in preview
-34. ☐ use actual team names in role preview
-35. ☐ center table and picker in form
-36. ☐ fix the tabulators
-37. ☐ finish layout for calandar color cusmasation
-38. ☐ finish th layout for button and background  colors
-39. ☐ maybe a dialog simular to screen settings in window with a countdown keep changes?
+🟢32. ☐ custom color picker looses gradient when picking, roles
+🟡33. ☐ use actual role names and icons in preview
+🟡34. ☐ use actual team names in role preview
+🟡35. ☐ center table and picker in form
+🟢36. ☐ fix the tabulators
+🟡37. ☐ finish layout for calandar color cusmasation
+🟡38. ☐ finish th layout for button and background  colors
+🟣39. ☐ maybe a dialog simular to screen settings in window with a countdown keep changes?
 admin tools.auto save
-40. ☐ disable are you sure dialogs
-41.☐ replace dirty state with autosave in shared state save button
+🟢40. ☐ disable are you sure dialogs
+🟢41.☐ replace dirty state with autosave in shared state save button
 admin tools.clear cache... 
-42. ☐ use german language for dialog buttons ok and cannceld
-43. ☐ (maybe show current cache?)
+🟡42. ✅ use german language for dialog buttons ok and cannceld
+🟡43. ☐ (maybe show current cache?)
 admin tool.ruleset-settings
-44. ☐ gather ideas
-45. ☐ build prilimary UI
+🔵44. ☐ gather ideas
+🔵45. ☐ build prilimary UI
 admin tools.calendar settings
-46. ☐ reuse options from main menu
-47. ☐ build lay out 
-48. ☐ disable sample mode 
-49. ☐ discuss if needed anymore
+🟡46. ☐ reuse options from main menu
+🟡47. ☐ build lay out 
+🟣48. ☐ disable sample mode 
+🟣49. ☐ discuss if needed anymore
 admin tools. revive delted employees
-50. ☐ add sample
-51. ☐ move more to left
-52. ☐ add phönix for mass revive
-53. ☐ fix end date picker
+🟡50. ☐ add sample
+🟡51. ☐ move more to left
+🟡52. ☐ add phönix for mass revive
+🟢53. ☐ fix end date picker
 admin tools.donate
-54. ☐ add an offline alternatove
-55. ☐ make a begging text
+🟡54. ☐ add an offline alternatove
+🟡55. ☐ make a begging text
 
 minx:
-56. ☐ allow state dirty for sample save button(?)
-57. ☐ update version from 1.x.x to 2.0.0 dev to prototype
-58. ☐ publish as prototype on itch.icon
-59. ☐ make basic marketing article for itch.icon
-60. ☐ plan you-tube tutorial
+🟡56. ☐ allow state dirty for sample save button(?)
+🟣57. ☐ update version from 1.x.x to 2.0.0 dev to prototype
+🟣58. ☐ publish as prototype on itch.icon
+🟣59. ☐ make basic marketing article for itch.icon
+🟣60. ☐ plan you-tube tutorial
 
 help page:
-61. ☐ write done the thoughts about  heros journey and save the calculations
-62. ☐ update Glossary
-63. ☐ build a skeleton for screenshots
-64. ☐ highlight in nav when hover/click in help
+🟣61. ☐ write down the thoughts about  heros journey and save the calculations
+🟡62. ☐ update Glossary
+🟡63. ☐ build a skeleton for screenshots
+🟡64. ☐ highlight in nav when hover/click in help
 
-65. ☐ “Collapsed list opacity: make adjustable via color/appearance settings.
-66. ☐ Should respect different screen brightness, resolution, and client monitors.
-67. ☐ Currently hardcoded; consider adding a cached local setting for transparency once prototype is stable.”
+🔴65. ☐ “Collapsed list opacity: make adjustable via color/appearance settings.
+🔴66. ☐ Should respect different screen brightness, resolution, and client monitors.
+🔴67. ☐ Currently hardcoded; consider adding a cached local setting for transparency once prototype is stable.”

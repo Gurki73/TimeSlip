@@ -695,3 +695,36 @@
   align-items: center;
   gap: 0.4rem;
 }
+
+#request-year.request-year-past {
+  color: #b33;
+  animation: request-year-past 1.2s ease-in-out infinite;
+}
+
+#request-year.request-year-current {
+  color: var(--text-color);
+}
+
+#request-year.request-year-future {
+  color: #397a4a;
+  font-weight: bold;
+  animation: request-year-future 0.75s ease-in-out infinite;
+}
+
+@keyframes request-year-past {
+  0%, 100% {
+    color: darkred;
+  }
+  50% {
+    color: orange
+  }
+}
+
+@keyframes request-year-future {
+  0%, 100% {
+    color: limegreen;
+  }
+  50% {
+    color: darkgreen;
+  }
+}

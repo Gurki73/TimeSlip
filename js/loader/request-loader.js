@@ -183,8 +183,8 @@ async function loadSampleRequests(year) {
             return {
                 ...r,
                 year: requestYear,                                   // for filtering
-                start: startDate.toISOString().slice(0, 10),        // YYYY-MM-DD
-                end: endDate.toISOString().slice(0, 10),            // YYYY-MM-DD
+                start: (function (d) { const dt = new Date(d); return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}` })(startDate),        // YYYY-MM-DD
+                end: (function (d) { const dt = new Date(d); return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}` })(endDate),            // YYYY-MM-DD
                 requestedAt: r.requestedAt ? r.requestedAt.replace(/^\d{4}/, requestYear) : ''
             };
         });

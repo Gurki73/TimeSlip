@@ -183,8 +183,11 @@ function addYears(startDateStr, years) {
 
   d.setFullYear(d.getFullYear() + whole);
   d.setMonth(d.getMonth() + months);
-
-  return d.toISOString().slice(0, 10);
+  // return local ISO date (YYYY-MM-DD) to avoid timezone shifts
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 function syncDurationFromDates(start, end, durationInput) {
@@ -269,8 +272,8 @@ function renderNewEmployeeForm() {
     roleSplitMain: 100,
     roleSplitSecondary: 0,
     roleSplitTertiary: 0,
-    startDate: new Date().toISOString().slice(0, 10),
-    endDate: (() => { const d = new Date(); d.setFullYear(d.getFullYear() + 35); return d.toISOString().slice(0, 10); })(),
+    startDate: (function () { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })(),
+    endDate: (function () { const d = new Date(); d.setFullYear(d.getFullYear() + 35); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })(),
     birthday: "0",
     birthMonth: "0"
   };

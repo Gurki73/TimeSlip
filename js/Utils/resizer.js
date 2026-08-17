@@ -24,7 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   resizeButton.addEventListener('click', () => {
     const isExpanded = leftPanel.classList.toggle('expanded');
+
     resizeButton.classList.toggle('expanded', isExpanded);
+    resizeButton.setAttribute('aria-expanded', String(isExpanded));
   });
 
   divider.addEventListener('mousedown', (e) => {

@@ -18,7 +18,8 @@ export async function simulatePeriodValidation(rule, startIso, endIso, staffingP
     const start = new Date(startIso);
     const end = new Date(endIso);
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const dateIso = d.toISOString().slice(0, 10);
+        const dt = new Date(d);
+        const dateIso = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
         const attendance = await staffingProvider(dateIso); // { roleIndex: [morning, day, late] }
         // reuse your checkRulesForDay logic here (you said it's already in place)
         const dayIndex = d.getDay() === 0 ? 6 : d.getDay() - 1; // map Sun→6, Mon→0

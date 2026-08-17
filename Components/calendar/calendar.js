@@ -180,7 +180,7 @@ function setupCalendarEnvironment() {
 
 function initializeCalendarData() {
   const currentDate = new Date();
-  currentMonthIndex = currentDate.getMonth() + 1;
+  currentMonthIndex = currentDate.getMonth();
   currentYear = currentDate.getFullYear();
 }
 
@@ -945,7 +945,7 @@ export async function computeAttendanceForRange(startDate, endDate, options = {}
     const year = date.getFullYear();
     const monthIndex = date.getMonth();
     const day = date.getDate();
-    const fullDate = date.toISOString().slice(0, 10);
+    const fullDate = formatISODate(date);
     const weekdayIndex = (date.getDay() + 6) % 7; // Monday = 0
 
     const officeSchedule = Array.isArray(officeDays) ? officeDays[weekdayIndex] : null;
@@ -1110,7 +1110,7 @@ function createMorningShift(day, index, monthRequests, isOpen, reassignments = n
   shift.title = 'vormittags';
 
   if (!isOpen) {
-    shift.innerHTML = "🔒";
+    shift.innerHTML = `${getShiftSymbol('early', cachedShiftSymbols)}` + "🔒";
     shift.title = "vormittags geschlossen";
     shift.style.background = "var(--calendar-day-closed-bg)";
     const attendance = createEmptyAttendance();
@@ -1130,7 +1130,7 @@ function createAfternoonShift(day, index, monthRequests, isOpen, reassignments =
   afternoonShift.title = "nachmittags";
 
   if (!isOpen) {
-    afternoonShift.innerHTML = "🔒";
+    afternoonShift.innerHTML = `${getShiftSymbol('late', cachedShiftSymbols)}` + "🔒";
     afternoonShift.title = "nachmittags geschlossen";
     afternoonShift.style.background = "var(--calendar-day-closed-bg)";
     const attendance = createEmptyAttendance();
@@ -1150,7 +1150,7 @@ function createDayShift(day, index, monthRequests, isOpen, reassignments = null,
   dayShift.classList.add('shift', 'noto');
   if (!isOpen) {
     dayShift.style.background = "var(--calendar-day-closed-bg)";
-    dayShift.innerHTML = "🔒";
+    dayShift.innerHTML = `${getShiftSymbol('day', cachedShiftSymbols)}` + "🔒";
     dayShift.title = "halbtags geschlossen"
     const attendance = createEmptyAttendance();
     return { shiftElement: dayShift, attendance };
@@ -1665,7 +1665,7 @@ function renderDayCell(day, index, shiftStatusForDay, usedShifts, monthRequests,
   const dayCell = document.createElement('div');
 
   const today = new Date();
-  const todayISO = today.toISOString().slice(0, 10);
+  const todayISO = formatISODate(today);
   const isToday = fullDate === todayISO;
 
   dayCell.className = 'day-column';
@@ -1908,7 +1908,41 @@ function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts) 
   return { shifts, summedAttendance, shiftAttendanceByType };
 }
 
+export function clearCalendarHighlights() {
+  const highlightedCells = document.querySelectorAll('.calendar-range-highlight');
+  highlightedCells.forEach(cell => {
+    cell.classList.remove('calendar-range-highlight');
+  });
+}
 
+export function highlightRangeInCalendar(startDate, endDate) {
+  const start = new Date(startDate + 'T00:00:00');
+  const end = new Date(endDate + 'T00:00:00');
+
+  const rangeStart = start <= end ? start : end;
+  const rangeEnd = start <= end ? end : start;
+
+  const cells = document.querySelectorAll(
+    '.day-column.weekday[data-date]'
+  );
+
+  const highlightedCells = [];
+
+  cells.forEach(cell => {
+    const date = new Date(cell.dataset.date + 'T00:00:00');
+
+    if (date >= rangeStart && date <= rangeEnd) {
+      cell.classList.add('calendar-range-highlight');
+      highlightedCells.push(cell);
+    }
+  });
+
+  return () => {
+    highlightedCells.forEach(cell => {
+      cell.classList.remove('calendar-range-highlight');
+    });
+  };
+}
 
 
 

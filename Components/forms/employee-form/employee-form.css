@@ -349,12 +349,14 @@ input[type="range"] {
 #privacy-warning-collapsible {
   display: flex;
   flex-direction: row;
-  align-items: stretch; /* both columns same height */
+  align-items: stretch;
   gap: 0.5rem;
   border: 2px double darkorange;
   padding: 0.5rem;
-  min-height: 96%;
-  max-height: 96%;
+  margin: 0.5rem 0;
+  background-color: #fff8f0;
+  border-radius: 0.5rem;
+  min-height: 100%; /* Adjust as needed */
   overflow: hidden;
 }
 
@@ -381,8 +383,7 @@ input[type="range"] {
 .privacy-collapsible {
   display: flex;
   flex-direction: row;
-  flex: 1;                 /* fill column */
-  border: 2px double darkorange;
+  flex: 1;
   border-radius: 0.5rem;
   background-color: #fff4e5;
   overflow: hidden;
@@ -403,17 +404,20 @@ input[type="range"] {
   display: flex;
   flex-direction: row;
   gap: 0.5rem;
-  flex: 1 1 auto; /* fill remaining space */
-  min-width: 0; /* allow shrinking */
-  min-height: 98%;
-  height: 98%;
-  max-height: 98%;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .privacy-warning-content {
   flex: 1;
-  padding: 0.5rem;
-  overflow-y: auto;        /* THIS is what you actually want */
+  padding: 0.5rem 1rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  word-wrap: break-word;
+  white-space: normal;
+  line-height: 1.5;
+  max-height: 100%;
 }
 
 .privacy-warning-content p b {
@@ -447,16 +451,30 @@ input[type="range"] {
   flex-basis: 55rem;
 }
 
+.privacy-warning-content p {
+  margin: 0.5rem 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.privacy-warning-content p b,
+.privacy-warning-content p strong {
+  word-break: break-word;
+}
+
 .privacy-collapsible[aria-expanded="false"] .privacy-warning-content {
-  display: inline-block;
-  min-width: 20rem;
-  width: 20rem;
-  max-width: 30rem;
-  max-height: 98%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+  min-height: 90%;
 }
 
 .privacy-collapsible[aria-expanded="true"] .privacy-warning-content {
-  display: none;
+  max-height: 100%;
+  overflow-y: auto;
 }
 
 .employee-opaque {
@@ -465,6 +483,11 @@ input[type="range"] {
   pointer-events: none;
 }
 
+.newEmployeeLabel {
+  min-width: 90%;
+  align-self: center;
+  text-align: center;
+}
 .legend-with-button {
   display: flex;
   flex-direction: column;

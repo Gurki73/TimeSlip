@@ -78,13 +78,97 @@ export async function initializeAdminForm(api) {
     });
   }
 
+  // Replace the clear-cache handler with this:
   const clearBtn = document.getElementById('clear-cache');
   if (clearBtn) {
     clearBtn.addEventListener('click', () => {
-      if (confirm("Gespeicherte Einstellungen (z.B. Zoom, Farben) wirklich zurücksetzen?\nDies kann nicht rückgängig gemacht werden.")) {
+      // Custom confirmation dialog with German buttons
+      const dialogOverlay = document.createElement('div');
+      dialogOverlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+    `;
+
+      const dialogBox = document.createElement('div');
+      dialogBox.style.cssText = `
+      background: white;
+      padding: 24px;
+      border-radius: 8px;
+      max-width: 400px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      font-family: system-ui, -apple-system, sans-serif;
+    `;
+
+      dialogBox.innerHTML = `
+      <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.5;">
+        Gespeicherte Einstellungen (z.B. Zoom, Farben) wirklich zurücksetzen?<br>
+        <strong>Dies kann nicht rückgängig gemacht werden.</strong>
+      </p>
+      <div style="display: flex; justify-content: flex-end; gap: 8px;">
+        <button id="dialog-cancel" style="
+          padding: 8px 16px;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          background: white;
+          cursor: pointer;
+          font-size: 14px;
+        ">Abbrechen</button>
+        <button id="dialog-confirm" style="
+          padding: 8px 16px;
+          border: none;
+          border-radius: 4px;
+          background: #d32f2f;
+          color: white;
+          cursor: pointer;
+          font-size: 14px;
+        ">Bestätigen</button>
+      </div>
+    `;
+
+      dialogOverlay.appendChild(dialogBox);
+      document.body.appendChild(dialogOverlay);
+
+      // Focus the confirm button by default
+      setTimeout(() => {
+        const confirmBtn = dialogBox.querySelector('#dialog-confirm');
+        if (confirmBtn) confirmBtn.focus();
+      }, 50);
+
+      // Handle cancel
+      const cancelBtn = dialogBox.querySelector('#dialog-cancel');
+      cancelBtn.addEventListener('click', () => {
+        dialogOverlay.remove();
+      });
+
+      // Handle confirm
+      const confirmBtn = dialogBox.querySelector('#dialog-confirm');
+      confirmBtn.addEventListener('click', () => {
+        dialogOverlay.remove();
         localStorage.removeItem('clientDefinedDataFolder');
         alert("Die Einstellungen wurden gelöscht.\nBitte starten Sie die Anwendung neu.");
-      }
+      });
+
+      // Close on overlay click (optional)
+      dialogOverlay.addEventListener('click', (e) => {
+        if (e.target === dialogOverlay) {
+          dialogOverlay.remove();
+        }
+      });
+
+      // Handle Escape key
+      dialogOverlay.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          dialogOverlay.remove();
+        }
+      });
     });
   }
   updateDivider("bg-admin",); // or chapter ref ? <a href="#chapter-admin">
