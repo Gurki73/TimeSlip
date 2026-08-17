@@ -828,23 +828,38 @@ function filterRequestsByMonth(requests, month, year) {
   });
 }
 
-function buildCheckerAttendance(shiftAttendanceByType, roleCount) {
-  const result = Array.from({ length: roleCount }, () => [0, 0, 0]);
-  const shiftIndex = { early: 0, day: 1, late: 2 };
+function buildCheckerAttendance(shiftAttendanceByType) {
+  // roleColorIndex is a stable ID from 0..13.
+  // Empty role slots MUST remain in the cube.
+  const ROLE_COUNT = 14;
+
+  // [roleColorIndex][shift]
+  // 0 = early
+  // 1 = day
+  // 2 = late
+  const result = Array.from(
+    { length: ROLE_COUNT },
+    () => [0, 0, 0]
+  );
 
   Object.entries(shiftAttendanceByType || {}).forEach(([shift, attendance]) => {
-    // Map both 'day' and 'full' to day shift index (1)
     let idx;
-    if (shift === 'early') idx = 0;
-    else if (shift === 'day' || shift === 'full') idx = 1;  // Both map to day shift
-    else if (shift === 'late') idx = 2;
-    else return; // Skip unknown shift types
+
+    if (shift === 'early') {
+      idx = 0;
+    } else if (shift === 'day' || shift === 'full') {
+      idx = 1;
+    } else if (shift === 'late') {
+      idx = 2;
+    } else {
+      return;
+    }
 
     if (!Array.isArray(attendance)) return;
 
-    for (let role = 0; role < roleCount; role++) {
-      const mainCount = attendance?.[role]?.[0] ?? 0;
-      result[role][idx] += mainCount; // Use += to accumulate if multiple sources
+    for (let roleColorIndex = 0; roleColorIndex < ROLE_COUNT; roleColorIndex++) {
+      const mainCount = attendance?.[roleColorIndex]?.[0] ?? 0;
+      result[roleColorIndex][idx] += mainCount;
     }
   });
 
@@ -982,7 +997,7 @@ export async function computeAttendanceForRange(startDate, endDate, options = {}
       });
     }
 
-    attendanceByDate[fullDate] = buildCheckerAttendance(shiftAttendanceByType, roleCount);
+    attendanceByDate[fullDate] = buildCheckerAttendance(shiftAttendanceByType);
   }
 
   return attendanceByDate;
