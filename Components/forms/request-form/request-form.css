@@ -728,3 +728,29 @@
     color: darkgreen;
   }
 }
+
+.request-overlap-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.request-overlap-employees {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.request-overlap-employee {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 1.6em;
+    height: 1.6em;
+
+    border-radius: 4px;
+    border: 1px solid currentColor;
+
+    line-height: 1;
+}

@@ -201,6 +201,7 @@ export async function initializeRequestForm(passedApi) {
   updateDivider("bg-request");
   resetRequestWarnings();
   updateFilterButtons();
+
 }
 
 function getRequestMonth(request) {
@@ -423,7 +424,6 @@ function handleDateChange() {
   fireWarnings();
 
   renderRequestOverlaps({
-    container: document.getElementById('request-overlaps'),
     requests: allRequests,
     employees: requestEmployees,
     start,
