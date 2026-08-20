@@ -125,7 +125,7 @@ ruleset:
 🟡18. ☐ add old new to heatmap
 ruleset-checker:
 🟢 19. ☐ roles are checked for day-shift instead of hall day
-🟢 20. ☐ same roles are warned twice
+🟢 20. ✅ same roles are warned twice
 
 
 calendar-settings:

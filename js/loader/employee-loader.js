@@ -213,52 +213,60 @@ export async function storeEmployeeChange(api, employeeData, action = "update") 
         return;
     }
 
-    // load current employees (array)
-    let employeeBefore = await loadEmployeeData(api);
-    if (!Array.isArray(employeeBefore)) employeeBefore = [];
+    // Load ALL employees, including deleted ones
+    // NOT loadEmployeeData(), because that filters deleted employees.
+    const fileData = await loadFile(
+        api,
+        localStorage.getItem('dataMode') || 'auto',
+        'employees/employee.csv',
+        null,
+        true
+    );
 
-    // ensure we have an id
-    if (!employeeData.id) {
-        employeeData.id = Date.now();
-    }
+    let employeeBefore =
+        typeof fileData === 'string'
+            ? parseCSV(fileData)
+            : Array.isArray(fileData)
+                ? fileData
+                : [];
+
+    const existingIndex = employeeBefore.findIndex(
+        emp => String(emp.id) === String(employeeData.id)
+    );
 
     if (action === "delete") {
-        employeeData.personalEmoji = "🗑️";
-        employeeData.endDate = new Date().toISOString().split("T")[0];
-        action = "update"; // treat as update for saving
-    }
-
-    const existingIndex = employeeBefore.findIndex(emp => String(emp.id) === String(employeeData.id));
-
-    if (existingIndex >= 0) {
-        // update existing record
-        if (action === "update" || action === "delete") {
-            employeeBefore[existingIndex] = {
-                ...employeeBefore[existingIndex],
-                ...employeeData
-            };
-        } else if (action === "create") {
-            employeeBefore[existingIndex] = { ...employeeBefore[existingIndex], ...employeeData };
+        if (existingIndex < 0) {
+            console.warn(
+                `[storeEmployeeChange] Employee ${employeeData.id} not found for delete`
+            );
+            return;
         }
-    } else {
-        if (action === "create") {
-            employeeBefore.push(employeeData);
-        } else if (action === "update") {
-            console.warn(`⚠ Employee with ID ${employeeData.id} not found for update — adding as new.`);
-            employeeBefore.push(employeeData);
-        } else {
-            console.warn(`⚠ Unknown action "${action}" for employee id=${employeeData.id}. Adding as new by default.`);
-            employeeBefore.push(employeeData);
+
+        employeeBefore[existingIndex].personalEmoji = "🗑️";
+        employeeBefore[existingIndex].endDate =
+            new Date().toISOString().split("T")[0];
+
+    } else if (action === "update") {
+        if (existingIndex < 0) {
+            console.warn(
+                `[storeEmployeeChange] Employee ${employeeData.id} not found for update`
+            );
+            return;
         }
+
+        employeeBefore[existingIndex] = {
+            ...employeeBefore[existingIndex],
+            ...employeeData
+        };
+
+    } else if (action === "create") {
+        employeeBefore.push(employeeData);
     }
 
     const employeeCSV = convertEmployeesToCSV(employeeBefore);
-    try {
-        await saveEmployeeData(api, employeeCSV);
-        employees = employeeBefore;
-    } catch (err) {
-        console.error("❌ Failed to save employee changes:", err);
-    }
+
+    await saveEmployeeData(api, employeeCSV);
+    employees = employeeBefore;
 }
 
 export function convertEmployeesToCSV(employees = []) {
