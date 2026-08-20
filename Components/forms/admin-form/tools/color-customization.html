@@ -1,217 +1,116 @@
-<!-- COLOR CUSTOMIZATION TAB LAYOUT -->
-<div id="color-theme-container">
-  <div class="color-tabulator">
-    <div class="tab-headers flex-row">
-      <button class="tab-header active" data-tab="roles">Aufgaben</button>
-      <button class="tab-header" data-tab="calendar">Kalender</button>
-      <button class="tab-header" data-tab="app">App</button>
+<!-- Components/forms/admin-form/tools/color-customization.html -->
+<!-- 
+  Color Customization Tool - Admin Form Component
+  Part of TimeSlip Admin Tools
+  Interfaces: loader.js, assets/css/colors.css
+  Styles: admin-form.css
+  Scripts: admin-form.js, colorTheme.js
+-->
+
+<div class="color-customization-container" role="main" aria-label="Color Customization Tool">
+  <!-- Header Section -->
+  <div class="color-customization-header">
+    <h2 class="color-customization-title">
+      <span class="title-icon" aria-hidden="true">🎨</span>
+      Color Customization
+    </h2>
+    <p class="color-customization-subtitle">
+      Customize the visual appearance of the TimeSlip interface
+    </p>
+    <div class="header-actions">
+      <button class="btn btn-secondary btn-sm" id="resetColorsBtn" type="button">
+        <span class="btn-icon" aria-hidden="true">↺</span> Reset to Defaults
+      </button>
+    </div>
+  </div>
+
+  <!-- Color Categories -->
+  <div class="color-categories">
+    <!-- Primary Colors -->
+    <div class="color-category" data-category="primary">
+      <div class="category-header">
+        <h3 class="category-title">Primary Colors</h3>
+        <span class="category-badge">Main Interface</span>
+      </div>
+      <div class="color-grid" data-category="primary">
+        <!-- Color items dynamically generated -->
+      </div>
     </div>
 
-    <div class="tab-content active" id="tab-roles">
-      <div class="tab-contents table-scroll">
-        <div class="flex-row">
-          <table class="color-role-table color-table" aria-label="Aufgaben und Teams Farbzuordnung">
-            <thead>
-              <tr>
-                <th><span data-team="blue">Team Blau</span></th>
-                <th><span data-team="green">Team Grün</span></th>
-                <th><span data-team="red">Team Rot</span></th>
-                <th><span data-team="black">Team Schwarz</span></th>
-                <th>Ausbildung</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td data-team="blue" data-role="1">#1</td>
-                <td data-team="green" data-role="4">#4</td>
-                <td data-team="red" data-role="7">#7</td>
-                <td data-team="black" data-role="10">#10</td>
-                <td data-team="orange" data-role="13">#13 Azubi</td>
-              </tr>
-              <tr>
-                <td data-team="blue" data-role="2">#2</td>
-                <td data-team="green" data-role="5">#5</td>
-                <td data-team="red" data-role="8">#8</td>
-                <td data-team="black" data-role="11">#11</td>
-                <td></td>
-              </tr>
-              <tr>
-                <td data-team="blue" data-role="3">#3</td>
-                <td data-team="green" data-role="6">#6</td>
-                <td data-team="red" data-role="9">#9</td>
-                <td data-team="black" data-role="12">#12</td>
-                <td></td>
-              </tr>
-            </tbody>
-          </table>
+    <!-- Status Colors -->
+    <div class="color-category" data-category="status">
+      <div class="category-header">
+        <h3 class="category-title">Status Colors</h3>
+        <span class="category-badge">Feedback &amp; States</span>
+      </div>
+      <div class="color-grid" data-category="status">
+        <!-- Color items dynamically generated -->
+      </div>
+    </div>
 
-          <div id="limited-color-picker-container">
-            <h2 id="limited-color-picker-teamname">Team Blau</h2>
-            <h3 id="limited-color-picker-rolename">Aufgabe #1</h3>
-            <div id="limited-color-picker">
-              <div class="picker-cursor"></div>
-            </div>
-            <p class="limited-picker-hint">Farben sind pro Team in der Hue begrenzt.</p>
+    <!-- Text Colors -->
+    <div class="color-category" data-category="text">
+      <div class="category-header">
+        <h3 class="category-title">Text Colors</h3>
+        <span class="category-badge">Typography</span>
+      </div>
+      <div class="color-grid" data-category="text">
+        <!-- Color items dynamically generated -->
+      </div>
+    </div>
+
+    <!-- Background Colors -->
+    <div class="color-category" data-category="background">
+      <div class="category-header">
+        <h3 class="category-title">Background Colors</h3>
+        <span class="category-badge">Surfaces &amp; Containers</span>
+      </div>
+      <div class="color-grid" data-category="background">
+        <!-- Color items dynamically generated -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview Section -->
+  <div class="color-preview-section">
+    <div class="preview-header">
+      <h3 class="preview-title">Live Preview</h3>
+      <span class="preview-badge">Real-time updates</span>
+    </div>
+    <div class="preview-container" id="colorPreview">
+      <div class="preview-card">
+        <div class="preview-header-bar">
+          <span class="preview-title-text">Sample Header</span>
+          <span class="preview-status-badge">Status</span>
+        </div>
+        <div class="preview-content">
+          <p class="preview-text">This is a sample text to preview the color scheme.</p>
+          <div class="preview-actions">
+            <button class="preview-btn preview-btn-primary" type="button">Primary</button>
+            <button class="preview-btn preview-btn-secondary" type="button">Secondary</button>
+            <button class="preview-btn preview-btn-success" type="button">Success</button>
+            <button class="preview-btn preview-btn-danger" type="button">Danger</button>
+          </div>
+          <div class="preview-status-bar">
+            <span class="preview-status success">Success</span>
+            <span class="preview-status warning">Warning</span>
+            <span class="preview-status error">Error</span>
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <div class="tab-content" id="tab-calendar">
-      <section class="mini-calendar-customizer" aria-label="Mini-Kalender Farbwahl">
-        <div class="mini-calendar-header">
-          <h3 class="noto">Mini-Kalender</h3>
-          <span class="muted">Tag anklicken und Farbe anpassen</span>
-        </div>
-
-        <div class="mini-calendar-layout">
-          <div class="mini-calendar">
-            <div class="mini-calendar-weekdays">
-              <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
-            </div>
-            <div class="mini-calendar-grid">
-              <button class="mini-day" data-day-type="weekday" aria-pressed="true">1</button>
-              <button class="mini-day" data-day-type="weekday">2</button>
-              <button class="mini-day" data-day-type="weekday">3</button>
-              <button class="mini-day" data-day-type="weekday">4</button>
-              <button class="mini-day" data-day-type="weekday">5</button>
-              <button class="mini-day weekend" data-day-type="weekend">6</button>
-              <button class="mini-day weekend" data-day-type="sunday">7</button>
-
-              <button class="mini-day" data-day-type="weekday">8</button>
-              <button class="mini-day" data-day-type="weekday">9</button>
-              <button class="mini-day" data-day-type="weekday">10</button>
-              <button class="mini-day" data-day-type="weekday">11</button>
-              <button class="mini-day" data-day-type="weekday">12</button>
-              <button class="mini-day weekend" data-day-type="weekend">13</button>
-              <button class="mini-day weekend holiday" data-day-type="holiday">14</button>
-
-              <button class="mini-day" data-day-type="weekday">15</button>
-              <button class="mini-day" data-day-type="weekday">16</button>
-              <button class="mini-day" data-day-type="weekday">17</button>
-              <button class="mini-day" data-day-type="weekday">18</button>
-              <button class="mini-day" data-day-type="weekday">19</button>
-              <button class="mini-day weekend" data-day-type="weekend">20</button>
-              <button class="mini-day weekend closed" data-day-type="closed">21</button>
-
-              <button class="mini-day" data-day-type="weekday">22</button>
-              <button class="mini-day" data-day-type="weekday">23</button>
-              <button class="mini-day" data-day-type="weekday">24</button>
-              <button class="mini-day" data-day-type="weekday">25</button>
-              <button class="mini-day" data-day-type="weekday">26</button>
-              <button class="mini-day weekend" data-day-type="weekend">27</button>
-              <button class="mini-day weekend" data-day-type="sunday">28</button>
-            </div>
-          </div>
-
-          <div class="mini-calendar-panel">
-            <div class="panel-title">Gewählter Tag</div>
-            <div class="mini-day-preview" data-day-type="weekday">
-              <div class="mini-day-preview-header">
-                <span class="preview-day-label">Tag 1</span>
-                <span class="preview-day-type">Werktag</span>
-              </div>
-              <div class="mini-day-preview-shifts">
-                <div class="shift-row">
-                  <span class="shift-label">Früh</span>
-                  <span class="shift-swatch" data-shift="early"></span>
-                </div>
-                <div class="shift-row">
-                  <span class="shift-label">Tag</span>
-                  <span class="shift-swatch" data-shift="day"></span>
-                </div>
-                <div class="shift-row">
-                  <span class="shift-label">Spät</span>
-                  <span class="shift-swatch" data-shift="late"></span>
-                </div>
-              </div>
-            </div>
-
-            <div class="mini-color-controls">
-              <label class="color-row">
-                <span>Tag-Zelle</span>
-                <input type="color" data-var="calendar-day-regular-bg" aria-label="Farbe für Tag-Zelle">
-              </label>
-              <label class="color-row">
-                <span>Zeitfenster Betriebsbeginn</span>
-                <input type="color" data-var="calendar-shift-early-bg" aria-label="Farbe für Betriebsbeginn">
-              </label>
-              <label class="color-row">
-                <span>Zeitfenster Kernzeit</span>
-                <input type="color" data-var="calendar-shift-day-bg" aria-label="Farbe für Kernarbeitszeit">
-              </label>
-              <label class="color-row">
-                <span>Zeitfenster Betriebsende</span>
-                <input type="color" data-var="calendar-shift-late-bg" aria-label="Farbe für Betriebsende">
-              </label>
-              <label class="color-row">
-                <span>Betrieb geschlossen</span>
-                <input type="color" data-var="office-closed-color" aria-label="Farbe für Office geschlossen">
-              </label>
-            </div>
-          </div>
-        </div>
-      </section>
+  <!-- Actions Footer -->
+  <div class="color-customization-footer">
+    <div class="footer-actions">
+      <button class="btn btn-outline-secondary" id="cancelChangesBtn" type="button">Cancel</button>
+      <button class="btn btn-primary" id="saveColorsBtn" type="button">
+        <span class="btn-icon" aria-hidden="true">💾</span> Save Changes
+      </button>
     </div>
-
-    <div class="tab-content" id="tab-app">
-      <div class="app-theme-grid">
-        <div class="app-theme-group">
-          <h3>Buttons</h3>
-          <label class="color-row">
-            <span>Button aktiv</span>
-            <input type="color" data-var="button-active-color">
-          </label>
-          <label class="color-row">
-            <span>Button inaktiv</span>
-            <input type="color" data-var="button-inactive-color">
-          </label>
-          <label class="color-row">
-            <span>Button Hover</span>
-            <input type="color" data-var="button-hover-color">
-          </label>
-        </div>
-
-        <div class="app-theme-group">
-          <h3>Akzente</h3>
-          <label class="color-row">
-            <span>Akzent aktiv</span>
-            <input type="color" data-var="accent-active">
-          </label>
-          <label class="color-row">
-            <span>Akzent Hover</span>
-            <input type="color" data-var="accent-hover">
-          </label>
-          <label class="color-row">
-            <span>Akzent inaktiv</span>
-            <input type="color" data-var="accent-inactive">
-          </label>
-          <label class="color-row">
-            <span>Akzent muted</span>
-            <input type="color" data-var="accent-muted">
-          </label>
-        </div>
-
-        <div class="app-theme-group">
-          <h3>Hintergrund und Text</h3>
-          <label class="color-row">
-            <span>Hintergrund hell</span>
-            <input type="color" data-var="bg-white">
-          </label>
-          <label class="color-row">
-            <span>Hintergrund soft</span>
-            <input type="color" data-var="bg-soft-white">
-          </label>
-          <label class="color-row">
-            <span>Inaktiv</span>
-            <input type="color" data-var="bg-inactive">
-          </label>
-          <label class="color-row">
-            <span>Textfarbe</span>
-            <input type="color" data-var="text-color">
-          </label>
-        </div>
-      </div>
+    <div class="footer-status" id="saveStatus">
+      <span class="status-message">Ready</span>
     </div>
   </div>
 </div>

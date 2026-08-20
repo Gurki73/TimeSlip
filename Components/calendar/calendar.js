@@ -976,8 +976,8 @@ export async function computeAttendanceForRange(startDate, endDate, options = {}
 
     const monthRequests = getMonthRequests(year, monthIndex);
     const shiftAttendanceByType = {};
-    console.log("shiftStatusForDay", shiftStatusForDay);
-    console.log("shiftAttendanceByType", shiftAttendanceByType);
+    // console.log("shiftStatusForDay", shiftStatusForDay);
+    // console.log("shiftAttendanceByType", shiftAttendanceByType);
     if (shiftStatusForDay.early) {
       shiftAttendanceByType.early = computeShiftAttendance('early', day, weekdayIndex, monthRequests, shiftStatusForDay.early, {
         usePresenceState: false,

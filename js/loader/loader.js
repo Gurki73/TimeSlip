@@ -233,3 +233,17 @@ export async function saveFile(api, folderPath, fileName, content) {
         throw err;
     }
 }
+
+// Add to your loader.js
+document.addEventListener('colorsSaved', function (e) {
+    const colorData = e.detail.colors;
+    console.log('Colors saved:', colorData);
+
+    // Apply colors to all components
+    Object.entries(colorData).forEach(([varName, value]) => {
+        document.documentElement.style.setProperty(varName, value);
+    });
+
+    // Save to your backend or localStorage
+    // Your existing save logic here
+});

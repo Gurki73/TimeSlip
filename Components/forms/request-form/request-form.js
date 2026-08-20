@@ -12,6 +12,7 @@ import { createDateRangePicker } from '../../../Components/customDatePicker/cust
 import { createSaveButton } from '../../../js/Utils/saveButton.js';
 import { executeRulechecker, computeRequestDelta } from '../rule-form/ruleChecker.js';
 import { ensureCalendarReady, computeAttendanceForRange, highlightRangeInCalendar, clearCalendarHighlights } from '../../calendar/calendar.js';
+import { renderRequestOverlaps } from './request-overlap.js';
 
 let requestYear = 2000;
 let api;
@@ -420,6 +421,15 @@ function handleDateChange() {
   }
 
   fireWarnings();
+
+  renderRequestOverlaps({
+    container: document.getElementById('request-overlaps'),
+    requests: allRequests,
+    employees: requestEmployees,
+    start,
+    end,
+    currentRequestId: newRequest.id
+  });
 
   if (start && end) {
     scheduleCalendarJump(start, end);

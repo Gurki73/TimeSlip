@@ -15,6 +15,48 @@ import { loadRuleData, saveRuleData, deleteRule as deleteRuleFromDisk, getAllRul
 import { createSaveButton } from '../../../js/Utils/saveButton.js';
 import { confirmAction } from '../../../js/Utils/conformation-dialog.js'
 
+/**
+ * Persisted lifecycle state of a rule.
+ *
+ * These values describe whether the rule exists and participates
+ * in normal rule evaluation.
+ *
+ * Runtime findings such as conflicts, duplicates, incomplete rules,
+ * or outdated dependencies are intentionally NOT stored here.
+ * They are derived from the current data during rule analysis.
+ * 
+ *                  RULE JSON
+ *                    │
+ *                    ▼
+ *             ┌──────────────┐
+ *             │    state     │
+ *             └──────┬───────┘
+ *                    │
+ *         ┌──────────┼──────────┐
+ *         ▼          ▼          ▼
+ *       awake      asleep     deleted
+ *         │          │          │
+ *      evaluate    skip       hidden
+ *         │
+ *         ▼
+ *    RULE ANALYSIS
+ *         │
+ *         ├── duplicate?
+ *         ├── conflict?
+ *         ├── incomplete?
+ *         ├── outdated schedule?
+ *         ├── never false?
+ *         ├── never true?
+ *         ├── outdated roles?
+ */
+export const RULE_STATES = Object.freeze({
+    AWAKE: "awake",
+    ASLEEP: "asleep",
+    DELETED: "deleted",
+});
+
+
+
 // temporary
 import { getCell, getSelect } from './ruleDomAdapter.js';
 const _getElementById = document.getElementById.bind(document);

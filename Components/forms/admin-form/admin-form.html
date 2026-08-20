@@ -1,6 +1,71 @@
+<!-- 
 <div id="tool-container" role="region" aria-label="Admin Tool Panel" tabindex="0" class="admin-panel">
   <h2 class="panel-title noto">⚙️🛠️ Verwaltungs-Werkzeuge</h2>
 
-  <!-- Tools Grid -->
   <section id="tool-grid" class="tool-grid" aria-label="Admin tool actions"></section>
+</div>
+-->
+
+<!-- Components/forms/admin-form/admin-form.html -->
+<!-- 
+  Admin Form Component - Optimized for small screens
+  Part of TimeSlip Admin Tools
+-->
+
+<div class="admin-form-container">
+  <!-- Compact Header -->
+  <div class="admin-header">
+    <h2 class="admin-title">
+      <span class="title-icon">🎨</span>
+      Color Customization
+    </h2>
+    <div class="admin-actions">
+      <button class="btn btn-sm btn-outline" id="resetColorsBtn" type="button" title="Reset to defaults">
+        <span class="btn-icon">↺</span>
+        <span class="btn-label">Reset</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Color Grid - Compact -->
+  <div class="color-grid-compact" id="colorGrid">
+    <!-- Color items will be injected here by admin-form.js -->
+  </div>
+
+  <!-- Mini Preview -->
+  <div class="preview-compact" id="colorPreview">
+    <div class="preview-bar">
+      <span class="preview-label">Preview</span>
+      <span class="preview-badge">live</span>
+    </div>
+    <div class="preview-sample">
+      <div class="sample-header">
+        <span>Sample</span>
+        <span class="sample-badge">Status</span>
+      </div>
+      <div class="sample-body">
+        <p class="sample-text">Preview text</p>
+        <div class="sample-buttons">
+          <span class="sample-btn primary">Primary</span>
+          <span class="sample-btn success">Success</span>
+          <span class="sample-btn danger">Danger</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Compact Footer -->
+  <div class="admin-footer">
+    <div class="footer-status" id="saveStatus">
+      <span class="status-dot"></span>
+      <span class="status-text">Ready</span>
+    </div>
+    <div class="footer-actions">
+      <button class="btn btn-sm btn-secondary" id="cancelChangesBtn" type="button">Cancel</button>
+      <button class="btn btn-sm btn-primary" id="saveColorsBtn" type="button">
+        <span class="btn-icon">💾</span>
+        <span class="btn-label">Save</span>
+      </button>
+    </div>
+  </div>
 </div>

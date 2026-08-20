@@ -1,4 +1,5 @@
 // adminTools.js
+
 import { loadEmojiData, normalizeEmojiData, saveEmojiData } from '../../../js/loader/custom-loader.js';
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
@@ -414,7 +415,7 @@ export async function initEmojiCustomizer() {
     renderAll();
   }
 
-  /* ------------------ MOUSE BEHAVIOR ------------------ */
+
 
   poolGrid.addEventListener("click", (e) => {
     if (!e.target.classList.contains("emoji-customizer-emoji")) return;
@@ -443,7 +444,7 @@ export async function initEmojiCustomizer() {
     });
   });
 
-  /* ------------------ KEYBOARD NAVIGATION ------------------ */
+
   function handleArrowNav(e) {
     const el = e.target;
     if (!el.classList.contains("emoji-customizer-emoji")) return;
@@ -479,7 +480,6 @@ export async function initEmojiCustomizer() {
 
   document.addEventListener("keydown", handleArrowNav);
 
-  /* ------------------ ADD CUSTOM EMOJI ------------------ */
   const blockedEmojis = new Set(['🎭', '⚡', '❓', '💾', '🗑️', '➕', '⊖']);
 
   function splitGraphemes(str) {
@@ -571,8 +571,6 @@ export async function initEmojiCustomizer() {
     }, 250);
   }
 
-
-  /* ------------------ SAVE BUTTON ------------------ */
   saveBtn.addEventListener("click", () => {
     saveEmojiData(adminApi, {
       categories: loaded.categories,

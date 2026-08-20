@@ -812,4 +812,18 @@ table th option[data-is-enabled="false"] {
 .role-color-12 { --role-color: var(--role-12-color) }
 .role-color-13 { --role-color: var(--role-13-color) }
 
+.rule-item[data-rule-state="asleep"] {
+    opacity: 0.4;
+}
 
+.rule-item[data-rule-state="asleep"] .rule-description {
+    font-style: italic;
+}
+
+.rule-item[data-rule-state="deleted"] {
+    display: none;
+}
+
+.rule-item {
+    transition: opacity 180ms ease;
+}
