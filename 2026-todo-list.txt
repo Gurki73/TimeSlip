@@ -171,6 +171,7 @@ admin tools. revive delted employees
 🟡51. ☐ move more to left
 🟡52. ☐ add phönix for mass revive
 🟢53. ☐ fix end date picker
+removed date picker completely and moved date - picker needs to employeeform , new state phoenix ="🐦‍🔥" needs a warning status in employee form
 admin tools.donate
 🟡54. ☐ add an offline alternatove
 🟡55. ☐ make a begging text
