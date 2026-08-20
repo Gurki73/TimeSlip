@@ -1602,57 +1602,123 @@ function fireWarnings() {
   recalcWarnings(saveButtonHeader, cachedRoles, allRequests, rules, requestEmployees);
 }
 
-async function updateRequestRuleWarnings(requests, options = {}) {
-  const { extraRequests = [], isBaseline = false } = options;
+async function updateRequestRuleWarnings(
+  requests,
+  options = {}
+) {
+  const {
+    extraRequests = [],
+    isBaseline = false
+  } = options;
 
-  if (!Array.isArray(requests) || requests.length === 0) return;
+  if (!Array.isArray(requests) || requests.length === 0) {
+    return;
+  }
 
   try {
     rules = await loadRuleData(api);
   } catch (err) {
-    console.warn("⚠️ Failed to load rules for request warnings:", err);
+    console.warn(
+      "⚠️ Failed to load rules for request warnings:",
+      err
+    );
     return;
   }
 
-  const range = getRequestRange([...requests, newRequest]);
-  if (!range) return;
-
-  let attendanceByDate = null;
-  const calendarReady = await ensureCalendarReady(api);
-  if (calendarReady) {
-    attendanceByDate = await computeAttendanceForRange(range.start, range.end, { extraRequests });
-  }
-
-  let ruleStatsDelta;
+  // ------------------------------------------------------------
+  // WHAT-IF
+  // ------------------------------------------------------------
 
   if (!isBaseline && requestBeingEdited) {
-    ruleStatsDelta = await computeRequestDelta(requests, requestBeingEdited, {
-      uiRules: rules,
-      employees: requestEmployees,
-      roles: cachedRoles,
-      extraRequests
-    });
-  } else {
-    const ruleStats = await executeRulechecker(range.start, range.end, requests, {
-      uiRules: rules,
-      employees: requestEmployees,
-      roles: cachedRoles,
-      includePending: true,
-      attendanceByDate
-    });
+    ruleStatsDelta = await computeRequestDelta(
+      requests,
+      requestBeingEdited,
+      {
+        uiRules: rules,
+        employees: requestEmployees,
+        roles: cachedRoles
+      }
+    );
 
-    ruleStatsDelta = {
-      delta: ruleStats,
-      baseline: ruleStats
-    };
+    if (!ruleStatsDelta) {
+      return;
+    }
+
+    const statsForViolations =
+      ruleStatsDelta.futureStats ||
+      ruleStatsDelta.delta ||
+      ruleStatsDelta;
+
+    applyRequestViolations(
+      requests,
+      statsForViolations,
+      { isBaseline }
+    );
+
+    setRuleCheckInfo(
+      buildRuleCheckInfo(ruleStatsDelta)
+    );
+
+    return;
   }
-  const statsForViolations = ruleStatsDelta?.futureStats || ruleStatsDelta?.delta || ruleStatsDelta;
-  applyRequestViolations(requests, statsForViolations, { isBaseline });
+
+  // ------------------------------------------------------------
+  // NORMAL / BASELINE
+  // ------------------------------------------------------------
+
+  const range =
+    getRequestRange(requests);
+
+  if (!range) {
+    return;
+  }
+
+  let attendanceByDate = null;
+
+  const calendarReady =
+    await ensureCalendarReady(api);
+
+  if (calendarReady) {
+    attendanceByDate =
+      await computeAttendanceForRange(
+        range.start,
+        range.end,
+        {
+          extraRequests
+        }
+      );
+  }
+
+  const ruleStats =
+    await executeRulechecker(
+      range.start,
+      range.end,
+      requests,
+      {
+        uiRules: rules,
+        employees: requestEmployees,
+        roles: cachedRoles,
+        includePending: true,
+        attendanceByDate
+      }
+    );
+
+  const ruleStatsDelta = {
+    delta: ruleStats,
+    baseline: ruleStats
+  };
+
+  applyRequestViolations(
+    requests,
+    ruleStats,
+    { isBaseline }
+  );
 
   if (!isBaseline) {
-    setRuleCheckInfo(buildRuleCheckInfo(ruleStatsDelta));
+    setRuleCheckInfo(
+      buildRuleCheckInfo(ruleStatsDelta)
+    );
   }
-
 }
 
 export async function establishBaselineViolations() {
@@ -1755,7 +1821,10 @@ async function runDraftRequestRuleCheck() {
   }
 
   try {
-    await updateRequestRuleWarnings(requests, { extraRequests: [draft] });
+    await updateRequestRuleWarnings(
+      approvedRequests,
+      { extraRequests: [draft] }
+    );
   } finally {
     requestBeingEdited = null;
   }

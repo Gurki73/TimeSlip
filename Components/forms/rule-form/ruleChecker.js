@@ -1,7 +1,6 @@
 // Components\forms\rule-form\ruleChecker.js
 import { runSolver, runSolverPerShift } from './solver.js';
 import { updateRulesPreview } from './translatorMachine.js';
-import { getRequestRange } from '../request-form/request-form.js';
 import { ensureCalendarReady, computeAttendanceForRange } from '../../calendar/calendar.js';
 import { loadRuleData } from '../../../js/loader/rule-loader.js';
 import { loadRoleData } from '../../../js/loader/role-loader.js';
@@ -1139,84 +1138,177 @@ export async function computeRequestDelta(requests, newRequest, options = {}) {
         return null; // fully silent after limit
     }
 
-    const { extraRequests = [], uiRules, employees, roles = [], roleNames = null } = options;
+    const {
+        extraRequests = [],
+        uiRules,
+        employees,
+        roles = [],
+        roleNames = null
+    } = options;
 
     if (!Array.isArray(requests)) {
-        console.warn("[computeRequestDelta] requests is not an array:", requests);
+        console.warn(
+            "[computeRequestDelta] requests is not an array:",
+            requests
+        );
         errorCount++;
         return null;
     }
+
     if (!newRequest) {
-        console.warn("[computeRequestDelta] newRequest missing");
+        console.warn(
+            "[computeRequestDelta] newRequest missing"
+        );
         errorCount++;
         return null;
     }
 
-    if (typeof getRequestRange !== "function") {
-        console.error("[computeRequestDelta] getRequestRange not defined");
-        errorCount++;
-        return null;
+    // The What-If comparison is deliberately limited to
+    // the date range of the new request.
+    const range = {
+        start: normalizeDateInput(newRequest.start),
+        end: normalizeDateInput(newRequest.end)
+    };
+
+    if (!range.start || !range.end || range.start > range.end) {
+        return {
+            baselineStats: {
+                ok: false,
+                failures: []
+            },
+            futureStats: {
+                ok: false,
+                failures: []
+            },
+            added: [],
+            removed: [],
+            unchanged: []
+        };
     }
 
-    const allRequests = [...requests];
-    const range = getRequestRange(allRequests);
-    if (!range) return null;
+    const normalizedExtraRequests =
+        Array.isArray(extraRequests)
+            ? extraRequests
+            : [];
 
-    const normalizedExtraRequests = Array.isArray(extraRequests) ? extraRequests : [];
-    const baselineExtraRequests = normalizedExtraRequests.filter(req => req?.id !== newRequest?.id);
-    const futureExtraRequests = [...baselineExtraRequests, newRequest].filter(Boolean);
+    const baselineExtraRequests =
+        normalizedExtraRequests.filter(
+            req => req?.id !== newRequest?.id
+        );
 
-    // 1️⃣ Build baseline attendance (without the new request)
+    const futureExtraRequests = [
+        ...baselineExtraRequests,
+        newRequest
+    ].filter(Boolean);
+
+    // 1️⃣ Build baseline attendance
+    //    without the new request.
     let baselineAttendanceByDate = null;
     let futureAttendanceByDate = null;
-    const calendarReady = await ensureCalendarReady(api);
+
+    const calendarReady =
+        await ensureCalendarReady(api);
+
     if (calendarReady) {
-        baselineAttendanceByDate = await computeAttendanceForRange(range.start, range.end, {
-            extraRequests: baselineExtraRequests
-        });
-        futureAttendanceByDate = await computeAttendanceForRange(range.start, range.end, {
-            extraRequests: futureExtraRequests
-        });
+        baselineAttendanceByDate =
+            await computeAttendanceForRange(
+                range.start,
+                range.end,
+                {
+                    extraRequests:
+                        baselineExtraRequests
+                }
+            );
+
+        futureAttendanceByDate =
+            await computeAttendanceForRange(
+                range.start,
+                range.end,
+                {
+                    extraRequests:
+                        futureExtraRequests
+                }
+            );
     }
 
-    const baselineStats = await executeRulechecker(range.start, range.end, requests, {
-        uiRules,
-        employees,
-        roles,
-        roleNames,
-        includePending: true,
-        attendanceByDate: baselineAttendanceByDate
-    });
+    // 2️⃣ Baseline:
+    //    existing requests only.
+    const baselineStats =
+        await executeRulechecker(
+            range.start,
+            range.end,
+            requests,
+            {
+                uiRules,
+                employees,
+                roles,
+                roleNames,
+                includePending: true,
+                attendanceByDate:
+                    baselineAttendanceByDate
+            }
+        );
 
-    // 2️⃣ Build future attendance (with newRequest)
-    const futureRequests = [...requests, newRequest];
-    const futureStats = await executeRulechecker(range.start, range.end, futureRequests, {
-        uiRules,
-        employees,
-        roles,
-        roleNames,
-        includePending: true,
-        attendanceByDate: futureAttendanceByDate
-    });
+    // 3️⃣ Future:
+    //    existing requests + new request.
+    const futureRequests = [
+        ...requests,
+        newRequest
+    ];
 
-    // 3️⃣ Compute delta for each violation key
-    const mapFailures = (arr) => new Map(
-        arr.map(f => [`${f.ruleId}_${f.scope}_${f.date ?? f.weekNumber}_${f.subjectRoles.join(',')}`, f])
-    );
+    const futureStats =
+        await executeRulechecker(
+            range.start,
+            range.end,
+            futureRequests,
+            {
+                uiRules,
+                employees,
+                roles,
+                roleNames,
+                includePending: true,
+                attendanceByDate:
+                    futureAttendanceByDate
+            }
+        );
 
-    const baselineMap = mapFailures(baselineStats.failures);
-    const futureMap = mapFailures(futureStats.failures);
+    // 4️⃣ Compute delta for each violation key.
+    const mapFailures = (arr) =>
+        new Map(
+            arr.map(f => [
+                `${f.ruleId}_${f.scope}_${f.date ?? f.weekNumber}_${f.subjectRoles.join(',')}`,
+                f
+            ])
+        );
+
+    const baselineMap =
+        mapFailures(baselineStats.failures);
+
+    const futureMap =
+        mapFailures(futureStats.failures);
 
     const delta = [];
-    const allKeys = new Set([...baselineMap.keys(), ...futureMap.keys()]);
+
+    const allKeys = new Set([
+        ...baselineMap.keys(),
+        ...futureMap.keys()
+    ]);
 
     allKeys.forEach(key => {
-        const baseline = baselineMap.get(key);
-        const future = futureMap.get(key);
+        const baseline =
+            baselineMap.get(key);
 
-        const baselineTotal = baseline?.total ?? 0;
-        const futureTotal = future?.total ?? 0;
-        const diff = futureTotal - baselineTotal;
+        const future =
+            futureMap.get(key);
+
+        const baselineTotal =
+            baseline?.total ?? 0;
+
+        const futureTotal =
+            future?.total ?? 0;
+
+        const diff =
+            futureTotal - baselineTotal;
 
         if (diff !== 0) {
             delta.push({
@@ -1224,15 +1316,34 @@ export async function computeRequestDelta(requests, newRequest, options = {}) {
                 baselineTotal,
                 futureTotal,
                 delta: diff,
-                type: future?.type ?? baseline?.type ?? 'UNKNOWN'
+                type:
+                    future?.type ??
+                    baseline?.type ??
+                    'UNKNOWN'
             });
         }
     });
 
-    console.log("baseline failures:", baselineStats.failures);
-    console.log("future failures:", futureStats.failures);
-    console.log("delta:", delta);
-    return { baselineStats, futureStats, delta };
+    console.log(
+        "baseline failures:",
+        baselineStats.failures
+    );
+
+    console.log(
+        "future failures:",
+        futureStats.failures
+    );
+
+    console.log(
+        "delta:",
+        delta
+    );
+
+    return {
+        baselineStats,
+        futureStats,
+        delta
+    };
 }
 
 // Add this function to your file (after createEmptyWeekCube function)
@@ -1528,7 +1639,7 @@ export function compareCubes(cube1, cube2, label1 = 'Cube 1', label2 = 'Cube 2')
 // Add this function to your file near the top with other utilities
 
 /**
- * Auto-log week 2 cube for debugging - call this after building weekly cubes
+ * Auto-log week 2 cube for debugging - call this after building weekly cubeapproveds
  * @param {Array} weeks - Array of week objects with cube data
  * @param {Object} options - Logging options
  */
