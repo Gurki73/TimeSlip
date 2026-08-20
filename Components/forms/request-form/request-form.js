@@ -1614,7 +1614,7 @@ async function updateRequestRuleWarnings(requests, options = {}) {
     return;
   }
 
-  const range = getRequestRange(requests);
+  const range = getRequestRange([...requests, newRequest]);
   if (!range) return;
 
   let attendanceByDate = null;
