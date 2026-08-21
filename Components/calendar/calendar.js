@@ -1040,12 +1040,23 @@ function applyRuleWarnings(ruleStats) {
     return `Regel ${failure.ruleId}: ${typeLabel} ${roleLabel}, ist = ${actual}, soll = ${expected}`;
   };
 
+  const createViolationIcon = (failure) => {
+    const icon = document.createElement('span');
+    icon.classList.add('violation-icon');
+    icon.textContent = failure.type === 'TOO_MANY' ? '⚠️' : '🚨';
+    icon.title = buildViolationTooltip(failure);
+    return icon;
+  };
+
   ruleStats.failures.forEach(failure => {
     const key = [
       failure.scope,
       failure.ruleId,
       failure.type,
-      failure.scope === 'daily' ? failure.date : failure.weekNumber
+      failure.scope === 'daily' || failure.scope === 'shiftly' || failure.scope === 'shift'
+        ? failure.date
+        : failure.weekNumber,
+      failure.shiftType || failure.shift || ''
     ].join('|');
     if (seen.has(key)) return;
     seen.add(key);
@@ -1053,23 +1064,30 @@ function applyRuleWarnings(ruleStats) {
     if (failure.scope === 'weekly') {
       const container = document.getElementById(`week-${failure.weekNumber}-warning`);
       if (!container) return;
-      const icon = document.createElement('span');
-      icon.classList.add('violation-icon');
-      icon.textContent = failure.type === 'TOO_MANY' ? '⚠️' : '🚨';
-      icon.title = buildViolationTooltip(failure);
-      container.appendChild(icon);
+      container.appendChild(createViolationIcon(failure));
     }
 
     if (failure.scope === 'daily') {
       const warningEl = document.querySelector(`[data-date-warning="${failure.date}"]`);
       if (!warningEl) return;
-      const icon = document.createElement('span');
-      icon.classList.add('violation-icon');
-      icon.textContent = failure.type === 'TOO_MANY' ? '⚠️' : '🚨';
-      icon.title = buildViolationTooltip(failure);
-      warningEl.appendChild(icon);
+      warningEl.appendChild(createViolationIcon(failure));
+    }
+
+    if (failure.scope === 'shiftly' || failure.scope === 'shift') {
+      const shiftType = failure.shiftType || failure.shift || failure.timeframe;
+      if (!['early', 'day', 'late'].includes(shiftType)) return;
+
+      const warningEl = document.querySelector(
+        `[data-shift-warning="${failure.date}|${shiftType}"]`
+      );
+      if (!warningEl) return;
+      warningEl.prepend(createViolationIcon(failure));
     }
   });
+}
+
+function addShiftWarningAnchor(shiftElement, date, shiftType) {
+  shiftElement.dataset.shiftWarning = `${date}|${shiftType}`;
 }
 function getUsedShiftsInWeek(officeDays) {
   let isEarly = false, isDay = false, isLate = false;
@@ -1340,6 +1358,24 @@ function buildStaticSolverRules(ruleset) {
   return { static: staticRules, flexible: [] };
 }
 
+function buildDailySolverRules(ruleset) {
+  const empty = { static: [], flexible: [] };
+  if (!ruleset) return empty;
+
+  const dailyRules = Array.isArray(ruleset.daily) ? ruleset.daily : [];
+  return {
+    static: dailyRules.filter(rule => {
+      const cond = rule?.dominantCondition;
+      return String(cond?.roleLogicOperator || '').toUpperCase() === 'TOTAL'
+        && Array.isArray(cond?.subjectRoles)
+        && cond.subjectRoles.length > 0
+        && Array.isArray(cond?.timeframeSlots)
+        && cond.timeframeSlots.some(slot => typeof slot === 'number');
+    }),
+    flexible: []
+  };
+}
+
 function mapSolverMovesToReassignments(moves, matches) {
   const result = {};
   if (!Array.isArray(moves) || !Array.isArray(matches) || matches.length < 1) return result;
@@ -1389,6 +1425,48 @@ function mapSolverMovesToReassignments(moves, matches) {
   });
 
   return result;
+}
+
+function mapDailySolverMovesToReassignments(moves, shiftMatchesByType) {
+  const result = { early: {}, day: {}, late: {} };
+  if (!Array.isArray(moves)) return result;
+
+  moves.forEach(move => {
+    for (const shiftType of ['early', 'day', 'late']) {
+      const mapped = mapSolverMovesToReassignments(
+        [move],
+        shiftMatchesByType?.[shiftType]
+      );
+      if (!Object.keys(mapped).length) continue;
+
+      Object.assign(result[shiftType], mapped);
+      break;
+    }
+  });
+
+  return result;
+}
+
+function logSolverIssues(date, scope, result) {
+  const results = scope === 'shift'
+    ? Object.entries(result || {})
+    : [[scope, result]];
+  const issues = results
+    .map(([timeframe, solverResult]) => ({
+      timeframe,
+      stopReason: solverResult?.stopReason,
+      moves: solverResult?.moves?.length ?? 0,
+      warnings: solverResult?.warnings?.length ?? 0
+    }))
+    .filter(entry => entry.moves > 0 || entry.warnings > 0 || entry.stopReason !== 'solved');
+
+  if (issues.length) {
+    console.info('[Calendar][Solver] SOLVER_ISSUE', {
+      date,
+      scope,
+      issues
+    });
+  }
 }
 
 function populateShift(type, shift, day, index, monthRequests, reassignments = null, matchesOverride = null) {
@@ -1745,7 +1823,7 @@ function renderDayCell(day, index, shiftStatusForDay, usedShifts, monthRequests,
   }
 
   // 👩‍💼 Shifts + rule validation
-  const shiftResult = createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts);
+  const shiftResult = createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts, fullDate);
   dayCell.appendChild(shiftResult.shifts);
   if (shiftResult?.shiftAttendanceByType && attendanceByDate) {
     const roleCount = Array.isArray(calendarRoles) && calendarRoles.length > 0
@@ -1771,7 +1849,7 @@ function renderDayCell(day, index, shiftStatusForDay, usedShifts, monthRequests,
   return { cell: dayCell, render: true, attendance };
 }
 
-function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts) {
+function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts, fullDate) {
 
   /*
   in an attendance aray [ main, secondary, tertiary]
@@ -1855,6 +1933,12 @@ function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts) 
   }
 
   const solverRules = buildStaticSolverRules(machineRuleSet);
+  const dailySolverRules = buildDailySolverRules(machineRuleSet);
+  const dailyAttendance = createEmptyAttendance();
+  Object.values(shiftAttendanceByType).forEach(attendance => {
+    mergeAttendance(dailyAttendance, attendance);
+  });
+
   let solverResult = null;
   if (solverRules.static.length || solverRules.flexible.length) {
     try {
@@ -1863,8 +1947,29 @@ function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts) 
         day: shiftAttendanceByType.day || createEmptyAttendance(),
         late: shiftAttendanceByType.late || createEmptyAttendance()
       }, solverRules);
+      logSolverIssues(day, 'shift', solverResult);
     } catch (error) {
       console.warn('Solver failed for day shift:', error);
+    }
+  }
+
+  let dailySolverResult = null;
+  if (dailySolverRules.static.length || dailySolverRules.flexible.length) {
+    try {
+      console.info('[Calendar][Solver] DAILY_SOLVER_REQUESTED', {
+        date: day,
+        weekday: index,
+        staticRules: dailySolverRules.static.length,
+        flexibleRules: dailySolverRules.flexible.length
+      });
+      dailySolverResult = runSolver({
+        timeframe: index,
+        attendance: dailyAttendance,
+        rules: dailySolverRules
+      });
+      logSolverIssues(day, 'daily', dailySolverResult);
+    } catch (error) {
+      console.warn('Daily solver failed for day:', error);
     }
   }
 
@@ -1873,6 +1978,13 @@ function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts) 
     day: mapSolverMovesToReassignments(solverResult?.day?.moves, shiftMatchesByType.day),
     late: mapSolverMovesToReassignments(solverResult?.late?.moves, shiftMatchesByType.late)
   };
+  const dailyReassignmentsByShift = mapDailySolverMovesToReassignments(
+    dailySolverResult?.moves,
+    shiftMatchesByType
+  );
+  Object.keys(reassignmentsByShift).forEach(shiftType => {
+    Object.assign(reassignmentsByShift[shiftType], dailyReassignmentsByShift[shiftType]);
+  });
 
   if (usedShifts.isEarly) {
     const { shiftElement: morningShift, attendance: attendanceMorning } =
@@ -1884,6 +1996,7 @@ function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts) 
         reassignmentsByShift.early,
         shiftMatchesByType.early
       );
+    addShiftWarningAnchor(morningShift, fullDate, 'early');
     mergeAttendance(summedAttendance, attendanceMorning);
 
     setShiftColor(morningShift, 'early', officeShiftStatus.early && !isOfficeClosed);
@@ -1900,6 +2013,7 @@ function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts) 
         reassignmentsByShift.day,
         shiftMatchesByType.day
       );
+    addShiftWarningAnchor(dayShift, fullDate, 'day');
     mergeAttendance(summedAttendance, attendanceDay);
     setShiftColor(dayShift, 'day', officeShiftStatus.day && !isOfficeClosed);
     shifts.appendChild(dayShift);
@@ -1915,6 +2029,7 @@ function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts) 
         reassignmentsByShift.late,
         shiftMatchesByType.late
       );
+    addShiftWarningAnchor(lateShift, fullDate, 'late');
     mergeAttendance(summedAttendance, attendanceAfternoon);
     setShiftColor(lateShift, 'late', officeShiftStatus.late && !isOfficeClosed);
     shifts.appendChild(lateShift);

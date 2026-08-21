@@ -772,17 +772,47 @@ export function executeRuleset(
             });
         });
 
-        cursor = addDays(cursor, 1);
-    }
-
-    if (normalizedRules.shiftly.length) {
+        const shiftTypes = ['early', 'day', 'late'];
         normalizedRules.shiftly.forEach(rule => {
-            skipped.push({
-                ruleId: rule.id,
-                scope: 'shiftly',
-                reason: 'NOT_IMPLEMENTED'
+            const slots = rule?.dominantCondition?.timeframeSlots || [];
+            const shiftSlots = slots.filter(slot => shiftTypes.includes(slot));
+            if (!shiftSlots.length) return;
+
+            shiftSlots.forEach(shiftType => {
+                const shiftIndex = shiftTypes.indexOf(shiftType);
+                const shiftCube = createEmptyWeekCube(ROLE_COUNT);
+                for (let role = 0; role < ROLE_COUNT; role++) {
+                    shiftCube[0][0][role] = dayAttendance?.[role]?.[shiftIndex] ?? 0;
+                }
+
+                const shiftRule = {
+                    ...rule,
+                    dominantCondition: {
+                        ...rule.dominantCondition,
+                        timeframeSlots: [0]
+                    },
+                    submissiveCondition: rule.submissiveCondition
+                        ? { ...rule.submissiveCondition, timeframeSlots: [0] }
+                        : rule.submissiveCondition
+                };
+                const violations = evaluateRule(shiftRule, shiftCube);
+                violations.forEach(v => {
+                    failures.push({
+                        ruleId: rule.id,
+                        scope: 'shiftly',
+                        date: key,
+                        weekdayIndex: dayIndex,
+                        shiftType,
+                        type: v.type,
+                        total: v.total,
+                        limit: v.limit,
+                        subjectRoles: rule?.dominantCondition?.subjectRoles || []
+                    });
+                });
             });
         });
+
+        cursor = addDays(cursor, 1);
     }
 
     if (normalizedRules.special.length) {

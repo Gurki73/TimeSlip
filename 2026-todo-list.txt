@@ -74,121 +74,87 @@ we are ready for beta when:
 → Validate correct date boundaries.
 → Prevent invalid end-date states.
 
-
-🟢 Beta / do soon -> Core things that directly affect whether the prototype feels trustworthy.
-Tasks:1, 2, 2.1, 3, 4, 5, 6, 7, 8, 10, 12, 19, 20, 21, 22, 23, 32, 36, 40, 41, 53
-🟡 Useful but later -> Good UX improvements, polish, or functionality that isn't essential for the first beta.
-Tasks: 9, 11, 13, 15, 16, 17, 18, 24, 25, 26, 28, 29, 30, 31, 33, 34, 35, 37, 38, 42, 43, 46, 47, 50, 51, 52, 54, 55, 56, 62, 63, 64
-🔵 Debugging / developer tooling -> Things whose primary value is helping us understand/debug the system, rather than being a customer-facing feature.
-Tasks: 14, 44, 45
-🟣 Future Gurki / ideas-> Interesting ideas that shouldn't distract us from getting the core application stable.
-27, 39, 48, 49, 57, 58, 59, 60, 61
-🔴 Probably delete / reconsider -> Things that currently look duplicated, questionable, or whose purpose needs to be challenged before implementation.
-Tasks: 65, 66, 67
-
 ---------------------------------------------------------------
 Legend:
 ☐  open           🚧 in work      ✅ finished   ❌ cannceld
 🔥 ship-blocker   🧩 beta-value   🧠 post-beta  👀 review-needed
 
-legend:
-🟢 1.  ✅ fix 180° chevron
-navigation
-
-welcome page
-🟢 2.  ✅ maxamize minimize on load, inject form max min heights
-🟢 2.1 ✅ hide fn hint isnt working
 
 calendar:
-🟢 3. ✅ highlight day or range for requests or warnings
-🟢 4. ☐ check if role reasignments are rendered
-🟢 5. ✅ integrtate shift icon on closed days
+🟢 1. ☐ check if role reasignments are rendered
 
-requests:
-🟢 6. ✅ add higlight period for new requests
-🟢 7. ✅ add highlight period for listed request
 employees:
-🟢8. ✅ fit privacy warning in its conatianer
-🟡9. ☐ add sample mode style to delete button in pay-updateRuleModel
-🟢10. ☐ explain warnings for corrupt shift assignments
-🟡11. ☐ switch from label to something fitting for style ( regular shedule )
-
-roles:
-🟢 12. ☐ check tranparence or opacity for table
+🟡 2. ☐ add sample mode style to delete button in pay-updateRuleModel
+🟡 3. ☐ switch from label to something fitting for style ( regular shedule )
 
 ruleset:
-🟡13. 👀 elipsses style for awake and asleep in sample model
-🔵14. ☐ check complex rules
-🟡15. ☐ add chip for weekdays ( color )
-🟡16. ☐ add chip for shift ( icon + color)
-🟡17. ☐ extend team marker ( maybe with ellipses if no space)
-🟡18. ☐ add old new to heatmap
+🟡 4. 👀 elipsses style for awake and asleep in sample model
+🔵 5. ☐ check complex rules
+🟡 6. ☐ add chip for weekdays ( color )
+🟡 7. ☐ add chip for shift ( icon + color)
+🟡 8. ☐ extend team marker ( maybe with ellipses if no space)
+🟡 9. ☐ add old new to heatmap
 ruleset-checker:
-🟢 19. ☐ roles are checked for day-shift instead of hall day
-🟢 20. ✅ same roles are warned twice
-
+🟢 10. ☐ roles are checked for day-shift instead of hall day
 
 calendar-settings:
-🟢21. ✅ fix filling of minimized shifts
-🟢22. ☐ open/close icons dont match status for weekdays 
-🟢23. ✅ check opacity for collapsed lists 
-🟡24. ☐ add tool tip texts for icons "open" and "closed" (icons are pseudo elements, workarround needed)
-🟡25. ☐ adjust height for company holidays 
-🟡26. ☐ (include bridge days in company holiday)
-🟣27. ☐ (auto remove available days off for employees depending an regular shedule ) 
+🟢11. ☐ open/close icons dont match status for weekdays 
+🟡12. ☐ add tool tip texts for icons "open" and "closed" (icons are pseudo elements, workarround needed)
+🟡13. ☐ adjust height for company holidays 
+🟡14. ☐ (include bridge days in company holiday)
+🟣15. ☐ (auto remove available days off for employees depending an regular shedule ) 
 
 admin tools:
 admin tools.emojies: 
-🟡28. ☐ add a input for add an emojies
-🟡29. ☐ test saving emojies
-🟡30. ☐ fix animation (z-index?) for animation
-🟡31. ☐ improove hint for left and right mouse buttons
+🟡16. ☐ add a input for add an emojies
+🟡17. ☐ test saving emojies
+🟡18. ☐ fix animation (z-index?) for animation
+🟡19. ☐ improove hint for left and right mouse buttons
 admin tools.color:
-🟢32. ☐ custom color picker looses gradient when picking, roles
-🟡33. ☐ use actual role names and icons in preview
-🟡34. ☐ use actual team names in role preview
-🟡35. ☐ center table and picker in form
-🟢36. ☐ fix the tabulators
-🟡37. ☐ finish layout for calandar color cusmasation
-🟡38. ☐ finish th layout for button and background  colors
-🟣39. ☐ maybe a dialog simular to screen settings in window with a countdown keep changes?
+🟢20. ☐ custom color picker looses gradient when picking, roles
+🟡21. ☐ use actual role names and icons in preview
+🟡22. ☐ use actual team names in role preview
+🟡23. ☐ center table and picker in form
+🟢24. ☐ fix the tabulators
+🟡25. ☐ finish layout for calandar color cusmasation
+🟡26. ☐ finish th layout for button and background  colors
+🟣27. ☐ maybe a dialog simular to screen settings in window with a countdown keep changes?
 admin tools.auto save
-🟢40. ☐ disable are you sure dialogs
-🟢41.☐ replace dirty state with autosave in shared state save button
+🟢28. ☐ disable are you sure dialogs
+🟢29.☐ replace dirty state with autosave in shared state save button
 admin tools.clear cache... 
-🟡42. ✅ use german language for dialog buttons ok and cannceld
-🟡43. ☐ (maybe show current cache?)
+🟡30. ☐ (maybe show current cache?)
 admin tool.ruleset-settings
-🔵44. ☐ gather ideas
-🔵45. ☐ build prilimary UI
+🔵31. ☐ gather ideas
+🔵32. ☐ build prilimary UI
 admin tools.calendar settings
-🟡46. ☐ reuse options from main menu
-🟡47. ☐ build lay out 
-🟣48. ☐ disable sample mode 
-🟣49. ☐ discuss if needed anymore
+🟡33. ☐ reuse options from main menu
+🟡34. ☐ build lay out 
+🟣35. ☐ disable sample mode 
+🟣36. ☐ discuss if needed anymore
 admin tools. revive delted employees
-🟡50. ☐ add sample
-🟡51. ☐ move more to left
-🟡52. ☐ add phönix for mass revive
-🟢53. ☐ fix end date picker
+🟡37. ☐ add sample
+🟡38. ☐ move more to left
+🟡39. ☐ add phönix for mass revive
+🟢40. ☐ fix end date picker
 removed date picker completely and moved date - picker needs to employeeform , new state phoenix ="🐦‍🔥" needs a warning status in employee form
 admin tools.donate
-🟡54. ☐ add an offline alternatove
-🟡55. ☐ make a begging text
+🟡41. ☐ add an offline alternatove
+🟡42. ☐ make a begging text
 
 minx:
-🟡56. ☐ allow state dirty for sample save button(?)
-🟣57. ☐ update version from 1.x.x to 2.0.0 dev to prototype
-🟣58. ☐ publish as prototype on itch.icon
-🟣59. ☐ make basic marketing article for itch.icon
-🟣60. ☐ plan you-tube tutorial
+🟡43. ☐ allow state dirty for sample save button(?)
+🟣44. ☐ update version from 1.x.x to 2.0.0 dev to prototype
+🟣45. ☐ publish as prototype on itch.icon
+🟣46. ☐ make basic marketing article for itch.icon
+🟣47. ☐ plan you-tube tutorial
 
 help page:
-🟣61. ☐ write down the thoughts about  heros journey and save the calculations
-🟡62. ☐ update Glossary
-🟡63. ☐ build a skeleton for screenshots
-🟡64. ☐ highlight in nav when hover/click in help
+🟣48. ☐ write down the thoughts about  heros journey and save the calculations
+🟡49. ☐ update Glossary
+🟡50. ☐ build a skeleton for screenshots
+🟡51. ☐ highlight in nav when hover/click in help
 
-🔴65. ☐ “Collapsed list opacity: make adjustable via color/appearance settings.
-🔴66. ☐ Should respect different screen brightness, resolution, and client monitors.
-🔴67. ☐ Currently hardcoded; consider adding a cached local setting for transparency once prototype is stable.”
+🔴52. ☐ “Collapsed list opacity: make adjustable via color/appearance settings.
+🔴53. ☐ Should respect different screen brightness, resolution, and client monitors.
+🔴54. ☐ Currently hardcoded; consider adding a cached local setting for transparency once prototype is stable.”

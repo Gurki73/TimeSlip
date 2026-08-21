@@ -192,6 +192,30 @@ function solveShift({ timeframe, attendance, rules, options = {} }) {
     }
 
     let attendanceClone = cloneAttendance(attendance);
+    const initialFlexDemand = shrinkFlexDemand(rules.flexible, attendanceClone, timeframe);
+    const initialEffectiveDemand = mergeDemand(staticDemand, initialFlexDemand);
+    const initialRoleStatus = computeRoleFlexibility(attendanceClone, initialEffectiveDemand);
+
+    if (!initialRoleStatus.some(role => role.deficit > 0 || role.surplus > 0)) {
+        return {
+            status: 'ok',
+            demand: { static: staticDemand, effective: initialEffectiveDemand },
+            feasibility,
+            roleStatus: initialRoleStatus,
+            moves: [],
+            finalAttendance: attendanceClone,
+            warnings: [],
+            stopReason: 'solved'
+        };
+    }
+
+    console.info(`${logPrefix} VIOLATION_FOUND`, {
+        deficits: initialRoleStatus.filter(role => role.deficit > 0)
+            .map(role => ({ roleId: role.roleId, amount: role.deficit })),
+        surpluses: initialRoleStatus.filter(role => role.surplus > 0)
+            .map(role => ({ roleId: role.roleId, amount: role.surplus }))
+    });
+
     let moves = [];
     let steps = 0;
     let stopReason = 'stuck';
@@ -228,7 +252,12 @@ function solveShift({ timeframe, attendance, rules, options = {} }) {
                             to: { roleId: targetRole.roleId, rank: toRank },
                             reason: targetRole.deficit > 0 ? 'deficit' : 'surplus'
                         });
-                        // console.info(`${logPrefix} Move committed: from role ${donorRoleId} rank ${fromRank} -> role ${targetRole.roleId} rank ${toRank}.`);
+                        console.info('[Solver] ROLE_MOVED', {
+                            timeframe,
+                            from: { roleId: donorRoleId, rank: fromRank },
+                            to: { roleId: targetRole.roleId, rank: toRank },
+                            reason: targetRole.deficit > 0 ? 'deficit' : 'surplus'
+                        });
                         return true;
                     }
                 }
@@ -272,6 +301,17 @@ function solveShift({ timeframe, attendance, rules, options = {} }) {
         attendanceClone,
         mergeDemand(staticDemand, shrinkFlexDemand(rules.flexible, attendanceClone, timeframe))
     );
+
+    if (stopReason !== 'solved') {
+        console.info(`${logPrefix} NO_MOVE`, {
+            stopReason,
+            moves: moves.length,
+            remainingDeficits: finalRoleStatus.filter(role => role.deficit > 0)
+                .map(role => ({ roleId: role.roleId, amount: role.deficit })),
+            remainingSurpluses: finalRoleStatus.filter(role => role.surplus > 0)
+                .map(role => ({ roleId: role.roleId, amount: role.surplus }))
+        });
+    }
 
     //console.info(`${logPrefix} Stop reason: ${stopReason}.`);
     /*
