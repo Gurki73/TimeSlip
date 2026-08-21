@@ -1,116 +1,190 @@
-<!-- Components/forms/admin-form/tools/color-customization.html -->
-<!-- 
-  Color Customization Tool - Admin Form Component
-  Part of TimeSlip Admin Tools
-  Interfaces: loader.js, assets/css/colors.css
-  Styles: admin-form.css
-  Scripts: admin-form.js, colorTheme.js
--->
-
-<div class="color-customization-container" role="main" aria-label="Color Customization Tool">
-  <!-- Header Section -->
-  <div class="color-customization-header">
-    <h2 class="color-customization-title">
-      <span class="title-icon" aria-hidden="true">🎨</span>
-      Color Customization
-    </h2>
-    <p class="color-customization-subtitle">
-      Customize the visual appearance of the TimeSlip interface
-    </p>
-    <div class="header-actions">
-      <button class="btn btn-secondary btn-sm" id="resetColorsBtn" type="button">
-        <span class="btn-icon" aria-hidden="true">↺</span> Reset to Defaults
+<!-- COLOR CUSTOMIZATION TAB LAYOUT -->
+<div id="color-theme-container">
+  <div class="color-tabulator">
+    <!-- Tab Headers -->
+    <div class="tab-headers flex-row">
+      <button class="tab-header active" data-tab="roles">
+        Aufgaben
       </button>
-    </div>
-  </div>
-
-  <!-- Color Categories -->
-  <div class="color-categories">
-    <!-- Primary Colors -->
-    <div class="color-category" data-category="primary">
-      <div class="category-header">
-        <h3 class="category-title">Primary Colors</h3>
-        <span class="category-badge">Main Interface</span>
-      </div>
-      <div class="color-grid" data-category="primary">
-        <!-- Color items dynamically generated -->
-      </div>
-    </div>
-
-    <!-- Status Colors -->
-    <div class="color-category" data-category="status">
-      <div class="category-header">
-        <h3 class="category-title">Status Colors</h3>
-        <span class="category-badge">Feedback &amp; States</span>
-      </div>
-      <div class="color-grid" data-category="status">
-        <!-- Color items dynamically generated -->
-      </div>
-    </div>
-
-    <!-- Text Colors -->
-    <div class="color-category" data-category="text">
-      <div class="category-header">
-        <h3 class="category-title">Text Colors</h3>
-        <span class="category-badge">Typography</span>
-      </div>
-      <div class="color-grid" data-category="text">
-        <!-- Color items dynamically generated -->
-      </div>
-    </div>
-
-    <!-- Background Colors -->
-    <div class="color-category" data-category="background">
-      <div class="category-header">
-        <h3 class="category-title">Background Colors</h3>
-        <span class="category-badge">Surfaces &amp; Containers</span>
-      </div>
-      <div class="color-grid" data-category="background">
-        <!-- Color items dynamically generated -->
-      </div>
-    </div>
-  </div>
-
-  <!-- Preview Section -->
-  <div class="color-preview-section">
-    <div class="preview-header">
-      <h3 class="preview-title">Live Preview</h3>
-      <span class="preview-badge">Real-time updates</span>
-    </div>
-    <div class="preview-container" id="colorPreview">
-      <div class="preview-card">
-        <div class="preview-header-bar">
-          <span class="preview-title-text">Sample Header</span>
-          <span class="preview-status-badge">Status</span>
-        </div>
-        <div class="preview-content">
-          <p class="preview-text">This is a sample text to preview the color scheme.</p>
-          <div class="preview-actions">
-            <button class="preview-btn preview-btn-primary" type="button">Primary</button>
-            <button class="preview-btn preview-btn-secondary" type="button">Secondary</button>
-            <button class="preview-btn preview-btn-success" type="button">Success</button>
-            <button class="preview-btn preview-btn-danger" type="button">Danger</button>
-          </div>
-          <div class="preview-status-bar">
-            <span class="preview-status success">Success</span>
-            <span class="preview-status warning">Warning</span>
-            <span class="preview-status error">Error</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Actions Footer -->
-  <div class="color-customization-footer">
-    <div class="footer-actions">
-      <button class="btn btn-outline-secondary" id="cancelChangesBtn" type="button">Cancel</button>
-      <button class="btn btn-primary" id="saveColorsBtn" type="button">
-        <span class="btn-icon" aria-hidden="true">💾</span> Save Changes
+      <button class="tab-header" data-tab="calendar">
+        Kalender
       </button>
+      <button class="tab-header" data-tab="app">
+        App
+      </button>
+
+      <button class="mybutton noto">💾</button>
+
     </div>
-    <div class="footer-status" id="saveStatus">
-      <span class="status-message">Ready</span>
+
+    <!-- Tab Contents -->
+    <div class="tab-contents table-scroll">
+      <div class="tab-content active" id="tab-roles">
+        <table class="color-role-table color-table" aria-label="Aufgaben und Teams Farbzuordnung">
+          <thead>
+            <tr>
+              <th><span class="teamname-editable" data-team="blue">Team Blau</span></th>
+              <th><span class="teamname-editable" data-team="green">Team Grün</span></th>
+              <th><span class="teamname-editable" data-team="red">Team Rot</span></th>
+              <th><span class="teamname-editable" data-team="black">Team Schwarz</span></th>
+              <th>Ausbildung</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td data-role="1">
+                <span class="role-index" aria-hidden="true">#1</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 1" />
+              </td>
+              <td data-role="4">
+                <span class="role-index" aria-hidden="true">#4</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 4" />
+              </td>
+              <td data-role="7">
+                <span class="role-index" aria-hidden="true">#7</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 7" />
+              </td>
+              <td data-role="10">
+                <span class="role-index" aria-hidden="true">#10</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 10" />
+              </td>
+              <td data-role="13">
+                <span class="role-index" aria-hidden="true">#13 Azubi</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe Azubi" />
+              </td>
+            </tr>
+            <tr>
+              <td data-role="2">
+                <span class="role-index" aria-hidden="true">#2</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 2" />
+              </td>
+              <td data-role="5">
+                <span class="role-index" aria-hidden="true">#5</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 5" />
+              </td>
+              <td data-role="8">
+                <span class="role-index" aria-hidden="true">#8</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 8" />
+              </td>
+              <td data-role="11">
+                <span class="role-index" aria-hidden="true">#11</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 11" />
+              </td>
+              <td></td>
+            </tr>
+            <tr>
+              <td data-role="3">
+                <span class="role-index" aria-hidden="true">#3</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 3" />
+              </td>
+              <td data-role="6">
+                <span class="role-index" aria-hidden="true">#6</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 6" />
+              </td>
+              <td data-role="9">
+                <span class="role-index" aria-hidden="true">#9</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 9" />
+              </td>
+              <td data-role="12">
+                <span class="role-index" aria-hidden="true">#12</span>
+                <div class="role-preview" aria-hidden="true"></div>
+                <input type="color" aria-label="Farbe für Aufgabe 9" />
+              </td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+
+      <div class="tab-content flex-row" id="tab-calendar">
+
+        <div class="calendar-preview">
+
+          <div class="calendar-grid">
+
+            <!-- Header -->
+            <div class="cell header"></div>
+            <div class="cell header">Mo</div>
+            <div class="cell header">Di</div>
+            <div class="cell header">Mi</div>
+            <div class="cell header">Do</div>
+            <div class="cell header">Fr</div>
+            <div class="cell header">Sa</div>
+            <div class="cell header">So</div>
+            <div class="cell header">Farbe</div>
+
+            <!-- Werktag -->
+            <div class="cell label">Werktag</div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell weekend"></div>
+            <div class="cell weekend"></div>
+            <div class="cell"><input type="color"></div>
+
+            <!-- Samstag -->
+            <div class="cell label">Samstag</div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell active"></div>
+            <div class="cell"></div>
+            <div class="cell"><input type="color"></div>
+
+            <!-- Sonntag & Feiertag -->
+            <div class="cell label">Sonn & Feiertag</div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell active"></div>
+            <div class="cell"><input type="color"></div>
+
+            <!-- Geschlossen -->
+            <div class="cell label">Geschlossen</div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell weekend"></div>
+            <div class="cell weekend"></div>
+            <div class="cell"><input type="color"></div>
+
+          </div>
+        </div>
+
+        <div class="preview-day-cell">
+          <span> header</span>
+          <span> earliy shift </span> <input type="color"> Frühschicht</input>
+          <span> earliy day </span> <input type="color"> Tagschicht</input>
+          <span> earliy late </span> <input type="color"> Spätschicht</input>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-app">
+        <!-- App button/background/text color pickers go here -->
+      </div>
     </div>
   </div>
 </div>

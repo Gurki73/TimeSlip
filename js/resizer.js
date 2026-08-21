@@ -11,6 +11,7 @@ const formHeightLookup = {
 };
 
 const MIN_BOTTOM_PX = Math.max(150, window.innerHeight * 0.15);
+const MIN_TOP_PX = 100;
 
 let isDragging = false;
 let currentResizer = null;
@@ -23,6 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const rightPanel = document.getElementById('right-panel');
   const leftPanel = document.getElementById('left-panel');
   const resizeButton = document.getElementById('resize-toggle');
+
+  applyBottomHeight(rightPanel.getBoundingClientRect().height * 0.25);
 
   resizeButton.addEventListener('click', () => {
     const isExpanded = leftPanel.classList.toggle('expanded');
@@ -43,9 +46,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const panelRect = rightPanel.getBoundingClientRect();
     const dividerHeight = divider.offsetHeight;
+    const headerHeight = document.getElementById('horizontal-divider-box')?.offsetHeight || 0;
 
     const offsetY = e.clientY - panelRect.top;
-    const requestedBottom = panelRect.height - offsetY - dividerHeight;
+    const requestedBottom = panelRect.height - offsetY - dividerHeight - headerHeight;
 
     applyBottomHeight(requestedBottom);
   });
@@ -72,6 +76,8 @@ function applyBottomHeight(requestedBottomPx) {
 
   const containerHeight = rightPanel.getBoundingClientRect().height;
   const dividerHeight = divider?.offsetHeight || 0;
+  const headerHeight = document.getElementById('horizontal-divider-box')?.offsetHeight || 0;
+  const availableHeight = Math.max(0, containerHeight - dividerHeight - headerHeight);
 
   const minBottom = MIN_BOTTOM_PX;
   const maxBottom = getMaxBottomPx();
@@ -79,16 +85,18 @@ function applyBottomHeight(requestedBottomPx) {
   const bottomHeight = Math.min(
     Math.max(requestedBottomPx, minBottom),
     maxBottom,
-    containerHeight - dividerHeight - 100 // safety top min
+    Math.max(0, availableHeight - MIN_TOP_PX)
   );
 
-  const topHeight = containerHeight - bottomHeight - dividerHeight;
+  const topHeight = Math.max(0, availableHeight - bottomHeight);
 
   bottomPanel.style.height = `${bottomHeight}px`;
+  bottomPanel.style.minHeight = '0';
   topPanel.style.height = `${topHeight}px`;
+  topPanel.style.minHeight = '0';
 
   if (divider) {
-    divider.style.top = `${topHeight}px`;
+    divider.style.top = '';
   }
 }
 
@@ -163,12 +171,11 @@ export function handleDrag(e) {
 
     // Safety limits
     const minTopHeight = 100; // px
-    const maxTopHeight = parent.offsetHeight - 100;
-    const newTopHeight = Math.min(Math.max(offsetY, minTopHeight), maxTopHeight);
-    const newBottomHeight = parent.offsetHeight - newTopHeight - dividerHeight;
+    const headerHeight = parent.querySelector('#horizontal-divider-box')?.offsetHeight || 0;
+    const availableHeight = parent.offsetHeight - dividerHeight - headerHeight;
+    const requestedBottom = availableHeight - offsetY;
 
-    topPanel.style.height = `${newTopHeight}px`;
-    bottomPanel.style.height = `${newBottomHeight}px`;
+    applyBottomHeight(requestedBottom);
   }
 }
 
