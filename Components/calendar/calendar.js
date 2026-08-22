@@ -1017,6 +1017,11 @@ function applyRuleWarnings(ruleStats) {
     el.textContent = '';
   });
 
+  const weekdayWarningSpans = document.querySelectorAll('.weekday-warning');
+  weekdayWarningSpans.forEach(el => {
+    el.remove();
+  });
+
   if (!ruleStats || !Array.isArray(ruleStats.failures)) return;
 
   const seen = new Set();
@@ -1048,6 +1053,34 @@ function applyRuleWarnings(ruleStats) {
     return icon;
   };
 
+  const getWeekdayIndex = (failure) => {
+    if (Number.isInteger(failure.weekdayIndex)) return failure.weekdayIndex;
+    if (!failure.date) return null;
+
+    const date = new Date(`${failure.date}T00:00:00`);
+    return Number.isNaN(date.getTime()) ? null : (date.getDay() + 6) % 7;
+  };
+
+  const getWarningSignature = (failure) => [
+    failure.scope,
+    failure.ruleId,
+    failure.type,
+    failure.limit,
+    JSON.stringify(failure.subjectRoles || []),
+    failure.shiftType || failure.shift || failure.timeframe || ''
+  ].join('|');
+
+  const repeatedByWeekday = new Map();
+  const placedWeekdayWarnings = new Set();
+  ruleStats.failures.forEach(failure => {
+    if (failure.scope !== 'daily' && failure.scope !== 'shiftly' && failure.scope !== 'shift') return;
+    const weekdayIndex = getWeekdayIndex(failure);
+    if (weekdayIndex === null) return;
+
+    const key = `${getWarningSignature(failure)}|${weekdayIndex}`;
+    repeatedByWeekday.set(key, (repeatedByWeekday.get(key) || 0) + 1);
+  });
+
   ruleStats.failures.forEach(failure => {
     const key = [
       failure.scope,
@@ -1068,6 +1101,23 @@ function applyRuleWarnings(ruleStats) {
     }
 
     if (failure.scope === 'daily') {
+      const weekdayIndex = getWeekdayIndex(failure);
+      const repeated = weekdayIndex !== null && repeatedByWeekday.get(
+        `${getWarningSignature(failure)}|${weekdayIndex}`
+      ) > 1;
+
+      if (repeated) {
+        const headerKey = `${getWarningSignature(failure)}|${weekdayIndex}`;
+        if (placedWeekdayWarnings.has(headerKey)) return;
+        placedWeekdayWarnings.add(headerKey);
+        const warningEl = document.querySelector(
+          `[data-weekday-warning="${weekdayIndex}"]`
+        );
+        if (!warningEl) return;
+        warningEl.appendChild(createViolationIcon(failure));
+        return;
+      }
+
       const warningEl = document.querySelector(`[data-date-warning="${failure.date}"]`);
       if (!warningEl) return;
       warningEl.appendChild(createViolationIcon(failure));
@@ -1076,6 +1126,23 @@ function applyRuleWarnings(ruleStats) {
     if (failure.scope === 'shiftly' || failure.scope === 'shift') {
       const shiftType = failure.shiftType || failure.shift || failure.timeframe;
       if (!['early', 'day', 'late'].includes(shiftType)) return;
+
+      const weekdayIndex = getWeekdayIndex(failure);
+      const repeated = weekdayIndex !== null && repeatedByWeekday.get(
+        `${getWarningSignature(failure)}|${weekdayIndex}`
+      ) > 1;
+
+      if (repeated) {
+        const headerKey = `${getWarningSignature(failure)}|${weekdayIndex}`;
+        if (placedWeekdayWarnings.has(headerKey)) return;
+        placedWeekdayWarnings.add(headerKey);
+        const warningEl = document.querySelector(
+          `[data-weekday-warning="${weekdayIndex}"]`
+        );
+        if (!warningEl) return;
+        warningEl.appendChild(createViolationIcon(failure));
+        return;
+      }
 
       const warningEl = document.querySelector(
         `[data-shift-warning="${failure.date}|${shiftType}"]`
@@ -1120,6 +1187,13 @@ function renderCalendarHeader() {
     const headerCell = document.createElement('div');
     headerCell.textContent = day;
     headerCell.className = day === 'KW' ? 'kw-column' : 'day-column';
+
+    if (day !== 'KW') {
+      const warning = document.createElement('span');
+      warning.className = 'weekday-warning noto';
+      warning.dataset.weekdayWarning = String(index - 1);
+      headerCell.appendChild(warning);
+    }
 
     if (officeDays[index - 1] === 'never' || day === 'KW') {
       headerCell.classList.add('shrink');

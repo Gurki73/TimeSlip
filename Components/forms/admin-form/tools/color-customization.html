@@ -112,79 +112,243 @@
 
       <div class="tab-content flex-row" id="tab-calendar">
 
-        <div class="calendar-preview">
+        <div class="tab-content" id="tab-calendar">
 
-          <div class="calendar-grid">
+          <div class="calendar-customization">
 
-            <!-- Header -->
-            <div class="cell header"></div>
-            <div class="cell header">Mo</div>
-            <div class="cell header">Di</div>
-            <div class="cell header">Mi</div>
-            <div class="cell header">Do</div>
-            <div class="cell header">Fr</div>
-            <div class="cell header">Sa</div>
-            <div class="cell header">So</div>
-            <div class="cell header">Farbe</div>
+            <!-- =========================================================
+         COLUMN 1: MINI CALENDAR PREVIEW
+         ========================================================= -->
+            <section class="calendar-panel calendar-panel-preview">
 
-            <!-- Werktag -->
-            <div class="cell label">Werktag</div>
-            <div class="cell"></div>
-            <div class="cell"></div>
-            <div class="cell"></div>
-            <div class="cell"></div>
-            <div class="cell"></div>
-            <div class="cell weekend"></div>
-            <div class="cell weekend"></div>
-            <div class="cell"><input type="color"></div>
+              <div class="panel-title">
+                Kalender Vorschau
+              </div>
 
-            <!-- Samstag -->
-            <div class="cell label">Samstag</div>
-            <div class="cell"></div>
-            <div class="cell"></div>
-            <div class="cell"></div>
-            <div class="cell"></div>
-            <div class="cell"></div>
-            <div class="cell active"></div>
-            <div class="cell"></div>
-            <div class="cell"><input type="color"></div>
+              <table class="mini-calendar" aria-label="Kalender Vorschau">
 
-            <!-- Sonntag & Feiertag -->
-            <div class="cell label">Sonn & Feiertag</div>
-            <div class="cell"></div>
-            <div class="cell"></div>
-            <div class="cell"></div>
-            <div class="cell"></div>
-            <div class="cell"></div>
-            <div class="cell"></div>
-            <div class="cell active"></div>
-            <div class="cell"><input type="color"></div>
+                <thead>
+                  <tr>
+                    <th class="calendar-kw">KW</th>
+                    <th>Mo</th>
+                    <th>Di</th>
+                    <th>Mi</th>
+                    <th>Do</th>
+                    <th>Fr</th>
+                    <th class="calendar-weekend">Sa</th>
+                    <th class="calendar-weekend">So</th>
+                  </tr>
+                </thead>
 
-            <!-- Geschlossen -->
-            <div class="cell label">Geschlossen</div>
-            <div class="cell"></div>
-            <div class="cell"></div>
-            <div class="cell"></div>
-            <div class="cell"></div>
-            <div class="cell"></div>
-            <div class="cell weekend"></div>
-            <div class="cell weekend"></div>
-            <div class="cell"><input type="color"></div>
+                <tbody>
+
+                  <tr>
+                    <th class="kw">KW 6</th>
+                    <td></td>
+                    <td></td>
+                    <td class="calendar-day weekday">1</td>
+                    <td class="calendar-day weekday">2</td>
+                    <td class="calendar-day weekday">3</td>
+                    <td class="calendar-day weekend">4</td>
+                    <td class="calendar-day weekend">5</td>
+                  </tr>
+
+                  <tr>
+                    <th class="kw">KW 7</th>
+                    <td class="calendar-day weekday">6</td>
+                    <td class="calendar-day weekday">7</td>
+                    <td class="calendar-day weekday">8</td>
+                    <td class="calendar-day weekday">9</td>
+                    <td class="calendar-day weekday">10</td>
+                    <td class="calendar-day weekend">11</td>
+                    <td class="calendar-day weekend">12</td>
+                  </tr>
+
+                  <tr>
+                    <th class="kw">KW 8</th>
+                    <td class="calendar-day weekday">13</td>
+                    <td class="calendar-day weekday">14</td>
+                    <td class="calendar-day weekday">15</td>
+                    <td class="calendar-day weekday">16</td>
+                    <td class="calendar-day weekday">17</td>
+                    <td class="calendar-day weekend">18</td>
+                    <td class="calendar-day weekend">19</td>
+                  </tr>
+
+                  <tr>
+                    <th class="kw">KW 9</th>
+                    <td class="calendar-day weekday">20</td>
+                    <td class="calendar-day weekday">21</td>
+                    <td class="calendar-day weekday">22</td>
+                    <td class="calendar-day weekday">23</td>
+                    <td class="calendar-day weekday">24</td>
+                    <td class="calendar-day weekend">25</td>
+                    <td class="calendar-day weekend">26</td>
+                  </tr>
+
+                  <tr>
+                    <th class="kw">KW 10</th>
+                    <td class="calendar-day weekday">27</td>
+                    <td class="calendar-day weekday">28</td>
+                    <td class="calendar-day weekday">29</td>
+                    <td class="calendar-day weekday">30</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+
+                </tbody>
+              </table>
+
+            </section>
+
+
+            <!-- =========================================================
+         COLUMN 2: WEEKDAY / CALENDAR COLORS
+         ========================================================= -->
+            <section class="calendar-panel calendar-panel-weekdays">
+
+              <div class="panel-title">
+                Farben für Kalendertage
+              </div>
+
+              <div class="color-picker-list">
+
+                <!-- Normaler Wochentag -->
+                <label class="color-picker-row">
+                  <span class="color-picker-label">
+                    Normaler Wochentag
+                  </span>
+                  <input type="color" class="calendar-color" data-color="weekday" value="#ffffff"
+                    aria-label="Farbe für normalen Wochentag">
+                </label>
+
+                <!-- Wochenende -->
+                <label class="color-picker-row">
+                  <span class="color-picker-label">
+                    Wochenende
+                  </span>
+                  <input type="color" class="calendar-color" data-color="weekend" value="#f2f2f2"
+                    aria-label="Farbe für Wochenende">
+                </label>
+
+                <!-- Sonn- und Feiertag -->
+                <label class="color-picker-row">
+                  <span class="color-picker-label">
+                    Sonn- und Feiertag
+                  </span>
+                  <input type="color" class="calendar-color" data-color="holiday" value="#ffe0e0"
+                    aria-label="Farbe für Sonn- und Feiertage">
+                </label>
+
+                <!-- Ruhetag -->
+                <label class="color-picker-row">
+                  <span class="color-picker-label">
+                    Ruhetag
+                  </span>
+                  <input type="color" class="calendar-color" data-color="rest-day" value="#e5e5e5"
+                    aria-label="Farbe für Ruhetage">
+                </label>
+
+                <!-- KW -->
+                <label class="color-picker-row">
+                  <span class="color-picker-label">
+                    KW-Nummern
+                  </span>
+                  <input type="color" class="calendar-color" data-color="calendar-week" value="#eeeeee"
+                    aria-label="Farbe für KW-Nummern">
+                </label>
+
+              </div>
+
+            </section>
+
+
+            <!-- =========================================================
+         COLUMN 3: SINGLE DAY PREVIEW
+         ========================================================= -->
+            <section class="calendar-panel calendar-panel-day">
+
+              <div class="panel-title">
+                Tageszelle Vorschau
+              </div>
+
+              <div class="day-cell-preview">
+
+                <div class="day-number">
+                  1
+                </div>
+
+                <div class="day-shifts">
+
+                  <div class="shift shift-early">
+                    Frühschicht
+                  </div>
+
+                  <div class="shift shift-day">
+                    Tagschicht
+                  </div>
+
+                  <div class="shift shift-late">
+                    Spätschicht
+                  </div>
+
+                </div>
+
+              </div>
+
+            </section>
+
+
+            <!-- =========================================================
+         COLUMN 4: SHIFT COLORS
+         ========================================================= -->
+            <section class="calendar-panel calendar-panel-shifts">
+
+              <div class="panel-title">
+                Farben für Schichten
+              </div>
+
+              <div class="color-picker-list">
+
+                <!-- Frühschicht -->
+                <label class="color-picker-row">
+                  <span class="color-picker-label">
+                    Frühschicht
+                  </span>
+                  <input type="color" class="shift-color" data-shift="early" value="#ffe08a"
+                    aria-label="Farbe für Frühschicht">
+                </label>
+
+                <!-- Tagschicht -->
+                <label class="color-picker-row">
+                  <span class="color-picker-label">
+                    Tagschicht
+                  </span>
+                  <input type="color" class="shift-color" data-shift="day" value="#a8e6a3"
+                    aria-label="Farbe für Tagschicht">
+                </label>
+
+                <!-- Spätschicht -->
+                <label class="color-picker-row">
+                  <span class="color-picker-label">
+                    Spätschicht
+                  </span>
+                  <input type="color" class="shift-color" data-shift="late" value="#a9c7ff"
+                    aria-label="Farbe für Spätschicht">
+                </label>
+
+              </div>
+
+            </section>
 
           </div>
+
         </div>
 
-        <div class="preview-day-cell">
-          <span> header</span>
-          <span> earliy shift </span> <input type="color"> Frühschicht</input>
-          <span> earliy day </span> <input type="color"> Tagschicht</input>
-          <span> earliy late </span> <input type="color"> Spätschicht</input>
+        <div class="tab-content" id="tab-app">
+          <!-- App button/background/text color pickers go here -->
         </div>
-      </div>
-
-      <div class="tab-content" id="tab-app">
-        <!-- App button/background/text color pickers go here -->
       </div>
     </div>
   </div>
-</div>

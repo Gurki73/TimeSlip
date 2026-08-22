@@ -732,3 +732,338 @@ input[type="color"] {
   background: transparent;
   cursor: pointer;
 }
+
+.mini-calendar {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 13px;
+}
+
+.mini-calendar th,
+.mini-calendar td {
+  border: 1px solid #ccc;
+  height: 32px;
+  text-align: center;
+  padding: 4px;
+}
+
+.mini-calendar thead th {
+  background: #f2f2f2;
+  font-weight: 600;
+}
+
+.mini-calendar .kw {
+  width: 55px;
+  background: #f7f7f7;
+  font-weight: 600;
+}
+
+.mini-calendar .day {
+  cursor: pointer;
+}
+
+.mini-calendar .day:hover {
+  background: #eaf3ff;
+}
+
+.mini-calendar .weekend {
+  background: #f5f5f5;
+}
+
+/* =========================================================
+   CALENDAR CUSTOMIZATION
+   ========================================================= */
+
+#tab-calendar {
+  width: 100%;
+}
+
+.calendar-customization {
+  display: grid;
+  grid-template-columns:
+    minmax(320px, 2fr)
+    minmax(180px, 1fr)
+    minmax(150px, 1fr)
+    minmax(180px, 1fr);
+
+  gap: 16px;
+  width: 100%;
+  align-items: start;
+}
+
+
+/* =========================================================
+   PANELS
+   ========================================================= */
+
+.calendar-panel {
+  min-width: 0;
+}
+
+.panel-title {
+  margin-bottom: 10px;
+
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+
+/* =========================================================
+   MINI CALENDAR
+   ========================================================= */
+
+.mini-calendar {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+
+  font-size: 12px;
+}
+
+.mini-calendar th,
+.mini-calendar td {
+  border: 1px solid var(--border-color, #ccc);
+
+  height: 34px;
+
+  padding: 4px;
+
+  text-align: center;
+  vertical-align: middle;
+}
+
+
+/* Header */
+
+.mini-calendar thead th {
+  height: 28px;
+
+  background: var(--calendar-header-bg, #f2f2f2);
+
+  font-weight: 600;
+}
+
+
+/* KW column */
+
+.mini-calendar .calendar-kw,
+.mini-calendar .kw {
+  width: 52px;
+
+  background: var(--calendar-week-bg, #eeeeee);
+
+  font-weight: 600;
+}
+
+
+/* Weekend header */
+
+.mini-calendar .calendar-weekend {
+  background: var(--calendar-weekend-bg, #f2f2f2);
+}
+
+
+/* Calendar days */
+
+.mini-calendar .calendar-day {
+  cursor: pointer;
+
+  background: var(--calendar-weekday-bg, #ffffff);
+
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+
+/* Weekend */
+
+.mini-calendar .calendar-day.weekend {
+  background: var(--calendar-weekend-bg, #f2f2f2);
+}
+
+
+/* Holiday */
+
+.mini-calendar .calendar-day.holiday {
+  background: var(--calendar-holiday-bg, #ffe0e0);
+}
+
+
+/* Rest day */
+
+.mini-calendar .calendar-day.rest-day {
+  background: var(--calendar-rest-bg, #e5e5e5);
+}
+
+
+/* Hover */
+
+.mini-calendar .calendar-day:hover {
+  box-shadow: inset 0 0 0 2px var(--accent-color, #999);
+}
+
+
+/* =========================================================
+   COLOR PICKER LIST
+   ========================================================= */
+
+.color-picker-list {
+  display: flex;
+  flex-direction: column;
+
+  gap: 10px;
+}
+
+
+/* Individual picker row */
+
+.color-picker-row {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  min-height: 34px;
+
+  cursor: pointer;
+}
+
+
+/* Label */
+
+.color-picker-label {
+  flex: 1;
+
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+
+/* Color input */
+
+.color-picker-row input[type="color"] {
+  flex: 0 0 auto;
+
+  width: 38px;
+  height: 28px;
+
+  padding: 2px;
+
+  border: 1px solid var(--border-color, #ccc);
+  border-radius: 4px;
+
+  background: transparent;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   SINGLE DAY PREVIEW
+   ========================================================= */
+
+.day-cell-preview {
+  width: 100%;
+
+  border: 1px solid var(--border-color, #ccc);
+  border-radius: 4px;
+
+  overflow: hidden;
+
+  background: var(--calendar-weekday-bg, #ffffff);
+}
+
+
+/* Day number */
+
+.day-cell-preview .day-number {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-height: 38px;
+
+  padding: 6px;
+
+  border-bottom: 1px solid var(--border-color, #ccc);
+
+  background: var(--calendar-weekday-bg, #ffffff);
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+
+/* Shift container */
+
+.day-shifts {
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* Individual shift */
+
+.day-cell-preview .shift {
+  display: flex;
+
+  align-items: center;
+
+  min-height: 30px;
+
+  padding: 5px 8px;
+
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+
+/* Early */
+
+.day-cell-preview .shift-early {
+  background: var(--shift-early-bg, #ffe08a);
+}
+
+
+/* Day */
+
+.day-cell-preview .shift-day {
+  background: var(--shift-day-bg, #a8e6a3);
+}
+
+
+/* Late */
+
+.day-cell-preview .shift-late {
+  background: var(--shift-late-bg, #a9c7ff);
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+  .calendar-customization {
+    grid-template-columns:
+      minmax(300px, 2fr)
+      minmax(180px, 1fr);
+  }
+
+}
+
+
+@media (max-width: 700px) {
+
+  .calendar-customization {
+    grid-template-columns: 1fr;
+  }
+
+}
