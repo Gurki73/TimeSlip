@@ -111,6 +111,28 @@ export async function initializeAdminForm(api) {
 
     divider.append(leftGap, h2, btnContainer);
   }
+
+  // In admin-form.js - Initialisierung
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Prüfen ob Color-Customization-Tab existiert
+    const colorTab = document.querySelector('#color-customization-tab');
+    if (colorTab) {
+      try {
+        // Dynamisch importieren
+        const module = await import('./colorTheme.js');
+
+        // Custom-Theme laden
+        const customTheme = await module.loadCustomTheme();
+
+        // UI initialisieren
+        module.initCustomThemeUI(customTheme);
+
+      } catch (err) {
+        console.error('Failed to load color customization:', err);
+      }
+    }
+  });
+
 }
 
 

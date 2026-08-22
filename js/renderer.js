@@ -223,32 +223,165 @@ function setupFormLoader() {
 
 const CUSTOM_THEME_KEY = 'customColorTheme';
 
+// Theme setzen
 function setTheme(themeName) {
-  document.body.classList.remove("theme-dark", "theme-default", "theme-pastel", "theme-greyscale");
-  document.body.classList.add(`theme-${themeName}`);
+  document.body.classList.remove("theme-dark", "theme-default", "theme-pastel", "theme-greyscale", "theme-custom");
+
+  if (themeName === 'custom') {
+    document.body.classList.add('theme-custom');
+    applyCustomThemeFromStorage();
+  } else {
+    document.body.classList.add(`theme-${themeName}`);
+    resetCustomThemeVariables();
+  }
+
   localStorage.setItem('colorTheme', themeName);
-  window.api.send('update-cache', { colorTheme: themeName });
+
+  // Über cacheAPI setzen (nicht send)
+  if (window.cacheAPI) {
+    window.cacheAPI.setCacheValue('colorTheme', themeName);
+  }
 }
 
+// Custom-Theme aus localStorage anwenden
 function applyCustomThemeFromStorage() {
   try {
     const raw = localStorage.getItem(CUSTOM_THEME_KEY);
     if (!raw) return;
     const theme = JSON.parse(raw);
     if (!theme || typeof theme !== 'object') return;
-    ['roles', 'calendar', 'app'].forEach((section) => {
-      const vars = theme[section];
-      if (!vars || typeof vars !== 'object') return;
-      Object.entries(vars).forEach(([key, value]) => {
-        if (typeof value === 'string') {
-          document.documentElement.style.setProperty(`--${key}`, value);
-        }
-      });
-    });
+    applyThemeVariables(theme);
   } catch (err) {
-    console.warn('Failed to apply custom theme:', err);
+    console.warn('Failed to apply custom theme from storage:', err);
   }
 }
+
+// Theme-Variablen auf das Dokument anwenden
+function applyThemeVariables(theme) {
+  if (!theme || typeof theme !== 'object') return;
+
+  ['roles', 'calendar', 'app'].forEach((section) => {
+    const vars = theme[section];
+    if (!vars || typeof vars !== 'object') return;
+    Object.entries(vars).forEach(([key, value]) => {
+      if (typeof value === 'string') {
+        document.documentElement.style.setProperty(`--${key}`, value);
+      }
+    });
+  });
+}
+
+// Custom-Theme-Variablen zurücksetzen
+function resetCustomThemeVariables() {
+  const customVars = [
+    'team-blue', 'team-green', 'team-yellow', 'team-red', 'team-purple',
+    'team-orange', 'team-cyan', 'team-pink', 'team-brown', 'team-grey',
+    'weekday-bg', 'weekend-bg', 'today-bg', 'selected-bg', 'holiday-bg', 'birthday-bg',
+    'bg-primary', 'bg-secondary', 'text-primary', 'text-secondary',
+    'border-color', 'hover-bg', 'active-bg', 'shadow-color', 'header-bg', 'footer-bg'
+  ];
+
+  customVars.forEach(varName => {
+    document.documentElement.style.removeProperty(`--${varName}`);
+  });
+}
+
+// IPC-Events empfangen - MIT receive (nicht on)
+function setupThemeListeners() {
+  // Prüfen ob window.api.receive existiert
+  if (typeof window.api?.receive === 'function') {
+    // Theme-Änderungen empfangen
+    window.api.receive('set-theme', (themeName) => {
+      console.log('[Theme] Received set-theme:', themeName);
+      setTheme(themeName);
+    });
+
+    // Custom-Theme-Empfang
+    window.api.receive('set-custom-theme', (themeData) => {
+      console.log('[Theme] Received set-custom-theme');
+      try {
+        // Custom-Theme im localStorage speichern
+        localStorage.setItem(CUSTOM_THEME_KEY, JSON.stringify(themeData));
+
+        // Auch im Cache speichern
+        if (window.cacheAPI) {
+          window.cacheAPI.setCacheValue('customColorTheme', JSON.stringify(themeData));
+        }
+
+        // Wenn aktuell Custom-Theme aktiv, sofort anwenden
+        if (document.body.classList.contains('theme-custom')) {
+          applyThemeVariables(themeData);
+        }
+      } catch (err) {
+        console.warn('[Theme] Failed to apply custom theme:', err);
+      }
+    });
+  } else {
+    console.warn('[Theme] window.api.receive not available');
+  }
+}
+
+// Custom-Theme laden (für die Picker-Initialisierung)
+async function loadCustomTheme() {
+  try {
+    // Versuche vom Cache zu laden
+    if (window.cacheAPI) {
+      const cached = await window.cacheAPI.getCacheValue('customColorTheme');
+      if (cached) {
+        const theme = typeof cached === 'string' ? JSON.parse(cached) : cached;
+        localStorage.setItem(CUSTOM_THEME_KEY, JSON.stringify(theme));
+        return theme;
+      }
+    }
+
+    // Fallback: Aus localStorage laden
+    const raw = localStorage.getItem(CUSTOM_THEME_KEY);
+    if (raw) {
+      return JSON.parse(raw);
+    }
+  } catch (err) {
+    console.warn('[Theme] Failed to load custom theme:', err);
+  }
+  return null;
+}
+
+// Custom-Theme speichern
+async function saveCustomTheme(themeData) {
+  try {
+    // Im localStorage speichern
+    localStorage.setItem(CUSTOM_THEME_KEY, JSON.stringify(themeData));
+
+    // Im Cache speichern
+    if (window.cacheAPI) {
+      await window.cacheAPI.setCacheValue('customColorTheme', JSON.stringify(themeData));
+    }
+
+    // Allen Fenstern das neue Theme mitteilen
+    if (window.api) {
+      window.api.send('update-cache', {
+        colorTheme: 'custom',
+        customTheme: themeData
+      });
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error('[Theme] Failed to save custom theme:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+// Initialisierung
+document.addEventListener('DOMContentLoaded', () => {
+  // Theme aus localStorage laden
+  const savedTheme = localStorage.getItem('colorTheme') || 'default';
+  setTheme(savedTheme);
+
+  // Theme-Listener einrichten
+  setupThemeListeners();
+
+  console.log('[Theme] Initialized with theme:', savedTheme);
+});
 
 function setZoom(factor) {
   document.body.style.fontSize = `${factor}rem`;

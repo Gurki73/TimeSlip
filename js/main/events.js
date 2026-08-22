@@ -64,6 +64,41 @@ export function registerEventHandlers(mainWindow) {
         }
     });
 
+    // In main.js - IPC-Handler
+    ipcMain.on('update-cache', (event, data) => {
+        try {
+            if (data && typeof data === 'object') {
+                // Bestehende Cache-Logik...
+                Object.entries(data).forEach(([key, value]) => {
+                    setCacheValue(key, typeof value === 'string' ? value : JSON.stringify(value));
+                });
+
+                // Wenn Custom-Theme gespeichert wird
+                if (data.customTheme) {
+                    saveCustomTheme(data.customTheme);
+                }
+
+                // Wenn nur Theme-Name geändert wird
+                if (data.colorTheme) {
+                    const window = BrowserWindow.fromWebContents(event.sender);
+                    setTheme(data.colorTheme, window);
+                }
+            }
+        } catch (err) {
+            console.error('[Cache] Failed to update cache:', err);
+        }
+    });
+
+    // Neuer IPC-Handler für Custom-Theme
+    ipcMain.handle('save-custom-theme', async (event, themeData) => {
+        saveCustomTheme(themeData);
+        return { success: true };
+    });
+
+    ipcMain.handle('get-custom-theme', async () => {
+        return getCustomTheme();
+    });
+
     ipcMain.on('switch-mode', (event, targetMode) => {
 
         if (!['sandbox', 'real'].includes(targetMode)) {
