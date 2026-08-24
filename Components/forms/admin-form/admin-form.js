@@ -6,7 +6,7 @@ import { loadEmployeeData, storeEmployeeChange } from '../../../js/loader/employ
 import { initRoleColorTab } from './colorTheme.js';
 
 export const adminTools = [
-  { id: 'color-customization', name: 'Eigene Farben', icon: 'cog-wheel-settings-svgrepo-com.svg', enabled: true },
+  { id: 'color-customization', name: 'Eigene Farben', icon: 'paint-palette-art-svgrepo-com.svg', enabled: true },
   { id: 'emoji-customization', name: 'Symbol Auswahl', icon: 'smiley-happy-svgrepo-com.svg', enabled: true },
   { id: 'auto-save-toggle', name: 'Automatisch Speichern', icon: 'rocket-svgrepo-com.svg', enabled: true },
   { id: 'clear-cache', name: 'Puffer leeren', icon: 'safe-svgrepo-com.svg', enabled: true },
@@ -75,16 +75,44 @@ export async function initializeAdminForm(api) {
     });
   }
 
+  /*
   const clearBtn = document.getElementById('clear-cache');
+
   if (clearBtn) {
     clearBtn.addEventListener('click', () => {
-      if (confirm("Gespeicherte Einstellungen (z.B. Zoom, Farben) wirklich zurücksetzen?\nDies kann nicht rückgängig gemacht werden.")) {
+
+      // Show current renderer storage
+      const entries = Object.entries(localStorage);
+
+      let cacheText = '';
+
+      if (entries.length === 0) {
+        cacheText = 'Keine gespeicherten Einstellungen gefunden.';
+      } else {
+        cacheText = entries
+          .map(([key, value]) => `${key}: ${value}`)
+          .join('\n');
+      }
+
+      alert(
+        `Gespeicherte Einstellungen:\n\n${cacheText}`
+      );
+
+      // Existing clear action
+      if (confirm(
+        "Gespeicherte Einstellungen (z.B. Zoom, Farben) wirklich zurücksetzen?\n" +
+        "Dies kann nicht rückgängig gemacht werden."
+      )) {
         localStorage.removeItem('clientDefinedDataFolder');
-        alert("Die Einstellungen wurden gelöscht.\nBitte starten Sie die Anwendung neu.");
+
+        alert(
+          "Die Einstellungen wurden gelöscht.\n" +
+          "Bitte starten Sie die Anwendung neu."
+        );
       }
     });
   }
-
+*/
 
   const divider = document.getElementById('horizontal-divider-box');
   if (divider) {
@@ -157,7 +185,9 @@ async function loadToolPage(htmlFile) {
     if (htmlFile === 'color-customization.html') {
       initRoleColorTabSafe(adminApi);
     }
-
+    if (htmlFile === 'clear-cache.html') {
+      initClearCache();
+    }
 
   } catch (err) {
     container.innerHTML = `
@@ -165,6 +195,56 @@ async function loadToolPage(htmlFile) {
         <h2>⚠️ Failed to load tool</h2>
         <p>Error: ${err}</p>
       </div>`;
+  }
+}
+
+function initClearCache() {
+  const cacheList = document.getElementById('cache-list');
+  const clearCacheBtn = document.getElementById('clear-cache-confirm');
+
+  if (!cacheList || !clearCacheBtn) return;
+
+  renderCacheList();
+
+  clearCacheBtn.addEventListener('click', () => {
+    if (!confirm(
+      'Den gesamten Frontend-Puffer wirklich löschen?\n\n' +
+      'Alle lokal gespeicherten Einstellungen werden entfernt.\n' +
+      'Dies kann nicht rückgängig gemacht werden.'
+    )) {
+      return;
+    }
+
+    localStorage.clear();
+
+    renderCacheList();
+
+    clearCacheBtn.disabled = true;
+  });
+
+  function renderCacheList() {
+    cacheList.innerHTML = '';
+
+    const entries = Object.entries(localStorage);
+
+    if (entries.length === 0) {
+      cacheList.textContent = 'Keine gespeicherten Einstellungen gefunden.';
+      return;
+    }
+
+    for (const [key, value] of entries) {
+      const entry = document.createElement('div');
+      entry.className = 'cache-entry';
+
+      const keyElement = document.createElement('strong');
+      keyElement.textContent = key;
+
+      const valueElement = document.createElement('div');
+      valueElement.textContent = value;
+
+      entry.append(keyElement, valueElement);
+      cacheList.appendChild(entry);
+    }
   }
 }
 

@@ -1625,16 +1625,22 @@ function renderEmployeeList() {
 function createEmployeeEllipsis(employee) {
 
   const context = {
-    delete: () => deleteEmployeeSafely(employee.id),
     copy: () => copyEmployee(employee)
   };
+
+  // Employees in sample mode must not be deletable
+  if (!document.body.classList.contains('mode-sample')) {
+    context.delete = () => deleteEmployeeSafely(employee.id);
+  }
 
   if (employee.warnings?.length > 0) {
     context.inspect = () => showEmployeeWarnings(employee);
   }
 
-  if (employee.warnings?.includes('Keine gültige Hauptaufgabe gewählt.') ||
-    employee.warnings?.includes('Ungültige oder fehlende Schichtauswahl.')) {
+  if (
+    employee.warnings?.includes('Keine gültige Hauptaufgabe gewählt.') ||
+    employee.warnings?.includes('Ungültige oder fehlende Schichtauswahl.')
+  ) {
     context.repair = () => autoRepair(employee);
   }
 

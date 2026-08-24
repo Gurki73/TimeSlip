@@ -10,6 +10,9 @@ import { exec } from 'child_process';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+const backendLogs = [];
+const MAX_BACKEND_LOGS = 500;
+
 const ZOOM_LEVELS = [
     { label: '75%', factor: 0.75 },
     { label: '90%', factor: 0.9 },
@@ -20,6 +23,25 @@ const ZOOM_LEVELS = [
 
 let mainWindow;
 let currentZoomFactor = 1.0;
+
+const originalConsoleLog = console.log;
+const originalConsoleWarn = console.warn;
+const originalConsoleError = console.error;
+
+console.log = (...args) => {
+    addBackendLog('INFO', ...args);
+    originalConsoleLog(...args);
+};
+
+console.warn = (...args) => {
+    addBackendLog('WARN', ...args);
+    originalConsoleWarn(...args);
+};
+
+console.error = (...args) => {
+    addBackendLog('ERROR', ...args);
+    originalConsoleError(...args);
+};
 
 function setZoom(factor) {
     currentZoomFactor = factor;
@@ -163,19 +185,31 @@ function showStatusPanel(browserWindow) {
 
     const version = app.getVersion();
 
-    let message;
+    let cacheMessage;
+
     if (Object.keys(inMemoryCache).length === 0) {
-        message = 'Cache is empty.';
+        cacheMessage = 'Cache is empty.';
     } else {
-        message = Object.entries(inMemoryCache)
+        cacheMessage = Object.entries(inMemoryCache)
             .map(([key, value]) => `${key}: ${value || 'Not set'}`)
             .join('\n');
     }
 
+    const logsMessage = backendLogs.length === 0
+        ? 'Keine Backend-Logs vorhanden.'
+        : backendLogs
+            .map(log => `[${log.timestamp}] [${log.level}] ${log.message}`)
+            .join('\n');
+
     const now = new Date();
+
     const formattedTime = new Intl.DateTimeFormat('de-DE', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
         hour12: false
     }).format(now);
 
@@ -183,7 +217,11 @@ function showStatusPanel(browserWindow) {
         type: 'info',
         title: 'Statusfeld',
         message: `App version: ${version}\nStatus am ${formattedTime}`,
-        detail: message,
+        detail:
+            `=== CACHE ===\n` +
+            `${cacheMessage}\n\n` +
+            `=== BACKEND LOGS ===\n` +
+            `${logsMessage}`,
         buttons: ['OK']
     });
 }
@@ -630,6 +668,38 @@ function buildMenuTemplate() {
             ]
         }
     ];
+}
+
+function addBackendLog(level, ...args) {
+    const timestamp = new Intl.DateTimeFormat('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    }).format(new Date());
+
+    const message = args.map(arg => {
+        if (typeof arg === 'string') return arg;
+
+        try {
+            return JSON.stringify(arg);
+        } catch {
+            return String(arg);
+        }
+    }).join(' ');
+
+    backendLogs.push({
+        timestamp,
+        level,
+        message
+    });
+
+    if (backendLogs.length > MAX_BACKEND_LOGS) {
+        backendLogs.shift();
+    }
 }
 
 export { createWindow };

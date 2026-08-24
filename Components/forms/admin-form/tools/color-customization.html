@@ -1,354 +1,439 @@
-<!-- COLOR CUSTOMIZATION TAB LAYOUT -->
-<div id="color-theme-container">
-  <div class="color-tabulator">
-    <!-- Tab Headers -->
-    <div class="tab-headers flex-row">
-      <button class="tab-header active" data-tab="roles">
-        Aufgaben
-      </button>
-      <button class="tab-header" data-tab="calendar">
-        Kalender
-      </button>
-      <button class="tab-header" data-tab="app">
-        App
-      </button>
+<!-- Components/forms/admin-form/tools/color-customization.html -->
+<div class="color-customization-container">
+  <!-- Header -->
+  <div class="color-header">
+    <h2> <span class="noto">🎨</span> Farben anpassen</h2>
+    <p class="color-description">Passe die Farben deines TimeSlip an. Änderungen werden sofort in der Vorschau sichtbar.
+    </p>
+  </div>
 
-      <button class="mybutton noto">💾</button>
+  <!-- Tabs -->
+  <div class="color-tabs">
+    <button class="color-tab active" data-tab="roles" onclick="switchTab('roles')">
+      <span class="noto tab-icon">🧩</span> Team-Farben
+    </button>
+    <button class="color-tab" data-tab="weekdays" onclick="switchTab('weekdays')">
+      <span class="noto tab-icon">📅</span> Kalender-Farben
+    </button>
+    <button class="color-tab" data-tab="general" onclick="switchTab('general')">
+      <span class="noto   tab-icon">🪟</span> Allgemeine Farben
+    </button>
+  </div>
 
-    </div>
+  <!-- Tab Inhalt: Team-Farben -->
+  <div class="color-tab-content active" id="tab-roles">
+    <div class="color-section">
+      <h3>Team-Farben <span class="section-hint">(Farbton eingeschränkt)</span></h3>
+      <div class="color-grid">
 
-    <!-- Tab Contents -->
-    <div class="tab-contents table-scroll">
-      <div class="tab-content active" id="tab-roles">
-        <table class="color-role-table color-table" aria-label="Aufgaben und Teams Farbzuordnung">
+        <table border="1" cellpadding="10" cellspacing="0">
           <thead>
             <tr>
-              <th><span class="teamname-editable" data-team="blue">Team Blau</span></th>
-              <th><span class="teamname-editable" data-team="green">Team Grün</span></th>
-              <th><span class="teamname-editable" data-team="red">Team Rot</span></th>
-              <th><span class="teamname-editable" data-team="black">Team Schwarz</span></th>
-              <th>Ausbildung</th>
+              <th>Team Blau</th>
+              <th>Team Grün</th>
+              <th>Team Rot</th>
+              <th>Team Grau</th>
+              <th>Team Azubi</th>
             </tr>
           </thead>
 
           <tbody>
             <tr>
-              <td data-role="1">
-                <span class="role-index" aria-hidden="true">#1</span>
-                <div class="role-preview" aria-hidden="true"></div>
-                <input type="color" aria-label="Farbe für Aufgabe 1" />
-              </td>
-              <td data-role="4">
-                <span class="role-index" aria-hidden="true">#4</span>
-                <div class="role-preview" aria-hidden="true"></div>
-                <input type="color" aria-label="Farbe für Aufgabe 4" />
-              </td>
-              <td data-role="7">
-                <span class="role-index" aria-hidden="true">#7</span>
-                <div class="role-preview" aria-hidden="true"></div>
-                <input type="color" aria-label="Farbe für Aufgabe 7" />
-              </td>
-              <td data-role="10">
-                <span class="role-index" aria-hidden="true">#10</span>
-                <div class="role-preview" aria-hidden="true"></div>
-                <input type="color" aria-label="Farbe für Aufgabe 10" />
-              </td>
-              <td data-role="13">
-                <span class="role-index" aria-hidden="true">#13 Azubi</span>
-                <div class="role-preview" aria-hidden="true"></div>
-                <input type="color" aria-label="Farbe für Aufgabe Azubi" />
-              </td>
+              <td><button onclick="handleClick(1, 1)">Blau 1</button></td>
+              <td><button onclick="handleClick(1, 2)">Grün 1</button></td>
+              <td><button onclick="handleClick(1, 3)">Rot 1</button></td>
+              <td><button onclick="handleClick(1, 4)">Grau 1 </button></td>
+              <td><button onclick="handleClick(1, 5)">Azubi</button></td>
             </tr>
+
             <tr>
-              <td data-role="2">
-                <span class="role-index" aria-hidden="true">#2</span>
-                <div class="role-preview" aria-hidden="true"></div>
-                <input type="color" aria-label="Farbe für Aufgabe 2" />
-              </td>
-              <td data-role="5">
-                <span class="role-index" aria-hidden="true">#5</span>
-                <div class="role-preview" aria-hidden="true"></div>
-                <input type="color" aria-label="Farbe für Aufgabe 5" />
-              </td>
-              <td data-role="8">
-                <span class="role-index" aria-hidden="true">#8</span>
-                <div class="role-preview" aria-hidden="true"></div>
-                <input type="color" aria-label="Farbe für Aufgabe 8" />
-              </td>
-              <td data-role="11">
-                <span class="role-index" aria-hidden="true">#11</span>
-                <div class="role-preview" aria-hidden="true"></div>
-                <input type="color" aria-label="Farbe für Aufgabe 11" />
-              </td>
+              <td><button onclick="handleClick(2, 1)">Blau 2</button></td>
+              <td><button onclick="handleClick(2, 2)">Grün 2</button></td>
+              <td><button onclick="handleClick(2, 3)">Rot 2</button></td>
+              <td><button onclick="handleClick(2, 4)">Grau 2</button></td>
               <td></td>
             </tr>
+
             <tr>
-              <td data-role="3">
-                <span class="role-index" aria-hidden="true">#3</span>
-                <div class="role-preview" aria-hidden="true"></div>
-                <input type="color" aria-label="Farbe für Aufgabe 3" />
-              </td>
-              <td data-role="6">
-                <span class="role-index" aria-hidden="true">#6</span>
-                <div class="role-preview" aria-hidden="true"></div>
-                <input type="color" aria-label="Farbe für Aufgabe 6" />
-              </td>
-              <td data-role="9">
-                <span class="role-index" aria-hidden="true">#9</span>
-                <div class="role-preview" aria-hidden="true"></div>
-                <input type="color" aria-label="Farbe für Aufgabe 9" />
-              </td>
-              <td data-role="12">
-                <span class="role-index" aria-hidden="true">#12</span>
-                <div class="role-preview" aria-hidden="true"></div>
-                <input type="color" aria-label="Farbe für Aufgabe 9" />
-              </td>
+              <td><button onclick="handleClick(3, 1)">Blau 3</button></td>
+              <td><button onclick="handleClick(3, 2)">Grün 3</button></td>
+              <td><button onclick="handleClick(3, 3)">Rot 3</button></td>
+              <td><button onclick="handleClick(3, 4)">Grau 3</button></td>
               <td></td>
             </tr>
           </tbody>
         </table>
 
-      </div>
-
-      <div class="tab-content flex-row" id="tab-calendar">
-
-        <div class="tab-content" id="tab-calendar">
-
-          <div class="calendar-customization">
-
-            <!-- =========================================================
-         COLUMN 1: MINI CALENDAR PREVIEW
-         ========================================================= -->
-            <section class="calendar-panel calendar-panel-preview">
-
-              <div class="panel-title">
-                Kalender Vorschau
+        <div class="color-picker-group" id="team-blue-picker">
+          <label>Team Blau</label>
+          <div class="picker-wrapper">
+            <div class="color-preview" style="background: var(--team-blue, #3498db);"></div>
+            <div class="slider-controls">
+              <div class="slider-row">
+                <span class="slider-label">Farbton</span>
+                <input type="range" class="hue-slider" min="180" max="260" value="210">
+                <span class="slider-value">210°</span>
               </div>
-
-              <table class="mini-calendar" aria-label="Kalender Vorschau">
-
-                <thead>
-                  <tr>
-                    <th class="calendar-kw">KW</th>
-                    <th>Mo</th>
-                    <th>Di</th>
-                    <th>Mi</th>
-                    <th>Do</th>
-                    <th>Fr</th>
-                    <th class="calendar-weekend">Sa</th>
-                    <th class="calendar-weekend">So</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-
-                  <tr>
-                    <th class="kw">KW 6</th>
-                    <td></td>
-                    <td></td>
-                    <td class="calendar-day weekday">1</td>
-                    <td class="calendar-day weekday">2</td>
-                    <td class="calendar-day weekday">3</td>
-                    <td class="calendar-day weekend">4</td>
-                    <td class="calendar-day weekend">5</td>
-                  </tr>
-
-                  <tr>
-                    <th class="kw">KW 7</th>
-                    <td class="calendar-day weekday">6</td>
-                    <td class="calendar-day weekday">7</td>
-                    <td class="calendar-day weekday">8</td>
-                    <td class="calendar-day weekday">9</td>
-                    <td class="calendar-day weekday">10</td>
-                    <td class="calendar-day weekend">11</td>
-                    <td class="calendar-day weekend">12</td>
-                  </tr>
-
-                  <tr>
-                    <th class="kw">KW 8</th>
-                    <td class="calendar-day weekday">13</td>
-                    <td class="calendar-day weekday">14</td>
-                    <td class="calendar-day weekday">15</td>
-                    <td class="calendar-day weekday">16</td>
-                    <td class="calendar-day weekday">17</td>
-                    <td class="calendar-day weekend">18</td>
-                    <td class="calendar-day weekend">19</td>
-                  </tr>
-
-                  <tr>
-                    <th class="kw">KW 9</th>
-                    <td class="calendar-day weekday">20</td>
-                    <td class="calendar-day weekday">21</td>
-                    <td class="calendar-day weekday">22</td>
-                    <td class="calendar-day weekday">23</td>
-                    <td class="calendar-day weekday">24</td>
-                    <td class="calendar-day weekend">25</td>
-                    <td class="calendar-day weekend">26</td>
-                  </tr>
-
-                  <tr>
-                    <th class="kw">KW 10</th>
-                    <td class="calendar-day weekday">27</td>
-                    <td class="calendar-day weekday">28</td>
-                    <td class="calendar-day weekday">29</td>
-                    <td class="calendar-day weekday">30</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                  </tr>
-
-                </tbody>
-              </table>
-
-            </section>
-
-
-            <!-- =========================================================
-         COLUMN 2: WEEKDAY / CALENDAR COLORS
-         ========================================================= -->
-            <section class="calendar-panel calendar-panel-weekdays">
-
-              <div class="panel-title">
-                Farben für Kalendertage
+              <div class="slider-row">
+                <span class="slider-label">Sättigung</span>
+                <input type="range" class="saturation-slider" min="0" max="100" value="70">
+                <span class="slider-value">70%</span>
               </div>
-
-              <div class="color-picker-list">
-
-                <!-- Normaler Wochentag -->
-                <label class="color-picker-row">
-                  <span class="color-picker-label">
-                    Normaler Wochentag
-                  </span>
-                  <input type="color" class="calendar-color" data-color="weekday" value="#ffffff"
-                    aria-label="Farbe für normalen Wochentag">
-                </label>
-
-                <!-- Wochenende -->
-                <label class="color-picker-row">
-                  <span class="color-picker-label">
-                    Wochenende
-                  </span>
-                  <input type="color" class="calendar-color" data-color="weekend" value="#f2f2f2"
-                    aria-label="Farbe für Wochenende">
-                </label>
-
-                <!-- Sonn- und Feiertag -->
-                <label class="color-picker-row">
-                  <span class="color-picker-label">
-                    Sonn- und Feiertag
-                  </span>
-                  <input type="color" class="calendar-color" data-color="holiday" value="#ffe0e0"
-                    aria-label="Farbe für Sonn- und Feiertage">
-                </label>
-
-                <!-- Ruhetag -->
-                <label class="color-picker-row">
-                  <span class="color-picker-label">
-                    Ruhetag
-                  </span>
-                  <input type="color" class="calendar-color" data-color="rest-day" value="#e5e5e5"
-                    aria-label="Farbe für Ruhetage">
-                </label>
-
-                <!-- KW -->
-                <label class="color-picker-row">
-                  <span class="color-picker-label">
-                    KW-Nummern
-                  </span>
-                  <input type="color" class="calendar-color" data-color="calendar-week" value="#eeeeee"
-                    aria-label="Farbe für KW-Nummern">
-                </label>
-
+              <div class="slider-row">
+                <span class="slider-label">Helligkeit</span>
+                <input type="range" class="lightness-slider" min="0" max="100" value="50">
+                <span class="slider-value">50%</span>
               </div>
-
-            </section>
-
-
-            <!-- =========================================================
-         COLUMN 3: SINGLE DAY PREVIEW
-         ========================================================= -->
-            <section class="calendar-panel calendar-panel-day">
-
-              <div class="panel-title">
-                Tageszelle Vorschau
-              </div>
-
-              <div class="day-cell-preview">
-
-                <div class="day-number">
-                  1
-                </div>
-
-                <div class="day-shifts">
-
-                  <div class="shift shift-early">
-                    Frühschicht
-                  </div>
-
-                  <div class="shift shift-day">
-                    Tagschicht
-                  </div>
-
-                  <div class="shift shift-late">
-                    Spätschicht
-                  </div>
-
-                </div>
-
-              </div>
-
-            </section>
-
-
-            <!-- =========================================================
-         COLUMN 4: SHIFT COLORS
-         ========================================================= -->
-            <section class="calendar-panel calendar-panel-shifts">
-
-              <div class="panel-title">
-                Farben für Schichten
-              </div>
-
-              <div class="color-picker-list">
-
-                <!-- Frühschicht -->
-                <label class="color-picker-row">
-                  <span class="color-picker-label">
-                    Frühschicht
-                  </span>
-                  <input type="color" class="shift-color" data-shift="early" value="#ffe08a"
-                    aria-label="Farbe für Frühschicht">
-                </label>
-
-                <!-- Tagschicht -->
-                <label class="color-picker-row">
-                  <span class="color-picker-label">
-                    Tagschicht
-                  </span>
-                  <input type="color" class="shift-color" data-shift="day" value="#a8e6a3"
-                    aria-label="Farbe für Tagschicht">
-                </label>
-
-                <!-- Spätschicht -->
-                <label class="color-picker-row">
-                  <span class="color-picker-label">
-                    Spätschicht
-                  </span>
-                  <input type="color" class="shift-color" data-shift="late" value="#a9c7ff"
-                    aria-label="Farbe für Spätschicht">
-                </label>
-
-              </div>
-
-            </section>
-
+            </div>
+            <input type="text" class="color-hex-input" value="#3498db" spellcheck="false">
           </div>
-
         </div>
 
-        <div class="tab-content" id="tab-app">
-          <!-- App button/background/text color pickers go here -->
+
+      </div>
+    </div>
+  </div>
+  <!-- Tab Inhalt: Kalender-Farben -->
+  <div class="color-tab-content" id="tab-weekdays">
+    <div class="color-section">
+      <h3>Kalender-Farben</h3>
+
+      <section class="calendar-panel calendar-panel-preview">
+
+        <div class="panel-title">
+          Kalender Vorschau
+        </div>
+
+        <table class="mini-calendar" aria-label="Kalender Vorschau">
+
+          <thead>
+            <tr>
+              <th class="calendar-kw">KW</th>
+              <th>Mo</th>
+              <th>Di</th>
+              <th>Mi</th>
+              <th>Do</th>
+              <th>Fr</th>
+              <th class="calendar-weekend">Sa</th>
+              <th class="calendar-weekend">So</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            <tr>
+              <th class="kw">KW 6</th>
+              <td></td>
+              <td></td>
+              <td class="calendar-day weekday">1</td>
+              <td class="calendar-day weekday">2</td>
+              <td class="calendar-day weekday">3</td>
+              <td class="calendar-day weekend">4</td>
+              <td class="calendar-day weekend">5</td>
+            </tr>
+
+            <tr>
+              <th class="kw">KW 7</th>
+              <td class="calendar-day weekday">6</td>
+              <td class="calendar-day weekday">7</td>
+              <td class="calendar-day weekday">8</td>
+              <td class="calendar-day weekday">9</td>
+              <td class="calendar-day weekday">10</td>
+              <td class="calendar-day weekend">11</td>
+              <td class="calendar-day weekend">12</td>
+            </tr>
+
+            <tr>
+              <th class="kw">KW 8</th>
+              <td class="calendar-day weekday">13</td>
+              <td class="calendar-day weekday">14</td>
+              <td class="calendar-day weekday">15</td>
+              <td class="calendar-day weekday">16</td>
+              <td class="calendar-day weekday">17</td>
+              <td class="calendar-day weekend">18</td>
+              <td class="calendar-day weekend">19</td>
+            </tr>
+
+            <tr>
+              <th class="kw">KW 9</th>
+              <td class="calendar-day weekday">20</td>
+              <td class="calendar-day weekday">21</td>
+              <td class="calendar-day weekday">22</td>
+              <td class="calendar-day weekday">23</td>
+              <td class="calendar-day weekday">24</td>
+              <td class="calendar-day weekend">25</td>
+              <td class="calendar-day weekend">26</td>
+            </tr>
+
+            <tr>
+              <th class="kw">KW 10</th>
+              <td class="calendar-day weekday">27</td>
+              <td class="calendar-day weekday">28</td>
+              <td class="calendar-day weekday">29</td>
+              <td class="calendar-day weekday">30</td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+
+          </tbody>
+        </table>
+
+      </section>
+
+      <div class="color-grid">
+        <div class="color-picker-group" id="weekday-bg-picker">
+          <label>Wochentag Hintergrund</label>
+          <div class="picker-wrapper">
+            <div class="color-preview" style="background: var(--weekday-bg, #ffffff);"></div>
+            <div class="slider-controls">
+              <div class="slider-row">
+                <span class="slider-label">Farbton</span>
+                <input type="range" class="hue-slider" min="0" max="360" value="0">
+                <span class="slider-value">0°</span>
+              </div>
+              <div class="slider-row">
+                <span class="slider-label">Sättigung</span>
+                <input type="range" class="saturation-slider" min="0" max="100" value="0">
+                <span class="slider-value">0%</span>
+              </div>
+              <div class="slider-row">
+                <span class="slider-label">Helligkeit</span>
+                <input type="range" class="lightness-slider" min="0" max="100" value="100">
+                <span class="slider-value">100%</span>
+              </div>
+            </div>
+            <input type="text" class="color-hex-input" value="#ffffff" spellcheck="false">
+          </div>
+        </div>
+
+        <div class="color-picker-group" id="weekend-bg-picker">
+          <label>Wochenende Hintergrund</label>
+          <div class="picker-wrapper">
+            <div class="color-preview" style="background: var(--weekend-bg, #f8f9fa);"></div>
+            <div class="slider-controls">
+              <div class="slider-row">
+                <span class="slider-label">Farbton</span>
+                <input type="range" class="hue-slider" min="0" max="360" value="0">
+                <span class="slider-value">0°</span>
+              </div>
+              <div class="slider-row">
+                <span class="slider-label">Sättigung</span>
+                <input type="range" class="saturation-slider" min="0" max="100" value="0">
+                <span class="slider-value">0%</span>
+              </div>
+              <div class="slider-row">
+                <span class="slider-label">Helligkeit</span>
+                <input type="range" class="lightness-slider" min="0" max="100" value="98">
+                <span class="slider-value">98%</span>
+              </div>
+            </div>
+            <input type="text" class="color-hex-input" value="#f8f9fa" spellcheck="false">
+          </div>
+        </div>
+
+        <div class="color-picker-group" id="today-bg-picker">
+          <label>Heute Hintergrund</label>
+          <div class="picker-wrapper">
+            <div class="color-preview" style="background: var(--today-bg, #e8f0fe);"></div>
+            <div class="slider-controls">
+              <div class="slider-row">
+                <span class="slider-label">Farbton</span>
+                <input type="range" class="hue-slider" min="0" max="360" value="210">
+                <span class="slider-value">210°</span>
+              </div>
+              <div class="slider-row">
+                <span class="slider-label">Sättigung</span>
+                <input type="range" class="saturation-slider" min="0" max="100" value="30">
+                <span class="slider-value">30%</span>
+              </div>
+              <div class="slider-row">
+                <span class="slider-label">Helligkeit</span>
+                <input type="range" class="lightness-slider" min="0" max="100" value="95">
+                <span class="slider-value">95%</span>
+              </div>
+            </div>
+            <input type="text" class="color-hex-input" value="#e8f0fe" spellcheck="false">
+          </div>
+        </div>
+
+        <div class="color-picker-group" id="holiday-bg-picker">
+          <label>Feiertag Hintergrund</label>
+          <div class="picker-wrapper">
+            <div class="color-preview" style="background: var(--holiday-bg, #fce4ec);"></div>
+            <div class="slider-controls">
+              <div class="slider-row">
+                <span class="slider-label">Farbton</span>
+                <input type="range" class="hue-slider" min="0" max="360" value="350">
+                <span class="slider-value">350°</span>
+              </div>
+              <div class="slider-row">
+                <span class="slider-label">Sättigung</span>
+                <input type="range" class="saturation-slider" min="0" max="100" value="50">
+                <span class="slider-value">50%</span>
+              </div>
+              <div class="slider-row">
+                <span class="slider-label">Helligkeit</span>
+                <input type="range" class="lightness-slider" min="0" max="100" value="95">
+                <span class="slider-value">95%</span>
+              </div>
+            </div>
+            <input type="text" class="color-hex-input" value="#fce4ec" spellcheck="false">
+          </div>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Tab Inhalt: Allgemeine Farben -->
+  <div class="color-tab-content" id="tab-general">
+    <div class="color-section">
+      <h3>Allgemeine App-Farben</h3>
+      <div class="color-grid">
+        <div class="color-picker-group" id="bg-primary-picker">
+          <label>Haupt-Hintergrund</label>
+          <div class="picker-wrapper">
+            <div class="color-preview" style="background: var(--bg-primary, #ffffff);"></div>
+            <div class="slider-controls">
+              <div class="slider-row">
+                <span class="slider-label">Farbton</span>
+                <input type="range" class="hue-slider" min="0" max="360" value="0">
+                <span class="slider-value">0°</span>
+              </div>
+              <div class="slider-row">
+                <span class="slider-label">Sättigung</span>
+                <input type="range" class="saturation-slider" min="0" max="100" value="0">
+                <span class="slider-value">0%</span>
+              </div>
+              <div class="slider-row">
+                <span class="slider-label">Helligkeit</span>
+                <input type="range" class="lightness-slider" min="0" max="100" value="100">
+                <span class="slider-value">100%</span>
+              </div>
+            </div>
+            <input type="text" class="color-hex-input" value="#ffffff" spellcheck="false">
+          </div>
+        </div>
+
+        <div class="color-picker-group" id="hover-bg-picker">
+          <label>Hover Hintergrund</label>
+          <div class="picker-wrapper">
+            <div class="color-preview" style="background: var(--hover-bg, #f0f0f0);"></div>
+            <div class="slider-controls">
+              <div class="slider-row">
+                <span class="slider-label">Farbton</span>
+                <input type="range" class="hue-slider" min="0" max="360" value="0">
+                <span class="slider-value">0°</span>
+              </div>
+              <div class="slider-row">
+                <span class="slider-label">Sättigung</span>
+                <input type="range" class="saturation-slider" min="0" max="100" value="0">
+                <span class="slider-value">0%</span>
+              </div>
+              <div class="slider-row">
+                <span class="slider-label">Helligkeit</span>
+                <input type="range" class="lightness-slider" min="0" max="100" value="94">
+                <span class="slider-value">94%</span>
+              </div>
+            </div>
+            <input type="text" class="color-hex-input" value="#f0f0f0" spellcheck="false">
+          </div>
+        </div>
+
+        <div class="color-picker-group" id="active-bg-picker">
+          <label>Aktiver Hintergrund</label>
+          <div class="picker-wrapper">
+            <div class="color-preview" style="background: var(--active-bg, #e3f2fd);"></div>
+            <div class="slider-controls">
+              <div class="slider-row">
+                <span class="slider-label">Farbton</span>
+                <input type="range" class="hue-slider" min="0" max="360" value="210">
+                <span class="slider-value">210°</span>
+              </div>
+              <div class="slider-row">
+                <span class="slider-label">Sättigung</span>
+                <input type="range" class="saturation-slider" min="0" max="100" value="40">
+                <span class="slider-value">40%</span>
+              </div>
+              <div class="slider-row">
+                <span class="slider-label">Helligkeit</span>
+                <input type="range" class="lightness-slider" min="0" max="100" value="95">
+                <span class="slider-value">95%</span>
+              </div>
+            </div>
+            <input type="text" class="color-hex-input" value="#e3f2fd" spellcheck="false">
+          </div>
+        </div>
+
+        <div class="color-picker-group" id="text-primary-picker">
+          <label>Primärer Text</label>
+          <div class="picker-wrapper">
+            <div class="color-preview" style="background: var(--text-primary, #212529);"></div>
+            <div class="slider-controls">
+              <div class="slider-row">
+                <span class="slider-label">Farbton</span>
+                <input type="range" class="hue-slider" min="0" max="360" value="210">
+                <span class="slider-value">210°</span>
+              </div>
+              <div class="slider-row">
+                <span class="slider-label">Sättigung</span>
+                <input type="range" class="saturation-slider" min="0" max="100" value="10">
+                <span class="slider-value">10%</span>
+              </div>
+              <div class="slider-row">
+                <span class="slider-label">Helligkeit</span>
+                <input type="range" class="lightness-slider" min="0" max="100" value="15">
+                <span class="slider-value">15%</span>
+              </div>
+            </div>
+            <input type="text" class="color-hex-input" value="#212529" spellcheck="false">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Aktionen -->
+  <div class="color-actions">
+    <button class="btn btn-secondary" onclick="resetToDefault()">
+      🔄 Auf Standard zurücksetzen
+    </button>
+    <button class="btn btn-primary" id="save-custom-theme">
+      💾 Custom-Theme speichern
+    </button>
+  </div>
+
+  <!-- Vorschau -->
+  <div class="color-preview-container">
+    <h3>Live-Vorschau</h3>
+    <div class="preview-card">
+      <div class="preview-header" style="background: var(--header-bg, #2c3e50); color: white;">
+        <span>TimeSlip Vorschau</span>
+        <span>🔍</span>
+      </div>
+      <div class="preview-body">
+        <div class="preview-teams">
+          <span class="preview-team" style="background: var(--team-blue, #3498db);">Team Blau</span>
+          <span class="preview-team" style="background: var(--team-green, #2ecc71);">Team Grün</span>
+          <span class="preview-team" style="background: var(--team-yellow, #f1c40f);">Team Gelb</span>
+          <span class="preview-team" style="background: var(--team-red, #e74c3c);">Team Rot</span>
+        </div>
+        <div class="preview-calendar">
+          <span class="preview-day" style="background: var(--weekday-bg, #ffffff);">Mo</span>
+          <span class="preview-day" style="background: var(--weekday-bg, #ffffff);">Di</span>
+          <span class="preview-day" style="background: var(--weekday-bg, #ffffff);">Mi</span>
+          <span class="preview-day" style="background: var(--weekday-bg, #ffffff);">Do</span>
+          <span class="preview-day" style="background: var(--weekday-bg, #ffffff);">Fr</span>
+          <span class="preview-day preview-weekend" style="background: var(--weekend-bg, #f8f9fa);">Sa</span>
+          <span class="preview-day preview-weekend" style="background: var(--weekend-bg, #f8f9fa);">So</span>
+        </div>
+        <div class="preview-elements">
+          <button class="preview-btn"
+            style="background: var(--hover-bg, #f0f0f0); color: var(--text-primary, #212529);">Hover</button>
+          <button class="preview-btn active"
+            style="background: var(--active-bg, #e3f2fd); color: var(--text-primary, #212529);">Aktiv</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

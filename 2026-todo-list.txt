@@ -84,7 +84,7 @@ calendar:
 🟢 1. ☐ check if role reasignments are rendered
 
 employees:
-🟡 2. ☐ add sample mode style to delete button in pay-updateRuleModel
+🟡 2. ✅ add sample mode style to delete button in pay-updateRuleModel
 🟡 3. ☐ switch from label to something fitting for style ( regular shedule )
 
 ruleset:
@@ -93,13 +93,13 @@ ruleset:
 🟡 6. ☐ add chip for weekdays ( color )
 🟡 7. ☐ add chip for shift ( icon + color)
 🟡 8. ☐ extend team marker ( maybe with ellipses if no space)
-🟡 9. ☐ add old new to heatmap
+🟡 9. ✅ add old new to heatmap
 ruleset-checker:
-🟢 10. ☐ roles are checked for day-shift instead of hall day
+🟢 10. ✅ roles are checked for day-shift instead of hall day
 
 calendar-settings:
 🟢11. ☐ open/close icons dont match status for weekdays 
-🟡12. ☐ add tool tip texts for icons "open" and "closed" (icons are pseudo elements, workarround needed)
+🟡12. ✅ add tool tip texts for icons "open" and "closed" (icons are pseudo elements, workarround needed)
 🟡13. ☐ adjust height for company holidays 
 🟡14. ☐ (include bridge days in company holiday)
 🟣15. ☐ (auto remove available days off for employees depending an regular shedule ) 
@@ -123,7 +123,7 @@ admin tools.auto save
 🟢28. ☐ disable are you sure dialogs
 🟢29.☐ replace dirty state with autosave in shared state save button
 admin tools.clear cache... 
-🟡30. ☐ (maybe show current cache?)
+🟡30. ✅ (maybe show current cache?)
 admin tool.ruleset-settings
 🔵31. ☐ gather ideas
 🔵32. ☐ build prilimary UI
@@ -135,11 +135,11 @@ admin tools.calendar settings
 admin tools. revive delted employees
 🟡37. ☐ add sample
 🟡38. ☐ move more to left
-🟡39. ☐ add phönix for mass revive
-🟢40. ☐ fix end date picker
+🟡39. ✅ add phönix for mass revive
+🟢40. ✅ fix end date picker
 removed date picker completely and moved date - picker needs to employeeform , new state phoenix ="🐦‍🔥" needs a warning status in employee form
 admin tools.donate
-🟡41. ☐ add an offline alternatove
+🟡41. ☐ add an offline alternative
 🟡42. ☐ make a begging text
 
 minx:

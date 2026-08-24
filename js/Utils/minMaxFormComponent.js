@@ -16,7 +16,7 @@ export function createWindowButtons() {
     // --- Minimize button ---
     let btnMin = document.createElement('button');
     btnMin.type = 'button';
-    btnMin.classList.add('noto');
+    btnMin.classList.add('noto', 'window-button');
     btnMin.textContent = '🔽';
     btnMin.title = 'Minimieren';
     btnMin.setAttribute('aria-label', 'Formular minimieren');
@@ -28,7 +28,7 @@ export function createWindowButtons() {
     // --- Maximize / Restore button ---
     let btnMax = document.createElement('button');
     btnMax.type = 'button';
-    btnMax.classList.add('noto', 'btn-gabs');
+    btnMax.classList.add('noto', 'window-button', 'btn-gabs');
     btnMax.textContent = '🔼'; // Could be ⬜ or other symbolic icon
     btnMax.title = 'Maximieren / Wiederherstellen';
     btnMax.setAttribute('aria-label', 'Formular maximieren');

@@ -1,69 +1,169 @@
 .theme-dark {
-    --role-0-color: #1a1a1a;             /* Slightly softer black */
-    --role-1-color: #6699ff;             /* Muted blue for main accents */
-    --role-2-color: #4d80ff;             /* Slightly darker accent blue */
-    --role-3-color: #b084cc;             /* Softer purple */
-    --role-4-color: #7fd4a6;             /* Softer green */
-    --role-5-color: #f0d76d;             /* Warm yellow, not harsh */
-    --role-6-color: #43a047;             /* Medium green */
-    --role-7-color: #ec407a;             /* Soft pink */
-    --role-8-color: #ef5350;             /* Warm red */
-    --role-9-color: #c62828;             /* Darker red */
-    --role-10-color: #90a4ae;            /* Cool gray for text/secondary UI */
-    --role-11-color: #6d4c9c;            /* Deep purple */
-    --role-12-color: #dce1e6;            /* Soft off-white for text */
-    --role-13-color: #f4a261;            /* Warm accent orange */
+    /*
+     * ============================================================
+     * ROLE COLORS
+     * ============================================================
+     *
+     * Roles are intentionally more colorful than the rest of the UI.
+     * Hue should remain recognizable:
+     * blue -> blue, green -> green, red -> red, etc.
+     *
+     * These are designed to work on dark surfaces without becoming
+     * neon or muddy.
+     */
 
-    --background-color: #121212;         /* Very dark, near black */
-    --text-color: #e0e0e0;               /* Soft neutral gray for main text */
+    --role-0-color:  #6b7280;   /* Neutral gray */
+    --role-1-color:  #60a5fa;   /* Blue */
+    --role-2-color:  #818cf8;   /* Indigo */
+    --role-3-color:  #c084fc;   /* Purple */
+    --role-4-color:  #4ade80;   /* Green */
+    --role-5-color:  #facc15;   /* Yellow */
+    --role-6-color:  #34d399;   /* Emerald */
+    --role-7-color:  #f472b6;   /* Pink */
+    --role-8-color:  #fb7185;   /* Red / coral */
+    --role-9-color:  #ef4444;   /* Strong red */
+    --role-10-color: #94a3b8;   /* Slate */
+    --role-11-color: #a78bfa;   /* Violet */
+    --role-12-color: #e2e8f0;   /* Light neutral */
+    --role-13-color: #fb923c;   /* Orange */
 
-    --primary-accent-color: #2e7d32;     /* Medium green, readable */
-    --secondary-accent-color: #1b5e20;   /* Dark green for depth */
-    --accent-active: darkslateblue;
-    --accent-hover: #5c6bc0;             /* Softer hover blue */
-    --accent-inactive: #37474f;          /* Muted slate gray */
-    --accent-muted: #546e7a;             /* Lighter muted gray-blue */
 
-    --button-active-color: #388e3c;      /* Vibrant green */
-    --button-inactive-color: #2e7d32;    /* Darker green */
-    --button-hover-color: #43a047;       /* Slightly brighter green for hover */
+    /*
+     * ============================================================
+     * CORE SURFACES
+     * ============================================================
+     *
+     * Avoid pure black and avoid too many different dark colors.
+     * Most of the application should live within this small range.
+     */
 
-    /* Calendar Day Backgrounds */
-    --calendar-day-closed-bg: #332b27;   /* Deep, warm brown */
-    --calendar-day-regular-bg: #1f2a38;  /* Muted navy for neutral days */
-    --calendar-day-weekend-bg: #2e503f;  /* Muted green for weekends */
-    --calendar-day-holiday-bg: #b71c1c;  /* Strong, clear red */
+    --background-color: #111318;
+    --text-color:       #e5e7eb;
+    --text-muted-color: #9ca3af;
 
-    --calendar-shift-early-bg: #3f51b5;  /* Muted blue/purple */
-    --calendar-shift-day-bg: #212121;    /* Very dark gray */
-    --calendar-shift-late-bg: #3f51b5;   /* Same muted blue/purple */
 
-    --shift-border-color: #455a64;       /* Slate-gray border */
+    /*
+     * ============================================================
+     * APPLICATION ACCENTS
+     * ============================================================
+     *
+     * Blue is the primary interaction color.
+     * Green is reserved for positive/successful states.
+     */
 
-    --holiday-color: #ff8a80;            /* Soft red for holiday text */
-    --weekend-color: #a5d6a7;            /* Soft green for weekends */
-    --office-closed-color: #795548;      /* Medium brown for office closed */
-    
-    --text-muted-color: #9e9e9e;         /* Softer gray for secondary text */
+    --primary-accent-color:   #061c3f;
+    --secondary-accent-color: #1f2f53;
 
-    --color-layout-container-light: #1c1c1c; /* Dark charcoal */
-    --color-layout-container-medium: #2b2b2b; /* Slightly lighter charcoal */
-    --color-layout-container-dark: #333f4f;  /* Deep muted blue-gray */
+    --accent-active:   #1a2c42;
+    --accent-hover:    #162641;
+    --accent-inactive: #374151;
+    --accent-muted:    #4b5563;
 
-    --bg-white: #1c1c1c;                 /* Soft near-black instead of black */
-    --bg-soft-white: #2c387e;            /* Muted indigo for softer backgrounds */
-    --bg-inactive: #455a64;              /* Slate gray for inactive panels */
 
-    --color-text-request: #a05116;       /* Darker orange, less glaring */
-    --color-text-employee: #2a3d6b;      /* Deep muted blue */
-    --color-text-tasks: #1e4d1e;         /* Dark forest green */
-    --color-text-rules: #2f4f4f;         /* Dark slate gray, easier on eyes */
-    --color-text-calendar: #a42b1f;      /* Deep red for calendar items */
-    --color-text-welcome: #3c5a99;       /* Muted deep blue, still friendly */
-    --color-text-admin: #4b0082;         /* Dark purple, maintains authority feel */
+    /*
+     * ============================================================
+     * BUTTONS
+     * ============================================================
+     */
 
-    --color-request-form: #b8860b;       /* Dark goldenrod, rich but not glaring */
-    --color-request-border: #5c3a21;     /* Dark, warm brown */
-    --color-request-list: #8b7d6b;       /* Muted wheat / beige for softer contrast */
+    --button-active-color:   #2563eb;
+    --button-inactive-color: #1f2937;
+    --button-hover-color:   #3b82f6;
 
+
+    /*
+     * ============================================================
+     * CALENDAR DAYS
+     * ============================================================
+     *
+     * Day backgrounds are deliberately subtle.
+     * The calendar should not look like a rainbow before shifts
+     * are even rendered.
+     */
+
+    --calendar-day-closed-bg:  #211d1c;
+    --calendar-day-regular-bg: #171a20;
+    --calendar-day-weekend-bg: #18221d;
+    --calendar-day-holiday-bg: #321b1d;
+
+
+    /*
+     * Calendar day indicators / labels
+     */
+
+    --holiday-color:       #fb7185;
+    --weekend-color:       #6ee7b7;
+    --office-closed-color: #c08472;
+
+
+    /*
+     * ============================================================
+     * SHIFT COLORS
+     * ============================================================
+     *
+     * Shifts should remain visually distinct from the day itself.
+     */
+
+    --calendar-shift-early-bg: #293b66;
+    --calendar-shift-day-bg:   #24272e;
+    --calendar-shift-late-bg:  #3b315f;
+
+    --shift-border-color: #475569;
+
+
+    /*
+     * ============================================================
+     * LAYOUT CONTAINERS
+     * ============================================================
+     */
+
+    --color-layout-container-light:  #1b1e24;
+    --color-layout-container-medium: #20242b;
+    --color-layout-container-dark:   #292e37;
+
+
+    /*
+     * ============================================================
+     * GENERIC BACKGROUNDS
+     * ============================================================
+     *
+     * Keep these neutral. In particular, don't use indigo as a
+     * generic "soft white" background.
+     */
+
+    --bg-white:      #1b1e24;
+    --bg-soft-white: #22262e;
+    --bg-inactive:   #303640;
+
+
+    /*
+     * ============================================================
+     * TEXT / SECTION COLORS
+     * ============================================================
+     *
+     * These are UI text colors, so they must remain LIGHT on the
+     * dark theme. The previous version used dark text colors here,
+     * which is one of the main reasons things looked muddy.
+     *
+     * Hue is preserved, but brightness is increased.
+     */
+
+    --color-text-request:   #fdba74;   /* Orange */
+    --color-text-employee:  #93c5fd;   /* Blue */
+    --color-text-tasks:     #86efac;   /* Green */
+    --color-text-rules:     #94a3b8;   /* Slate */
+    --color-text-calendar:  #fca5a5;   /* Red */
+    --color-text-welcome:   #93c5fd;   /* Friendly blue */
+    --color-text-admin:     #c4b5fd;   /* Purple */
+
+
+    /*
+     * ============================================================
+     * REQUEST UI
+     * ============================================================
+     */
+
+    --color-request-form:   #fbbf24;
+    --color-request-border: #6b4f1d;
+    --color-request-list:   #c4b5a5;
 }

@@ -582,3 +582,31 @@
     }
 }
 
+#calendar-view {
+    height: 100%;
+    min-height: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+}
+
+#calendar-navigation2 {
+    flex: 0 0 auto;
+    z-index: 100;
+
+    /* optional, but makes the separation clearer */
+    background: var(--background-color);
+}
+
+#calendar-month-sheet {
+    flex: 1 1 auto;
+    min-height: 0;
+
+    overflow-y: auto;
+    overflow-x: auto;
+
+    /* optional */
+    position: relative;
+}
