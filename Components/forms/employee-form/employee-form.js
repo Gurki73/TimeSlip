@@ -741,15 +741,27 @@ function populateShiftOptions() {
 
   dayIds.forEach((id, dayIndex) => {
     const select = document.getElementById(id);
-    select.classList.add('noto');
     if (!select) return;
+    select.classList.add('noto');
     select.innerHTML = "";
 
     function updateSelectBg() {
+      if (select.classList.contains("shift-warning")) return;
       const opt = select.options[select.selectedIndex];
-      select.style.backgroundColor = opt.style.backgroundColor || "";
-      saveButtonHeader.setState('dirty');
+      select.style.backgroundColor = opt?.style.backgroundColor || "";
+      if (saveButtonHeader) saveButtonHeader.setState('dirty');
     }
+
+    const previousHandler = select._shiftChangeHandler;
+    if (previousHandler) {
+      select.removeEventListener("change", previousHandler);
+    }
+
+    const handleShiftChange = () => {
+      updateSelectBg();
+      updateShiftWarning(dayIds[dayIndex]);
+      if (saveButtonHeader) saveButtonHeader.setState('dirty');
+    };
 
     if (currentOfficeDays[dayIndex] === "never") {
       select.style.display = "none";
@@ -759,15 +771,18 @@ function populateShiftOptions() {
         label.id = id + "-closed-label";
         label.classList.add("flex-row");
         label.innerHTML = `<span class="noto">🔒</span> geschlossen`;
-        label.style.backgroundColor = getComputedStyle(document.body).getPropertyValue("--calendar-day-closed-bg"); // Insert label right after the select element 
+        label.style.backgroundColor = getComputedStyle(document.body).getPropertyValue("--calendar-day-closed-bg");
         select.insertAdjacentElement("afterend", label);
       }
+      select._shiftChangeHandler = handleShiftChange;
+      select.addEventListener("change", handleShiftChange);
       return;
     }
 
     select.style.display = "inline-block";
     const oldLabel = document.getElementById(id + "-closed-label");
     if (oldLabel) oldLabel.remove();
+
     const neverOpt = document.createElement("option");
     neverOpt.value = "never";
     neverOpt.textContent = "nicht eingeplant";
@@ -806,14 +821,12 @@ function populateShiftOptions() {
     }
 
     updateSelectBg();
-    select.addEventListener("change", () => {
-      updateSelectBg();
-      updateShiftWarning(dayIds[dayIndex], employee);
-    });
+    select._shiftChangeHandler = handleShiftChange;
+    select.addEventListener("change", handleShiftChange);
   });
 }
 
-function updateShiftWarning(day, employee) {
+function updateShiftWarning(day) {
   const select = document.getElementById(`employee-form-shift-${day}`);
   if (!select) return;
 
@@ -822,69 +835,84 @@ function updateShiftWarning(day, employee) {
   if (dayIndex === -1) return;
 
   const warningTextId = `warning-${day}`;
-
-  // Remove previous warning
   const oldWarning = document.getElementById(warningTextId);
   if (oldWarning) oldWarning.remove();
 
   select.classList.remove("shift-warning");
   select.style.border = "";
+  select.style.color = "";
+  select.style.backgroundColor = "";
+
+  const closedLabel = document.getElementById(`${select.id}-closed-label`);
+  if (closedLabel) closedLabel.remove();
 
   const selectedShift = select.value;
   const officeClosed = currentOfficeDays[dayIndex] === "never";
 
-  /*
-   * "never" is always a valid resolution.
-   * A shift is invalid only when it isn't currently available.
-   */
+  if (selectedShift === "never" && officeClosed) {
+    select.style.display = "none";
+
+    let label = document.getElementById(`${select.id}-closed-label`);
+    if (!label) {
+      label = document.createElement("label");
+      label.id = `${select.id}-closed-label`;
+      label.classList.add("flex-row");
+      label.innerHTML = `<span class="noto">🔒</span> geschlossen`;
+      label.style.backgroundColor = getComputedStyle(document.body).getPropertyValue("--calendar-day-closed-bg");
+      select.insertAdjacentElement("afterend", label);
+    }
+    return;
+  }
+
+  const syntheticInvalidOption = Array.from(select.options)
+    .find(option => option.dataset.invalidAssignment === "true");
+  if (syntheticInvalidOption) {
+    syntheticInvalidOption.remove();
+  }
+
   const selectedOption = Array.from(select.options)
-    .find(opt => opt.value === selectedShift);
+    .find(option => option.value === selectedShift);
 
   const isInvalid =
     selectedShift &&
     selectedShift !== "never" &&
-    (
-      !selectedOption ||
-      selectedOption.dataset.invalidAssignment === "true"
-    );
+    (!selectedOption || selectedOption.dataset.invalidAssignment === "true");
 
   if (!isInvalid) {
-    // Normal state
     const option = select.options[select.selectedIndex];
-    select.style.backgroundColor =
-      option?.style.backgroundColor || "";
-
-    /*
-     * If the office is closed, the caller can decide whether
-     * this select should be hidden again.
-     */
+    select.style.display = "inline-block";
+    select.style.backgroundColor = option?.style.backgroundColor || "";
     return;
   }
 
-  // Warning state
-  select.classList.add("shift-warning");
+  const invalidOption = document.createElement("option");
+  invalidOption.value = selectedShift;
+  invalidOption.textContent = getShiftDisplayName(selectedShift);
+  invalidOption.dataset.invalidAssignment = "true";
+  invalidOption.classList.add("noto", "employee-shift-invalid");
+  invalidOption.style.backgroundColor = "#ffd6d6";
 
-  // Keep the existing very visible warning treatment
-  select.style.backgroundColor = "yellow";
+  select.insertBefore(invalidOption, select.firstChild);
+  select.value = selectedShift;
+
+  select.classList.add("shift-warning");
+  select.style.display = "inline-block";
+  select.style.backgroundColor = "#ffd6d6";
   select.style.color = "red";
   select.style.border = "2px solid red";
 
   const warningText = document.createElement("span");
   warningText.id = warningTextId;
-
   warningText.textContent = officeClosed
     ? "geschlossen – prüfen"
     : "Schicht nicht verfügbar";
-
   warningText.style.color = "red";
+  warningText.style.backgroundColor = "#ffd6d6";
   warningText.style.fontWeight = "bold";
   warningText.style.display = "block";
   warningText.style.marginTop = "4px";
 
-  select.parentNode.insertBefore(
-    warningText,
-    select.nextSibling
-  );
+  select.parentNode.insertBefore(warningText, select.nextSibling);
 }
 
 function populateWeekdaySelection(employee) {
