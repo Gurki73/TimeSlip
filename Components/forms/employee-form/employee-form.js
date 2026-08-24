@@ -806,61 +806,239 @@ function populateShiftOptions() {
     }
 
     updateSelectBg();
-    select.addEventListener("change", updateSelectBg);
+    select.addEventListener("change", () => {
+      updateSelectBg();
+      updateShiftWarning(dayIds[dayIndex], employee);
+    });
   });
+}
+
+function updateShiftWarning(day, employee) {
+  const select = document.getElementById(`employee-form-shift-${day}`);
+  if (!select) return;
+
+  const dayIds = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+  const dayIndex = dayIds.indexOf(day);
+  if (dayIndex === -1) return;
+
+  const warningTextId = `warning-${day}`;
+
+  // Remove previous warning
+  const oldWarning = document.getElementById(warningTextId);
+  if (oldWarning) oldWarning.remove();
+
+  select.classList.remove("shift-warning");
+  select.style.border = "";
+
+  const selectedShift = select.value;
+  const officeClosed = currentOfficeDays[dayIndex] === "never";
+
+  /*
+   * "never" is always a valid resolution.
+   * A shift is invalid only when it isn't currently available.
+   */
+  const selectedOption = Array.from(select.options)
+    .find(opt => opt.value === selectedShift);
+
+  const isInvalid =
+    selectedShift &&
+    selectedShift !== "never" &&
+    (
+      !selectedOption ||
+      selectedOption.dataset.invalidAssignment === "true"
+    );
+
+  if (!isInvalid) {
+    // Normal state
+    const option = select.options[select.selectedIndex];
+    select.style.backgroundColor =
+      option?.style.backgroundColor || "";
+
+    /*
+     * If the office is closed, the caller can decide whether
+     * this select should be hidden again.
+     */
+    return;
+  }
+
+  // Warning state
+  select.classList.add("shift-warning");
+
+  // Keep the existing very visible warning treatment
+  select.style.backgroundColor = "yellow";
+  select.style.color = "red";
+  select.style.border = "2px solid red";
+
+  const warningText = document.createElement("span");
+  warningText.id = warningTextId;
+
+  warningText.textContent = officeClosed
+    ? "geschlossen – prüfen"
+    : "Schicht nicht verfügbar";
+
+  warningText.style.color = "red";
+  warningText.style.fontWeight = "bold";
+  warningText.style.display = "block";
+  warningText.style.marginTop = "4px";
+
+  select.parentNode.insertBefore(
+    warningText,
+    select.nextSibling
+  );
 }
 
 function populateWeekdaySelection(employee) {
   const weekdays = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
   weekdays.forEach((day, index) => {
-    const selectElement = document.getElementById(`employee-form-shift-${day}`);
+    const selectElement = document.getElementById(
+      `employee-form-shift-${day}`
+    );
+
     if (!selectElement) return;
 
+    // Reset previous warning state
     selectElement.classList.remove('shift-warning');
     selectElement.style.backgroundColor = '';
+    selectElement.style.border = '';
+
     const warningTextId = `warning-${day}`;
     let warningText = document.getElementById(warningTextId);
     if (warningText) warningText.remove();
 
     const selectedShift = employee.shifts?.[day];
+    const officeDay = currentOfficeDays[index];
+    const officeClosed = officeDay === 'never';
 
-    const isApprentice = [employee.mainRoleIndex, employee.secondaryRoleIndex, employee.trinaryRoleIndex].includes(13);
-    if (isApprentice && !Array.from(selectElement.options).some(opt => opt.value === 'school')) {
+    /*
+     * Apprentice / school option
+     * Keep this behaviour from the previous implementation.
+     */
+    const isApprentice = [
+      employee.mainRoleIndex,
+      employee.secondaryRoleIndex,
+      employee.trinaryRoleIndex
+    ].includes(13);
+
+    if (
+      isApprentice &&
+      !Array.from(selectElement.options)
+        .some(opt => opt.value === 'school')
+    ) {
       const schoolOption = document.createElement('option');
+
       schoolOption.value = 'school';
-      schoolOption.style.backgroundColor = getComputedStyle(document.body)
-        .getPropertyValue('--role-13-color');
+      schoolOption.style.backgroundColor =
+        getComputedStyle(document.body)
+          .getPropertyValue('--role-13-color');
+
       schoolOption.textContent = '📐 Berufsschule';
-      schoolOption.classList.add('noto', 'employee-shift-school');
+      schoolOption.classList.add(
+        'noto',
+        'employee-shift-school'
+      );
+
       selectElement.appendChild(schoolOption);
     }
 
-    const optionToSelect = Array.from(selectElement.options).find(opt => opt.value === selectedShift);
-    if (optionToSelect) {
-      optionToSelect.selected = true;
-      selectElement.style.backgroundColor = optionToSelect.style.backgroundColor || '';
-    } else if (selectedShift) {
-      let warningMessage = 'ungültige Schicht';
-      let bgColor = 'yellow';
+    /*
+     * Find out whether the employee's current assignment
+     * is still available in the current office configuration.
+     */
+    const currentOption = Array.from(selectElement.options)
+      .find(opt => opt.value === selectedShift);
 
-      const officeClosed = currentOfficeDays[index] === 'never';
+    const assignmentIsInvalid =
+      selectedShift &&
+      selectedShift !== 'never' &&
+      !currentOption;
 
-      /*
-      if (officeClosed) {
-        warningMessage = 'Büro geschlossen – Einteilung prüfen';
-        bgColor = '#ffd6d6';
+    /*
+     * Closed day WITHOUT an existing invalid assignment:
+     * keep the compact "geschlossen" presentation.
+     */
+    if (officeClosed && !assignmentIsInvalid) {
+      selectElement.style.display = 'none';
+
+      let closedLabel = document.getElementById(
+        `${selectElement.id}-closed-label`
+      );
+
+      if (!closedLabel) {
+        closedLabel = document.createElement('label');
+        closedLabel.id = `${selectElement.id}-closed-label`;
+        closedLabel.classList.add('flex-row');
+        closedLabel.innerHTML =
+          `<span class="noto">🔒</span> geschlossen`;
+
+        closedLabel.style.backgroundColor =
+          getComputedStyle(document.body)
+            .getPropertyValue('--calendar-day-closed-bg');
+
+        selectElement.insertAdjacentElement(
+          'afterend',
+          closedLabel
+        );
       }
-      */
+
+      return;
+    }
+
+    /*
+     * Open day OR closed day with an invalid assignment:
+     * the select must be visible.
+     */
+    selectElement.style.display = 'inline-block';
+
+    const closedLabel = document.getElementById(
+      `${selectElement.id}-closed-label`
+    );
+
+    if (closedLabel) closedLabel.remove();
+
+    /*
+     * If the current employee assignment is no longer
+     * available, keep it as the first option.
+     *
+     * This is important:
+     * "invalid" does NOT mean "delete".
+     */
+    if (assignmentIsInvalid) {
+      const invalidOption = document.createElement('option');
+
+      invalidOption.value = selectedShift;
+      invalidOption.textContent = getShiftDisplayName(selectedShift);
+      invalidOption.classList.add(
+        'noto',
+        'employee-shift-invalid'
+      );
+
+      invalidOption.style.backgroundColor = '#ffd6d6';
+
+      selectElement.insertBefore(
+        invalidOption,
+        selectElement.firstChild
+      );
+
+      invalidOption.selected = true;
+
       selectElement.classList.add('shift-warning');
-      selectElement.style.backgroundColor = bgColor;
+      selectElement.style.backgroundColor = '#ffd6d6';
       selectElement.style.border = '2px solid red';
 
+      /*
+       * Short warning text deliberately kept compact
+       * for Chromebook / small-screen users.
+       */
       warningText = document.createElement('span');
       warningText.id = warningTextId;
-      warningText.innerHTML = warningMessage;
+      warningText.textContent = officeClosed
+        ? 'geschlossen – prüfen'
+        : 'Schicht nicht verfügbar';
+
       warningText.style.color = 'red';
-      warningText.backgroundColor = 'yellow';
+      warningText.style.backgroundColor = '#ffd6d6';
+      warningText.style.fontWeight = 'bold';
       warningText.style.display = 'block';
       warningText.style.marginTop = '4px';
 
@@ -868,8 +1046,32 @@ function populateWeekdaySelection(employee) {
         warningText,
         selectElement.nextSibling
       );
+
+      return;
+    }
+
+    /*
+     * Normal valid assignment.
+     */
+    if (currentOption) {
+      currentOption.selected = true;
+
+      selectElement.style.backgroundColor =
+        currentOption.style.backgroundColor || '';
     }
   });
+}
+
+function getShiftDisplayName(shift) {
+  const names = {
+    early: '🐓 früh/vormittag',
+    day: '🍴 voll/ganztag',
+    late: '🌛 spät/abend',
+    school: '📐 Berufsschule',
+    never: '🚫 nicht eingeplant'
+  };
+
+  return names[shift] ?? `⚠️ ${shift}`;
 }
 
 function updateSelectColor(selectElement) {
