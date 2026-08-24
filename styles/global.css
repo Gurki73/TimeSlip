@@ -936,6 +936,7 @@ fieldset legend {
 
 /* Apply to all select elements with Noto font */
 select.noto {
+  min-width: 10rem; /* Ensure a minimum width */
   text-align: left; /* Align text (and emoji) to the start */
   padding-left: 0.25em; /* small left padding if needed */
   margin: 0;

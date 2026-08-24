@@ -84,77 +84,69 @@ calendar:
 🟢 1. ☐ check if role reasignments are rendered
 
 employees:
-🟡 2. ✅ add sample mode style to delete button in pay-updateRuleModel
-🟡 3. ☐ switch from label to something fitting for style ( regular shedule )
+🟡 2. ☐ switch from label to something fitting for style ( regular shedule )
 
 ruleset:
-🟡 4. 👀 elipsses style for awake and asleep in sample model
-🔵 5. ☐ check complex rules
-🟡 6. ☐ add chip for weekdays ( color )
-🟡 7. ☐ add chip for shift ( icon + color)
-🟡 8. ☐ extend team marker ( maybe with ellipses if no space)
-🟡 9. ✅ add old new to heatmap
-ruleset-checker:
-🟢 10. ✅ roles are checked for day-shift instead of hall day
+🟡 3. 👀 elipsses style for awake and asleep in sample model
+🔵 4. ☐ check complex rules
+🟡 5. ☐ add chip for weekdays ( color )
+🟡 6. ☐ add chip for shift ( icon + color)
+🟡 7. ☐ extend team marker ( maybe with ellipses if no space)
 
 calendar-settings:
-🟢11. ☐ open/close icons dont match status for weekdays 
-🟡12. ✅ add tool tip texts for icons "open" and "closed" (icons are pseudo elements, workarround needed)
-🟡13. ☐ adjust height for company holidays 
-🟡14. ☐ (include bridge days in company holiday)
-🟣15. ☐ (auto remove available days off for employees depending an regular shedule ) 
+🟢 8. ☐ open/close icons dont match status for weekdays 
+🟡 9. ☐ adjust height for company holidays 
+🟡10. ☐ (include bridge days in company holiday)
+🟣11. ☐ (auto remove available days off for employees depending an regular shedule ) 
 
 admin tools:
 admin tools.emojies: 
-🟡16. ☐ add a input for add an emojies
-🟡17. ☐ test saving emojies
-🟡18. ☐ fix animation (z-index?) for animation
-🟡19. ☐ improove hint for left and right mouse buttons
+🟡12. ☐ add a input for add an emojies
+🟡13. ☐ test saving emojies
+🟡14. ☐ fix animation (z-index?) for animation
 admin tools.color:
-🟢20. ☐ custom color picker looses gradient when picking, roles
-🟡21. ☐ use actual role names and icons in preview
-🟡22. ☐ use actual team names in role preview
-🟡23. ☐ center table and picker in form
-🟢24. ☐ fix the tabulators
-🟡25. ☐ finish layout for calandar color cusmasation
-🟡26. ☐ finish th layout for button and background  colors
-🟣27. ☐ maybe a dialog simular to screen settings in window with a countdown keep changes?
+🟢15. ☐ custom color picker looses gradient when picking, roles
+🟡16. ☐ use actual role names and icons in preview
+🟡17. ☐ use actual team names in role preview
+🟡18. ☐ center table and picker in form
+🟢19. ☐ fix the tabulators
+🟡20. ☐ finish layout for calandar color cusmasation
+🟡21. ☐ finish th layout for button and background  colors
+🟣22. ☐ maybe a dialog simular to screen settings in window with a countdown keep changes?
 admin tools.auto save
-🟢28. ☐ disable are you sure dialogs
-🟢29.☐ replace dirty state with autosave in shared state save button
-admin tools.clear cache... 
-🟡30. ✅ (maybe show current cache?)
+🟢23 ☐ disable are you sure dialogs
+🟢24.☐ replace dirty state with autosave in shared state save butto
 admin tool.ruleset-settings
-🔵31. ☐ gather ideas
-🔵32. ☐ build prilimary UI
+🔵25. ☐ gather ideas
+🔵26. ☐ build prilimary UI
 admin tools.calendar settings
-🟡33. ☐ reuse options from main menu
-🟡34. ☐ build lay out 
-🟣35. ☐ disable sample mode 
-🟣36. ☐ discuss if needed anymore
+🟡27. ☐ reuse options from main menu
+🟡28. ☐ build lay out 
+🟣19. ☐ disable sample mode 
+🟣30. ☐ discuss if needed anymore
 admin tools. revive delted employees
-🟡37. ☐ add sample
-🟡38. ☐ move more to left
-🟡39. ✅ add phönix for mass revive
-🟢40. ✅ fix end date picker
+🟡31. ☐ add sample
+🟡32. ☐ move more to left
+🟡33. ✅ add phönix for mass revive
+🟢34. ✅ fix end date picker
 removed date picker completely and moved date - picker needs to employeeform , new state phoenix ="🐦‍🔥" needs a warning status in employee form
 admin tools.donate
-🟡41. ☐ add an offline alternative
-🟡42. ☐ make a begging text
+🟡35. ☐ add an offline alternative
+🟡36. ☐ make a begging text
 
 minx:
-🟡43. ☐ allow state dirty for sample save button(?)
-🟣44. ☐ update version from 1.x.x to 2.0.0 dev to prototype
-🟣45. ☐ publish as prototype on itch.icon
-🟣46. ☐ make basic marketing article for itch.icon
-🟣47. ☐ plan you-tube tutorial
+🟡37. ☐ allow state dirty for sample save button(?)
+🟣38. ☐ update version from 1.x.x to 2.0.0 dev to prototype
+🟣39. ☐ publish as prototype on itch.icon
+🟣40. ☐ make basic marketing article for itch.icon
+🟣41. ☐ plan you-tube tutorial
 
 help page:
-🟣48. ☐ write down the thoughts about  heros journey and save the calculations
-🟡49. ☐ update Glossary
-🟡50. ☐ build a skeleton for screenshots
-🟡51. ☐ highlight in nav when hover/click in help
+🟣42. ☐ write down the thoughts about  heros journey and save the calculations
+🟡43. ☐ update Glossary
+🟡44. ☐ build a skeleton for screenshots
+🟡45. ☐ highlight in nav when hover/click in help
 
-🔴52. ☐ “Collapsed list opacity: make adjustable via color/appearance settings.
-🔴53. ☐ Should respect different screen brightness, resolution, and client monitors.
-🔴54. ☐ Currently hardcoded; consider adding a cached local setting for transparency once prototype is stable.”
+🔴46. ☐ “Collapsed list opacity: make adjustable via color/appearance settings.
+🔴47. ☐ Should respect different screen brightness, resolution, and client monitors.
+🔴48. ☐ Currently hardcoded; consider adding a cached local setting for transparency once prototype is stable.”

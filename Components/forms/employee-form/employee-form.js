@@ -846,21 +846,21 @@ function populateWeekdaySelection(employee) {
 
       const officeClosed = currentOfficeDays[index] === 'never';
 
+      /*
       if (officeClosed) {
         warningMessage = 'Büro geschlossen – Einteilung prüfen';
         bgColor = '#ffd6d6';
       }
-
+      */
       selectElement.classList.add('shift-warning');
       selectElement.style.backgroundColor = bgColor;
       selectElement.style.border = '2px solid red';
 
       warningText = document.createElement('span');
       warningText.id = warningTextId;
-      warningText.textContent = warningMessage;
+      warningText.innerHTML = warningMessage;
       warningText.style.color = 'red';
       warningText.backgroundColor = 'yellow';
-      warningText.style.fontWeight = 'bold';
       warningText.style.display = 'block';
       warningText.style.marginTop = '4px';
 
