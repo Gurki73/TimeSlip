@@ -1450,30 +1450,38 @@ function handleTopCellTimeFrame(id) {
 }
 
 function buildShiftSelector(container, id, inputObject) {
-    const existingShifts = ['day', 'early', 'late'];
+    const existingShifts = ['early', 'day', 'late'];
     const shiftSelection = document.createElement('select');
-    shiftSelection.classList.add('role-select', 'noto');
+    shiftSelection.classList.add('role-select', 'noto', 'shift-chip');
 
     existingShifts.forEach((shift, index) => {
         const shiftOption = document.createElement('option');
         const symbols = cachedShiftSymbols || 'none';
         const emoji = getShiftSymbol(shift, symbols);
-        const name = shift === 'day' ? 'Tag' : shift === 'early' ? 'Früh/' : 'Spät';
 
-        shiftOption.innerHTML = `${emoji} ⇨ ${name}`;
+        const name =
+            shift === 'early' ? 'Früh/' :
+                shift === 'day' ? 'Tag' :
+                    'Spät';
+
+        shiftOption.innerHTML = `${emoji} ⇨ ${name} `;
         shiftOption.title = name;
         shiftOption.value = shift;
         shiftOption.dataset.name = name;
         shiftOption.id = id + '-' + (index + 1);
+
         shiftSelection.appendChild(shiftOption);
     });
 
     updateShiftSelectColor(shiftSelection);
 
     shiftSelection.addEventListener('change', function () {
-        const selectedOption = shiftSelection.options[shiftSelection.selectedIndex];
+        const selectedOption =
+            shiftSelection.options[shiftSelection.selectedIndex];
+
         inputObject.words = selectedOption.dataset.name;
         inputObject.value = selectedOption.value;
+
         handleInput(inputObject);
         updateShiftSelectColor(shiftSelection);
     });
@@ -1482,15 +1490,35 @@ function buildShiftSelector(container, id, inputObject) {
 }
 
 function buildWorkdaySelector(container, id, inputObject) {
-    const ruleWorkdays = [];
     const ruleWorkdayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+    const ruleWorkdays = [];
 
     ruleOfficeDays.forEach((item, index) => {
-        if (item === 'never') return;
-        let name = ruleWorkdayNames[index];
-        if (item === 'morning') name += ' (früh)';
-        else if (item === 'afternoon') name += ' (spät)';
-        ruleWorkdays.push({ name, index });
+        const name = ruleWorkdayNames[index];
+
+        // Closed day
+        if (item === 'never') {
+            ruleWorkdays.push({
+                name,
+                index,
+                closed: true
+            });
+            return;
+        }
+
+        let displayName = name;
+
+        if (item === 'morning') {
+            displayName += ' (früh)';
+        } else if (item === 'afternoon') {
+            displayName += ' (spät)';
+        }
+
+        ruleWorkdays.push({
+            name: displayName,
+            index,
+            closed: false
+        });
     });
 
     if (ruleWorkdays.length < 1) {
@@ -1498,12 +1526,18 @@ function buildWorkdaySelector(container, id, inputObject) {
         workdayLabel.style = "margin-left: 5px;";
         workdayLabel.textContent = 'Bitte Öffnungzeiten festlegen';
         container.appendChild(workdayLabel);
-    } else {
-        createCheckboxGroup("days", ruleWorkdays, container,
-            (container) => handleCheckboxChangeWithNeighbors(container, id)(),
-            { idPrefix: `${id}-checkbox` }
-        );
+        return;
     }
+
+    createCheckboxGroup(
+        "days",
+        ruleWorkdays,
+        container,
+        (container) => handleCheckboxChangeWithNeighbors(container, id)(),
+        {
+            idPrefix: `${id}-checkbox`
+        }
+    );
 }
 
 function buildOutOfOfficeSelector(container, id, inputObject) {
@@ -1549,12 +1583,25 @@ function buildOutOfOfficeSelector(container, id, inputObject) {
 
 function updateShiftSelectColor(select) {
     const value = select.value;
-    select.classList.remove('rule-form-shift-early', 'rule-form-shift-day', 'rule-form-shift-late');
+
+    select.classList.remove(
+        'shift-early',
+        'shift-day',
+        'shift-late'
+    );
 
     switch (value) {
-        case 'morning': select.classList.add('rule-form-shift-early'); break;
-        case 'full': select.classList.add('rule-form-shift-day'); break;
-        case 'afternoon': select.classList.add('rule-form-shift-late'); break;
+        case 'early':
+            select.classList.add('shift-early');
+            break;
+
+        case 'day':
+            select.classList.add('shift-day');
+            break;
+
+        case 'late':
+            select.classList.add('shift-late');
+            break;
     }
 }
 
@@ -1776,13 +1823,57 @@ function createCheckboxGroup(type, items, parent, onChange, options = {}) {
         const wrapper = document.createElement('div');
         wrapper.classList.add('checkbox-item');
 
+        // =========================
+        // Timeframe: weekdays
+        // =========================
+        if (type === 'days') {
+            wrapper.classList.add('weekday-chip');
+
+            if (item.index === 5) {
+                wrapper.classList.add('weekday-weekend');
+            } else if (item.index === 6) {
+                wrapper.classList.add('weekday-holiday');
+            }
+        }
+
+        // =========================
+        // Closed day
+        // =========================
+        if (item.closed) {
+            const closedIcon = document.createElement('span');
+            closedIcon.classList.add('noto');
+            closedIcon.textContent = '🔒';
+
+            wrapper.appendChild(closedIcon);
+
+            const label = document.createElement('span');
+            label.classList.add('noto');
+            label.textContent = ` ${item.name} `;
+
+            wrapper.appendChild(label);
+            container.appendChild(wrapper);
+
+            return;
+        }
+
+        // =========================
+        // Normal checkbox
+        // =========================
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
-        checkbox.id = `${options.idPrefix || 'chk'}-${item.name}`;
+        checkbox.id = `${options.idPrefix || 'chk'} -${item.name} `;
 
-        if (item.index != null) checkbox.dataset.index = item.index;
-        if (item.colorIndex != null) checkbox.dataset.colorIndex = item.colorIndex;
-        if (item.name) checkbox.dataset.name = item.name;
+        if (item.index != null) {
+            checkbox.dataset.index = item.index;
+        }
+
+        if (item.colorIndex != null) {
+            checkbox.dataset.colorIndex = item.colorIndex;
+        }
+
+        if (item.name) {
+            checkbox.dataset.name = item.name;
+        }
 
         const label = document.createElement('label');
         label.htmlFor = checkbox.id;
@@ -1794,7 +1885,9 @@ function createCheckboxGroup(type, items, parent, onChange, options = {}) {
         wrapper.appendChild(label);
         container.appendChild(wrapper);
 
-        checkbox.addEventListener('change', () => onChange(container, type));
+        checkbox.addEventListener('change', () => {
+            onChange(container, type);
+        });
     });
 
     parent.appendChild(container);
@@ -1822,7 +1915,7 @@ function drawRuleLine() {
     const endY = c.top + c.height / 2 - container.top;
     const midX2 = endX - 32;
 
-    const pathData = `M ${startX} ${startY} L ${midX1} ${startY} L ${midX1} ${midY} L ${midX2} ${midY} L ${midX2} ${endY} L ${endX} ${endY}`;
+    const pathData = `M ${startX} ${startY} L ${midX1} ${startY} L ${midX1} ${midY} L ${midX2} ${midY} L ${midX2} ${endY} L ${endX} ${endY} `;
 
     const base = createSVGElement("path", { id: "rule-line-base", d: pathData });
     const flow = createSVGElement("path", { id: "rule-line-flow", d: pathData });
@@ -2105,8 +2198,8 @@ export async function deleteRule(ruleView) {
 
         if (!result.success) {
             const message = result.error || 'Unbekannter Fehler beim Löschen';
-            console.warn(`Delete failed for "${targetId}":`, message);
-            announceStatus(`Regel konnte nicht gelöscht werden: ${message}`);
+            console.warn(`Delete failed for "${targetId}": `, message);
+            announceStatus(`Regel konnte nicht gelöscht werden: ${message} `);
             return result;
         }
 
@@ -2177,7 +2270,7 @@ function compareRuleExecutions(baselineStats, candidateStats) {
     const baselineFailures = baselineStats?.failures || [];
     const candidateFailures = candidateStats?.failures || [];
 
-    const makeKey = (f) => `${f.scope}|${f.ruleId}|${f.weekNumber || f.date || ''}|${f.type}`;
+    const makeKey = (f) => `${f.scope}| ${f.ruleId}| ${f.weekNumber || f.date || ''}| ${f.type} `;
 
     const baselineKeys = new Set(baselineFailures.map(makeKey));
     const candidateKeys = new Set(candidateFailures.map(makeKey));
@@ -2333,7 +2426,7 @@ function countFailuresByTeamRole(failures = []) {
 
         uniqueRoles.forEach((roleId) => {
             const teamKey = mapRoleToTeamKey(roleId);
-            const key = `${teamKey}|${roleId}`;
+            const key = `${teamKey}| ${roleId} `;
             map.set(key, (map.get(key) || 0) + 1);
         });
     });
@@ -2369,8 +2462,8 @@ function resolveRoleLabel(roleId) {
         ? cachedRoles.find(item => Number(item?.colorIndex) === Number(roleId))
         : null;
 
-    if (!role) return `Rolle #${roleId}`;
-    return `${role.emoji || '•'} ${role.name || `Rolle #${roleId}`}`.trim();
+    if (!role) return `Rolle #${roleId} `;
+    return `${role.emoji || '•'} ${role.name || `Rolle #${roleId}`} `.trim();
 }
 
 function updateRuleInMemory(rule) {
