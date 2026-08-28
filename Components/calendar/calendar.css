@@ -556,8 +556,9 @@
 }
 
 .day-column.weekday.calendar-range-highlight {
-    position: relative;
-    overflow: hidden;
+    border-color: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 .day-column.weekday.calendar-range-highlight::after {
@@ -566,7 +567,7 @@
     inset: 0;
     pointer-events: none;
     background: transparent;
-    border-color: transparent;
+    border: none;
     animation: calendarRangePulse 1.15s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
 }
 
@@ -574,9 +575,11 @@
     0% {
         opacity: 0.4;
     }
+
     50% {
         opacity: 0.6;
     }
+
     100% {
         opacity: 0.4;
     }

@@ -369,52 +369,65 @@ async function onTestRuleClick(e) {
 
 async function enrichReportWithImpact(report, draft, activeRules, futureContext) {
     try {
-        const { attendanceByDate, attendanceStart, attendanceEnd, roleCount } = futureContext;
-        const futureStart = normalizeDateInput(attendanceStart);
-        const futureEnd = normalizeDateInput(attendanceEnd);
-
-        if (!attendanceByDate || !futureStart || !futureEnd || futureStart > futureEnd) {
-            return;
-        }
-
-        const derivedRoleCount = Number.isFinite(roleCount) ? roleCount :
-            (Object.values(attendanceByDate)[0]?.length ?? 14);
-
-        // Baseline (existing rules only)
-        const baselineRuleset = updateRulesPreview(activeRules);
-        const baselineStats = executeRuleset(
-            { ...baselineRuleset, context: { ...baselineRuleset?.context, attendanceByDate, roleCount: derivedRoleCount } },
-            futureStart, futureEnd, true
-        );
-
-        // Candidate (existing + draft)
-        const candidateRuleset = updateRulesPreview([...activeRules, draft]);
-        const candidateStats = executeRuleset(
-            { ...candidateRuleset, context: { ...candidateRuleset?.context, attendanceByDate, roleCount: derivedRoleCount } },
-            futureStart, futureEnd, true
-        );
-
-        // Delta comparison
-        const impactRaw = compareRuleExecutions(baselineStats, candidateStats);
-
-        const impactSummary = {
-            before: baselineStats.summary,
-            after: candidateStats.summary,
-            delta: {
-                total: candidateStats.summary.totalFailures - baselineStats.summary.totalFailures,
-                byScope: computeScopeDelta(baselineStats.summary.byScope, candidateStats.summary.byScope)
-            },
-            added: impactRaw.added.length,
-            removed: impactRaw.removed.length,
-            changed: impactRaw.changed.length,
-            window: { start: dateKey(futureStart), end: dateKey(futureEnd) },
-            breakdown: buildImpactBreakdown(baselineStats.failures, candidateStats.failures)
-        };
+        const candidateRules = Array.isArray(activeRules)
+            ? activeRules.filter(rule => String(rule?.id) !== String(draft?.id))
+            : [];
+        candidateRules.push(draft);
+        const impactSummary = await buildRuleSetImpact(activeRules, candidateRules, futureContext);
+        if (!impactSummary) return;
 
         report.details = report.details || {};
         report.details.impact = impactSummary;
     } catch (err) {
         console.error("Rule impact calculation failed:", err);
+    }
+}
+
+async function buildRuleSetImpact(beforeRules, afterRules, futureContext) {
+    const { attendanceByDate, attendanceStart, attendanceEnd, roleCount } = futureContext || {};
+    const futureStart = normalizeDateInput(attendanceStart);
+    const futureEnd = normalizeDateInput(attendanceEnd);
+
+    if (!attendanceByDate || !futureStart || !futureEnd || futureStart > futureEnd) {
+        return null;
+    }
+
+    const derivedRoleCount = Number.isFinite(roleCount) ? roleCount :
+        (Object.values(attendanceByDate)[0]?.length ?? 14);
+    const baselineRuleset = updateRulesPreview(getActiveRules(beforeRules));
+    const candidateRuleset = updateRulesPreview(getActiveRules(afterRules));
+    const buildStats = (ruleset) => executeRuleset(
+        { ...ruleset, context: { ...ruleset?.context, attendanceByDate, roleCount: derivedRoleCount } },
+        futureStart, futureEnd, true
+    );
+    const baselineStats = buildStats(baselineRuleset);
+    const candidateStats = buildStats(candidateRuleset);
+    const impactRaw = compareRuleExecutions(baselineStats, candidateStats);
+
+    return {
+        before: baselineStats.summary,
+        after: candidateStats.summary,
+        delta: {
+            total: candidateStats.summary.totalFailures - baselineStats.summary.totalFailures,
+            byScope: computeScopeDelta(baselineStats.summary.byScope, candidateStats.summary.byScope)
+        },
+        added: impactRaw.added.length,
+        removed: impactRaw.removed.length,
+        changed: impactRaw.changed.length,
+        window: { start: dateKey(futureStart), end: dateKey(futureEnd) },
+        breakdown: buildImpactBreakdown(baselineStats.failures, candidateStats.failures)
+    };
+}
+
+async function renderRuleSetImpact(beforeRules, afterRules) {
+    try {
+        const futureContext = await buildFutureRuleContext();
+        const impact = await buildRuleSetImpact(beforeRules, afterRules, futureContext);
+        if (!impact) return;
+        clearImpactCharts();
+        renderImpactCharts(impact);
+    } catch (err) {
+        console.error('Rule impact calculation failed:', err);
     }
 }
 
@@ -439,7 +452,7 @@ async function runCurrentRuleValidation({ showStatus = false } = {}) {
     updateSaveButtonState();
 
     const draft = ruleForEditing;
-    const activeRules = Array.isArray(ruleSet) ? ruleSet : [];
+    const activeRules = getActiveRules(ruleSet);
     const futureContext = await buildFutureRuleContext();
 
     try {
@@ -2076,6 +2089,7 @@ export async function deleteRule(ruleView) {
     if (!ok) return;
 
     const target = ruleView?.rule ?? ruleView;
+    const previousRules = Array.isArray(ruleSet) ? [...ruleSet] : [];
     const targetId = target?.id ?? ruleView?.id;
     if (!targetId) {
         console.warn('Delete failed: missing rule id', ruleView);
@@ -2096,7 +2110,6 @@ export async function deleteRule(ruleView) {
             return result;
         }
 
-        const previousRules = Array.isArray(ruleSet) ? [...ruleSet] : [];
         const filteredRules = previousRules.filter((rule) => {
             const sameId = String(rule?.id) === String(targetId);
             const sameSource = target?._sourcePath && rule?._sourcePath && String(rule._sourcePath) === String(target._sourcePath);
@@ -2107,7 +2120,7 @@ export async function deleteRule(ruleView) {
         ruleSet = filteredRules;
         translateExistingRules(ruleSet, cachedRoles, teamnames);
         scrollRulesToBottomIfAllowed(true);
-        clearImpactCharts();
+        await renderRuleSetImpact(previousRules, filteredRules);
         updateSaveButtonState();
         announceStatus('Regel gelöscht.');
 
@@ -2144,7 +2157,7 @@ export async function deleteRule(ruleView) {
 
     translateExistingRules(ruleSet, cachedRoles, teamnames);
     scrollRulesToBottomIfAllowed(true);
-    clearImpactCharts();
+    await renderRuleSetImpact(previousRules, ruleSet);
     updateSaveButtonState();
     announceStatus('Regel gelöscht (Sample-Modus).');
     console.warn('Rule removed in sample mode:', targetId);
@@ -2450,25 +2463,39 @@ function clearRuleCellAndDraftBlock(key) {
 }
 
 export async function awakeRule(ruleView) {
+    const previousRules = Array.isArray(ruleSet) ? [...ruleSet] : [];
     const rule = { ...ruleView.rule, isAsleep: false, updated: Date.now() };
 
     if (isClientMode()) {
-        return await saveRuleData(window.api, rule);
+        const result = await saveRuleData(window.api, rule);
+        if (result?.success !== false) {
+            const nextRules = previousRules.map(item => String(item?.id) === String(rule.id) ? rule : item);
+            await renderRuleSetImpact(previousRules, nextRules);
+        }
+        return result;
     }
 
     updateRuleInMemory(rule);
+    await renderRuleSetImpact(previousRules, ruleSet);
     console.info('Rule awakened (sample mode)');
 }
 
 
 export async function goAsleep(ruleView) {
+    const previousRules = Array.isArray(ruleSet) ? [...ruleSet] : [];
     const rule = { ...ruleView.rule, isAsleep: true, updated: Date.now() };
 
     if (isClientMode()) {
-        return await saveRuleData(window.api, rule);
+        const result = await saveRuleData(window.api, rule);
+        if (result?.success !== false) {
+            const nextRules = previousRules.map(item => String(item?.id) === String(rule.id) ? rule : item);
+            await renderRuleSetImpact(previousRules, nextRules);
+        }
+        return result;
     }
 
     updateRuleInMemory(rule);
+    await renderRuleSetImpact(previousRules, ruleSet);
     console.info('Rule put to sleep (sample mode)');
 }
 

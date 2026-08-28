@@ -2120,32 +2120,23 @@ export function clearCalendarHighlights() {
 }
 
 export function highlightRangeInCalendar(startDate, endDate) {
+  clearCalendarJumpHighlights();
+
   const start = new Date(startDate + 'T00:00:00');
   const end = new Date(endDate + 'T00:00:00');
 
   const rangeStart = start <= end ? start : end;
   const rangeEnd = start <= end ? end : start;
 
-  const cells = document.querySelectorAll(
-    '.day-column.weekday[data-date]'
-  );
+  document
+    .querySelectorAll('.day-column.weekday[data-date]')
+    .forEach(cell => {
+      const date = new Date(cell.dataset.date + 'T00:00:00');
 
-  const highlightedCells = [];
-
-  cells.forEach(cell => {
-    const date = new Date(cell.dataset.date + 'T00:00:00');
-
-    if (date >= rangeStart && date <= rangeEnd) {
-      cell.classList.add('calendar-range-highlight');
-      highlightedCells.push(cell);
-    }
-  });
-
-  return () => {
-    highlightedCells.forEach(cell => {
-      cell.classList.remove('calendar-range-highlight');
+      if (date >= rangeStart && date <= rangeEnd) {
+        cell.classList.add('calendar-range-highlight');
+      }
     });
-  };
 }
 
 

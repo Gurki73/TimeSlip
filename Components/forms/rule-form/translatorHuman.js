@@ -261,13 +261,18 @@ function buildCorePhrase(groupBlock, dependencyBlock, roles) {
 
 // ========== UTILITY FUNCTIONS ==========
 function getShiftName(shiftCode) {
-    return SHIFT_CONFIG[shiftCode]?.name || "&lt;Fehler&gt;";
+    const name = SHIFT_CONFIG[shiftCode]?.name || "<Fehler>";
+    return timeframeHTML(name, `shift-${shiftCode}`);
 }
 
 function formatDaysList(days = [], usePrefix = false, connector = "und") {
-    if (!days?.length) return "&lt;Tag fehlt&gt;";
+    if (!days?.length) return "<Tag fehlt>";
 
-    const dayNames = days.map(normalizeDay);
+    const dayNames = days.map(day => {
+        const name = normalizeDay(day);
+        return timeframeHTML(name, getWeekdayChipClass(day));
+    });
+
     return joinGermanList(dayNames, connector);
 }
 
@@ -918,4 +923,22 @@ export function renderRoleSpan(roleName, roleIndex) {
 
 function roleHTML(name, index) {
     return `<span class="role-chip noto role-color-${index}">${name}</span>`;
+}
+
+function timeframeHTML(name, className = "") {
+    return `<span class="timeframe-chip noto ${className}">${name}</span>`;
+}
+
+function getWeekdayChipClass(day) {
+    const normalized = normalizeDay(day);
+
+    if (normalized === "Samstag") {
+        return "weekday-chip weekday-weekend";
+    }
+
+    if (normalized === "Sonntag") {
+        return "weekday-chip weekday-holiday";
+    }
+
+    return "weekday-chip";
 }

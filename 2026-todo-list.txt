@@ -83,70 +83,60 @@ Legend:
 calendar:
 🟢 1. ☐ check if role reasignments are rendered
 
-employees:
-🟡 2. ☐ switch from label to something fitting for style ( regular shedule )
 
 ruleset:
-🟡 3. 👀 elipsses style for awake and asleep in sample model
-🔵 4. ☐ check complex rules
-🟡 5. ☐ add chip for weekdays ( color )
-🟡 6. ☐ add chip for shift ( icon + color)
-🟡 7. ☐ extend team marker ( maybe with ellipses if no space)
+🔵 2. ☐ check complex rules
+🟡 3. ☐ add chip for weekdays ( color )
+🟡 4. ☐ add chip for shift ( icon + color)
+🟡 5. ☐ extend team marker ( maybe with ellipses if no space)
 
 calendar-settings:
-🟢 8. ☐ open/close icons dont match status for weekdays 
-🟡 9. ☐ adjust height for company holidays 
-🟡10. ☐ (include bridge days in company holiday)
-🟣11. ☐ (auto remove available days off for employees depending an regular shedule ) 
+🟡 6. ☐ adjust height for company holidays 
+🟡 7. ☐ (include bridge days in company holiday)
+🟣 8. ☐ (auto remove available days off for employees depending an regular shedule ) 
 
 admin tools:
 admin tools.emojies: 
-🟡12. ☐ add a input for add an emojies
-🟡13. ☐ test saving emojies
-🟡14. ☐ fix animation (z-index?) for animation
+🟡 9. ☐ add a input for add an emojies
+🟡10. ☐ test saving emojies
+🟡11. ☐ fix animation (z-index?) for animation
 admin tools.color:
-🟢15. ☐ custom color picker looses gradient when picking, roles
-🟡16. ☐ use actual role names and icons in preview
-🟡17. ☐ use actual team names in role preview
-🟡18. ☐ center table and picker in form
-🟢19. ☐ fix the tabulators
-🟡20. ☐ finish layout for calandar color cusmasation
-🟡21. ☐ finish th layout for button and background  colors
-🟣22. ☐ maybe a dialog simular to screen settings in window with a countdown keep changes?
+🟢12. ☐ custom color picker looses gradient when picking, roles
+🟡13. ☐ use actual role names and icons in preview
+🟡14. ☐ use actual team names in role preview
+🟡15. ☐ center table and picker in form
+🟢16. ☐ fix the tabulators
+🟡17. ☐ finish layout for calandar color cusmasation
+🟡18. ☐ finish the layout for button and background  colors
+🟣19. ☐ maybe a dialog simular to screen settings in window with a countdown keep changes?
 admin tools.auto save
-🟢23 ☐ disable are you sure dialogs
-🟢24.☐ replace dirty state with autosave in shared state save butto
+🟢20 ☐ disable are you sure dialogs
+🟢21.☐ replace dirty state with autosave in shared state save butto
 admin tool.ruleset-settings
-🔵25. ☐ gather ideas
-🔵26. ☐ build prilimary UI
+🔵22. ☐ gather ideas
+🔵23. ☐ build prilimary UI
 admin tools.calendar settings
-🟡27. ☐ reuse options from main menu
-🟡28. ☐ build lay out 
-🟣19. ☐ disable sample mode 
-🟣30. ☐ discuss if needed anymore
+🟡24. ☐ reuse options from main menu
+🟡25. ☐ build lay out 
+🟣26. ☐ disable sample mode 
+🟣27. ☐ discuss if needed anymore
 admin tools. revive delted employees
-🟡31. ☐ add sample
-🟡32. ☐ move more to left
-🟡33. ✅ add phönix for mass revive
-🟢34. ✅ fix end date picker
+🟡28. ☐ add sample
+🟡29. ☐ move more to left
 removed date picker completely and moved date - picker needs to employeeform , new state phoenix ="🐦‍🔥" needs a warning status in employee form
 admin tools.donate
-🟡35. ☐ add an offline alternative
-🟡36. ☐ make a begging text
+🟡30. ☐ add an offline alternative
+🟡31. ☐ make a begging text
 
 minx:
-🟡37. ☐ allow state dirty for sample save button(?)
-🟣38. ☐ update version from 1.x.x to 2.0.0 dev to prototype
-🟣39. ☐ publish as prototype on itch.icon
-🟣40. ☐ make basic marketing article for itch.icon
-🟣41. ☐ plan you-tube tutorial
+🟡32. ☐ allow state dirty for sample save button(?)
+🟣33. ☐ update version from 1.x.x to 2.0.0 dev to prototype
+🟣34. ☐ publish as prototype on itch.icon
+🟣35. ☐ make basic marketing article for itch.icon
+🟣36. ☐ plan you-tube tutorial
 
 help page:
-🟣42. ☐ write down the thoughts about  heros journey and save the calculations
-🟡43. ☐ update Glossary
-🟡44. ☐ build a skeleton for screenshots
-🟡45. ☐ highlight in nav when hover/click in help
-
-🔴46. ☐ “Collapsed list opacity: make adjustable via color/appearance settings.
-🔴47. ☐ Should respect different screen brightness, resolution, and client monitors.
-🔴48. ☐ Currently hardcoded; consider adding a cached local setting for transparency once prototype is stable.”
+🟣37. ☐ write down the thoughts about  heros journey and save the calculations
+🟡38. ☐ update Glossary
+🟡39. ☐ build a skeleton for screenshots
+🟡40. ☐ highlight in nav when hover/click in help
