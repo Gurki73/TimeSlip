@@ -2498,11 +2498,3 @@ export async function goAsleep(ruleView) {
     await renderRuleSetImpact(previousRules, ruleSet);
     console.info('Rule put to sleep (sample mode)');
 }
-
-
-
-
-
-
-
-
