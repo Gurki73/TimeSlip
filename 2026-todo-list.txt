@@ -83,16 +83,17 @@ Legend:
 calendar:
 🟢 1. ☐ check if role reasignments are rendered
 
+🔥 0. schicht model vs. 1 schicht + halbtags vs. 3 schicht modell  🔥
 
 ruleset:
 🔵 2. ☐ check complex rules
-🟡 3. ☐ add chip for weekdays ( color )
-🟡 4. ☐ add chip for shift ( icon + color)
+🟡 3. 🚧 add chip for weekdays ( color )
+🟡 4. 🚧 add chip for shift ( icon + color)
 🟡 5. ☐ extend team marker ( maybe with ellipses if no space)
 
 calendar-settings:
 🟡 6. ☐ adjust height for company holidays 
-🟡 7. ☐ (include bridge days in company holiday)
+🟡 7. 🚧 (include bridge days in company holiday)
 🟣 8. ☐ (auto remove available days off for employees depending an regular shedule ) 
 
 admin tools:
@@ -136,7 +137,7 @@ minx:
 🟣36. ☐ plan you-tube tutorial
 
 help page:
-🟣37. ☐ write down the thoughts about  heros journey and save the calculations
+🟣37. 🚧 write down the thoughts about  heros journey and save the calculations
 🟡38. ☐ update Glossary
 🟡39. ☐ build a skeleton for screenshots
 🟡40. ☐ highlight in nav when hover/click in help

@@ -202,7 +202,7 @@ export async function initializeCalendarForm(passedApi) {
   cachedApi = passedApi;
   // 1️⃣ Preload / Data Phase
   const { isOnboarding, dataFolder } = await checkOnboardingState(cachedApi);
-  let ruleFormState, officeDays, companyHolidays, savedBridgeDays;
+  let ruleFormState, officeDays, savedBridgeDays;
 
   try {
     const [
@@ -957,11 +957,45 @@ async function gatherBridgeDaysAndSave() {
     return acc;
   }, {});
 
+  const closedBridgeDates = allBridgeDays
+    .filter(({ isOpen }) => !isOpen)
+    .map(({ id }) => id.replace(/^bridge\s*-\s*/, ''))
+    .filter(date => {
+      const dateYear = Number(date.slice(0, 4));
+      return /^\d{4}-\d{2}-\d{2}$/.test(date) && dateYear === currentYear;
+    });
+
+  const existingCompanyHolidayDates = new Set(
+    companyHolidays.flatMap(({ startDate, endDate }) => {
+      const dates = [];
+      for (let date = new Date(startDate); date <= new Date(endDate); date.setDate(date.getDate() + 1)) {
+        dates.push(formatCalendarDate(date));
+      }
+      return dates;
+    })
+  );
+
+  const addedCompanyHolidays = closedBridgeDates
+    .filter(date => !existingCompanyHolidayDates.has(date))
+    .map(date => ({ startDate: date, endDate: date }));
+
+  if (addedCompanyHolidays.length > 0) {
+    companyHolidays = [...companyHolidays, ...addedCompanyHolidays]
+      .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+    await saveCompanyHolidaysCSV(cachedApi, currentYear, companyHolidays);
+    populateCompanyHolidaysList(companyHolidays);
+  }
+
   try {
     await saveBridgeDaysSimple(cachedApi, allBridgeDays);
   } catch (err) {
     console.error('❌ Bridge days save failed', err);
   }
+}
+
+function formatCalendarDate(date) {
+  const value = new Date(date);
+  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
 }
 
 async function gatherHolidaysAndSave() {
@@ -1254,13 +1288,6 @@ async function populateSchoolHolidaysListUnified(cachedApi, state, year) {
     downloadBtn.classList.add('noto', 'download-school-data-btn');
     downloadBtn.innerHTML = `<span class="noto">🌐 Schulferien aktualisieren</span>`;
 
-    downloadBtn.addEventListener('click', async () => {
-      downloadBtn.disabled = true;
-      const success = await downloadAndCacheSchoolHolidays(cachedApi, state, year, progressText);
-      downloadBtn.disabled = false;
-      if (success) populateSchoolHolidaysListUnified(cachedApi, state, year);
-    });
-
     const progressText = document.createElement('span');
     progressText.classList.add('progress-text');
     controls.appendChild(downloadBtn);
@@ -1269,34 +1296,9 @@ async function populateSchoolHolidaysListUnified(cachedApi, state, year) {
     downloadBtn.addEventListener('click', async () => {
       downloadBtn.disabled = true;
       progressText.textContent = "Wird geladen...";
-      initChecklist();
-
-      try {
-        if (!navigator.onLine) throw new Error("offline");
-
-        updateChecklist('online', 'success');
-        const health = await apiHealthCheck(cachedApi, 'https://openholidaysapi.org');
-        updateChecklist('apiReachable', health.success ? 'success' : 'failure');
-        if (!health.success) throw new Error('api');
-
-        const holidays = await DownloadSchoolHoliday(cachedApi, state, year);
-        updateChecklist('apiResponse', 'success');
-        if (!holidays?.length) throw new Error('noData');
-        updateChecklist('dataReceived', 'success');
-
-        await waitForCsvCreation();
-        progressText.innerHTML = "<span class='noto'>✅</span> Erfolgreich geladen!";
-        populateSchoolHolidaysListUnified(cachedApi, state, year);
-      } catch (err) {
-        console.error('Download error', err);
-        const msg =
-          err.message === "offline" ? "📴 Kein Internet" :
-            err.message === "api" ? "❌ API nicht erreichbar" :
-              err.message === "noData" ? "📄 Keine Daten" :
-                "⚠️ Fehler beim Laden";
-        progressText.textContent = msg;
-        downloadBtn.disabled = false;
-      }
+      const success = await downloadAndCacheSchoolHolidays(cachedApi, state, year, progressText);
+      downloadBtn.disabled = false;
+      if (success) await populateSchoolHolidaysListUnified(cachedApi, state, year);
     });
   } else {
     schoolHolidays.forEach(holiday => {
@@ -2288,7 +2290,7 @@ function showSchoolHolidayError(message) {
 }
 
 function updateChecklist(step, status) {
-  const row = document.querySelector(`[data - step= "${step}"]`);
+  const row = document.querySelector(`[data-step="${step}"]`);
   if (!row) return;
 
   const indicator = row.querySelector('.status-indicator');
@@ -2311,16 +2313,16 @@ function updateChecklist(step, status) {
     switch (status) {
       case 'success':
         row.classList.add('status-success');
-        indicator.innerHTML = `< span class="noto" > ${icons.success}</span > `;
+        indicator.textContent = icons.success;
         break;
       case 'failure':
         row.classList.add('status-failure');
-        indicator.innerHTML = `< span class="noto" > ${icons.failure}</span > `;
+        indicator.textContent = icons.failure;
         break;
       case 'pending':
       default:
         row.classList.add('status-pending');
-        indicator.innerHTML = `< span class="noto" > ${icons.pending}</span > `;
+        indicator.textContent = icons.pending;
         break;
     }
   }, totalDelay);

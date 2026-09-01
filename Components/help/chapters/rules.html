@@ -1,3 +1,610 @@
+<!--
+Das Regelwerk – von Easy bis Hell on Earth 🕷️
+
+Die Rule Engine ist der mächtigste Teil der Planung.
+
+Und genau deshalb gleich die wichtigste Information:
+
+Du musst keine Regeln eingeben.
+
+Die App funktioniert auch ohne eigenes Regelwerk wie eine klassische Mitarbeiter- und Urlaubsplanung mit Kalender und Arbeitszeiten.
+
+Das Regelwerk ist eine zusätzliche Hilfe, wenn du bei Entscheidungen nicht jedes Mal selbst alle Zusammenhänge prüfen möchtest.
+
+Besonders bei Urlaubsanträgen kann es helfen, schnell zu erkennen:
+
+„Diesen Urlaub kann ich wahrscheinlich problemlos genehmigen.“
+
+oder:
+
+„Hier sollte ich genauer hinschauen.“
+
+Lernziel 1: Regeln sind optional
+
+Du kannst die App zunächst ganz einfach verwenden:
+
+Öffnungszeiten festlegen
+Arbeitsabläufe definieren
+Aufgaben festlegen
+Mitarbeiter zuordnen
+regelmäßige Arbeitszeiten hinterlegen
+Urlaub und Abwesenheiten eintragen
+
+Damit kannst du bereits planen.
+
+Die Regeln kommen oben drauf.
+
+Sie sind besonders hilfreich, wenn dein Betrieb Anforderungen hat, die sich nicht einfach mit festen Arbeitszeiten oder Mitarbeiterzuordnungen beschreiben lassen.
+
+Die Rule Engine macht aus deiner Planung kein Pflichtprogramm. Sie macht sie intelligenter, wenn du sie brauchst.
+
+Lernziel 2: Was interessiert die Rule Engine überhaupt?
+
+Die Rule Engine interessiert sich nicht dafür, ob zwei Menschen im gleichen Betrieb arbeiten.
+
+Sie interessiert sich dafür, ob ihre Aufgaben voneinander abhängig sind.
+
+Der wichtigste Zusammenhang ist:
+
+Müssen bestimmte Aufgaben gleichzeitig, am gleichen Ort und innerhalb desselben Arbeitsablaufs besetzt sein?
+
+Beispiel: Rettungstaucher und Ersthelfer
+
+Ein Rettungstaucher kann eine bestimmte Aufgabe nur ausführen, wenn gleichzeitig ein Ersthelfer verfügbar ist.
+
+Dabei reicht es nicht, dass beide irgendwann am selben Tag arbeiten.
+
+Sie müssen:
+
+zur gleichen Zeit
+am erforderlichen Ort
+für den relevanten Arbeitsablauf
+
+gleichzeitig verfügbar sein.
+
+Genau solche Abhängigkeiten sind für die Rule Engine interessant.
+
+Was nicht automatisch eine Regel ist
+
+Nicht jede fachliche Beziehung muss als Regel hinterlegt werden.
+
+Zum Beispiel:
+
+„Bob ist Koch und Alice ist Kellnerin.“
+
+Das allein ist noch keine Regel.
+
+Auch:
+
+„Bob und Alice arbeiten im selben Betrieb.“
+
+ist keine Regel.
+
+Erst wenn aus der betrieblichen Realität eine Abhängigkeit für die gleichzeitige Besetzung entsteht, wird daraus eine Regel.
+
+Die Rule Engine plant keine sozialen Beziehungen. Sie prüft betriebliche Abhängigkeiten.
+ 
+
+# Kapitel 4: Regeln
+
+### Von einfachen Grenzen bis zur Hölle der Ausnahmen 🕷️
+
+Regeln sind das Herzstück der automatischen Planung.
+
+Sie beschreiben nicht, wie du einen einzelnen Plan von Hand erstellen möchtest, sondern welche Bedingungen dein Betrieb grundsätzlich erfüllen muss.
+
+Die Rule Engine ist dabei in vier Stufen aufgebaut:
+
+**Easy → Hardcore → Nightmare → Hell on Earth**
+
+Je höher die Stufe, desto mehr Zusammenhänge muss die App berücksichtigen.
+
+Keine Angst: Du musst nicht mit Level 4 anfangen. 😉
+
+---
+
+## Warum Warnungen nicht überall auftauchen sollten
+
+Eine gute Planung besteht nicht darin, **keine Warnungen** zu haben.
+
+Eine gute Planung besteht darin, dass die Warnungen, die angezeigt werden, **wirklich etwas bedeuten**.
+
+Stell dir vor, dein Plan zeigt jeden einzelnen Tag fünf Warnungen.
+
+Am Montag: 5 Warnungen.
+Am Dienstag: 5 Warnungen.
+Am Mittwoch: 5 Warnungen.
+Am Donnerstag: 5 Warnungen.
+
+Nach kurzer Zeit passiert etwas völlig Normales:
+
+**Du liest sie nicht mehr.**
+
+Das nennt man **Warning Fatigue**.
+
+Wenn Warnungen ständig auftreten, werden sie zu Hintergrundrauschen.
+
+Und genau das wollen wir vermeiden.
+
+> **Warnungen sollen kein Noise sein. Sie sollen Jump Scares sein. 🫣**
+
+Eine Warnung soll deine Aufmerksamkeit bekommen, weil sie ungewöhnlich, relevant oder tatsächlich problematisch ist.
+
+---
+
+# Ausnahmen reduzieren Warning Fatigue
+
+Dafür sind Ausnahmen besonders wichtig.
+
+Nehmen wir eine Regel:
+
+> **Jeden Tag müssen mindestens 2 Köche anwesend sein.**
+
+Wenn am Dienstag regelmäßig nur 1 Koch benötigt wird, könnte die App jeden Dienstag eine Warnung anzeigen.
+
+Technisch wäre das korrekt.
+
+Für den Nutzer wäre es aber nutzlos.
+
+Wenn der Nutzer weiß:
+
+> „Dienstags ist das bei uns normal.“
+
+dann sollte diese Situation nicht jeden Dienstag erneut als Problem erscheinen.
+
+Dafür gibt es Ausnahmen.
+
+Die Regel kann beispielsweise sagen:
+
+> **Mindestens 2 Köche – außer dienstags unter bestimmten Bedingungen.**
+
+Damit wird aus einem scheinbaren Fehler eine **bekannte und gewollte Situation**.
+
+Die Ausnahme ist also nicht nur ein Werkzeug, um komplizierte Regeln zu bauen.
+
+Sie ist auch ein Werkzeug, um **unnötige Warnungen zu verhindern**.
+
+---
+
+# Statistiken helfen ebenfalls
+
+Nicht jede Abweichung muss sofort eine Warnung auslösen.
+
+Manchmal ist viel interessanter, **wie häufig etwas passiert**.
+
+Beispiel:
+
+Eine bestimmte Aufgabe wird normalerweise durch einen Koch besetzt.
+
+Gelegentlich übernimmt ein Kellner diese Aufgabe über seine Aushilfsaufgabe.
+
+Ein einzelner solcher Einsatz ist möglicherweise völlig in Ordnung.
+
+Wenn das aber plötzlich **jeden zweiten Tag** passiert, wird es interessant.
+
+Dann stellt sich eine andere Frage:
+
+> **Ist diese Aushilfsaufgabe vielleicht längst eine normale Aufgabe geworden?**
+
+Statistiken können solche Muster sichtbar machen.
+
+Sie helfen dabei, zwischen:
+
+**„Das ist einmal passiert.“**
+
+und
+
+**„Das passiert ständig.“**
+
+zu unterscheiden.
+
+---
+
+## Wiederholende Warnungen sind ein Signal
+
+Besonders wichtig sind **wiederholende Warnungen**.
+
+Eine einzelne Warnung kann ein Sonderfall sein.
+
+Eine Warnung, die immer wieder auftaucht, kann dagegen auf ein strukturelles Problem hinweisen.
+
+Zum Beispiel:
+
+* Jeden Freitag fehlt ein Kellner.
+* Jeden Dienstag wird ein Koch als Kellner eingesetzt.
+* Jeden Monat überschreitet dieselbe Person regelmäßig eine Grenze.
+* Eine bestimmte Aufgabe kann fast nie vollständig besetzt werden.
+
+Dann ist die Frage nicht mehr:
+
+> **„Wie bekomme ich diese Warnung heute weg?“**
+
+Sondern:
+
+> **„Warum passiert das immer wieder?“**
+
+Vielleicht muss eine Rolle angepasst werden.
+
+Vielleicht braucht es einen weiteren Mitarbeiter.
+
+Vielleicht stimmt eine reguläre Arbeitszeit nicht.
+
+Vielleicht fehlt eine Regel.
+
+Oder vielleicht ist die Situation tatsächlich normal und sollte als Ausnahme definiert werden.
+
+---
+
+# Die Rule Engine soll dich nicht ständig anschreien
+
+Das Ziel ist deshalb nicht:
+
+> **So viele Warnungen wie möglich.**
+
+Das Ziel ist:
+
+> **Die richtigen Warnungen zum richtigen Zeitpunkt.**
+
+Eine gute Regel-Engine unterscheidet zwischen:
+
+### 🟢 Normal
+
+Alles entspricht den bekannten Regeln.
+
+**Keine Warnung notwendig.**
+
+### 🟡 Auffällig
+
+Etwas weicht vom Normalfall ab.
+
+**Beobachten oder prüfen.**
+
+### 🔴 Relevant
+
+Eine wichtige Bedingung wird verletzt oder ein echtes Planungsproblem entsteht.
+
+**Aufmerksamkeit erforderlich.**
+
+Und wenn dieselbe gelbe Situation immer wieder vorkommt, kann die Statistik irgendwann wichtiger sein als die einzelne Warnung.
+
+---
+
+# Eine Warnung sollte etwas auslösen
+
+Bevor du eine Regel anlegst, stelle dir deshalb eine einfache Frage:
+
+> **„Was möchte ich tun, wenn diese Regel verletzt wird?“**
+
+Wenn die Antwort lautet:
+
+> „Eigentlich nichts – das passiert jeden Dienstag.“
+
+dann brauchst du wahrscheinlich keine Warnung.
+
+Vielleicht brauchst du eine **Ausnahme**.
+
+Wenn die Antwort lautet:
+
+> „Dann muss ich einen anderen Mitarbeiter einsetzen.“
+
+dann ist die Regel sinnvoll.
+
+Wenn die Antwort lautet:
+
+> „Das passiert ständig. Ich muss meine Personalplanung ändern.“
+
+dann sollte zusätzlich die **Statistik** darauf aufmerksam machen.
+
+---
+
+# Der Unterschied zwischen Regel, Ausnahme und Statistik
+
+Diese drei Werkzeuge haben unterschiedliche Aufgaben:
+
+**Regel**
+→ Was muss normalerweise gelten?
+
+**Ausnahme**
+→ Wann ist es ausdrücklich in Ordnung, davon abzuweichen?
+
+**Statistik**
+→ Wie oft passiert diese Abweichung tatsächlich?
+
+Zusammen verhindern sie, dass die Rule Engine zu einem permanenten Alarmgerät wird.
+
+> **Regeln schützen den Betrieb.
+> Ausnahmen verhindern unnötige Warnungen.
+> Statistiken zeigen wiederkehrende Muster.**
+
+---
+
+# Und jetzt kommt die Spinne 🕷️
+
+Die Spinne ist deshalb nicht nur ein technischer Gag.
+
+Sie passt erstaunlich gut zum Konzept:
+
+Eine Spinne reagiert nicht auf jedes einzelne Staubkorn in ihrem Netz.
+
+Sie reagiert auf **Veränderungen und relevante Bewegungen**.
+
+Genau das soll auch deine Planung tun.
+
+Die Rule Engine kennt die Zusammenhänge.
+
+Der Solver versucht, daraus eine funktionierende Planung zu bauen.
+
+Die Warnungen zeigen dir nur die Stellen, an denen deine Aufmerksamkeit wirklich gebraucht wird.
+
+> **Die Spinne baut das Netz.
+> Der Solver findet den Weg.
+> Die Warnung sagt dir, wenn etwas hängen bleibt. 🕷️🕸️**
+
+
+
+### Von einfachen Grenzen bis zur Hölle der Ausnahmen 🕷️
+
+Regeln sind das Herzstück der automatischen Planung.
+
+Sie beschreiben nicht, **wie du einen einzelnen Plan erstellen möchtest**, sondern welche Bedingungen dein Betrieb grundsätzlich erfüllen muss.
+
+Die Rule Engine ist dabei in vier Stufen aufgebaut.
+
+Je höher die Stufe, desto mehr Zusammenhänge muss die App berücksichtigen.
+
+**Easy → Hardcore → Nightmare → Hell on Earth**
+
+Keine Angst: Du musst nicht mit Level 4 anfangen. 😉
+
+---
+
+# Level 1 – Easy 🟢
+
+## Limits
+
+Limits sind die einfachsten Regeln.
+
+Du gibst eine **feste Mindest- oder Höchstgrenze** vor.
+
+Zum Beispiel:
+
+> **Jeden Tag müssen mindestens 2 Köche anwesend sein.**
+
+Die App prüft jeden Tag:
+
+**Sind mindestens 2 Köche eingeplant?**
+
+Ja → alles in Ordnung.
+Nein → die Bedingung ist nicht erfüllt.
+
+### Beispiele
+
+* mindestens 2 Köche
+* maximal 1 Manager
+* mindestens 1 Ersthelfer
+* maximal 8 Mitarbeiter gleichzeitig
+
+Limits sind ideal, wenn eine Zahl einfach und eindeutig feststeht.
+
+> **Limit = Eine Zahl muss eingehalten werden.**
+
+---
+
+# Level 2 – Hardcore 🟠
+
+## Ratios
+
+Jetzt wird es interessanter.
+
+Bei einem Ratio hängt die benötigte Anzahl **von einer anderen Anzahl ab**.
+
+Zum Beispiel:
+
+> **Für jeden Koch müssen 2 Kellner anwesend sein.**
+
+Bei 2 Köchen werden also **4 Kellner** benötigt.
+
+Bei 3 Köchen werden **6 Kellner** benötigt.
+
+Die benötigte Anzahl ist nicht mehr fest – sie wird **dynamisch berechnet**.
+
+### Hier kommt der Solver ins Spiel
+
+Angenommen:
+
+* 2 Köche sind eingeplant
+* aber nur 3 Kellner
+
+Die App erkennt:
+
+**Es fehlen eigentlich Kellner.**
+
+Aber bevor sie einfach eine Warnung ausgibt, schaut der Solver genauer hin.
+
+Hat einer der Köche eine **Aushilfs- oder Notfallaufgabe „Kellner“**?
+
+Dann kann dieser Mitarbeiter neu zugeordnet werden.
+
+Aus:
+
+**2 Köche + 3 Kellner**
+
+wird beispielsweise:
+
+**1 Koch + 4 Kellner**
+
+Die Regel ist damit erfüllt, ohne dass eine zusätzliche Person benötigt wird.
+
+Das ist ein wichtiger Unterschied:
+
+> **Der Solver prüft nicht nur, ob eine Regel verletzt wird. Er versucht, eine mögliche Lösung zu finden.**
+
+### Beispiele
+
+* 1 Koch : 2 Kellner
+* 1 Ausbilder : 2 Azubis
+* 1 Arzt : 1 TMA
+* 1 Maschinenführer : 1 Helfer
+
+> **Ratio = Die benötigte Anzahl ergibt sich aus einer anderen Anzahl.**
+
+---
+
+# Level 3 – Nightmare 🔴
+
+## Ausnahmen
+
+Jetzt verlassen wir die Welt der einfachen Regeln.
+
+Eine Regel gilt – **außer wenn eine bestimmte Bedingung eintritt.**
+
+Zum Beispiel:
+
+> **Normalerweise müssen jeden Tag 2 Köche anwesend sein.
+> Dienstags reicht 1 Koch, wenn mehr als 7 Kellner anwesend sind.**
+
+Plötzlich muss die App mehrere Dinge gleichzeitig betrachten:
+
+1. Welcher Wochentag ist es?
+2. Wie viele Kellner sind eingeplant?
+3. Ist diese Zahl größer als 7?
+4. Welche Regel gilt unter diesen Bedingungen?
+5. Wie viele Köche werden jetzt tatsächlich benötigt?
+
+Die Regel ist also nicht mehr einfach:
+
+**„2 Köche“**
+
+sondern:
+
+**„2 Köche – außer wenn …“**
+
+Und genau hier beginnt das, was Menschen normalerweise intuitiv können, aber Tabellen nur schwer abbilden.
+
+### Warum das Nightmare heißt
+
+Weil Ausnahmen miteinander kombiniert werden können.
+
+Eine Ausnahme kann wiederum von einer anderen Bedingung abhängen.
+
+> **Ausnahmen machen Regeln mächtig – und komplex.**
+
+Deshalb sollte man sie bewusst einsetzen.
+
+---
+
+# Level 4 – Hell on Earth 🔥
+
+## Urlaubs- und Abwesenheitstypen
+
+Jetzt kommen Bedingungen ins Spiel, bei denen nicht nur zählt, **ob jemand fehlt**, sondern **warum**.
+
+Zum Beispiel:
+
+> **Es müssen immer 2 Köche anwesend sein – außer mehr als 1 Koch ist krankgeschrieben.**
+
+Ein normaler Urlaub ist dabei etwas anderes als eine Krankmeldung.
+
+Die App muss also unterscheiden können:
+
+**Koch A ist im Urlaub.**
+→ Die normale Besetzungsregel gilt weiterhin.
+
+**Koch A ist krankgeschrieben.**
+→ Eine andere Regel kann greifen.
+
+**Koch A und Koch B sind krankgeschrieben.**
+→ Die Mindestbesetzung kann unter bestimmten Bedingungen angepasst werden.
+
+Damit wird eine Abwesenheit selbst zu einem **Auslöser für andere Regeln**.
+
+Und genau hier wird die Rule Engine wirklich mächtig:
+
+> **Eine Information verändert, welche andere Regel gilt.**
+
+---
+
+# 🕷️ Was die Spinne damit eigentlich macht
+
+Vielleicht sieht die Rule Engine auf den ersten Blick kompliziert aus.
+
+Aber du musst keinen Graphen verstehen.
+
+Die Spinne 🕷️ steht für etwas Einfaches:
+
+**Sie verbindet Informationen miteinander.**
+
+Zum Beispiel:
+
+**Krankgeschrieben**
+↓
+**Ausnahme aktiv**
+↓
+**Mindestbesetzung ändert sich**
+↓
+**Solver berechnet neuen Plan**
+
+Oder:
+
+**Anzahl Köche**
+↓
+**Ratio**
+↓
+**benötigte Kellner**
+↓
+**Aushilfsaufgaben prüfen**
+↓
+**Mitarbeiter neu zuordnen**
+
+Die Spinne baut im Hintergrund das Netz der Zusammenhänge.
+
+Du musst nur die **betriebliche Regel** beschreiben.
+
+---
+
+# Die vier Level auf einen Blick
+
+| Level | Name                 | Was wird beschrieben?            | Beispiel                     |
+| ----- | -------------------- | -------------------------------- | ---------------------------- |
+| 1     | 🟢 **Easy**          | Feste Grenzen                    | Mind. 2 Köche                |
+| 2     | 🟠 **Hardcore**      | Dynamische Verhältnisse          | 1 Koch : 2 Kellner           |
+| 3     | 🔴 **Nightmare**     | Bedingungen und Ausnahmen        | 2 Köche, außer dienstags …   |
+| 4     | 🔥 **Hell on Earth** | Abwesenheiten als Regel-Auslöser | 2 Köche, außer mehrere krank |
+
+### Die wichtigste Idee
+
+**Du musst nicht selbst planen, wie die Regel umgesetzt wird.**
+
+Du sagst der App:
+
+> **„Das ist die Realität, die eingehalten werden muss.“**
+
+Die Rule Engine verbindet die Bedingungen.
+
+Der Solver sucht anschließend nach einer möglichen Lösung.
+
+Und wenn keine Lösung existiert, sagt dir die App nicht einfach:
+
+> ❌ „Fehler“
+
+sondern kann dir zeigen:
+
+> **„Unter diesen Bedingungen ist kein gültiger Plan möglich.“**
+
+Das ist der Punkt, an dem deine App mehr wird als eine Excel-Tabelle.
+
+> **Excel speichert deinen Plan.
+> Deine Rule Engine versteht, warum der Plan funktionieren muss.**
+
+
+Mögliche Kategorien
+Symbol	Bedeutung
+⚠️	Problem – eine wichtige Regel wird verletzt
+💡	Hinweis – etwas ist auffällig, aber nicht unbedingt problematisch
+💀	Noise / Spam – diese Regel erzeugt wahrscheinlich unnötige Warnungen
+
+-->
+
 <h2>📘 Kapitel 6: Das Regelwerk</h2>
 
 <div class="long">

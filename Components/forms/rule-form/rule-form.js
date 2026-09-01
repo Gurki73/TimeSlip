@@ -1837,6 +1837,14 @@ function createCheckboxGroup(type, items, parent, onChange, options = {}) {
         }
 
         // =========================
+        // Apply item color to the
+        // entire container
+        // =========================
+        if (item.color) {
+            wrapper.style.color = item.color;
+        }
+
+        // =========================
         // Closed day
         // =========================
         if (item.closed) {
@@ -1861,7 +1869,7 @@ function createCheckboxGroup(type, items, parent, onChange, options = {}) {
         // =========================
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
-        checkbox.id = `${options.idPrefix || 'chk'} -${item.name} `;
+        checkbox.id = `${options.idPrefix || 'chk'}-${item.name}`;
 
         if (item.index != null) {
             checkbox.dataset.index = item.index;
