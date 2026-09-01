@@ -628,6 +628,7 @@ function renderRule(ruleView, container, roles) {
     container.appendChild(fragment);
 }
 
+/*
 function renderCompactDots(ruleView, marker) {
     const teams = ruleView.teams ?? [];
     const current = ruleView.categoryTeam;
@@ -653,6 +654,8 @@ function renderCompactDots(ruleView, marker) {
         addCount(marker, others.length);
     }
 }
+*/
+
 
 function addDot(container, team, isPrimary = false) {
     const span = document.createElement('span');
@@ -663,20 +666,24 @@ function addDot(container, team, isPrimary = false) {
     container.appendChild(span);
 }
 
+
+/*
 function addPlus(container) {
     const span = document.createElement('span');
     span.className = 'rule-dot rule-plus noto';
     span.textContent = '+';
     container.appendChild(span);
 }
+*/
 
+/*
 function addCount(container, count) {
     const span = document.createElement('span');
     span.className = 'rule-dot rule-count noto';
     span.textContent = count;
     container.appendChild(span);
 }
-
+*/
 
 function renderRoleDots(li, ruleView) {
     const marker = li.querySelector('.rule-role-marker');
@@ -684,8 +691,11 @@ function renderRoleDots(li, ruleView) {
 
     marker.innerHTML = '';
 
-    // default for now: compact mode
-    renderCompactDots(ruleView, marker);
+    const teams = ruleView.teams ?? [];
+
+    teams.forEach(team => {
+        addDot(marker, team);
+    });
 }
 
 function renderWarnings(ruleView, ruleLi) {
