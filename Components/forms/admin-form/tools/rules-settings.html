@@ -1,19 +1,184 @@
 <!-- Components/forms/admin-form/tools/rules-settings.html -->
-<div class="tool-page rules-settings-tool" aria-labelledby="rules-settings-title">
-  <header class="tool-header">
+
+<div class="tool-page rules-settings-tool" id="rules-settings" aria-labelledby="rules-settings-title">
+  <header class="tool-header" id="rules-settings-header">
     <h2 id="rules-settings-title">
-      <span class="noto">🧩</span> Regel Toleranzen (Platzhalter) <span class="noto">🧪</span>
+      <span class="noto" aria-hidden="true">🧩</span>
+      Regelwerk Einstellungen
     </h2>
-    <p>
-      Dieses Modul ist als Erinnerung vorbereitet. Die Einstellungen sind noch nicht verdrahtet.
-    </p>
+
+    <p id="rules-settings-description"> Regel-Einstellungen sorgen dafür, dass Warnungen relevante Ereignisse bleiben
+      und nicht zum Alltag werden. </p>
   </header>
 
-  <section class="tool-section" aria-label="Solver Settings Placeholder">
-    <label for="solver-max-steps" class="tool-label">Solver Max Steps</label>
-    <input id="solver-max-steps" type="number" min="1" max="50" value="10" disabled />
-    <small class="tool-help">
-      Geplant: Wird später aus einer Konfigurationsdatei geladen und gespeichert.
-    </small>
-  </section>
+
+  <div class="rules-settings-grid" id="rules-settings-grid">
+
+    <!-- =========================================================
+             SHIFT MODEL
+             ========================================================= -->
+
+    <section class="rules-settings-panel rules-settings-panel-shift" id="shift-model-panel"
+      aria-labelledby="shift-model-title">
+      <h3 id="shift-model-title">Schicht-Modell</h3>
+
+      <fieldset class="settings-radio-group" id="shift-model-options">
+        <legend class="sr-only">
+          Schicht-Modell auswählen
+        </legend>
+
+        <label class="settings-radio-option" for="shift-model-one">
+          <input id="shift-model-one" name="shift-model" type="radio" value="one-shift">
+          <span class="settings-radio-label">
+            1 Schicht
+          </span>
+        </label>
+
+        <label class="settings-radio-option" for="shift-model-half-day">
+          <input id="shift-model-half-day" name="shift-model" type="radio" value="one-shift-half-day">
+          <span class="settings-radio-label">
+            1 Schicht + Halbtag
+          </span>
+        </label>
+
+        <label class="settings-radio-option" for="shift-model-three">
+          <input id="shift-model-three" name="shift-model" type="radio" value="three-shifts">
+          <span class="settings-radio-label">
+            3 Schichten
+          </span>
+        </label>
+      </fieldset>
+
+      <div class="settings-explanation" id="shift-model-explanation" aria-live="polite">
+        <!-- Filled by JavaScript -->
+      </div>
+    </section>
+
+
+    <!-- =========================================================
+             RULE ENGINE
+             ========================================================= -->
+
+    <section class="rules-settings-panel rules-settings-panel-engine" id="rule-engine-panel"
+      aria-labelledby="rule-engine-title">
+      <h3 id="rule-engine-title">Rule Engine</h3>
+
+      <div class="tolerance-control" id="rule-tolerance-control">
+        <div class="tolerance-heading">
+          <label for="rule-tolerance" id="rule-tolerance-label">
+            Toleranz
+          </label>
+
+          <output id="rule-tolerance-value" class="tolerance-value" for="rule-tolerance" aria-live="polite">
+            15&nbsp;%
+          </output>
+        </div>
+
+        ```html
+        <div class="tolerance-slider" id="rule-tolerance-slider">
+          <span class="tolerance-end-label" aria-hidden="true">
+            penibel <span class="noto">😠</span>
+          </span>
+
+          <!--
+    7 tolerance levels (0–6).
+
+    Level 0 = most strict:
+      min = target - 1 (never below 0)
+      max = target + 1
+
+    Relaxation alternates:
+      1 → relax max
+      2 → relax max
+      3 → relax min
+      4 → relax max
+      5 → relax min
+      6 → most relaxed:
+           min = 0
+           max = target * 2
+
+    The slider value is therefore a RELAXATION LEVEL,
+    not a percentage tolerance.
+  -->
+          <input id="rule-tolerance" name="rule-tolerance" type="range" min="0" max="6" step="1" value="3"
+            aria-describedby="rule-tolerance-description">
+
+          <span class="tolerance-end-label" aria-hidden="true">
+            entspannt <span class="noto">😎</span>
+          </span>
+        </div>
+
+        <p id="rule-tolerance-description" class="sr-only">
+          Bestimmt, wie tolerant die Regelprüfung gegenüber Über- und Unterbesetzung ist.
+          Überbesetzung wird zuerst erlaubt, bevor Unterbesetzung zugelassen wird.
+        </p>
+
+        <div class="tolerance-examples" id="tolerance-examples" aria-live="polite" aria-atomic="true">
+          <p id="tolerance-example-one">
+            <!-- JS inserts example -->
+          </p>
+
+          <p id="tolerance-example-two">
+            <!-- JS inserts example -->
+          </p>
+
+          <p id="tolerance-example-three">
+            <!-- JS inserts example -->
+          </p>
+        </div>
+        
+
+
+        <p class="sr-only" id="rule-tolerance-description">
+          Bestimmt, wie stark die tatsächliche Besetzung von der
+          gewünschten Besetzung abweichen darf.
+        </p>
+      </div>
+
+      <div class="tolerance-examples" id="tolerance-examples" aria-live="polite" aria-atomic="true">
+        <!-- Filled by JavaScript -->
+      </div>
+    </section>
+
+
+    <!-- =========================================================
+             SOLVER
+             ========================================================= -->
+
+    <section class="rules-settings-panel rules-settings-panel-solver" id="solver-panel" aria-labelledby="solver-title">
+      <h3 id="solver-title">Solver</h3>
+
+      <fieldset class="settings-radio-group" id="solver-options">
+        <legend class="sr-only">
+          Solver-Modus auswählen
+        </legend>
+
+        <label class="settings-radio-option" for="solver-none">
+          <input id="solver-none" name="solver-mode" type="radio" value="none">
+          <span class="settings-radio-label">
+            No solving
+          </span>i still
+        </label>
+
+        <label class="settings-radio-option" for="solver-easy">
+          <input id="solver-easy" name="solver-mode" type="radio" value="easy">
+          <span class="settings-radio-label">
+            Easy solve
+          </span>
+        </label>
+
+        <label class="settings-radio-option" for="solver-hard">
+          <input id="solver-hard" name="solver-mode" type="radio" value="hard">
+          <span class="settings-radio-label">
+            Hard solve
+          </span>
+        </label>
+      </fieldset>
+
+      <div class="settings-explanation" id="solver-explanation" aria-live="polite">
+        <!-- Filled by JavaScript -->
+      </div>
+    </section>
+
+  </div>
 </div>

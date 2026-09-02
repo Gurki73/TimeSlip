@@ -80,16 +80,14 @@ Legend:
 🔥 ship-blocker   🧩 beta-value   🧠 post-beta  👀 review-needed
 
 
+🚧 1. schicht model vs. 1 schicht + halbtags vs. 3 schicht modell  
 calendar:
-🟢 1. ☐ check if role reasignments are rendered
-
-🔥 0. schicht model vs. 1 schicht + halbtags vs. 3 schicht modell  🔥
+🟢 2. ☐ check if role reasignments are rendered
 
 ruleset:
-🔵 2. ☐ check complex rules
-🟡 3. 🚧 add chip for weekdays ( color )
-🟡 4. 🚧 add chip for shift ( icon + color)
-🟡 5. ☐ extend team marker ( maybe with ellipses if no space)
+🔵 3. ☐ check complex rules
+🟡 4. 🚧 add chip for weekdays ( color )
+🟡 5. 🚧 add chip for shift ( icon + color)
 
 calendar-settings:
 🟡 6. ☐ adjust height for company holidays 
@@ -114,8 +112,8 @@ admin tools.auto save
 🟢20 ☐ disable are you sure dialogs
 🟢21.☐ replace dirty state with autosave in shared state save butto
 admin tool.ruleset-settings
-🔵22. ☐ gather ideas
-🔵23. ☐ build prilimary UI
+🔵22. ✅ gather ideas
+🔵23. ✅ build prilimary UI
 admin tools.calendar settings
 🟡24. ☐ reuse options from main menu
 🟡25. ☐ build lay out 

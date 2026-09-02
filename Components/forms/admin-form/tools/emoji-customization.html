@@ -14,9 +14,12 @@
       </header>
       <div id="employee-grid" class="emoji-grid"></div>
     </section>
+
+    ```
     <div class="swap-icon-wrapper">
       <div class="noto swap-icon"> ⇄ </div>
     </div>
+
     <!-- Pool -->
     <section class="emoji-block center-block">
       <header>
@@ -24,19 +27,30 @@
         <div class="flex-row">
           <div class="noto big">❓</div>
           <div>
-            <i> <span class="noto">🖱️</span> Linksklick: Vorrat → Mitarbeiter</i><br />
-            <i> Rechtsklick: Vorrat ← Aufgaben <span class="noto">🖱️</span></i>
+            <i>
+              <span class="noto">🖱️</span>
+              Linksklick: Vorrat → Mitarbeiter
+            </i>
+            <br />
+            <i>
+              Rechtsklick: Vorrat ← Aufgaben
+              <span class="noto">🖱️</span>
+            </i>
           </div>
         </div>
-        <button id="add-emoji-btn" title="Neues Unicode Emoji hinzufügen" class="noto">
+
+        <button id="add-emoji-btn" title="Neue Unicode Emojis hinzufügen" class="noto" type="button">
           ➕
         </button>
       </header>
+
       <div id="pool-grid" class="emoji-grid"></div>
     </section>
+
     <div class="swap-icon-wrapper">
       <div class="noto swap-icon"> ⇄ </div>
     </div>
+
     <!-- Roles -->
     <section class="emoji-block">
       <header>
@@ -44,5 +58,77 @@
       </header>
       <div id="role-grid" class="emoji-grid"></div>
     </section>
+    ```
+
   </div>
 </div>
+
+<!-- =========================================================
+     Add Unicode Emoji Dialog
+     ========================================================= -->
+
+<dialog id="emoji-add-dialog" class="emoji-dialog">
+  <form method="dialog" id="emoji-add-form">
+
+    ```
+    <header class="emoji-dialog-header">
+      <div>
+        <h2>Unicode Emojis hinzufügen</h2>
+        <p>
+          Füge ein oder mehrere Unicode-Symbole per Kopieren &amp; Einfügen ein.
+        </p>
+      </div>
+
+      <button type="button" id="emoji-dialog-close" class="emoji-dialog-close noto" aria-label="Dialog schließen"
+        title="Schließen">
+        ✕
+      </button>
+    </header>
+
+
+    <section class="emoji-dialog-content">
+
+      <label for="emoji-input">
+        Symbole einfügen
+      </label>
+
+      <textarea id="emoji-input" class="emoji-input" rows="3" spellcheck="false" autocomplete="off"
+        placeholder="z. B. 🦊 🐼 🐸 🐦‍🔥 👍🏽"></textarea>
+
+      <div class="emoji-dialog-hint">
+        Erlaubter Unicode-Bereich:
+        <code>U+1F600 – U+1F64F</code>
+      </div>
+
+
+      <section class="emoji-validation-section">
+        <div class="emoji-validation-header">
+          <h3>Prüfung</h3>
+          <span id="emoji-validation-count"></span>
+        </div>
+
+        <div id="emoji-validation-results" class="emoji-validation-results" aria-live="polite">
+          <div class="emoji-validation-empty">
+            Noch keine Symbole eingegeben.
+          </div>
+        </div>
+      </section>
+
+    </section>
+
+
+    <footer class="emoji-dialog-footer">
+
+      <button type="button" id="emoji-dialog-cancel" class="emoji-dialog-button secondary">
+        Abbrechen
+      </button>
+
+      <button type="submit" id="emoji-dialog-add" class="emoji-dialog-button primary" disabled>
+        Hinzufügen
+      </button>
+
+    </footer>
+    ```
+
+  </form>
+</dialog>

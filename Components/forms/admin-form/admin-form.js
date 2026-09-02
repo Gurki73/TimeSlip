@@ -10,7 +10,7 @@ export const adminTools = [
   { id: 'emoji-customization', name: 'Symbol Auswahl', icon: 'smiley-happy-svgrepo-com.svg', enabled: true },
   { id: 'auto-save-toggle', name: 'Automatisch Speichern', icon: 'rocket-svgrepo-com.svg', enabled: true },
   { id: 'clear-cache', name: 'Puffer leeren', icon: 'safe-svgrepo-com.svg', enabled: true },
-  { id: 'rules-settings', name: 'Regel Toleranzen', icon: 'puzzle-piece-svgrepo-com.svg', enabled: false },
+  { id: 'rules-settings', name: 'Regel Toleranzen', icon: 'puzzle-piece-svgrepo-com.svg', enabled: true },
   { id: 'calendar-settings', name: 'Kalendar Anpassung', icon: 'calendar-svgrepo-com.svg', enabled: true },
   { id: 'deleted-employees', name: 'Mitarbeiter Wiederherstellen', icon: 'reshot-icon-trash-SX6L89TFAM.svg', enabled: true },
   { id: 'buy-coffee', name: 'Spenden Unterstützen', icon: 'BuyMeACoffee.png', enabled: true }
@@ -918,3 +918,529 @@ function getContrastYIQ(hexcolor) {
   const b = parseInt(hexcolor.substr(4, 2), 16) || 0;
   return ((r * 299 + g * 587 + b * 114) / 1000) > 128 ? 'black' : 'white';
 }
+
+/* ------------------ ADD CUSTOM EMOJI ------------------ */
+
+const EMOJI_MIN = 0x1F600;
+const EMOJI_MAX = 0x1F64F;
+
+/*
+
+* Emojis which are already used by the application for
+* controls, system functions, or special employee handling.
+*
+* Add/remove entries here as the application grows.
+  */
+const RESERVED_EMOJIS = new Set([
+  "🗑️", // deleted employees
+  "💾"  // save
+]);
+
+/*
+
+* Emojis reserved for reactivated/deleted employees.
+*
+* Keep this separate from RESERVED_EMOJIS because these
+* symbols have a meaningful application-specific purpose.
+  */
+const REACTIVATION_RESERVED_EMOJIS = new Set([
+  "🐦‍🔥"
+]);
+
+const emojiAddDialog = document.getElementById("emoji-add-dialog");
+const emojiInput = document.getElementById("emoji-input");
+const emojiValidationResults =
+  document.getElementById("emoji-validation-results");
+const emojiValidationCount =
+  document.getElementById("emoji-validation-count");
+const emojiDialogClose =
+  document.getElementById("emoji-dialog-close");
+const emojiDialogCancel =
+  document.getElementById("emoji-dialog-cancel");
+const emojiDialogAdd =
+  document.getElementById("emoji-dialog-add");
+const emojiAddForm =
+  document.getElementById("emoji-add-form");
+
+/*
+
+* Return all currently assigned / available emojis.
+*
+* This is deliberately calculated from the current UI state
+* instead of relying on loaded.categories.
+  */
+function getAllKnownEmojis() {
+  return new Set([
+    ...poolEmojis,
+    ...employeeEmojis,
+    ...roleEmojis
+  ]);
+}
+
+/*
+
+* Split pasted text into Unicode grapheme clusters.
+*
+* This is important for:
+* 👍🏽
+* 🐦‍🔥
+* 👨‍💻
+* 🇩🇪
+*
+* They may contain multiple Unicode code points but should
+* be treated as one visual symbol.
+  */
+function splitIntoGraphemes(text) {
+  if (typeof Intl !== "undefined" && Intl.Segmenter) {
+    const segmenter = new Intl.Segmenter(undefined, {
+      granularity: "grapheme"
+    });
+
+    return [...segmenter.segment(text)]
+      .map(item => item.segment);
+  }
+
+
+  /*
+  
+  
+      
+   * Fallback for older environments.
+   *
+   * Array.from() is not as Unicode-complete as
+   * Intl.Segmenter, but is still preferable to split("").
+   */
+  return Array.from(text);
+
+
+}
+
+/*
+
+* Find the first "real" Unicode code point in an emoji.
+*
+* Variation selectors, zero-width joiners and emoji
+* modifiers are not considered the base character.
+  */
+function getBaseCodePoint(emoji) {
+  const codePoints = [...emoji].map(char => char.codePointAt(0));
+
+
+  return codePoints.find(codePoint => {
+
+
+
+    // Variation selectors
+    if (codePoint >= 0xFE00 && codePoint <= 0xFE0F) {
+      return false;
+    }
+
+    // Zero-width joiner
+    if (codePoint === 0x200D) {
+      return false;
+    }
+
+    // Emoji skin-tone modifiers
+    if (codePoint >= 0x1F3FB && codePoint <= 0x1F3FF) {
+      return false;
+    }
+
+    return true;
+  });
+
+
+}
+
+function isAllowedEmojiRange(emoji) {
+  const baseCodePoint = getBaseCodePoint(emoji);
+
+
+  if (baseCodePoint == null) {
+    return false;
+  }
+
+  return (
+    baseCodePoint >= EMOJI_MIN &&
+    baseCodePoint <= EMOJI_MAX
+  );
+
+
+}
+
+function formatCodePoint(emoji) {
+  const baseCodePoint = getBaseCodePoint(emoji);
+
+
+  if (baseCodePoint == null) {
+    return "";
+  }
+
+  return `U + ${baseCodePoint
+      .toString(16)
+      .toUpperCase()
+      .padStart(4, "0")
+    } `;
+
+
+}
+
+/*
+
+* Validate one pasted emoji.
+  */
+function validateEmoji(emoji, knownEmojis) {
+
+
+  if (RESERVED_EMOJIS.has(emoji)) {
+
+
+
+    return {
+      emoji,
+      status: "reserved",
+      message:
+        `Das neue Emoji "${emoji}" ist für eine Systemfunktion reserviert.`
+    };
+  }
+
+
+  if (REACTIVATION_RESERVED_EMOJIS.has(emoji)) {
+    return {
+      emoji,
+      status: "reserved",
+      message:
+        `Das neue Emoji "${emoji}" ist reserviert für reaktivierte gelöschte Mitarbeiter.`
+    };
+  }
+
+
+  if (knownEmojis.has(emoji)) {
+    return {
+      emoji,
+      status: "duplicate",
+      message:
+        `Das neue Emoji "${emoji}" existiert schon im Pool oder wird bereits verwendet.`
+    };
+  }
+
+
+  if (!isAllowedEmojiRange(emoji)) {
+    return {
+      emoji,
+      status: "invalid",
+      message:
+        `Das neue Emoji "${emoji}" liegt außerhalb des erlaubten Abschnitts des Unicode - Alphabets(${formatCodePoint(emoji) || "kein gültiger Unicode-Codepunkt"}).`
+    };
+  }
+
+
+  return {
+    emoji,
+    status: "valid",
+    message:
+      `Das neue Emoji "${emoji}" kann zum Vorrat hinzugefügt werden.`
+  };
+
+
+}
+
+/*
+
+* Render validation feedback.
+  */
+function renderEmojiValidation(results) {
+
+
+  emojiValidationResults.innerHTML = "";
+
+
+
+  if (results.length === 0) {
+    emojiValidationResults.innerHTML = `
+    < div class="emoji-validation-empty" >
+      Noch keine Symbole eingegeben.
+    </div >
+    `;
+
+    emojiValidationCount.textContent = "";
+    emojiDialogAdd.disabled = true;
+
+    return;
+  }
+
+
+  const validCount = results.filter(
+    result => result.status === "valid"
+  ).length;
+
+
+  emojiValidationCount.textContent =
+    `${validCount} von ${results.length} neu`;
+
+
+  results.forEach(result => {
+
+    const item = document.createElement("div");
+    item.className =
+      `emoji - validation - item ${result.status} `;
+
+
+    const symbol = document.createElement("div");
+    symbol.className =
+      "emoji-validation-symbol noto";
+    symbol.textContent = result.emoji;
+
+
+    const message = document.createElement("div");
+    message.className =
+      "emoji-validation-message";
+    message.textContent = result.message;
+
+
+    item.append(symbol, message);
+    emojiValidationResults.appendChild(item);
+  });
+
+
+  emojiDialogAdd.disabled = validCount === 0;
+
+
+}
+
+/*
+
+* Validate the entire textarea.
+  */
+function validateEmojiInput() {
+
+
+  const text = emojiInput.value.trim();
+
+
+
+  if (!text) {
+    renderEmojiValidation([]);
+    return [];
+  }
+
+
+  const graphemes = splitIntoGraphemes(text)
+    .map(value => value.trim())
+    .filter(Boolean);
+
+
+  /*
+   * Avoid reporting the same pasted emoji several times.
+   */
+  const uniqueGraphemes = [
+    ...new Set(graphemes)
+  ];
+
+
+  const knownEmojis = getAllKnownEmojis();
+
+  /*
+   * Also consider duplicates inside the pasted input.
+   */
+  const seenInInput = new Set();
+
+  const results = uniqueGraphemes.map(emoji => {
+
+    if (seenInInput.has(emoji)) {
+      return {
+        emoji,
+        status: "duplicate",
+        message:
+          `Das neue Emoji "${emoji}" wurde mehrfach eingefügt.`
+      };
+    }
+
+    seenInInput.add(emoji);
+
+    return validateEmoji(
+      emoji,
+      knownEmojis
+    );
+  });
+
+
+  renderEmojiValidation(results);
+
+  return results;
+
+
+}
+
+function openEmojiAddDialog() {
+
+
+  if (!emojiAddDialog) {
+    console.error("Emoji add dialog not found.");
+    return;
+  }
+
+  emojiInput.value = "";
+  renderEmojiValidation([]);
+
+  emojiAddDialog.showModal();
+
+  requestAnimationFrame(() => {
+    emojiInput.focus();
+  });
+
+
+}
+
+function closeEmojiAddDialog() {
+
+
+  if (
+    emojiAddDialog &&
+    emojiAddDialog.open
+  ) {
+    emojiAddDialog.close();
+  }
+
+
+}
+
+/*
+
+* ➕ button
+  */
+if (addBtn) {
+  addBtn.addEventListener(
+    "click",
+    openEmojiAddDialog
+  );
+}
+
+/*
+
+* Validate while the user types/pastes.
+  */
+if (emojiInput) {
+  emojiInput.addEventListener(
+    "input",
+    validateEmojiInput
+  );
+}
+
+/*
+
+* X button
+  */
+if (emojiDialogClose) {
+  emojiDialogClose.addEventListener(
+    "click",
+    closeEmojiAddDialog
+  );
+}
+
+/*
+
+* Cancel button
+  */
+if (emojiDialogCancel) {
+  emojiDialogCancel.addEventListener(
+    "click",
+    closeEmojiAddDialog
+  );
+}
+
+/*
+
+* Clicking the backdrop closes the dialog.
+  */
+if (emojiAddDialog) {
+  emojiAddDialog.addEventListener(
+    "click",
+    (event) => {
+
+      if (event.target !== emojiAddDialog) {
+        return;
+      }
+
+      closeEmojiAddDialog();
+    }
+  );
+}
+
+/*
+
+* Add validated emojis to the pool.
+  */
+if (emojiAddForm) {
+
+
+  emojiAddForm.addEventListener(
+
+
+
+    "submit",
+    (event) => {
+
+      event.preventDefault();
+
+      const results =
+        validateEmojiInput();
+
+
+      const validEmojis = results
+        .filter(
+          result => result.status === "valid"
+        )
+        .map(
+          result => result.emoji
+        );
+
+
+      if (validEmojis.length === 0) {
+        return;
+      }
+
+
+      /*
+       * Ensure the custom category exists.
+       */
+      if (!Array.isArray(
+        loaded.categories.custom
+      )) {
+        loaded.categories.custom = [];
+      }
+
+
+      validEmojis.forEach(emoji => {
+
+        /*
+         * Add to the persistent custom category.
+         */
+        if (!loaded.categories.custom.includes(emoji)) {
+          loaded.categories.custom.push(emoji);
+        }
+
+
+        /*
+         * Add to currently available pool.
+         */
+        if (!poolEmojis.includes(emoji)) {
+          poolEmojis.push(emoji);
+        }
+      });
+
+
+      /*
+       * Focus the first newly added emoji after render.
+       */
+      lastFocusedEmoji =
+        validEmojis[0];
+
+
+      renderAll();
+
+      closeEmojiAddDialog();
+    }
+  );
+
+}
+
