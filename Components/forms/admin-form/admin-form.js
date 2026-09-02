@@ -270,6 +270,18 @@ async function initRoleColorTabSafe(api) {
 export async function initEmojiCustomizer() {
   console.group("🧩 Emoji Customizer Init");
 
+  /* ------------------ ADD CUSTOM EMOJI ------------------ */
+
+  const emojiAddDialog = document.getElementById("emoji-add-dialog");
+  const emojiInput = document.getElementById("emoji-input");
+  const emojiDialogClose = document.getElementById("emoji-dialog-close");
+  const emojiDialogCancel = document.getElementById("emoji-dialog-cancel");
+
+  addBtn?.addEventListener("click", openEmojiAddDialog);
+  emojiInput?.addEventListener("input", validateEmojiInput);
+  emojiDialogClose?.addEventListener("click", closeEmojiAddDialog);
+  emojiDialogCancel?.addEventListener("click", closeEmojiAddDialog);
+
   const loaded = await loadEmojiData(adminApi);
   console.log("Loaded raw emoji data:", loaded);
 
@@ -1076,9 +1088,9 @@ function formatCodePoint(emoji) {
   }
 
   return `U + ${baseCodePoint
-      .toString(16)
-      .toUpperCase()
-      .padStart(4, "0")
+    .toString(16)
+    .toUpperCase()
+    .padStart(4, "0")
     } `;
 
 
@@ -1305,15 +1317,6 @@ function closeEmojiAddDialog() {
 }
 
 /*
-
-* ➕ button
-  */
-if (addBtn) {
-  addBtn.addEventListener(
-    "click",
-    openEmojiAddDialog
-  );
-}
 
 /*
 
