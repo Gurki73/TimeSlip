@@ -1666,7 +1666,7 @@ function updateDivider(className = "bg-calendar", ruleFormState) {
   buttonContainer.id = 'form-buttons';
   buttonContainer.className = 'flex items-center gap-3';
 
-  const helpBtn = createHelpButton('chapter-employees');
+  const helpBtn = createHelpButton('chapter-calendar');
   const dataModeToggle = createDataModeToggle({
     onChange: (val) => applyDataModePreset(val)
   });

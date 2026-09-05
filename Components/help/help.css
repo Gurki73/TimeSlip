@@ -544,3 +544,286 @@
 .help-chapter-header[aria-expanded="true"] .chev-btn {
   transform: rotate(90deg); /* ▼ */
 }
+
+/* ================================================== */
+/* GLOSSAR – Spezifische Stile (CSP-konform)          */
+/* ================================================== */
+
+.glossary-container {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #2d2a24;
+    line-height: 1.6;
+    max-width: 1100px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 32px;
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.2);
+    padding: 2rem 2.5rem;
+}
+
+.glossary-container h1 {
+    font-size: 2.8rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #c0392b, #e67e22);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: inline-block;
+    margin-bottom: 0.25rem;
+}
+
+.glossary-container .subhead {
+    font-size: 1.1rem;
+    color: #7f8c8d;
+    border-left: 4px solid #f1c40f;
+    padding-left: 1rem;
+    margin-bottom: 2.5rem;
+    font-style: italic;
+}
+
+.glossary-container h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin: 2.5rem 0 0.5rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 3px solid #ecf0f1;
+}
+
+.glossary-container h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.75rem 0;
+    color: #2c3e50;
+}
+
+.glossary-container .glossar-intro {
+    margin-bottom: 1.5rem;
+    color: #5d6d7e;
+}
+
+/* --- Index-Ribbon --- */
+.glossary-container .index-ribbon {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.8rem;
+    background: #f2efea;
+    padding: 0.75rem 1.5rem;
+    border-radius: 60px;
+    margin: 1.5rem 0 2rem 0;
+    justify-content: center;
+}
+
+.glossary-container .index-ribbon .index-label {
+    color: #7f8c8d;
+    margin-right: 0.5rem;
+}
+
+.glossary-container .index-ribbon a {
+    text-decoration: none;
+    font-weight: 600;
+    color: #4a4a4a;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.glossary-container .index-ribbon a:hover {
+    background: #c0392b;
+    color: white;
+    transform: scale(1.1);
+}
+
+/* --- Accordion (details/summary) --- */
+.glossary-container details {
+    background: #faf9f7;
+    border-radius: 16px;
+    padding: 0.5rem 1.5rem 1.5rem 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #eae7e0;
+    transition: all 0.25s ease;
+}
+
+.glossary-container details:hover {
+    border-color: #d5ccc0;
+}
+
+.glossary-container details[open] {
+    background: #ffffff;
+    border-color: #c0392b;
+    box-shadow: 0 4px 12px rgba(192, 57, 43, 0.08);
+}
+
+.glossary-container summary {
+    font-weight: 600;
+    font-size: 1.4rem;
+    cursor: pointer;
+    padding: 0.75rem 0;
+    color: #2d2a24;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    list-style: none;
+    user-select: none;
+}
+
+.glossary-container summary::-webkit-details-marker {
+    display: none;
+}
+
+.glossary-container summary::after {
+    content: "▾";
+    margin-left: auto;
+    font-size: 1.2rem;
+    color: #95a5a6;
+    transition: transform 0.3s;
+}
+
+.glossary-container details[open] summary::after {
+    transform: rotate(180deg);
+    color: #c0392b;
+}
+
+/* --- Definition Lists --- */
+.glossary-container dl {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 0.4rem 1.5rem;
+    margin-top: 0.5rem;
+}
+
+.glossary-container dt {
+    font-weight: 600;
+    color: #2c3e50;
+    padding: 0.5rem 0.5rem 0.5rem 0;
+    border-bottom: 1px dashed #ecf0f1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.glossary-container dd {
+    padding: 0.5rem 0 0.5rem 0.5rem;
+    border-bottom: 1px dashed #ecf0f1;
+    color: #3d3a33;
+    margin: 0;
+}
+
+.glossary-container .noto {
+    font-size: 1.3rem;
+    line-height: 1;
+    display: inline-block;
+    width: 1.8rem;
+    text-align: center;
+}
+
+/* --- Info Boxes --- */
+.glossary-container .info-box {
+    margin-top: 1rem;
+    padding: 0.75rem 1.2rem;
+    border-radius: 12px;
+}
+
+.glossary-container .info-box.warm {
+    background: #fef9e7;
+}
+
+.glossary-container .info-box.cool {
+    background: #f0f3f8;
+}
+
+/* --- Staff Cards --- */
+.glossary-container .story-section {
+    border-color: #d4a373;
+}
+
+.glossary-container .story-intro {
+    margin-bottom: 1rem;
+    color: #5d6d7e;
+}
+
+.glossary-container .staff-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.glossary-container .staff-card {
+    background: #fcfcfa;
+    border-radius: 14px;
+    padding: 0.8rem 1.2rem;
+    border-left: 4px solid #e67e22;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    transition: all 0.2s;
+}
+
+.glossary-container .staff-card:hover {
+    background: #fdf6ed;
+    border-left-color: #c0392b;
+    transform: translateX(4px);
+}
+
+.glossary-container .staff-card strong {
+    font-size: 1.1rem;
+    color: #1e1e1e;
+}
+
+.glossary-container .staff-card small {
+    display: block;
+    color: #7f8c8d;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+}
+
+/* --- Footer --- */
+.glossary-container footer {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 2px solid #ecf0f1;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+}
+
+.glossary-container .footer-badge {
+    display: inline-block;
+    margin-right: 1.5rem;
+}
+
+.glossary-container .footer-update {
+    display: inline-block;
+}
+
+/* --- Responsive --- */
+@media (max-width: 700px) {
+    .glossary-container {
+        padding: 1.5rem;
+    }
+
+    .glossary-container dl {
+        grid-template-columns: 1fr;
+        gap: 0.1rem;
+    }
+
+    .glossary-container dt {
+        border-bottom: none;
+        padding-bottom: 0.2rem;
+    }
+
+    .glossary-container dd {
+        border-bottom: 1px solid #ecf0f1;
+        padding-left: 1.8rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .glossary-container h1 {
+        font-size: 2.2rem;
+    }
+
+    .glossary-container .footer-badge,
+    .glossary-container .footer-update {
+        display: block;
+        margin-right: 0;
+        margin-bottom: 0.25rem;
+    }
+}

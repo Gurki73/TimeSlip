@@ -1,276 +1,269 @@
-<h3>Glossar</h3>
+<!-- ================================================== -->
+<!-- GLOSSAR – Dynamisches Fragment für help.html       -->
+<!-- ================================================== -->
 
-<!-- Allgemeine Icons -->
-<section id="glossary-icons">
-    <h4>Allgemeine Icons</h4>
-    <dl>
-        <dt><span class="noto">❓</span> Hilfe</dt>
-        <dd>Unterstützung oder Rettung im Kontext der App.</dd>
+<div class="glossary-container" role="main">
 
-        <dt><span class="noto">⟳</span> Refresh-Bildschirm</dt>
-        <dd>Aktualisiert die Ansicht des aktuellen Bildschirms.</dd>
+    <!-- HEADER -->
+    <header role="banner">
+        <h1>📖 Glossar &amp; Lore</h1>
+        <div class="subhead">
+            Die versteckte Wissensdatenbank der Mitarbeiter-Kalender-App
+        </div>
+    </header>
 
-        <dt><span class="noto">◀⏵</span> vorherig / nächster</dt>
-        <dd>Zeigt den vorherigen oder nächsten Monat/Jahr an.</dd>
+    <!-- ALPHABETIC INDEX -->
+    <nav role="navigation" aria-label="Alphabetisches Glossar-Index" class="index-ribbon">
+        <span class="index-label">🔍 Springe zu:</span>
+        <a href="#section-a">A</a>
+        <a href="#section-b">B</a>
+        <a href="#section-c">C</a>
+        <a href="#section-d">D</a>
+        <a href="#section-e">E</a>
+        <a href="#section-f">F</a>
+        <a href="#section-g">G</a>
+        <a href="#section-h">H</a>
+        <a href="#section-i">I</a>
+        <a href="#section-j">J</a>
+        <a href="#section-k">K</a>
+        <a href="#section-l">L</a>
+        <a href="#section-m">M</a>
+        <a href="#section-n">N</a>
+        <a href="#section-o">O</a>
+        <a href="#section-p">P</a>
+        <a href="#section-q">Q</a>
+        <a href="#section-r">R</a>
+        <a href="#section-s">S</a>
+        <a href="#section-t">T</a>
+        <a href="#section-u">U</a>
+        <a href="#section-v">V</a>
+        <a href="#section-w">W</a>
+        <a href="#section-x">X</a>
+        <a href="#section-y">Y</a>
+        <a href="#section-z">Z</a>
+    </nav>
 
-        <dt><span class="noto">▷</span> Minimieren / Maximieren</dt>
-        <dd>
-            Viele Komponenten der App können detailliert oder kompakt dargestellt werden,
-            um auf kleinen Bildschirmen alle relevanten Daten übersichtlich anzuzeigen.
-        </dd>
+    <!-- INTERACTIVE GLOSSARY -->
+    <section role="region" aria-labelledby="glossar-heading">
+        <h2 id="glossar-heading">🧩 Das digitale Lexikon</h2>
+        <p class="glossar-intro">
+            Klicke auf einen Bereich, um die verborgenen Schätze zu entdecken.
+        </p>
 
-        🧪 Test
-        ▶️ Run
-        🐞 Debug
-        ✅ / ❌ Result
+        <!-- SECTION 1: Allgemeine Icons -->
+        <details id="section-a">
+            <summary><span aria-hidden="true">🖥️</span> Allgemeine Icons &amp; Aktionen</summary>
+            <dl>
+                <dt><span class="noto" aria-hidden="true">❓</span> Hilfe</dt>
+                <dd>Unterstützung oder Rettung im Kontext der App – dein digitaler Lebensretter.</dd>
 
-        And optionally:
+                <dt><span class="noto" aria-hidden="true">⟳</span> Refresh</dt>
+                <dd>Aktualisiert die Ansicht des aktuellen Bildschirms. Frische Daten, frischer Geist.</dd>
 
-        🐞👌 = Clean run / No bugs found
+                <dt><span class="noto" aria-hidden="true">◀⏵</span> Vorherig / Nächster</dt>
+                <dd>Blättert durch Monate oder Jahre – wie durch die Zeit.</dd>
 
-        <dt><span class="noto">↕</span> Drag and Drop</dt>
-        <dd>Ermöglicht die Anpassung der Größe des Formularbereichs.</dd>
-    </dl>
-</section>
+                <dt><span class="noto" aria-hidden="true">▷</span> Minimieren / Maximieren</dt>
+                <dd>Komponenten können detailliert oder kompakt dargestellt werden – perfekt für kleine Bildschirme.
+                </dd>
 
-<!-- Schichtsystem -->
-<section id="glossary-shifts">
-    <h4>Schichtsystem</h4>
-    <dl>
-        <dt><span class="noto">🐓</span> Betriebsbeginn / Vormittag</dt>
-        <dd>Der erste Abschnitt eines Arbeitstages.</dd>
+                <dt><span class="noto" aria-hidden="true">🧪</span> Test</dt>
+                <dd>Kennzeichnet eine Prüfung, mit der ein bestimmter Bereich oder eine Funktion überprüft wird.</dd>
 
-        <dt><span class="noto">🍴</span> Vollschicht / Ganztags</dt>
-        <dd>Der zweite Abschnitt eines Arbeitstages.</dd>
+                <dt><span class="noto" aria-hidden="true">▶️</span> Run</dt>
+                <dd>Startet einen Test oder führt eine definierte Prüfung aus.</dd>
 
-        <dt><span class="noto">🌜</span> Betriebsende / Nachmittags / Abends</dt>
-        <dd>Der dritte Abschnitt eines Arbeitstages.</dd>
-    </dl>
+                <dt><span class="noto" aria-hidden="true">🐞</span> Debug</dt>
+                <dd>Unterstützt bei der Untersuchung von Fehlern und unerwartetem Verhalten.</dd>
 
-    <p>
-        Das Schicht-Modell in der Mitarbeiter-Kalender-App ist flexibel und kein klassisches 3-Schicht-System.
-        Teilzeitkräfte können nur nachmittags eingeplant werden, und Mitarbeitende mit speziellen Aufgaben
-        starten morgens, um Türen zu öffnen oder Equipment vorzubereiten. Nutzer können das Modell nach ihren
-        Bedürfnissen anpassen.
-    </p>
-</section>
+                <dt><span class="noto" aria-hidden="true">✅ / ❌</span> Result</dt>
+                <dd>Zeigt an, ob ein Test erfolgreich war oder Fehler festgestellt wurden.</dd>
 
-<!-- Schulferien -->
-<section id="glossary-school-holidays">
-    <h4>Schulferien</h4>
-    <dl>
-        <dt><span class="noto">❄️</span> Winter</dt>
-        <dd>Dezember bis Februar</dd>
+                <dt><span class="noto" aria-hidden="true">🐞👌</span> Clean Run</dt>
+                <dd>Ein Testlauf ohne Fehler – das ist wie ein perfekter Kochtag.</dd>
 
-        <dt><span class="noto">🌹</span> Frühling</dt>
-        <dd>März bis Juni</dd>
+                <dt><span class="noto" aria-hidden="true">↕</span> Drag &amp; Drop</dt>
+                <dd>Ermöglicht die Anpassung der Größe von Formularbereichen – flexibel wie ein Tisch mit Auszug.</dd>
+            </dl>
+        </details>
 
-        <dt><span class="noto">☀️</span> Sommer</dt>
-        <dd>Juli bis September</dd>
+        <!-- SECTION 2: Schichtsystem -->
+        <details id="section-s">
+            <summary><span aria-hidden="true">⏰</span> Schichtsystem</summary>
+            <dl>
+                <dt><span class="noto" aria-hidden="true">🐓</span> Betriebsbeginn / Vormittag</dt>
+                <dd>Der erste Abschnitt eines Arbeitstages – der frühe Vogel fängt den Wurm.</dd>
 
-        <dt><span class="noto">🍁</span> Herbst</dt>
-        <dd>Oktober bis November</dd>
-    </dl>
-</section>
+                <dt><span class="noto" aria-hidden="true">🍴</span> Vollschicht / Ganztags</dt>
+                <dd>Der zentrale Abschnitt – das Herzstück des Tages.</dd>
 
-<!-- Rollen -->
-<section id="glossary-roles">
-    <h4>Rollen / Hüte</h4>
-    <dl>
-        <dt>Rolle / Hut</dt>
-        <dd>
-            Rollen beschreiben Tätigkeiten, nicht Personen. Ein Mitarbeiter kann mehrere Rollen besitzen
-            (z. B. Kochmütze, Lieferfahrerhelm), aber nicht gleichzeitig in Konflikt stehende Rollen übernehmen.
-            Die Rollen definieren, wer welche Aufgaben übernimmt, wer Hauptverantwortung trägt und wer im Notfall
-            einspringt.
-        </dd>
-    </dl>
-</section>
+                <dt><span class="noto" aria-hidden="true">🌜</span> Betriebsende / Nachmittag / Abend</dt>
+                <dd>Der dritte Abschnitt – der Ausklang des Tages.</dd>
+            </dl>
+            <div class="info-box warm">
+                💡 <strong>Flexibilität:</strong> Das Schicht-Modell ist kein klassisches 3-Schicht-System.
+                Teilzeitkräfte können nur nachmittags eingeplant werden, während Frühaufsteher morgens die Türen öffnen.
+                Passe es an deine Bedürfnisse an.
+            </div>
+        </details>
 
-<!-- Allgemeine Begriffe -->
-<section id="glossary-terms">
-    <h4>Worterklärungen</h4>
-    <dl>
-        <dt>Aufgabe</dt>
-        <dd>Im Kontext der Mitarbeiter-Kalender-App bezeichnet eine Aufgabe eine Sammlung von Tätigkeiten, die
-            zusammen ein bestimmtes Ziel oder Ergebnis bilden.</dd>
+        <!-- SECTION 3: Schulferien -->
+        <details id="section-f">
+            <summary><span aria-hidden="true">🏖️</span> Schulferien</summary>
+            <dl>
+                <dt><span class="noto" aria-hidden="true">❄️</span> Winter</dt>
+                <dd>Dezember bis Februar – Schnee, Glühwein und ruhige Tage.</dd>
 
-        <dt>Request Form</dt>
-        <dd>Formular, mit dem Mitarbeiter Urlaubs-, Schicht- oder Sonderanfragen stellen.</dd>
+                <dt><span class="noto" aria-hidden="true">🌹</span> Frühling</dt>
+                <dd>März bis Juni – Blühende Landschaften und Osterhasen.</dd>
 
-        <dt>Rule Violation</dt>
-        <dd>Ein Hinweis, dass eine eingegebene Anfrage oder Planung gegen definierte Regeln verstößt.</dd>
+                <dt><span class="noto" aria-hidden="true">☀️</span> Sommer</dt>
+                <dd>Juli bis September – Sonne, Eis und Hochsaison.</dd>
 
-        <dt>Evaluation Engine</dt>
-        <dd>Systemkomponente, die alle Regeln prüft und Warnungen oder Hinweise ausgibt.</dd>
+                <dt><span class="noto" aria-hidden="true">🍁</span> Herbst</dt>
+                <dd>Oktober bis November – bunte Blätter und Erntedank.</dd>
+            </dl>
+        </details>
 
-        <dt>Self-Healing</dt>
-        <dd>Automatische Korrektur von fehlerhaften Daten, z. B. fehlende Mitarbeiter in Listen.</dd>
-    </dl>
-</section>
+        <!-- SECTION 4: Feiertage -->
+        <details id="section-h">
+            <summary><span aria-hidden="true">🎉</span> Feiertage (regional)</summary>
+            <dl>
+                <dt><span class="noto" aria-hidden="true">🎉</span> Neujahrstag</dt>
+                <dd>1. Januar – bundesweit.</dd>
 
-<!-- Feiertage -->
-<section id="glossary-holidays">
-    <h4>Feiertage (Beispiele)</h4>
-    <dl>
-        <dt><span class="noto">🎉</span> Neujahrstag</dt>
-        <dd>1. Januar – bundesweit</dd>
+                <dt><span class="noto" aria-hidden="true">🌼</span> Tag der Arbeit</dt>
+                <dd>1. Mai – bundesweit.</dd>
 
-        <dt><span class="noto">🌼</span> Tag der Arbeit</dt>
-        <dd>1. Mai – bundesweit</dd>
+                <dt><span class="noto" aria-hidden="true">🎄</span> Weihnachten</dt>
+                <dd>25.–26. Dezember – bundesweit.</dd>
 
-        <dt><span class="noto">🎄</span> Weihnachten</dt>
-        <dd>25.–26. Dezember – bundesweit</dd>
+                <dt><span class="noto" aria-hidden="true">🕊️</span> Pfingstmontag</dt>
+                <dd>Datum variiert – bundesweit.</dd>
 
-        <dt><span class="noto">🕊️</span> Pfingstmontag</dt>
-        <dd>Datum variiert – bundesweit</dd>
+                <dt><span class="noto" aria-hidden="true">🙏</span> Buß- und Bettag</dt>
+                <dd>Bundeslandabhängig – z. B. Sachsen.</dd>
+            </dl>
+            <div class="info-box cool">
+                📍 Die Feiertage werden abhängig vom gewählten Bundesland angezeigt (Bayern, Berlin, Sachsen, etc.).
+            </div>
+        </details>
 
-        <dt><span class="noto">🙏</span> Buß- & Bettag</dt>
-        <dd>Bundeslandabhängig – Beispiel: Sachsen</dd>
-    </dl>
+        <!-- SECTION 5: Rollen / Hüte -->
+        <details id="section-r">
+            <summary><span aria-hidden="true">🎭</span> Rollen &amp; Hüte</summary>
+            <dl>
+                <dt>Rolle / Hut</dt>
+                <dd>
+                    Rollen beschreiben Tätigkeiten, nicht Personen. Ein Mitarbeiter kann mehrere Rollen besitzen (z. B.
+                    Kochmütze, Lieferfahrerhelm), aber nicht gleichzeitig in Konflikt stehende Rollen übernehmen. Die
+                    Rollen definieren, wer welche Aufgaben übernimmt, wer die Hauptverantwortung trägt und wer im
+                    Notfall einspringt.
+                </dd>
+            </dl>
+        </details>
 
-    <p>
-        Feiertage werden abhängig vom gewählten Bundesland angezeigt, z. B. Bayern, Berlin, Sachsen oder
-        Mecklenburg-Vorpommern.
-    </p>
-</section>
+        <!-- SECTION 6: Fachbegriffe -->
+        <details id="section-a2">
+            <summary><span aria-hidden="true">📚</span> Fachbegriffe &amp; Worterklärungen</summary>
+            <dl>
+                <dt>Aufgabe</dt>
+                <dd>Eine Sammlung von Tätigkeiten, die zusammen ein bestimmtes Ziel oder Ergebnis bilden.</dd>
 
-<section id="glossar" class="story-only">
+                <dt>Evaluation Engine</dt>
+                <dd>Systemkomponente, die definierte Regeln prüft und bei Problemen Warnungen ausgibt.</dd>
 
-    <h3>Glossar – Mitarbeitende</h3>
+                <dt>Request Form</dt>
+                <dd>Formular für Urlaubs-, Schicht- oder Sonderanfragen der Mitarbeiter.</dd>
 
-    <!-- ===================== -->
-    <!-- Führungsebene         -->
-    <!-- ===================== -->
+                <dt>Rule Violation</dt>
+                <dd>Ein Hinweis darauf, dass eine Anfrage oder Planung gegen definierte Regeln verstößt.</dd>
 
-    <p>
-        <strong>{{tiana-1}}</strong> neuer Besitzer des Restaurants.
-        Verantwortlich für Struktur, Team und Weiterentwicklung.
-    </p>
-    <!-- main character in story, reliable anchor, user identification point -->
+                <dt>Self-Healing</dt>
+                <dd>Automatische Korrektur oder Wiederherstellung fehlerhafter Daten – die App heilt sich selbst.</dd>
+            </dl>
+        </details>
 
-    <p>
-        <strong>{{stromberg-9}}</strong> Mitinhaber mit starkem Fokus auf Zahlen.
-        Bevorzugt Tabellen gegenüber neuen Systemen.
-    </p>
-    <!-- represents resistance to digitalization, important narrative arc -->
+        <!-- SECTION 7: Story-only – Mitarbeitende (Hidden Gem) -->
+        <details id="section-m" class="story-section">
+            <summary><span aria-hidden="true">👥</span> Die Crew – Mitarbeitende (Story-Lore)</summary>
+            <p class="story-intro">
+                Tauche ein in die Welt des Restaurants. Hier sind die Schlüsselspieler – jeder mit seiner eigenen
+                Geschichte.
+            </p>
 
-    <p>
-        <strong>{{jubaba-1}}</strong> ehemalige Besitzerin, zieht sich langsam zurück.
-        Übergibt Verantwortung schrittweise.
-    </p>
-    <!-- legacy system / old structure -->
+            <h3>Führungsebene</h3>
+            <div class="staff-grid">
+                <div class="staff-card"><strong>{{tiana-1}}</strong> <small>Neue Besitzerin – Struktur, Team,
+                        Weiterentwicklung.</small></div>
+                <div class="staff-card"><strong>{{stromberg-9}}</strong> <small>Mitinhaber – Zahlenfokus, Tabellenliebe,
+                        Digitalisierungsskepsis.</small></div>
+                <div class="staff-card"><strong>{{jubaba-1}}</strong> <small>Ehemalige Besitzerin – zieht sich langsam
+                        zurück.</small></div>
+            </div>
 
-    <!-- ===================== -->
-    <!-- Küche                 -->
-    <!-- ===================== -->
+            <h3>Küche</h3>
+            <div class="staff-grid">
+                <div class="staff-card"><strong>{{ramsey-1}}</strong> <small>Küchenchef – hohe Ansprüche, klare
+                        Erwartungen.</small></div>
+                <div class="staff-card"><strong>{{remi-1}}</strong> <small>Kreativer Koch – neue Ideen,
+                        Ausbildung.</small></div>
+                <div class="staff-card"><strong>{{bobazubi-1}}</strong> <small>Auszubildender – lernt
+                        Verantwortung.</small></div>
+                <div class="staff-card"><strong>{{bobstellvertreter-1}}</strong> <small>Flexibel – springt ein, wenn Not
+                        am Mann ist.</small></div>
+            </div>
 
-    <p>
-        <strong>{{ramsey-1}}</strong> erfahrener Küchenchef mit hohen Ansprüchen.
-        Führt das Küchenteam mit klaren Erwartungen.
-    </p>
-    <!-- senior authority, stability, overtime edge-case -->
+            <h3>Service</h3>
+            <div class="staff-grid">
+                <div class="staff-card"><strong>{{sanji-5}}</strong> <small>Charismatisch, aber lieber in der
+                        Küche.</small></div>
+                <div class="staff-card"><strong>{{grobi-5}}</strong> <small>Langjährig, verlässlich – das
+                        Fundament.</small></div>
+                <div class="staff-card"><strong>{{al-5}}</strong> <small>Erfahren, Vorliebe für Betriebsenden.</small>
+                </div>
+                <div class="staff-card"><strong>{{joel-5}}</strong> <small>Erfahren, aber Familie geht vor –
+                        Unplanbarkeit.</small></div>
+                <div class="staff-card"><strong>{{step-5}}</strong> <small>Energetisch, jung, gesundes Essen &amp;
+                        Sport.</small></div>
+            </div>
 
-    <p>
-        <strong>{{remi-1}}</strong> kreativer Koch mit Leidenschaft für neue Ideen.
-        Unterstützt Ausbildung und Experimente.
-    </p>
-    <!-- innovation & monday low-load showcase -->
+            <h3>Bar &amp; Lieferung</h3>
+            <div class="staff-grid">
+                <div class="staff-card"><strong>{{weasel-7}}</strong> <small>Bar am Wochenende – Mentorrolle.</small>
+                </div>
+                <div class="staff-card"><strong>{{fry-6}}</strong> <small>Lieferfahrten – hauptsächlich am
+                        Wochenende.</small></div>
+                <div class="staff-card"><strong>{{kiky-6}}</strong> <small>Lieferung &amp; Betriebsbeginn –
+                        Logistik.</small></div>
+            </div>
 
-    <p>
-        <strong>{{bobazubi-1}}</strong> Auszubildender in der Küche.
-        Lernt schrittweise Verantwortung zu übernehmen.
-    </p>
-    <!-- apprenticeship logic, skill progression -->
+            <h3>Reinigung &amp; Support</h3>
+            <div class="staff-grid">
+                <div class="staff-card"><strong>{{walle-2}}</strong> <small>Hintergrundsupport – Ordnung im
+                        Betrieb.</small></div>
+                <div class="staff-card"><strong>{{filch-2}}</strong> <small>Strukturierte Reinigungszeiten – festes
+                        Muster.</small></div>
+                <div class="staff-card"><strong>{{heli-2}}</strong> <small>Teilzeit – Schulzeiten
+                        berücksichtigt.</small></div>
+                <div class="staff-card"><strong>{{kevin-2}}</strong> <small>Temporäre Unterstützung – befristet.</small>
+                </div>
+                <div class="staff-card"><strong>{{bigbee-8}}</strong> <small>Auszubildende im Management – digital
+                        affin.</small></div>
+            </div>
+        </details>
+    </section>
 
-    <p>
-        <strong>{{bobstellvertreter-1}}</strong> flexibel einsetzbar und kann bei Bedarf
-        die Küche unterstützen.
-    </p>
-    <!-- fallback cook when ramsey/remi absent -->
+    <!-- FOOTER -->
+    <footer role="contentinfo">
+        <p>
+            <span class="footer-badge">✨ <strong>Hidden Gem</strong> – Dieses Glossar lebt.</span>
+            <span class="footer-badge">📌 <strong>Tipp:</strong> Nutze die Suchfunktion deines Browsers
+                (<kbd>Ctrl+F</kbd>).</span>
+            <span class="footer-update">🔄 Letzte Aktualisierung: <time datetime="2026-09-05">5. September
+                    2026</time></span>
+        </p>
+    </footer>
 
-    <!-- ===================== -->
-    <!-- Service               -->
-    <!-- ===================== -->
-
-    <p>
-        <strong>{{sanji-5}}</strong> ein charismatischer Kellner,
-        der lieber als {{sanji-1}} in der Küche arbeiten würde.
-    </p>
-    <!-- ambition vs assignment conflict showcase -->
-
-    <p>
-        <strong>{{grobi-5}}</strong> langjähriger und verlässlicher Service-Mitarbeiter.
-        Sorgt für Stabilität im Alltag.
-    </p>
-    <!-- baseline service reference employee -->
-
-    <p>
-        <strong>{{al-5}}</strong> erfahrener Kellner mit Vorliebe für Betriebsendeen.
-    </p>
-    <!-- late shift stabilizer -->
-
-    <p>
-        <strong>{{joel-5}}</strong> erfahrener, aber nicht immer planbarer Mitarbeiter.
-        Familie hat Priorität.
-    </p>
-    <!-- reliability conflict test case -->
-
-    <p>
-        <strong>{{step-5}}</strong> ein energetisches junges Mädchen
-        mit einem Faible für gesundes Essen und Sport.
-    </p>
-    <!-- weekday volume balancer, young hire example -->
-
-    <!-- ===================== -->
-    <!-- Bar & Lieferung       -->
-    <!-- ===================== -->
-
-    <p>
-        <strong>{{weasel-7}}</strong> betreut die Bar am Wochenende
-        und übernimmt eine Mentorrolle.
-    </p>
-    <!-- weekend late specialist -->
-
-    <p>
-        <strong>{{fry-6}}</strong> übernimmt Lieferfahrten hauptsächlich am Wochenende.
-    </p>
-    <!-- weekend-only availability case -->
-
-    <p>
-        <strong>{{kiky-6}}</strong> unterstützt Lieferungen und Betriebsbeginnen.
-    </p>
-    <!-- early shift logistics coverage -->
-
-    <!-- ===================== -->
-    <!-- Reinigung & Support   -->
-    <!-- ===================== -->
-
-    <p>
-        <strong>{{walle-2}}</strong> unterstützt im Hintergrund
-        und sorgt für Ordnung im Betrieb.
-    </p>
-    <!-- background reliability -->
-
-    <p>
-        <strong>{{filch-2}}</strong> kümmert sich strukturiert um feste Reinigungszeiten.
-    </p>
-    <!-- fixed weekday pattern example -->
-
-    <p>
-        <strong>{{heli-2}}</strong> arbeitet Teilzeit und berücksichtigt Schulzeiten.
-    </p>
-    <!-- availability constraint logic -->
-
-    <p>
-        <strong>{{kevin-2}}</strong> temporäre Unterstützung mit befristetem Vertrag.
-    </p>
-    <!-- contract start/end validation showcase -->
-
-    <p>
-        <strong>{{bigbee-8}}</strong> Auszubildende im Management
-        und offen für digitale Lösungen.
-    </p>
-    <!-- contrast to stromberg -->
-
-</section>
+</div>
+<!-- Ende .glossary-container -->

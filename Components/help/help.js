@@ -71,16 +71,20 @@ export async function initializeHelp(container, topicId = 'intro') {
 
         const html = await response.text();
         container.innerHTML = html;
+        loadedChapters.clear();
+        const helpRoot = container.querySelector('#help-page-root') || container;
+        const chapterName = getChapterName(topicId);
 
         // Initialize any JS logic for TOC, collapsibles, etc.
-        initEventListener();
-        initHelpCollapse();
-        initTOCScroll();
-        focusFirstTOCEntry();
+        initEventListener(helpRoot);
 
-        if (topicId) {
-            const target = container.querySelector(`#${topicId}`);
-            if (target) target.scrollIntoView({ behavior: 'smooth' });
+        if (chapterName) {
+            await ensureChapterLoaded(chapterName, helpRoot);
+            expandChapterBySectionId(`chapter-${chapterName}`, helpRoot);
+            activateTOCEntry(`chapter-${chapterName}`, helpRoot);
+
+            const target = helpRoot.querySelector(`#chapter-${chapterName}`);
+            target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
     } catch (err) {
@@ -88,20 +92,15 @@ export async function initializeHelp(container, topicId = 'intro') {
         container.innerHTML = `<p>Unable to load help page.</p>`;
     }
 
-    document.querySelectorAll('[data-help-toggle]').forEach(btn => {
-        const contentId = btn.getAttribute('aria-controls');
-        const content = document.getElementById(contentId);
-        if (!content) return;
-
-        btn.setAttribute('aria-expanded', 'false');
-        content.style.display = 'block';
-        content.classList.remove('helpChapterHidden');
-    });
-
 }
 
-function focusFirstTOCEntry() {
-    const firstLink = document.querySelector("#help-toc a");
+function getChapterName(topicId) {
+    if (!topicId || topicId === 'anleitung') return 'intro';
+    return topicId.startsWith('chapter-') ? topicId.slice('chapter-'.length) : topicId;
+}
+
+function focusFirstTOCEntry(root) {
+    const firstLink = root.querySelector("#help-toc a");
     if (firstLink) {
         firstLink.focus();
     } else {
@@ -109,13 +108,13 @@ function focusFirstTOCEntry() {
     }
 }
 
-function initHelpCollapse() {
-    document.querySelectorAll('[data-help-toggle]').forEach(button => {
+function initHelpCollapse(root) {
+    root.querySelectorAll('[data-help-toggle]').forEach(button => {
         if (button.dataset.bound) return;
         button.dataset.bound = 'true';
 
         const contentId = button.getAttribute('aria-controls');
-        const content = document.getElementById(contentId);
+        const content = root.querySelector(`#${contentId}`);
         if (!content) return;
 
         // default: collapsed
@@ -143,7 +142,7 @@ function initHelpCollapse() {
                 chapterLoading.add(chapterName);
                 document.body.style.cursor = 'wait';
 
-                await ensureChapterLoaded(chapterName);
+                await ensureChapterLoaded(chapterName, root);
 
                 chapterLoading.delete(chapterName);
                 document.body.style.cursor = 'default';
@@ -153,48 +152,51 @@ function initHelpCollapse() {
 }
 
 
-function expandChapterBySectionId(sectionId) {
-    const section = document.getElementById(sectionId);
+function expandChapterBySectionId(sectionId, root) {
+    const section = root.querySelector(`#${sectionId}`);
     if (!section) return;
 
     const toggleButton = section.querySelector('[data-help-toggle]');
     if (!toggleButton) return;
 
     const contentId = toggleButton.getAttribute('aria-controls');
-    const content = document.getElementById(contentId);
+    const content = root.querySelector(`#${contentId}`);
     if (!content) return;
 
     toggleButton.setAttribute('aria-expanded', 'true');
-
+    content.hidden = false;
     content.style.display = 'block';
+    content.classList.remove('helpChapterHidden');
 }
 
-function initTOCScroll() {
-    const controlBar = document.getElementById('help-controlbar');
-    const scrollContainer = document.getElementById('help-scroll-container') || window;
+function initTOCScroll(root) {
+    const controlBar = root.querySelector('#help-controlbar');
+    const scrollContainer = root.querySelector('#help-scroll-container') || window;
 
-    document.querySelectorAll('#help-toc a').forEach(link => {
+    root.querySelectorAll('#help-toc a').forEach(link => {
         link.addEventListener('click', async e => {
             e.preventDefault();
 
             const targetId = link.getAttribute('href').substring(1);
-            const target = document.getElementById(targetId);
+            const target = root.querySelector(`#${targetId}`);
             if (!target) return;
 
             // Hide control bar
             controlBar?.classList.add('is-hidden');
 
             // Expand chapter immediately
-            expandChapterBySectionId(targetId);
+            if (targetId.startsWith('chapter-')) {
+                await ensureChapterLoaded(getChapterName(targetId), root);
+                expandChapterBySectionId(targetId, root);
+                activateTOCEntry(targetId, root);
+            } else if (targetId.startsWith('glossary-')) {
+                await ensureChapterLoaded('glossar', root);
+            }
 
             // Scroll with offset
-            const y =
-                target.getBoundingClientRect().top +
-                window.pageYOffset -
-                controlBar.offsetHeight;
-
-            window.scrollTo({
-                top: y,
+            const top = target.offsetTop - (controlBar?.offsetHeight || 0);
+            scrollContainer.scrollTo({
+                top,
                 behavior: 'smooth'
             });
 
@@ -213,21 +215,27 @@ function initTOCScroll() {
     });
 }
 
-function highlightCurrentChapter() {
-    const tocLinks = document.querySelectorAll('#help-toc a');
-    const chapters = Array.from(tocLinks).map(link => document.getElementById(link.getAttribute('href').substring(1)));
+function activateTOCEntry(chapterId, root) {
+    root.querySelectorAll('#help-toc a').forEach(link => link.classList.remove('active'));
+    root.querySelector(`#help-toc a[href="#${chapterId}"]`)?.classList.add('active');
+}
+
+function highlightCurrentChapter(root) {
+    const tocLinks = root.querySelectorAll('#help-toc a');
+    const chapters = Array.from(tocLinks).map(link => root.querySelector(link.getAttribute('href')));
+    const scrollContainer = root.querySelector('#help-scroll-container');
 
     const observer = new IntersectionObserver(entries => {
         entries.forEach(entry => {
             const id = entry.target.id;
-            const tocLink = document.querySelector(`#help-toc a[href="#${id}"]`);
+            const tocLink = root.querySelector(`#help-toc a[href="#${id}"]`);
             if (entry.isIntersecting) {
                 tocLinks.forEach(link => link.classList.remove('active'));
-                tocLink.classList.add('active');
+                tocLink?.classList.add('active');
             }
         });
     }, {
-        root: null,
+        root: scrollContainer,
         rootMargin: '0px 0px -80% 0px',
         threshold: 0
     });
@@ -237,19 +245,19 @@ function highlightCurrentChapter() {
     });
 }
 
-function initEventListener() {
+function initEventListener(root) {
 
-    const exitBtn = document.getElementById('help-exit-button');
+    const exitBtn = root.querySelector('#help-exit-button');
     resetAndBind(exitBtn, 'click', () => {
         const container = document.getElementById('calendar');
         loadCalendarIntoContainer(container);
     });
 
-    initHelpToggles();
-    initTOCScroll();
-    focusFirstTOCEntry();
-    highlightCurrentChapter();
-    setTimeout(initHelpToggles, 0);
+    initHelpCollapse(root);
+    initTOCScroll(root);
+    focusFirstTOCEntry(root);
+    highlightCurrentChapter(root);
+    initHelpToggles(root);
 }
 
 
@@ -304,11 +312,11 @@ function renderEmployeeTag(raw) {
   `;
 }
 
-function initHelpToggles() {
-    const storyCheckbox = document.getElementById('help-storymode');
-    const lengthSelect = document.getElementById('help-textlength');
-    const helpRoot = document.getElementById('help-scroll-container');
-    const sizeSelect = document.getElementById('help-screenshot-size');
+function initHelpToggles(root) {
+    const storyCheckbox = root.querySelector('#help-storymode');
+    const lengthSelect = root.querySelector('#help-textlength');
+    const helpRoot = root.querySelector('#help-scroll-container');
+    const sizeSelect = root.querySelector('#help-screenshot-size');
 
     if (sizeSelect) {
         const savedSize = localStorage.getItem('helpScreenshotSize') || 'large';
@@ -316,7 +324,7 @@ function initHelpToggles() {
 
         const updateScreenshotSize = () => {
             // Include help-screenshot in toggle
-            const helpImages = document.querySelectorAll(
+            const helpImages = root.querySelectorAll(
                 '#help-scroll-container img.help-img, ' +
                 '#help-scroll-container figure.help-img, ' +
                 '#help-scroll-container img.help-screenshot'
@@ -375,16 +383,16 @@ function initHelpToggles() {
 
 const loadedChapters = new Set();
 
-async function ensureChapterLoaded(chapterName) {
+async function ensureChapterLoaded(chapterName, root) {
     if (!HELP_CHAPTERS[chapterName]) {
         console.warn(`⚠️ Unknown help chapter "${chapterName}"`);
         return;
     }
     if (loadedChapters.has(chapterName)) return;
 
-    const container = document.querySelector(
+    const container = root.querySelector(
         `[data-chapter="${chapterName}"] + [data-chapter-content]`
-    ) || document.getElementById(`chapter-${chapterName}-content`);
+    ) || root.querySelector(`#chapter-${chapterName}-content`);
 
     if (!container) {
         console.warn(`⚠️ No container for chapter "${chapterName}"`);
@@ -404,8 +412,7 @@ async function ensureChapterLoaded(chapterName) {
 
     // init only inside this chapter
     scanAndReplaceHelpContent(container);
-    initHelpCollapse();
-    initHelpToggles();
+    initHelpCollapse(root);
 
     loadedChapters.add(chapterName);
 }

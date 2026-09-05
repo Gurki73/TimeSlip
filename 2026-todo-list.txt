@@ -1,80 +1,20 @@
-Definition of “Beta Ready”
-we are ready for beta when:
-- No obvious UI glitches
-- No mismatched icon states
-- No double validation warnings
-- No broken rendering
-- No manual save confusion
-- Calendar visually communicates state clearly
+🧩 High-value beta features
 
-🚀 Beta Blocker List (Prototype → Beta)
-🔥 A. Core Navigation & Layout Stability
+These are the things I'd try to finish if the blockers above are under control:
 
-✅ Fix 180° chevron navigation bug
-→ Ensure correct rotation state and consistency across all collapsible elements.
+Priority	Item	Why
+🧩	6. Company holiday height	Makes calendar feel finished
+🧩	7. Bridge days	Important real-world calendar behavior
+🧩	12. Color picker gradient	Visual polish / usability
+🧩	13. Real role names/icons in preview	Makes customization believable
+🧩	14. Real team names in preview	Same
+🧩	17. Calendar color customization layout	Helps communicate final UI
+🧩	18. Button/background colors	Same
+🧩	28. Revived employee sample	Demonstrates an interesting workflow
+🧩	29. Move more to left	UI polish
+🧩	38. Update glossary	Helps clients understand unfamiliar concepts
+🧩	39. Screenshot skeleton	Helps explain unfinished areas
 
-☐ Fix maximize/minimize height injection on load
-→ Properly calculate and inject min/max heights.
-✅ Eliminate layout jump on first render.
-
-☐ Fix collapsed list opacity behavior
-→ Remove hardcoded opacity.
-→ Ensure consistent readability in collapsed state.
-
-☐ Unify opacity & brightness handling (65–67)
-→ Make collapsed transparency configurable (cached local setting).
-→ Ensure visibility across different monitor brightness levels.
-→ Remove hardcoded values.
-
-🔥 B. Calendar & Request Visual Feedback (Core UX)
-
-☐ Calendar day / range highlighting
-→ Highlight request ranges.
-→ Highlight warning ranges.
-→ Ensure no visual conflicts.
-
-☐ Request highlighting (new vs listed)
-→ Add visual distinction for newly created requests.
-→ Add consistent highlight when selected from list.
-
-☐ Fix open/close weekday icon mismatch
-→ Ensure icon state always reflects actual status.
-
-☐ Fix role reassignments rendering in calendar
-→ Confirm reassigned roles render correctly in all views.
-
-🔥 C. Validation & Ruleset Integrity
-
-☐ Fix ruleset-checker logic issues (19–20)
-→ Correct role check (day-shift vs hall-day).
-→ Prevent duplicate warnings for same role.
-
-☐ Explain corrupt shift assignment warnings
-→ Add clear explanation text.
-→ Avoid “technical sounding” errors.
-
-🔥 D. Visual Consistency & Admin Stability
-
-☐ Fix roles table transparency
-→ Remove unintended opacity / layering inconsistencies.
-
-☐ Fix custom color picker gradient loss (roles)
-→ Preserve gradient when selecting colors.
-
-☐ Fix tabulators layout issues
-→ Stabilize alignment and rendering.
-
-🔥 E. Data Integrity & Saving System
-
-☐ Replace dirty-state system with autosave (40–41)
-🚧 Remove confirmation dialogs.
-→ Ensure shared state save button triggers autosave properly.
-
-☐ Fix end date picker bug
-→ Validate correct date boundaries.
-→ Prevent invalid end-date states.
-
----------------------------------------------------------------
 Legend:
 ☐  open           🚧 in work      ✅ finished   ❌ cannceld
 🔥 ship-blocker   🧩 beta-value   🧠 post-beta  👀 review-needed
@@ -96,9 +36,9 @@ calendar-settings:
 
 admin tools:
 admin tools.emojies: 
-🟡 9. ☐ add a input for add an emojies
-🟡10. ☐ test saving emojies
-🟡11. ☐ fix animation (z-index?) for animation
+🟡 9. ✅ add a input for add an emojies
+🟡10. ✅ test saving emojies
+🟡11. ❌ fix animation (z-index?) for animation
 admin tools.color:
 🟢12. ☐ custom color picker looses gradient when picking, roles
 🟡13. ☐ use actual role names and icons in preview
@@ -136,6 +76,6 @@ minx:
 
 help page:
 🟣37. 🚧 write down the thoughts about  heros journey and save the calculations
-🟡38. ☐ update Glossary
+🟡38. 🚧 update Glossary
 🟡39. ☐ build a skeleton for screenshots
-🟡40. ☐ highlight in nav when hover/click in help
+🟡40. 🚧 highlight in nav when hover/click in help

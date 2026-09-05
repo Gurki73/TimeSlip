@@ -2014,5 +2014,10 @@ cursor: not-allowed;
 }
 
 .emoji-dialog-button:not(:disabled):hover {
-filter: brightness(1.08);
+  filter: brightness(1.08);
+}
+
+.emoji-input,
+.emoji-input::placeholder {
+  font-family: "NotoEmoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
 }

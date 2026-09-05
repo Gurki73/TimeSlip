@@ -543,12 +543,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     // If user presses Fn-locked keys, this may not trigger at all (hardware side)
     switch (event.key) {
       case 'F1':
+      case 'F10':
         event.preventDefault();
         const container = document.getElementById('calendar');
         if (container) {
-          initializeHelp(container, 'chapter-overview');
+          initializeHelp(container, 'chapter-intro');
         } else {
-          alert(`Help requested:  chapter-overview`);
+          alert(`Help requested: chapter-intro`);
         }
         break;
 

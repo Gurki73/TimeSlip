@@ -1109,7 +1109,7 @@ function updateDivider(className) {
     const buttonContainer = document.createElement('div');
     buttonContainer.id = 'form-buttons';
 
-    const helpBtn = createHelpButton('chapter-employees');
+    const helpBtn = createHelpButton('chapter-rules');
     helpBtn.setAttribute('aria-label', 'Hilfe öffnen für Rollen-Formular');
 
     const dataModeToggle = createDataModeToggle({
