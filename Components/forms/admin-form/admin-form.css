@@ -2021,3 +2021,22 @@ cursor: not-allowed;
 .emoji-input::placeholder {
   font-family: "NotoEmoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
 }
+
+.donation-pitch-link-wrapper {
+    flex: 1;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: all 0.2s ease;
+}
+
+.donation-pitch-link-wrapper:hover {
+    opacity: 0.85;
+}
+
+.donation-pitch-link-wrapper:focus-visible {
+    outline: 2px solid #c0392b;
+    outline-offset: 4px;
+    border-radius: 4px;
+}
+

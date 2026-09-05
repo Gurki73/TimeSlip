@@ -42,11 +42,7 @@ export async function initializeAdminForm(api) {
 
     if (tool.enabled) {
       btn.addEventListener('click', () => {
-        if (tool.id === 'buy-coffee') {
-          api.openExternalLink('https://www.buymeacoffee.com/gurky73?amount=5');
-        } else {
-          loadToolPage(`${tool.id}.html`);
-        }
+        loadToolPage(tool.id === 'buy-coffee' ? 'buyMeCoffee.html' : `${tool.id}.html`);
       });
     }
 
@@ -188,6 +184,9 @@ async function loadToolPage(htmlFile) {
     if (htmlFile === 'clear-cache.html') {
       initClearCache();
     }
+    if (htmlFile === 'buyMeCoffee.html') {
+      initBuyMeCoffee();
+    }
 
   } catch (err) {
     container.innerHTML = `
@@ -196,6 +195,48 @@ async function loadToolPage(htmlFile) {
         <p>Error: ${err}</p>
       </div>`;
   }
+}
+
+function initBuyMeCoffee() {
+  const pitch = document.getElementById('coffee-pitch');
+  // const refreshButton = document.getElementById('refresh-pitch-btn');
+  const donateButton = document.getElementById('donate-coffee-btn');
+
+  if (!pitch || !donateButton) return;
+
+  const pitches = [
+    {
+      title: 'Unterstütze die Weiterentwicklung',
+      text: 'Diese App wird in meiner Freizeit entwickelt und gepflegt. Wenn sie dir im Arbeitsalltag hilft, freue ich mich über eine kleine Anerkennung als virtuellen Kaffee.'
+    },
+    {
+      title: 'Fehler gefunden? Kaffee geschuldet!',
+      text: 'Diese App lebt von deinem Feedback. Wenn du sie nützlich findest oder einen besonders kniffligen Fehler entdeckst, kannst du mir mit einem kleinen Finderlohn in Form eines Kaffees eine große Freude machen.'
+    },
+    {
+      title: 'Fair bleiben, ohne Abo-Falle',
+      text: 'Mitarbeiter-Kalender ist und bleibt kostenlos, weil ich an faire Software glaube. Wenn du und dein Team davon profitieren, hilft jeder Beitrag dabei, die App am Laufen zu halten und weiterzuentwickeln.'
+    }
+  ];
+
+  function showRandomPitch() {
+    const selectedPitch = pitches[Math.floor(Math.random() * pitches.length)];
+    pitch.replaceChildren();
+
+    const title = document.createElement('strong');
+    title.textContent = `☕ ${selectedPitch.title}`;
+
+    const text = document.createElement('p');
+    text.textContent = selectedPitch.text;
+
+    pitch.append(title, text);
+  }
+
+  showRandomPitch();
+  //  refreshButton.addEventListener('click', showRandomPitch);
+  donateButton.addEventListener('click', () => {
+    adminApi?.openExternalLink('https://www.buymeacoffee.com/gurky73?amount=5');
+  });
 }
 
 function initClearCache() {

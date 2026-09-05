@@ -1,0 +1,99 @@
+#buy-me-coffee {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 2.5rem 3rem;
+    color: var(--text-color, #2d2a24);
+    text-align: center;
+    background: var(--bg-soft-white, #ffffff);
+    border: 1px solid var(--accent-muted, #eae7e0);
+    border-radius: 1rem;
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
+}
+
+#buy-me-coffee .coffee-emoji {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 4rem;
+}
+
+#buy-me-coffee h2 {
+    margin: 0 0 0.5rem;
+    font-size: 2rem;
+}
+
+#buy-me-coffee .coffee-subtitle {
+    margin-bottom: 1.5rem;
+    color: var(--text-muted, #7f8c8d);
+    font-size: 1.1rem;
+}
+
+#buy-me-coffee .pitch-display {
+    margin: 1.5rem 0;
+    padding: 1.25rem;
+    color: var(--text-color, #2d2a24);
+    line-height: 1.6;
+    text-align: left;
+    background: var(--bg-soft-yellow, #fef9e7);
+    border-left: 4px solid var(--accent-color, #f1c40f);
+    border-radius: 0.5rem;
+}
+
+#buy-me-coffee .pitch-display p {
+    margin: 0.5rem 0 0;
+}
+
+#buy-me-coffee .coffee-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+#buy-me-coffee .coffee-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border: 0;
+    border-radius: 0.5rem;
+    cursor: pointer;
+}
+
+#buy-me-coffee .coffee-button-primary {
+    color: #ffffff;
+    background: #c0392b;
+}
+
+#buy-me-coffee .coffee-button-secondary {
+    color: #2c3e50;
+    background: #ecf0f1;
+}
+
+#buy-me-coffee .coffee-button:hover {
+    filter: brightness(0.95);
+}
+
+#buy-me-coffee .coffee-button:focus-visible {
+    outline: 3px solid #f1c40f;
+    outline-offset: 2px;
+}
+
+#buy-me-coffee .coffee-note {
+    margin: 1.5rem 0 0;
+    color: var(--text-muted, #95a5a6);
+    font-size: 0.8rem;
+}
+
+@media (max-width: 600px) {
+    #buy-me-coffee {
+        margin: 1rem;
+        padding: 2rem 1.25rem;
+    }
+
+    #buy-me-coffee h2 {
+        font-size: 1.5rem;
+    }
+
+    #buy-me-coffee .coffee-button {
+        width: 100%;
+    }
+}
