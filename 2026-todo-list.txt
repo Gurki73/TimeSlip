@@ -1,20 +1,3 @@
-🧩 High-value beta features
-
-These are the things I'd try to finish if the blockers above are under control:
-
-Priority	Item	Why
-🧩	6. Company holiday height	Makes calendar feel finished
-🧩	7. Bridge days	Important real-world calendar behavior
-🧩	12. Color picker gradient	Visual polish / usability
-🧩	13. Real role names/icons in preview	Makes customization believable
-🧩	14. Real team names in preview	Same
-🧩	17. Calendar color customization layout	Helps communicate final UI
-🧩	18. Button/background colors	Same
-🧩	28. Revived employee sample	Demonstrates an interesting workflow
-🧩	29. Move more to left	UI polish
-🧩	38. Update glossary	Helps clients understand unfamiliar concepts
-🧩	39. Screenshot skeleton	Helps explain unfinished areas
-
 Legend:
 ☐  open           🚧 in work      ✅ finished   ❌ cannceld
 🔥 ship-blocker   🧩 beta-value   🧠 post-beta  👀 review-needed
@@ -23,59 +6,44 @@ Legend:
 🚧 1. schicht model vs. 1 schicht + halbtags vs. 3 schicht modell  
 calendar:
 🟢 2. ☐ check if role reasignments are rendered
-
 ruleset:
 🔵 3. ☐ check complex rules
 🟡 4. 🚧 add chip for weekdays ( color )
 🟡 5. 🚧 add chip for shift ( icon + color)
-
 calendar-settings:
 🟡 6. ☐ adjust height for company holidays 
 🟡 7. 🚧 (include bridge days in company holiday)
 🟣 8. ☐ (auto remove available days off for employees depending an regular shedule ) 
-
 admin tools:
 admin tools.emojies: 
 🟡 9. ✅ add a input for add an emojies
 🟡10. ✅ test saving emojies
-🟡11. ❌ fix animation (z-index?) for animation
 admin tools.color:
-🟢12. ☐ custom color picker looses gradient when picking, roles
-🟡13. ☐ use actual role names and icons in preview
-🟡14. ☐ use actual team names in role preview
-🟡15. ☐ center table and picker in form
-🟢16. ☐ fix the tabulators
-🟡17. ☐ finish layout for calandar color cusmasation
-🟡18. ☐ finish the layout for button and background  colors
-🟣19. ☐ maybe a dialog simular to screen settings in window with a countdown keep changes?
-admin tools.auto save
-🟢20 ☐ disable are you sure dialogs
-🟢21.☐ replace dirty state with autosave in shared state save butto
+🟢11. ☐ custom color picker looses gradient when picking, roles
+🟡12. ☐ center table and picker in form
+🟢13. 🚧 fix the tabulators
+🟡14. ☐ finish layout for calandar color customasation
+🟡15. 🚧 finish the layout for button and background  colors
 admin tool.ruleset-settings
-🔵22. ✅ gather ideas
-🔵23. ✅ build prilimary UI
-admin tools.calendar settings
-🟡24. ☐ reuse options from main menu
-🟡25. ☐ build lay out 
-🟣26. ☐ disable sample mode 
-🟣27. ☐ discuss if needed anymore
+🔵16. ✅ gather ideas
+🔵17. ✅ build prilimary UI
 admin tools. revive delted employees
-🟡28. ☐ add sample
-🟡29. ☐ move more to left
+🟡18. ☐ add sample
+🟡19. ☐ move more to left
 removed date picker completely and moved date - picker needs to employeeform , new state phoenix ="🐦‍🔥" needs a warning status in employee form
 admin tools.donate
-🟡30. ☐ add an offline alternative
-🟡31. ☐ make a begging text
-
+🟡20. ☐ add an offline alternative
+🟡21. ✅ make a begging text
 minx:
-🟡32. ☐ allow state dirty for sample save button(?)
-🟣33. ☐ update version from 1.x.x to 2.0.0 dev to prototype
-🟣34. ☐ publish as prototype on itch.icon
-🟣35. ☐ make basic marketing article for itch.icon
-🟣36. ☐ plan you-tube tutorial
+🟡22. 👀 allow state dirty for sample save button(?)
+-> keep buttons as are but make sure tooltip text are updated
+🟣23. ☐ update version from 1.x.x to 2.0.0 dev to prototype
+🟣24. ☐ publish as prototype on itch.icon
+🟣25. ☐ make basic marketing article for itch.icon
+🟣26. ☐ plan you-tube tutorial
 
 help page:
-🟣37. 🚧 write down the thoughts about  heros journey and save the calculations
-🟡38. 🚧 update Glossary
-🟡39. ☐ build a skeleton for screenshots
-🟡40. 🚧 highlight in nav when hover/click in help
+🟣27. 🚧 write down the thoughts about  heros journey and save the calculations
+🟡28. 🚧 update Glossary
+🟡29. ☐ build a skeleton for screenshots
+🟡30. 🚧 highlight in nav when hover/click in help

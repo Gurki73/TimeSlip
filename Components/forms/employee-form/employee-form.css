@@ -1182,3 +1182,18 @@ input[type="range"] {
   min-width: 5rem;
   max-width: 5rem;
 }
+
+.employee-phoenix-warning {
+    background-color: yellow;
+    border: 2px solid red;
+    color: red;
+    position: relative;
+}
+
+.employee-phoenix-warning::after {
+    content: "⚠️";
+    position: absolute;
+    top: -0.5rem;
+    left: -0.5rem;
+    font-size: 0.8em;
+}

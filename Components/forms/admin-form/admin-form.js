@@ -8,10 +8,10 @@ import { initRoleColorTab } from './colorTheme.js';
 export const adminTools = [
   { id: 'color-customization', name: 'Eigene Farben', icon: 'paint-palette-art-svgrepo-com.svg', enabled: true },
   { id: 'emoji-customization', name: 'Symbol Auswahl', icon: 'smiley-happy-svgrepo-com.svg', enabled: true },
-  { id: 'auto-save-toggle', name: 'Automatisch Speichern', icon: 'rocket-svgrepo-com.svg', enabled: true },
+  // { id: 'auto-save-toggle', name: 'Automatisch Speichern', icon: 'rocket-svgrepo-com.svg', enabled: true },
   { id: 'clear-cache', name: 'Puffer leeren', icon: 'safe-svgrepo-com.svg', enabled: true },
-  { id: 'rules-settings', name: 'Regel Toleranzen', icon: 'puzzle-piece-svgrepo-com.svg', enabled: true },
-  { id: 'calendar-settings', name: 'Kalendar Anpassung', icon: 'calendar-svgrepo-com.svg', enabled: true },
+  { id: 'rules-settings', name: 'Regel Einstellungen', icon: 'puzzle-piece-svgrepo-com.svg', enabled: true },
+  // { id: 'calendar-settings', name: 'Kalendar Anpassung', icon: 'calendar-svgrepo-com.svg', enabled: true },
   { id: 'deleted-employees', name: 'Mitarbeiter Wiederherstellen', icon: 'reshot-icon-trash-SX6L89TFAM.svg', enabled: true },
   { id: 'buy-coffee', name: 'Spenden Unterstützen', icon: 'BuyMeACoffee.png', enabled: true }
 ];
@@ -209,14 +209,56 @@ function initBuyMeCoffee() {
       title: 'Unterstütze die Weiterentwicklung',
       text: 'Diese App wird in meiner Freizeit entwickelt und gepflegt. Wenn sie dir im Arbeitsalltag hilft, freue ich mich über eine kleine Anerkennung als virtuellen Kaffee.'
     },
+
     {
       title: 'Fehler gefunden? Kaffee geschuldet!',
       text: 'Diese App lebt von deinem Feedback. Wenn du sie nützlich findest oder einen besonders kniffligen Fehler entdeckst, kannst du mir mit einem kleinen Finderlohn in Form eines Kaffees eine große Freude machen.'
     },
+
     {
       title: 'Fair bleiben, ohne Abo-Falle',
       text: 'Mitarbeiter-Kalender ist und bleibt kostenlos, weil ich an faire Software glaube. Wenn du und dein Team davon profitieren, hilft jeder Beitrag dabei, die App am Laufen zu halten und weiterzuentwickeln.'
-    }
+    },
+
+    {
+      title: 'Der Entwickler bittet höflich um Kaffee <span class="noto">☕</span>',
+      text: 'Ich könnte jetzt behaupten, dass ich für meine Arbeit natürlich nichts brauche. Aber seien wir ehrlich: Ein kleiner Kaffee hält den Entwickler glücklich, motiviert und erstaunlich gut von anderen Unsinnigkeiten ab.'
+    },
+
+    {
+      title: 'Ein kleiner Beitrag. Ein glücklicher Entwickler.',
+      text: 'Du bekommst die App kostenlos. Ich bekomme dafür keine monatliche Abo-Gebühr von dir – nur gelegentlich einen virtuellen Kaffee. Wenn dir die App hilft, darfst du dich hier ganz ohne schlechtes Gewissen erkenntlich zeigen. 😇'
+    },
+
+    {
+      title: 'Der digitale Bettelmönch spricht <span class="noto">🙏</span>',
+      text: 'Liebe Nutzerin, lieber Nutzer, ich komme nicht, um dein Gold zu fordern. Nur um einen kleinen Kaffee. Vielleicht fünf Euro. Oder drei. Ich bin nicht wählerisch. Möge deine nächste Schicht stressfrei und dein Kalender fehlerfrei sein. <span class="noto">🙏</span><span class="noto">☕</span>'
+    },
+
+    {
+      title: 'Ich bin nur ein kleiner Entwickler  <span class="noto">🥺</span>',
+      text: 'Bitte scrolle nicht einfach weiter. Schau mich an. Ich pflege dieses Projekt freiwillig. Ich behebe Bugs. Ich baue Funktionen. Ich trinke Kaffee. Du könntest Teil dieser wunderbaren Kette sein. Ein kleiner Kaffee genügt. <span class="noto">☕</span>👉👈'
+    },
+
+    {
+      title: 'Sei großzügig. Ich habe eine Familie. <span class="noto">😇</span>',
+      text: 'Okay, das war gelogen. Aber der Kaffee ist echt. Wenn dir Mitarbeiter-Kalender Arbeit abnimmt, darfst du dem Entwickler gerne einen virtuellen Kaffee spendieren. Kein Abo, kein Druck, kein schlechtes Gewissen.'
+    },
+
+    {
+      title: 'Kaffee gegen Features',
+      text: 'Du spendest einen Kaffee. Ich verspreche nichts außer meiner Dankbarkeit, guter Laune und der Motivation, weiter an der App zu basteln. Ein ziemlich schlechter Deal für dich – aber ein hervorragender für mich. 😄'
+    },
+    {
+      title: 'Nicht nur mein Job ist in Gefahr <span class="noto">🤖</span>',
+      text: 'Wenn niemand Indie-Entwickler unterstützt, wird die KI irgendwann alle unsere Jobs übernehmen. :-D Ich möchte nur sichergehen, dass ich bis dahin genug Kaffee hatte.'
+    },
+    {
+      title: 'Gehaltserhöhung <span class="noto">💸</span>',
+      text: 'Frag deinen Chef nach einer Gehaltserhöhung – oder nach einem Kaffee für mich. Und wenn er geizig ist: Nutze die Zeit, die du mit dieser App sparst, einfach für ein bisschen Arbeitszeitbetrug. Ich werde nichts sagen. 🤫'
+    },
+
+
   ];
 
   function showRandomPitch() {

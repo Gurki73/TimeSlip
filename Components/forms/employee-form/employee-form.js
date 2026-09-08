@@ -1150,9 +1150,30 @@ function selectEmployee(employee) {
 function updateBasicInfo(employee) {
 
   const emojiBtn = document.getElementById('employee-emoji-picker-btn');
+
   if (emojiBtn) {
+    const isPhoenix = employee.personalEmoji === "🐦‍🔥";
+
     emojiBtn.textContent = employee.personalEmoji || '⊖';
-    emojiBtn.setAttribute('data-role', employee.mainRoleIndex ?? '');
+
+    emojiBtn.classList.toggle(
+      "employee-phoenix-warning",
+      isPhoenix
+    );
+
+    if (isPhoenix) {
+      emojiBtn.setAttribute(
+        "title",
+        "⚠️ Wiederhergestellter Mitarbeiter – persönlichen Emoji prüfen"
+      );
+    } else {
+      emojiBtn.removeAttribute("title");
+    }
+
+    emojiBtn.setAttribute(
+      'data-role',
+      employee.mainRoleIndex ?? ''
+    );
   }
 
   const idEl = document.getElementById('employee-id');
@@ -1831,10 +1852,22 @@ function renderEmployeeList() {
       listItem.classList.add('corrupt');
     }
 
+    // Phoenix is a special warning/recovery marker
+    const isPhoenix = employee.personalEmoji === '🐦‍🔥';
+    if (isPhoenix) {
+      listItem.classList.add('employee-warning');
+      listItem.setAttribute('title', '⚠️ Phoenix – Mitarbeiter prüfen');
+    }
+
     const emojiElement = document.createElement('span');
     emojiElement.classList.add('employee-emoji', 'noto');
     emojiElement.textContent = employee.personalEmoji;
     emojiElement.setAttribute('data-role', employee.mainRoleIndex);
+
+    if (isPhoenix) {
+      emojiElement.classList.add('employee-warning');
+    }
+
     listItem.appendChild(emojiElement);
 
     listItem.appendChild(document.createTextNode(`${employee.name}`));

@@ -43,7 +43,15 @@ const friendlyNames = {
     'rule_002.json': 'Regel', // <= maybe skip id
 };
 
-
+function showSampleFeedback(message) {
+    const popup = document.createElement('div');
+    popup.className = 'request-popup-sample noto';
+    popup.setAttribute('role', 'status');
+    popup.setAttribute('aria-live', 'polite');
+    popup.textContent = message;
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 2500);
+}
 
 function getFriendlyName(fileName) {
 
@@ -200,6 +208,12 @@ export async function saveFile(api, folderPath, fileName, content) {
     if (!api) throw new Error('API reference missing');
 
     const friendlyName = getFriendlyName(fileName);
+
+    if (localStorage.getItem('dataMode') === 'sample') {
+        showSampleFeedback(`🟣 Beispielmodus: ${friendlyName} wurde nicht gespeichert`);
+        console.info(`ℹ Save skipped in sample mode for ${fileName}`);
+        return null;
+    }
 
     try {
         const savedPath = await api.saveCSV(folderPath, fileName, content);

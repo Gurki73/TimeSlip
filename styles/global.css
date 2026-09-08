@@ -1002,6 +1002,28 @@ body.mode-sample #main-container {
   padding-top: 48px;
 }
 
+.request-popup-sample {
+  position: fixed;
+  top: 4.5rem;
+  left: 50%;
+  z-index: 10000;
+  max-width: min(90vw, 34rem);
+  padding: 0.75rem 1.25rem;
+  color: #2a001f;
+  text-align: center;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 0, 150, 0.25),
+    rgba(255, 0, 150, 0.25) 10px,
+    rgba(128, 0, 128, 0.35) 10px,
+    rgba(128, 0, 128, 0.35) 20px
+  );
+  border: 2px solid #8b0a68;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(42, 0, 31, 0.3);
+  transform: translateX(-50%);
+}
+
 .save-button {
   position: relative;
   opacity: 1;

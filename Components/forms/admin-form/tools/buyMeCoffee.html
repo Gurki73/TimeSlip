@@ -1,28 +1,65 @@
-<main id="buy-me-coffee" class="coffee-card" aria-labelledby="coffee-title">
+<!--
+Components\forms\admin-form\tools\buyMeCoffee.html
+
+“I built the app to gain practical experience with ARIA, Electron, and CSP.
+ The donation system has no commercial purpose. I simply thought it would be fun
+ and turned it into a little experiment.”
+-->
+
+<section id="buy-me-coffee" class="coffee-card" aria-labelledby="coffee-title">
+
     <header class="coffee-header">
-        <span class="coffee-emoji" aria-hidden="true">☕</span>
+        <span class="coffee-emoji" aria-hidden="true">
+            <span class="noto">☕</span>
+        </span>
+
         <h2 id="coffee-title">Ein Kaffee für den Entwickler?</h2>
-        <p class="coffee-subtitle">Mitarbeiter-Kalender ist ein Lieblingsprojekt und bleibt kostenlos.</p>
+
+        <p class="coffee-subtitle">
+            Mitarbeiter-Kalender ist ein Lieblingsprojekt und bleibt kostenlos.
+        </p>
     </header>
 
     <section class="coffee-pitch-section" aria-labelledby="coffee-pitch-label">
-        <h3 id="coffee-pitch-label" class="sr-only">Warum eine Spende hilft</h3>
+
+        <h3 id="coffee-pitch-label" class="sr-only">
+            Warum eine Spende hilft
+        </h3>
+
         <div id="coffee-pitch" class="pitch-display" aria-live="polite">
             <noscript>
-                <strong>☕ Unterstütze die Weiterentwicklung</strong>
-                <p>Diese App wird in meiner Freizeit entwickelt. Wenn sie dir hilft, freue ich mich über eine kleine
-                    Anerkennung.</p>
+                <strong>
+                    <span class="noto">☕</span> Unterstütze die Weiterentwicklung
+                </strong>
+                <p>
+                    Diese App wird in meiner Freizeit entwickelt.
+                    Wenn sie dir hilft, freue ich mich über eine kleine Anerkennung.
+                </p>
             </noscript>
         </div>
 
         <div class="coffee-actions">
             <button id="donate-coffee-btn" type="button" class="coffee-button coffee-button-primary">
-                ❤️ Jetzt spenden
+                <span class="noto">❤️</span> Jetzt spenden
             </button>
         </div>
+
     </section>
 
     <footer class="coffee-footer">
-        <p class="coffee-note">Deine Unterstützung motiviert und hilft, neue Funktionen zu ermöglichen.</p>
+        <p class="coffee-note"> Deine Unterstützung motiviert und hilft, neue Funktionen zu ermöglichen. <br> Wenn es
+            tatsächlich mehr als 50 Unterstützer werden, starte ich die Arbeit an einer
+            Online-Urlaubsantragstellung. <span class="noto">😄</span>
+        </p>
+
+        <p class="coffee-link-label">
+            Falls das Öffnen nicht funktioniert:
+        </p>
+
+        <a class="coffee-link" href="https://www.buymeacoffee.com/gurky73?amount=5" target="_blank"
+            rel="noopener noreferrer">
+            Buy Me a Coffee öffnen
+        </a>
     </footer>
-</main>
+
+</section>
