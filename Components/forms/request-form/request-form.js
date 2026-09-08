@@ -1,13 +1,13 @@
 import { loadRoleData } from '../../../js/loader/role-loader.js';
 import { loadEmployeeData, filterEmployeesByEndDate, storeEmployeeChange } from '../../../js/loader/employee-loader.js';
-import { loadOfficeDaysData, loadPublicHolidaysSimple, loadStateData } from '../../../js/loader/calendar-loader.js';
+import { loadCompanyHolidayData, loadOfficeDaysData, loadPublicHolidaysSimple, loadStateData } from '../../../js/loader/calendar-loader.js';
 import { loadRequests, appendRequest, updateRequest, getAvailableRequestFiles, storeApproval } from '../../../js/loader/request-loader.js';
 import { loadRuleData } from '../../../js/loader/rule-loader.js';
 import { filterPublicHolidaysByYearAndState, getAllHolidaysForYear } from '../../../js/Utils/holidayUtils.js';
 import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
 import { createDataModeToggle } from '../../../js/Utils/DataMode-select.js';
-import { recalcWarnings, resetWarnings, setRuleCheckInfo } from "./request-warnings.js";
+import { recalcWarnings, resetWarnings, setOpenPublicHolidayWarning, setRuleCheckInfo } from "./request-warnings.js";
 import { createDateRangePicker } from '../../../Components/customDatePicker/customDatePicker.js';
 import { createSaveButton } from '../../../js/Utils/saveButton.js';
 import { executeRulechecker, computeRequestDelta } from '../rule-form/ruleChecker.js';
@@ -21,6 +21,7 @@ let allRequests = [];
 let requestEmployees = [];
 let officeDays = [];
 let publicHolidays = [];
+const companyHolidaysByYear = new Map();
 let federalState = '';
 let saveButtonHeader;
 let filtersInitialized = false;
@@ -120,6 +121,7 @@ export async function initializeRequestForm(passedApi) {
 
   const yearFilter = document.getElementById('request-year');
   requestYear = parseInt(localStorage.getItem('RequestListDate'), 10) || new Date().getFullYear();
+  await loadCompanyHolidaysForYears([requestYear]);
   if (yearFilter) {
     yearFilter.value = requestYear;
     yearFilter.title = "Jahr für Antragsliste wählen";
@@ -329,7 +331,7 @@ async function storeAllRequests(api) {
     console.warn('Final draft rule check failed:', err);
   }
 
-  storeRequest(api);
+  await storeRequest(api);
   if (localStorage.getItem('dataMode') !== 'sample') saveButtonHeader.setState('blocked');
   else saveButtonHeader.setState('readonly');
 }
@@ -442,8 +444,31 @@ function handleDateChange() {
 }
 
 
-function calculateDaysOff(startDate, endDate, federalState) {
-  if (!startDate) return 0;
+async function loadCompanyHolidaysForYears(years) {
+  await Promise.all([...new Set(years)].map(async year => {
+    if (companyHolidaysByYear.has(year)) return;
+    try {
+      companyHolidaysByYear.set(year, await loadCompanyHolidayData(api, year));
+    } catch (err) {
+      console.warn(`Failed to load company holidays for ${year}:`, err);
+      companyHolidaysByYear.set(year, []);
+    }
+  }));
+}
+
+function isCompanyHoliday(date) {
+  const holidays = companyHolidaysByYear.get(date.getFullYear()) || [];
+  return holidays.some(({ startDate, endDate }) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+    return date >= start && date <= end;
+  });
+}
+
+function getPtoCalculation(startDate, endDate, employee = currentEmployee) {
+  if (!startDate) return { days: 0, openPublicHolidayDates: [] };
 
   const start = new Date(startDate);
   const end = new Date(endDate || startDate); // default: single-day request
@@ -451,62 +476,50 @@ function calculateDaysOff(startDate, endDate, federalState) {
   start.setHours(0, 0, 0, 0);
   end.setHours(0, 0, 0, 0);
 
-  if (isNaN(start) || isNaN(end) || start > end) return 0;
+  if (isNaN(start) || isNaN(end) || start > end) return { days: 0, openPublicHolidayDates: [] };
 
-  const year = start.getFullYear();
-
-  let allHolidays = [];
-  try {
-    allHolidays = getAllHolidaysForYear(year, federalState) || [];
-  } catch (err) {
-    console.warn("Failed to get holidays:", err);
-  }
-
-  const holidayDates = allHolidays
-    .filter(h => h.isOpen === false)
-    .filter(h => !federalState || h.bundesländer?.includes(federalState))
-    .map(h => h.date || "");
-
-  let employee = currentEmployee;
-  const employeeIdRaw = document.getElementById("requester-select")?.value;
-
-  if (!employee && employeeIdRaw) {
-    const id = isNaN(employeeIdRaw) ? employeeIdRaw : Number(employeeIdRaw);
-    employee = requestEmployees.find(emp => emp.id === id);
-  }
-
-  if (!employee) return 0; // no employee selected yet
+  if (!employee) return { days: 0, openPublicHolidayDates: [] };
 
   const employeeWorkdays = employee.workDays || [1, 1, 1, 1, 1, 0, 0]; // fallback Mon–Fri
 
-  const yearLimit = new Date(year, 11, 31);
-  yearLimit.setHours(0, 0, 0, 0);
-
-  const finalDate = end > yearLimit ? yearLimit : end;
-
   let countedDays = 0;
+  const openPublicHolidayDates = [];
   const d = new Date(start);
   let iterations = 0;
 
-  while (d <= finalDate && iterations < 366) {
+  while (d <= end && iterations < 366) {
     const dayOfWeek = d.getDay(); // 0=Sun, 6=Sat
     const scheduled = employeeWorkdays[dayOfWeek] !== "never";
 
     const iso = d.toLocaleDateString("en-CA"); // YYYY-MM-DD
-    const isHoliday = federalState ? holidayDates.includes(iso) : false;
+    const allHolidays = getAllHolidaysForYear(d.getFullYear(), federalState || "All States") || [];
+    const publicHoliday = allHolidays.find(holiday => holiday.date === iso);
+    const holidaySetting = publicHolidays.find(holiday => holiday.id === publicHoliday?.id);
+    const companyHoliday = isCompanyHoliday(d);
+    const publicHolidayClosed = publicHoliday && holidaySetting?.isOpen === false;
+    const publicHolidayOpen = publicHoliday && holidaySetting?.isOpen === true;
 
-    if (scheduled && !isHoliday) countedDays++;
+    if (scheduled && !companyHoliday && !publicHolidayClosed) {
+      countedDays++;
+      if (publicHolidayOpen) openPublicHolidayDates.push(iso);
+    }
 
     d.setDate(d.getDate() + 1);
     iterations++;
   }
 
-  return countedDays;
+  return { days: countedDays, openPublicHolidayDates };
+}
+
+function calculateDaysOff(startDate, endDate, employee = currentEmployee) {
+  return getPtoCalculation(startDate, endDate, employee).days;
 }
 
 function createDurationMessage(startDate, endDate, employee, vacationType, reducePTO = false) {
   const employeeWorkdays = employee.workDays;
-  const effectiveDays = calculateDaysOff(startDate, endDate, employeeWorkdays);
+  const calculation = getPtoCalculation(startDate, endDate, employee);
+  const effectiveDays = calculation.days;
+  setOpenPublicHolidayWarning(calculation.openPublicHolidayDates.length > 0);
 
   const typeLabels = {
     vac: "Urlaub",
@@ -641,7 +654,7 @@ async function jumpCalendarToRange(start, end, options = {}) {
   }
 }
 
-function storeRequest() {
+async function storeRequest() {
 
   const requestToStore = {};
 
@@ -668,7 +681,13 @@ function storeRequest() {
   requestToStore.vacationType = document.getElementById('request-type-select').value;
   requestToStore.approverMSG = "";
   requestToStore.decisionDate = "";
-  requestToStore.effectiveDays = document.getElementById('request-durration').textContent;
+  const employee = requestEmployees.find(emp => emp.id == requestToStore.employeeID) || currentEmployee;
+  const startYear = new Date(requestToStore.start).getFullYear();
+  const endYear = new Date(requestToStore.end).getFullYear();
+  await loadCompanyHolidaysForYears(Array.from({ length: endYear - startYear + 1 }, (_, index) => startYear + index));
+  const calculation = getPtoCalculation(requestToStore.start, requestToStore.end, employee);
+  requestToStore.effectiveDays = calculation.days;
+  requestToStore.reservedDays = calculation.days;
 
   const date = new Date(requestToStore.start);
   const year = date.getFullYear();
@@ -686,13 +705,20 @@ function storeRequest() {
   }
 
   try {
-    appendRequest(api, Number(year), requestToStore);
+    await appendRequest(api, Number(year), requestToStore);
+    createDurationMessage(
+      requestToStore.start,
+      requestToStore.end,
+      employee,
+      requestToStore.vacationType,
+      true
+    );
     resetRequestWarnings();
   } catch (err) {
     console.error(err);
     showError("Failed to save request to disk");
   }
-  updateDurationPreview(true);
+  updateDurationPreview();
 }
 
 function handleRequestMSG(event) {
@@ -1489,7 +1515,7 @@ async function handleRequestUpdate(id, newState) {
   }
 }
 
-export function updateDurationPreview(savePTOchange = false) {
+export async function updateDurationPreview(savePTOchange = false) {
   const startInput = document.getElementById("request-start-picker");
   const endInput = document.getElementById("request-end-picker");
   const durEl = document.getElementById("request-durration");
@@ -1500,6 +1526,12 @@ export function updateDurationPreview(savePTOchange = false) {
   const startVal = startInput?.value;
   const endVal = endInput?.value;
   const vacationType = document.getElementById("request-type-select")?.value;
+
+  if (startVal) {
+    const startYear = new Date(startVal).getFullYear();
+    const endYear = new Date(endVal || startVal).getFullYear();
+    await loadCompanyHolidaysForYears(Array.from({ length: endYear - startYear + 1 }, (_, index) => startYear + index));
+  }
 
   recalcWarnings(saveButtonHeader, cachedRoles, allRequests, rules, requestEmployees);
   if (!currentEmployee) {
@@ -1512,8 +1544,6 @@ export function updateDurationPreview(savePTOchange = false) {
     return;
   }
 
-  calculateDaysOff(startVal, endVal, currentEmployee.workDays, publicHolidays);
-
   startEl.textContent = startVal || "--.--";
   endEl.textContent = endVal || "--.--";
 
@@ -1524,8 +1554,10 @@ export function updateDurationPreview(savePTOchange = false) {
   }
 
   if (!endVal) {
-    durEl.textContent = "1";
-    durElUnit.textContent = 'Tag';
+    const message = createDurationMessage(startVal, startVal, currentEmployee, vacationType);
+    durEl.textContent = message.msg;
+    durElUnit.textContent = message.msgUnit;
+    recalcWarnings(saveButtonHeader, cachedRoles, allRequests, rules, requestEmployees);
     return;
   }
 
@@ -1569,7 +1601,10 @@ function showError(message) {
 
 export async function refundReservedDays(api, request) {
   const employee = getEmployeeById(request.employeeID);
-  const effectiveDays = calculateDaysOff(request.startDate, request.endDate, employee.workDays);
+  if (!employee) return;
+  const effectiveDays = Number.isFinite(Number(request.reservedDays))
+    ? Number(request.reservedDays)
+    : calculateDaysOff(request.start || request.startDate, request.end || request.endDate, employee);
 
   switch (request.vacationType) {
     case 'vac':

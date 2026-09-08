@@ -12,15 +12,24 @@ const posWarnings = {
     nobo: { rank: 2, warn: "Kein Angestellter ausgewählt" },
     stat: { rank: 2, warn: "Kein Start-Termin ausgewählt" },
     shif: { rank: 2, warn: "Halber Tag frei nur an Einzeltagen" },
-    notype: { rank: 2, warn: "Kein Abwesenheitstyp ausgewählt" }
+    notype: { rank: 2, warn: "Kein Abwesenheitstyp ausgewählt" },
+    openPublicHoliday: { rank: 1, warn: "Der Zeitraum enthält einen offenen Feiertag; der Arbeitstag wird als PTO gezählt." }
 };
 
 let warningList = new Set();
 let lastSaveBtn = null;
 let ruleCheckInfo = null;
+let hasOpenPublicHoliday = false;
 
 export function resetWarnings() {
     warningList.clear();
+    if (hasOpenPublicHoliday) warningList.add("openPublicHoliday");
+}
+
+export function setOpenPublicHolidayWarning(isPresent) {
+    hasOpenPublicHoliday = Boolean(isPresent);
+    if (hasOpenPublicHoliday) warningList.add("openPublicHoliday");
+    else warningList.delete("openPublicHoliday");
 }
 
 export function addWarning(type) {

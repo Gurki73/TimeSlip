@@ -13,7 +13,7 @@ ruleset:
 calendar-settings:
 🟡 6. ☐ adjust height for company holidays 
 🟡 7. 🚧 (include bridge days in company holiday)
-🟣 8. ☐ (auto remove available days off for employees depending an regular shedule ) 
+🟣 8. 🚧 (auto remove available days off for employees depending an regular shedule ) 
 admin tools:
 admin tools.emojies: 
 🟡 9. ✅ add a input for add an emojies

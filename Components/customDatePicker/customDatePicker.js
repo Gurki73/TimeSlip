@@ -169,10 +169,12 @@ export function createDateRangePicker(config) {
     setStart: (v) => {
       startEl.value = v;
       updatePreview();
+      onChange?.(startEl.value, endEl.value);
     },
     setEnd: (v) => {
       endEl.value = v;
       updatePreview();
+      onChange?.(startEl.value, endEl.value);
     }
   };
 }

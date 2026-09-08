@@ -506,6 +506,10 @@ function createCollapsible(cfg) {
   if (titleEl) titleEl.textContent = cfg.title;
 
   const saveBtn = createSaveButton({ onSave: cfg.onSave });
+
+  if (cfg.id === 'companyHolidays') {
+    saveButtonHeader = saveBtn;
+  }
   const saveBtnPlaceholder = clone.querySelector('.rule-save-slot');
   if (saveBtnPlaceholder) {
     saveBtnPlaceholder.appendChild(saveBtn.el);
@@ -873,17 +877,14 @@ function populatePublicHolidayList(publicHolidays) {
   });
 }
 
-async function saveCompanyHoliday(startInputId = 'preview-start', endInputId = 'preview-end') {
-  const startEl = document.getElementById(startInputId);
-  const endEl = document.getElementById(endInputId);
-
-  if (!startEl) {
-    alert("❌ Date picker missing (start)");
+async function saveCompanyHoliday() {
+  if (!activeCompanyHolidayPicker) {
+    alert("❌ Date picker missing");
     return;
   }
 
-  const startValue = startEl.value;
-  const endValue = endEl?.value || startValue;
+  const startValue = activeCompanyHolidayPicker.getStart();
+  const endValue = activeCompanyHolidayPicker.getEnd() || startValue;
 
   if (!startValue) {
     alert("Bitte Startdatum wählen.");
@@ -1098,6 +1099,7 @@ function populateCompanyHolidaysList(companyHolidays = []) {
   const endInputId = `end-date-picker-${timestamp}`;
   const previewStartId = `preview-start`;
   const previewEndId = `preview-end`;
+  const durationId = `duration-${timestamp}`;
 
   const tpl = document.getElementById('date-range-template');
   const node = tpl.content.cloneNode(true);
@@ -1115,6 +1117,10 @@ function populateCompanyHolidaysList(companyHolidays = []) {
   endInput.id = endInputId;
   startPreview.id = previewStartId;
   endPreview.id = previewEndId;
+  const durationPreview = node.querySelector('.duration-value');
+  if (durationPreview) {
+    durationPreview.id = durationId;
+  }
 
   inputContainer.appendChild(node);
   listControls.appendChild(inputContainer);
@@ -1130,8 +1136,10 @@ function populateCompanyHolidaysList(companyHolidays = []) {
     endInput: `#${endInputId}`,
     previewStart: `#${previewStartId}`,
     previewEnd: `#${previewEndId}`,
-    previewDuration: '#company-holiday-duration',
-    onChange: () => { }
+    previewDuration: `#${durationId}`,
+    onChange: () => {
+      saveButtonHeader?.setState('dirty');
+    }
   });
 
   if (!companyHolidays.length) {
