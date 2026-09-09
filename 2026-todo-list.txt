@@ -8,8 +8,6 @@ calendar:
 🟢 2. ☐ check if role reasignments are rendered
 ruleset:
 🔵 3. ☐ check complex rules
-🟡 4. 🚧 add chip for weekdays ( color )
-🟡 5. 🚧 add chip for shift ( icon + color)
 calendar-settings:
 🟣 8. 🚧 (auto remove available days off for employees depending an regular shedule ) 
 admin tools:

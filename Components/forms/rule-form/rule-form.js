@@ -1619,7 +1619,7 @@ function handleTopCellRoles(id) {
     const roleLabel = document.createElement('div');
     roleLabel.classList.add('noto', 'rule-role-label');
 
-    const validRoles = cachedRoles.filter(r => !['⊖', '🗑️', 'keine', '?', 'name'].includes(r.name));
+    const validRoles = cachedRoles.filter(isAssignedRole);
 
     if (validRoles.length === 0) {
         roleLabel.textContent = '⚠️ Bitte zuerst Rollen zuweisen!';
@@ -1647,14 +1647,48 @@ function handleTopCellRoles(id) {
 
 function handleMultiRoleSelection(id, roleElement, roleLabel, validRoles) {
     roleLabel.textContent = id.toLowerCase() === 'g1' ? '🧩 und 🧩' : '🧩 oder 🧩';
-    roleElement.appendChild(roleLabel);
+    // roleElement.appendChild(roleLabel);
 
-    const items = validRoles.map(role => ({ name: role.name, index: role.colorIndex }));
+    const items = validRoles
+        .filter(role => Number(role.colorIndex) > 0)
+        .map(role => ({
+            name: role.name,
+            index: role.colorIndex,
+            colorIndex: role.colorIndex
+        }));
 
-    createCheckboxGroup('roles', items, roleElement,
-        (container) => handleCheckboxChangeWithNeighbors(container, id)(),
-        { idPrefix: `${id}-checkbox` }
-    );
+    const rows = [
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+        [10, 11, 12],
+        [13]
+    ];
+    const roleRows = document.createElement('div');
+    roleRows.className = 'multi-role-rows';
+
+    rows.forEach((indexes) => {
+        const rowItems = items.filter(item => indexes.includes(Number(item.colorIndex)));
+        if (!rowItems.length) return;
+
+        const row = document.createElement('div');
+        row.className = 'multi-role-row';
+        createCheckboxGroup('roles', rowItems, row,
+            () => handleCheckboxChangeWithNeighbors(roleRows, id)(),
+            { idPrefix: `${id}-checkbox` }
+        );
+        roleRows.appendChild(row);
+    });
+
+    roleElement.appendChild(roleRows);
+}
+
+function isAssignedRole(role) {
+    const name = String(role?.name ?? '').trim().toLowerCase();
+    const colorIndex = Number(role?.colorIndex);
+    if (!Number.isInteger(colorIndex) || colorIndex === 0) return false;
+    if (!name || ['⊖', '🗑️', 'keine', '?', 'name'].includes(name)) return false;
+    return !name.startsWith('aufgabe');
 }
 
 function handleSingleRoleSelection(id, roleElement, validRoles) {
@@ -1834,7 +1868,7 @@ function createCheckboxGroup(type, items, parent, onChange, options = {}) {
         // Timeframe: weekdays
         // =========================
         if (type === 'days') {
-            wrapper.classList.add('weekday-chip');
+            wrapper.classList.add('weekday-chip', 'timeframe-chip');
 
             if (item.index === 5) {
                 wrapper.classList.add('weekday-weekend');
@@ -1895,7 +1929,7 @@ function createCheckboxGroup(type, items, parent, onChange, options = {}) {
         label.style.marginLeft = '0.05rem';
         label.style.paddingRight = '0.1rem';
         label.textContent = item.name;
-
+        wrapper.classList.add('role-chip', `role-color-${item.colorIndex}`);
         wrapper.appendChild(checkbox);
         wrapper.appendChild(label);
         container.appendChild(wrapper);
