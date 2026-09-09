@@ -11,29 +11,17 @@ ruleset:
 🟡 4. 🚧 add chip for weekdays ( color )
 🟡 5. 🚧 add chip for shift ( icon + color)
 calendar-settings:
-🟡 6. ☐ adjust height for company holidays 
-🟡 7. 🚧 (include bridge days in company holiday)
 🟣 8. 🚧 (auto remove available days off for employees depending an regular shedule ) 
 admin tools:
-admin tools.emojies: 
-🟡 9. ✅ add a input for add an emojies
-🟡10. ✅ test saving emojies
 admin tools.color:
 🟢11. ☐ custom color picker looses gradient when picking, roles
 🟡12. ☐ center table and picker in form
 🟢13. 🚧 fix the tabulators
 🟡14. ☐ finish layout for calandar color customasation
 🟡15. 🚧 finish the layout for button and background  colors
-admin tool.ruleset-settings
-🔵16. ✅ gather ideas
-🔵17. ✅ build prilimary UI
 admin tools. revive delted employees
 🟡18. ☐ add sample
-🟡19. ☐ move more to left
-removed date picker completely and moved date - picker needs to employeeform , new state phoenix ="🐦‍🔥" needs a warning status in employee form
-admin tools.donate
-🟡20. ☐ add an offline alternative
-🟡21. ✅ make a begging text
+🟡19. ☐ removed date picker completely and moved date - picker needs to employeeform , new state phoenix ="🐦‍🔥" needs a warning status in employee form
 minx:
 🟡22. 👀 allow state dirty for sample save button(?)
 -> keep buttons as are but make sure tooltip text are updated

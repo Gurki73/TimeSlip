@@ -1452,7 +1452,8 @@ function handleTopCellTimeFrame(id) {
 function buildShiftSelector(container, id, inputObject) {
     const existingShifts = ['early', 'day', 'late'];
     const shiftSelection = document.createElement('select');
-    shiftSelection.classList.add('role-select', 'noto', 'shift-chip');
+
+    shiftSelection.classList.add('timeframe-chip', 'noto', 'shift-chip');
 
     existingShifts.forEach((shift, index) => {
         const shiftOption = document.createElement('option');
@@ -1464,7 +1465,13 @@ function buildShiftSelector(container, id, inputObject) {
                 shift === 'day' ? 'Tag' :
                     'Spät';
 
-        shiftOption.innerHTML = `${emoji} ⇨ ${name} `;
+        // Get the corresponding CSS variable
+        const shiftColor = getComputedStyle(document.body)
+            .getPropertyValue(`--calendar-shift-${shift}-bg`)
+            .trim();
+
+        shiftOption.style.backgroundColor = shiftColor;
+        shiftOption.innerHTML = `${emoji} ⇨ ${name}`;
         shiftOption.title = name;
         shiftOption.value = shift;
         shiftOption.dataset.name = name;
@@ -1612,7 +1619,7 @@ function handleTopCellRoles(id) {
     const roleLabel = document.createElement('div');
     roleLabel.classList.add('noto', 'rule-role-label');
 
-    const validRoles = cachedRoles.filter(r => !['⊖', 'keine', '?', 'name'].includes(r.name));
+    const validRoles = cachedRoles.filter(r => !['⊖', '🗑️', 'keine', '?', 'name'].includes(r.name));
 
     if (validRoles.length === 0) {
         roleLabel.textContent = '⚠️ Bitte zuerst Rollen zuweisen!';

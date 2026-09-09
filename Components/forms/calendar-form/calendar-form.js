@@ -999,6 +999,38 @@ function formatCalendarDate(date) {
   return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
 }
 
+function calculateCompanyHolidayDuration(startValue, endValue) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startValue) || !/^\d{4}-\d{2}-\d{2}$/.test(endValue)) {
+    return '?';
+  }
+
+  const openPublicHolidayDates = new Set(
+    getAllHolidaysForYear(Number(startValue.slice(0, 4)), ruleFederalState)
+      .filter(holiday => {
+        const savedHoliday = Array.isArray(publicHolidayState)
+          ? publicHolidayState.find(state => state.id === holiday.id)
+          : publicHolidayState[holiday.id];
+        return savedHoliday?.isOpen === true;
+      })
+      .map(holiday => holiday.date)
+  );
+
+  const start = new Date(`${startValue}T00:00:00`);
+  const end = new Date(`${endValue}T00:00:00`);
+  if (end < start) return '?';
+
+  let duration = 0;
+  for (const date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+    const isoDate = formatCalendarDate(date);
+    const weekday = weekdaysData[date.getDay() === 0 ? 6 : date.getDay() - 1];
+    if (weekday?.isOpen || openPublicHolidayDates.has(isoDate)) {
+      duration += 1;
+    }
+  }
+
+  return duration;
+}
+
 async function gatherHolidaysAndSave() {
   const allHolidays = [];
   const checkboxes = document.querySelectorAll('#rule-collapsible-holidays .row-checkbox');
@@ -1085,23 +1117,50 @@ function populateCompanyHolidaysList(companyHolidays = []) {
   }
 
   const tplList = document.getElementById('tpl-list');
+  if (!tplList) {
+    console.warn("⚠️ tpl-list template not found");
+    return;
+  }
+
   const listNode = tplList.content.cloneNode(true);
   const listBody = listNode.querySelector('.list-body');
   const listControls = listNode.querySelector('.list-controls');
 
+  if (!listBody || !listControls) {
+    console.warn("⚠️ Company Holidays list structure incomplete");
+    return;
+  }
+
+  /*
+   * ------------------------------------------------------------
+   * Date range input / picker
+   * ------------------------------------------------------------
+   */
+
   const inputContainer = document.createElement('div');
-  inputContainer.classList.add('company-holiday-input', 'noto', 'flex-col');
+  inputContainer.classList.add(
+    'company-holiday-input',
+    'noto',
+    'flex-col'
+  );
 
   const timestamp = Date.now();
+
   const startBtnId = `pick-start-${timestamp}`;
   const endBtnId = `pick-end-${timestamp}`;
   const startInputId = `start-date-picker-${timestamp}`;
   const endInputId = `end-date-picker-${timestamp}`;
-  const previewStartId = `preview-start`;
-  const previewEndId = `preview-end`;
+  const previewStartId = `preview-start-${timestamp}`;
+  const previewEndId = `preview-end-${timestamp}`;
   const durationId = `duration-${timestamp}`;
 
   const tpl = document.getElementById('date-range-template');
+
+  if (!tpl) {
+    console.warn("⚠️ date-range-template not found");
+    return;
+  }
+
   const node = tpl.content.cloneNode(true);
 
   const startBtn = node.querySelector('.start-btn');
@@ -1110,14 +1169,29 @@ function populateCompanyHolidaysList(companyHolidays = []) {
   const endInput = node.querySelector('.end-input');
   const startPreview = node.querySelector('.start-preview');
   const endPreview = node.querySelector('.end-preview');
+  const durationPreview = node.querySelector('.duration-value');
+
+  if (
+    !startBtn ||
+    !endBtn ||
+    !startInput ||
+    !endInput ||
+    !startPreview ||
+    !endPreview
+  ) {
+    console.warn("⚠️ Date range template is incomplete");
+    return;
+  }
 
   startBtn.id = startBtnId;
   endBtn.id = endBtnId;
+
   startInput.id = startInputId;
   endInput.id = endInputId;
+
   startPreview.id = previewStartId;
   endPreview.id = previewEndId;
-  const durationPreview = node.querySelector('.duration-value');
+
   if (durationPreview) {
     durationPreview.id = durationId;
   }
@@ -1125,7 +1199,19 @@ function populateCompanyHolidaysList(companyHolidays = []) {
   inputContainer.appendChild(node);
   listControls.appendChild(inputContainer);
 
+  /*
+   * ------------------------------------------------------------
+   * Date range picker
+   * ------------------------------------------------------------
+   */
+
   const content = collapsible.querySelector('.rule-collapsible-content');
+
+  if (!content) {
+    console.warn("⚠️ Company Holidays content container not found");
+    return;
+  }
+
   content.innerHTML = '';
   content.appendChild(listNode);
 
@@ -1137,91 +1223,334 @@ function populateCompanyHolidaysList(companyHolidays = []) {
     previewStart: `#${previewStartId}`,
     previewEnd: `#${previewEndId}`,
     previewDuration: `#${durationId}`,
+    durationCalculator: calculateCompanyHolidayDuration,
+
     onChange: () => {
       saveButtonHeader?.setState('dirty');
     }
   });
 
+  /*
+   * ------------------------------------------------------------
+   * Empty state
+   * ------------------------------------------------------------
+   */
+
   if (!companyHolidays.length) {
     const empty = document.createElement('span');
+    empty.classList.add('company-holiday-empty');
     empty.textContent = "Keine Betriebsferien hinterlegt";
+
     listBody.appendChild(empty);
     return;
   }
 
-  companyHolidays.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+  /*
+   * ------------------------------------------------------------
+   * Sort holidays by start date
+   * ------------------------------------------------------------
+   */
+
+  companyHolidays.sort(
+    (a, b) =>
+      new Date(a.startDate) - new Date(b.startDate)
+  );
+
+  /*
+   * ------------------------------------------------------------
+   * Render company holidays
+   * ------------------------------------------------------------
+   */
+
+  const tplItem = document.getElementById('tpl-list-item');
+
+  if (!tplItem) {
+    console.warn("⚠️ tpl-list-item template not found");
+    return;
+  }
 
   companyHolidays.forEach(period => {
-    const tplItem = document.getElementById('tpl-list-item');
     const fragment = tplItem.content.cloneNode(true);
     const itemNode = fragment.querySelector('.data-row');
-    if (!itemNode) return;
+
+    if (!itemNode) {
+      console.warn("⚠️ Company holiday data-row not found");
+      return;
+    }
+
+    /*
+     * ----------------------------------------------------------
+     * Basic row state
+     * ----------------------------------------------------------
+     */
 
     itemNode.classList.add('is-closed');
 
-    const labelText = itemNode.querySelector('.label-text');
+    /*
+     * The generic template contains a checkbox and label-text.
+     * Company holidays don't use those controls.
+     */
+    itemNode.querySelector('.row-checkbox')?.remove();
+    itemNode.querySelector('.label-text')?.remove();
+
+    const rowMiddle = itemNode.querySelector('.row-middle');
+    const metaLine = itemNode.querySelector('.meta-line');
     const rowRight = itemNode.querySelector('.row-right');
 
-    itemNode.querySelector('.row-checkbox')?.remove();
+    if (!rowMiddle || !metaLine || !rowRight) {
+      console.warn(
+        "⚠️ Company holiday row structure incomplete"
+      );
+      return;
+    }
+
+    /*
+     * ----------------------------------------------------------
+     * Dates
+     * ----------------------------------------------------------
+     */
 
     const start = new Date(period.startDate);
     const end = new Date(period.endDate);
 
-    const startStr = start.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
-    const endStr = end.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
-
-    const isMultiDay = startStr !== endStr;
-    if (isMultiDay) itemNode.classList.add('multi-day');
-
-    const label = document.createElement('div');
-    label.classList.add('company-holiday-label');
-
-    const startLabel = document.createElement('span');
-    startLabel.innerHTML = `<span class="noto">🔜</span> <span class="compHoliday">${startStr}</span>`;
-    label.appendChild(startLabel);
-
-    if (isMultiDay) {
-      label.appendChild(document.createElement('br'));
-
-      const endLabel = document.createElement('span');
-      endLabel.innerHTML = `<span class="noto">🔚</span> ${endStr}`;
-      label.appendChild(endLabel);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      console.warn(
+        "⚠️ Invalid company holiday dates:",
+        period
+      );
+      return;
     }
 
-    labelText.innerHTML = "";
-    labelText.appendChild(label);
+    /*
+     * Use calendar dates for comparison so that the time portion
+     * of Date objects cannot accidentally make a multi-day holiday
+     * appear as a single day.
+     */
+    const startDateOnly = formatCalendarDate(start);
+    const endDateOnly = formatCalendarDate(end);
 
-    const lockIcon = document.createElement('span');
-    lockIcon.classList.add('noto');
-    lockIcon.setAttribute('aria-label', 'geschlossen');
-    lockIcon.textContent = '🔒';
-    lockIcon.style.fontSize = '1.75rem';
-    lockIcon.style.lineHeight = '1';
+    const isMultiDay = startDateOnly !== endDateOnly;
+
+    if (isMultiDay) {
+      itemNode.classList.add('multi-day');
+    }
+
+    /*
+     * ----------------------------------------------------------
+     * Display dates
+     * ----------------------------------------------------------
+     *
+     * Example:
+     *
+     * 🔜 22.07.2026   🔚 26.07.2026
+     *
+     */
+
+    const startStr = start.toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+
+    const endStr = end.toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+
+    /*
+     * ----------------------------------------------------------
+     * Calculate duration
+     * ----------------------------------------------------------
+     *
+     * Inclusive duration:
+     *
+     * 22.07 → 22.07 = 1 Tag
+     * 22.07 → 26.07 = 5 Tage
+     *
+     */
+
+    let duration = 1;
+
+    if (typeof calculateCompanyHolidayDuration === 'function') {
+      try {
+        duration = calculateCompanyHolidayDuration(
+          startDateOnly,
+          endDateOnly
+        );
+      } catch (err) {
+        console.warn(
+          "⚠️ Could not calculate company holiday duration:",
+          err
+        );
+      }
+    }
+
+    /*
+     * Fallback duration calculation if the existing calculator
+     * returns something invalid.
+     */
+    if (!Number.isFinite(Number(duration)) || Number(duration) < 1) {
+      const startMidnight = new Date(`${startDateOnly}T00:00:00`);
+      const endMidnight = new Date(`${endDateOnly}T00:00:00`);
+
+      const diffMs =
+        endMidnight.getTime() -
+        startMidnight.getTime();
+
+      duration =
+        Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+    }
+
+    duration = Number(duration);
+
+    /*
+     * ----------------------------------------------------------
+     * Render date information in .meta-line
+     * ----------------------------------------------------------
+     */
+
+    metaLine.innerHTML = '';
+
+    const dateLabel = document.createElement('span');
+    dateLabel.classList.add('company-holiday-label');
+
+    /*
+     * Start
+     */
+    const startLabel = document.createElement('span');
+    startLabel.classList.add('company-holiday-start');
+
+    startLabel.innerHTML =
+      `<span class="noto">🔜</span> ` +
+      `<span class="compHoliday">${startStr}</span>`;
+
+    dateLabel.appendChild(startLabel);
+
+    /*
+     * End
+     *
+     * Only display the end date when this is actually a
+     * multi-day company holiday.
+     */
+    if (isMultiDay) {
+      const endLabel = document.createElement('span');
+      endLabel.classList.add('company-holiday-end');
+
+      endLabel.innerHTML =
+        `<span class="noto">🔚</span> ` +
+        `<span class="compHoliday">${endStr}</span>`;
+
+      dateLabel.appendChild(endLabel);
+    }
+
+    /*
+     * Duration
+     */
+    const durationLabel = document.createElement('span');
+    durationLabel.classList.add('company-holiday-duration');
+
+    durationLabel.textContent =
+      ` (${duration} ${duration === 1 ? 'Tag' : 'Tage'})`;
+
+    dateLabel.appendChild(durationLabel);
+
+    metaLine.appendChild(dateLabel);
+
+    /*
+     * ----------------------------------------------------------
+     * Right side: delete / edit / lock
+     * ----------------------------------------------------------
+     */
+
+    rowRight.innerHTML = '';
 
     const actions = document.createElement('div');
     actions.classList.add('company-holiday-actions');
 
+    /*
+     * Delete
+     */
     const delBtn = document.createElement('button');
-    delBtn.classList.add('noto', 'delete-btn');
-    delBtn.title = "Löschen";
-    delBtn.setAttribute('aria-label', 'Betriebsferien löschen');
+
+    delBtn.classList.add(
+      'noto',
+      'delete-btn'
+    );
+
+    delBtn.title = 'Löschen';
+
+    delBtn.setAttribute(
+      'aria-label',
+      'Betriebsferien löschen'
+    );
+
     delBtn.textContent = '🗑️';
-    delBtn.addEventListener('click', () => removeCompanyHoliday(period));
+
+    delBtn.addEventListener(
+      'click',
+      () => removeCompanyHoliday(period)
+    );
+
     actions.appendChild(delBtn);
 
+    /*
+     * Edit
+     *
+     * Keep the existing behaviour: only multi-day periods
+     * get an edit button.
+     */
     if (isMultiDay) {
       const editBtn = document.createElement('button');
-      editBtn.classList.add('noto', 'edit-btn');
-      editBtn.title = "Bearbeiten";
-      editBtn.setAttribute('aria-label', 'Betriebsferien bearbeiten');
+
+      editBtn.classList.add(
+        'noto',
+        'edit-btn'
+      );
+
+      editBtn.title = 'Bearbeiten';
+
+      editBtn.setAttribute(
+        'aria-label',
+        'Betriebsferien bearbeiten'
+      );
+
       editBtn.textContent = '✏️';
-      editBtn.addEventListener('click', () => editCompanyHoliday(period));
+
+      editBtn.addEventListener(
+        'click',
+        () => editCompanyHoliday(period)
+      );
+
       actions.appendChild(editBtn);
     }
 
-    rowRight.innerHTML = "";
     rowRight.appendChild(actions);
-    rowRight.appendChild(lockIcon);
+
+    /*
+     * Lock icon
+     */
+    const lockIcon = document.createElement('span');
+
+    lockIcon.classList.add('noto');
+
+    lockIcon.setAttribute(
+      'aria-label',
+      'geschlossen'
+    );
+
+    lockIcon.textContent = '🔒';
+
+    lockIcon.style.fontSize = '1.75rem';
+    lockIcon.style.lineHeight = '1';
+
+    // rowRight.appendChild(lockIcon);
+
+    /*
+     * ----------------------------------------------------------
+     * Add completed row to list
+     * ----------------------------------------------------------
+     */
 
     listBody.appendChild(itemNode);
   });

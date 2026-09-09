@@ -9,6 +9,7 @@ export function createDateRangePicker(config) {
     previewStart,
     previewEnd,
     previewDuration,
+    durationCalculator,
     onChange
   } = config;
 
@@ -78,7 +79,9 @@ export function createDateRangePicker(config) {
     if (previewE) previewE.textContent = format(endEl.value, fmtType);
 
     if (previewD) {
-      previewD.textContent = calcDuration(startEl.value, endEl.value);
+      previewD.textContent = durationCalculator
+        ? durationCalculator(startEl.value, endEl.value)
+        : calcDuration(startEl.value, endEl.value);
     }
   }
 

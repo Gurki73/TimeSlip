@@ -15,6 +15,11 @@
   gap: 12px; /* adjust spacing */
 }
 
+.multi-day .company-holiday-start,
+.multi-day .company-holiday-end {
+  display: block;
+}
+
 .calendar-flex-row {
   display: flex;
   align-items: flex-start;
