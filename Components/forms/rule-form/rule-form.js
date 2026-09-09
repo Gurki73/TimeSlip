@@ -1673,6 +1673,7 @@ function handleMultiRoleSelection(id, roleElement, roleLabel, validRoles) {
 
         const row = document.createElement('div');
         row.className = 'multi-role-row';
+        row.classList.add('multi-checkbox');
         createCheckboxGroup('roles', rowItems, row,
             () => handleCheckboxChangeWithNeighbors(roleRows, id)(),
             { idPrefix: `${id}-checkbox` }

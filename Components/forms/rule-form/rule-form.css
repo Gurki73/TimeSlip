@@ -970,7 +970,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   grid-auto-rows: 1.6rem;
   max-height: none;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .checkbox-grid label {
