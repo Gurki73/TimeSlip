@@ -340,3 +340,102 @@ export function getRules() {
 export function getAllRules() {
   return allRules.map(r => ({ ...r }));
 }
+
+const RULE_SETTINGS_FILE = 'rule-settings.json';
+
+const DEFAULT_RULE_SETTINGS = {
+  toleranceLevel: 3, // 0..6
+  shiftLevel: 0,     // 0..3
+  solverLevel: 0     // 0..2
+};
+
+export async function loadRuleSettings(api) {
+  if (!api) {
+    throw new Error('API reference missing');
+  }
+
+  try {
+    // Rule-engine settings always belong to client data.
+    const raw = await api.loadCSV('client', RULE_SETTINGS_FILE);
+
+    if (!raw) {
+      return { ...DEFAULT_RULE_SETTINGS };
+    }
+
+    const parsed = typeof raw === 'string'
+      ? JSON.parse(raw)
+      : raw;
+
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('Invalid rule settings JSON');
+    }
+
+    return {
+      toleranceLevel:
+        Number.isInteger(parsed.toleranceLevel) &&
+          parsed.toleranceLevel >= 0 &&
+          parsed.toleranceLevel <= 6
+          ? parsed.toleranceLevel
+          : DEFAULT_RULE_SETTINGS.toleranceLevel,
+
+      shiftLevel:
+        Number.isInteger(parsed.shiftLevel) &&
+          parsed.shiftLevel >= 0 &&
+          parsed.shiftLevel <= 3
+          ? parsed.shiftLevel
+          : DEFAULT_RULE_SETTINGS.shiftLevel,
+
+      solverLevel:
+        Number.isInteger(parsed.solverLevel) &&
+          parsed.solverLevel >= 0 &&
+          parsed.solverLevel <= 2
+          ? parsed.solverLevel
+          : DEFAULT_RULE_SETTINGS.solverLevel
+    };
+  } catch (err) {
+    console.warn('[rule-loader] failed to load rule settings, using defaults', err);
+    return { ...DEFAULT_RULE_SETTINGS };
+  }
+}
+
+export async function saveRuleSettings(api, settings) {
+  if (!api) {
+    throw new Error('API reference missing');
+  }
+
+  const data = {
+    toleranceLevel:
+      Number.isInteger(settings?.toleranceLevel) &&
+        settings.toleranceLevel >= 0 &&
+        settings.toleranceLevel <= 6
+        ? settings.toleranceLevel
+        : DEFAULT_RULE_SETTINGS.toleranceLevel,
+
+    shiftLevel:
+      Number.isInteger(settings?.shiftLevel) &&
+        settings.shiftLevel >= 0 &&
+        settings.shiftLevel <= 3
+        ? settings.shiftLevel
+        : DEFAULT_RULE_SETTINGS.shiftLevel,
+
+    solverLevel:
+      Number.isInteger(settings?.solverLevel) &&
+        settings.solverLevel >= 0 &&
+        settings.solverLevel <= 2
+        ? settings.solverLevel
+        : DEFAULT_RULE_SETTINGS.solverLevel
+  };
+
+  const content = JSON.stringify(data, null, 2);
+
+  try {
+    return await api.saveCSV(
+      'rules',
+      RULE_SETTINGS_FILE,
+      content
+    );
+  } catch (err) {
+    console.error('[rule-loader] failed to save rule settings', err);
+    throw err;
+  }
+}
