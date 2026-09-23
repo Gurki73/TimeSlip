@@ -20,38 +20,48 @@
 
     <section class="rules-settings-panel rules-settings-panel-shift" id="shift-model-panel"
       aria-labelledby="shift-model-title">
-      <h3 id="shift-model-title">Schicht-Modell</h3>
+      <span id="shift-model-title">Arbeitszeit-Block-Modell</span>
+      <div class="radio-and-explanation">
+        <div class="settings-radio-group" id="shift-model-options">
+          <div>
+            <legend class="sr-only">
+              Arbeitszeit-Block-Modell auswählen
+            </legend>
+            <label class="settings-radio-option" for="shift-model-one">
+              <input id="shift-model-one" name="shift-model" type="radio" value="one-shift">
+              <span class="settings-radio-label">
+                1 Schicht
+              </span>
+            </label>
 
-      <fieldset class="settings-radio-group" id="shift-model-options">
-        <legend class="sr-only">
-          Schicht-Modell auswählen
-        </legend>
+            <label class="settings-radio-option" for="shift-model-half-day">
+              <input id="shift-model-half-day" name="shift-model" type="radio" value="one-shift-half-day">
+              <span class="settings-radio-label">
+                1 Schicht + Halbtag
+              </span>
+            </label>
 
-        <label class="settings-radio-option" for="shift-model-one">
-          <input id="shift-model-one" name="shift-model" type="radio" value="one-shift">
-          <span class="settings-radio-label">
-            1 Schicht
-          </span>
-        </label>
+            <label class="settings-radio-option" for="shift-model-three">
+              <input id="shift-model-three" name="shift-model" type="radio" value="three-shifts">
+              <span class="settings-radio-label">
+                3 Schichten
+              </span>
+            </label>
 
-        <label class="settings-radio-option" for="shift-model-half-day">
-          <input id="shift-model-half-day" name="shift-model" type="radio" value="one-shift-half-day">
-          <span class="settings-radio-label">
-            1 Schicht + Halbtag
-          </span>
-        </label>
-
-        <label class="settings-radio-option" for="shift-model-three">
-          <input id="shift-model-three" name="shift-model" type="radio" value="three-shifts">
-          <span class="settings-radio-label">
-            3 Schichten
-          </span>
-        </label>
-      </fieldset>
-
-      <div class="settings-explanation" id="shift-model-explanation" aria-live="polite">
-        <!-- Filled by JavaScript -->
+            <label class="settings-radio-option" for="shift-model-three">
+              <input id="shift-model-three" name="shift-model" type="radio" value="three-shifts">
+              <span class="settings-radio-label">
+                3 Schichten
+              </span>
+            </label>
+          </div>
+        </div>
+        <div class="settings-explanation" id="shift-model-explanation" aria-live="polite">
+          <!-- Filled by JavaScript -->
+        </div>
       </div>
+
+
     </section>
 
 
@@ -59,25 +69,13 @@
              RULE ENGINE
              ========================================================= -->
 
-    <section class="rules-settings-panel rules-settings-panel-engine" id="rule-engine-panel"
-      aria-labelledby="rule-engine-title">
-      <h3 id="rule-engine-title">Rule Engine</h3>
-
+    <section class=" rules-settings-panel-engine" id="rule-engine-panel" aria-labelledby="rule-engine-title">
+      <span id="rule-engine-title">Was "genau" bedeuted <b>ungefähr</b>...</span>
       <div class="tolerance-control" id="rule-tolerance-control">
-        <div class="tolerance-heading">
-          <label for="rule-tolerance" id="rule-tolerance-label">
-            Toleranz
-          </label>
 
-          <output id="rule-tolerance-value" class="tolerance-value" for="rule-tolerance" aria-live="polite">
-            15&nbsp;%
-          </output>
-        </div>
-
-        ```html
         <div class="tolerance-slider" id="rule-tolerance-slider">
           <span class="tolerance-end-label" aria-hidden="true">
-            penibel <span class="noto">😠</span>
+            <span class="noto">😠</span> penibel
           </span>
 
           <!--
@@ -107,37 +105,25 @@
             entspannt <span class="noto">😎</span>
           </span>
         </div>
-
-        <p id="rule-tolerance-description" class="sr-only">
-          Bestimmt, wie tolerant die Regelprüfung gegenüber Über- und Unterbesetzung ist.
-          Überbesetzung wird zuerst erlaubt, bevor Unterbesetzung zugelassen wird.
-        </p>
-
         <div class="tolerance-examples" id="tolerance-examples" aria-live="polite" aria-atomic="true">
-          <p id="tolerance-example-one">
-            <!-- JS inserts example -->
-          </p>
-
-          <p id="tolerance-example-two">
-            <!-- JS inserts example -->
-          </p>
-
-          <p id="tolerance-example-three">
-            <!-- JS inserts example -->
-          </p>
-        </div>
-        
-
-
-        <p class="sr-only" id="rule-tolerance-description">
+          <b>Beispiele</b><br>
+          a) ungefähr 1 Koch <span class="noto">⇒</span> zwischen <span id="toleranceSampleMin_1">1</span> und <span
+            id="toleranceSampleMax_1">2</span>
+          Köche
+          <br>
+          b) ungefähr 4 Köche <span class="noto"> ⇒</span> zwischen<span id="toleranceSampleMin_2">3</span> und <span
+            id="toleranceSampleMax_2">5</span> Köche
+          <br>
+          c) ungefähr 9 Köche <span class="noto">⇒</span> zwischen <span id="toleranceSampleMin_3">8</span> und <span
+            id="toleranceSampleMax_3">12</span> Köche
+          <br><br>
           Bestimmt, wie stark die tatsächliche Besetzung von der
-          gewünschten Besetzung abweichen darf.
-        </p>
+          gewünschten Besetzung abweichen darf, wenn "ungefähr in einer Regel verwendet wird.
+
+        </div>
       </div>
 
-      <div class="tolerance-examples" id="tolerance-examples" aria-live="polite" aria-atomic="true">
-        <!-- Filled by JavaScript -->
-      </div>
+
     </section>
 
 
@@ -147,36 +133,37 @@
 
     <section class="rules-settings-panel rules-settings-panel-solver" id="solver-panel" aria-labelledby="solver-title">
       <h3 id="solver-title">Solver</h3>
+      <div class="solver-panel">
+        <div class="settings-radio-group" id="solver-options">
+          <legend class="sr-only">
+            Stellevertreter-Berechtigung auswählen
+          </legend>
 
-      <fieldset class="settings-radio-group" id="solver-options">
-        <legend class="sr-only">
-          Solver-Modus auswählen
-        </legend>
+          <label class="settings-radio-option" for="solver-none">
+            <input id="solver-none" name="solver-mode" type="radio" value="none">
+            <span class="settings-radio-label">
+              No solving
+            </span>i still
+          </label>
 
-        <label class="settings-radio-option" for="solver-none">
-          <input id="solver-none" name="solver-mode" type="radio" value="none">
-          <span class="settings-radio-label">
-            No solving
-          </span>i still
-        </label>
+          <label class="settings-radio-option" for="solver-easy">
+            <input id="solver-easy" name="solver-mode" type="radio" value="easy">
+            <span class="settings-radio-label">
+              Easy solve
+            </span>
+          </label>
 
-        <label class="settings-radio-option" for="solver-easy">
-          <input id="solver-easy" name="solver-mode" type="radio" value="easy">
-          <span class="settings-radio-label">
-            Easy solve
-          </span>
-        </label>
+          <label class="settings-radio-option" for="solver-hard">
+            <input id="solver-hard" name="solver-mode" type="radio" value="hard">
+            <span class="settings-radio-label">
+              Hard solve
+            </span>
+          </label>
+        </div>
 
-        <label class="settings-radio-option" for="solver-hard">
-          <input id="solver-hard" name="solver-mode" type="radio" value="hard">
-          <span class="settings-radio-label">
-            Hard solve
-          </span>
-        </label>
-      </fieldset>
-
-      <div class="settings-explanation" id="solver-explanation" aria-live="polite">
-        <!-- Filled by JavaScript -->
+        <div class="settings-explanation" id="solver-explanation" aria-live="polite">
+          <!-- Filled by JavaScript -->
+        </div>
       </div>
     </section>
 

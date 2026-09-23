@@ -497,7 +497,7 @@ function createCollapsible(cfg) {
     toggleBtn.id = `collapse-${cfg.id}-toggle`;
   }
 
-  const chev = clone.querySelector(".chev");
+  const chev = clone.querySelector(".chev-button");
   if (chev) {
     chev.id = `chev-${cfg.id}`;
   }
@@ -2082,7 +2082,10 @@ function applyCollapseState(toggleBtn, expanded) {
   collapsibleRoot.classList.toggle('active', expanded);
 
   const chev = toggleBtn.querySelector('.chev-button');
-  if (chev) chev.classList.toggle('active', expanded);
+  if (chev) {
+    chev.setAttribute('aria-expanded', expanded.toString());
+    chev.classList.toggle('active', expanded);
+  }
 
   if (toggleBtn.id === 'collapse-shifts-toggle') {
     const expandedMatrix = document.querySelector('.shift-matrix-expanded');

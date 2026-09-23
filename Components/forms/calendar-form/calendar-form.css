@@ -496,6 +496,40 @@
   background-color: transparent;
 }
 
+.rule-collapsible-toggle .chev-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  min-width: 1rem;
+  height: 1rem;
+  margin-right: 0.25rem;
+  font-size: 0.7rem;
+  line-height: 1;
+  transform: none;
+}
+
+.rule-collapsible-toggle .chev-button::before {
+  content: '\2B9C';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.3rem;
+  min-height: 1.3rem;
+  margin: 3px;
+  border-radius: 50%;
+  background-color: var(--accent-active);
+  color: var(--bg-white);
+  font-size: 0.6rem;
+  line-height: 1;
+  font-family: "NotoEmoji", sans-serif;
+}
+
+.rule-collapsible-toggle[aria-expanded="true"] .chev-button::before {
+  content: '\2B9E';
+  font-family: "NotoEmoji", sans-serif;
+}
+
 .rule-collapsible-legend:hover {
   background: color-mix(in srgb, var(--color-text-calendar) 45%, transparent);
 }

@@ -1,0 +1,48 @@
+<!-- Components\help\help-screenshot.html -->
+
+<!--
+an html-makro component to easy swab and maintain screenshots in the help section.
+The component is used in the help.html and chapterfiles
+
+Message for future me:
+Allways use pastel color.theme for any screenshot
+use purpple '#ab3e2a' for marker and identifier
+marker are times new roman bold(?) in drawIO
+
+JavaScript does NOT position markers over the image.
+
+    Legend:
+    - names only
+    - explanations belong in the surrounding Help text
+    - screenshot left, legend right
+
+    Visual language:
+    - octagonal marker
+    - dedicated purple
+    - cornflower-blue border
+    - ghostwhite letter
+    - deliberately distinct from application role/day/shift colors
+
+    If a screenshot needs more than 10 identifiers:
+    STOP.
+    Split the screenshot instead of extending this limit.
+
+    The goal is not to build a framework.
+    The goal is to make future Help maintenance boring.
+-->
+
+Components\help\help-screenshot.html
+
+<help-screenshot name="calendar-overview" <ul class="">
+    <Image src="assets/images/help/calendar-overview.png" alt="Kalenderübersicht" />
+    <li>
+        <span class="screenshot-identiffier">A</span>
+        Chevron um die Kalenderübersicht zu öffnen und zu schließen
+    </li>
+    <li>
+        <span class="screenshot-identiffier">B</span>
+        Filter um die Suchergebnisse zu verfeinern
+    </li>
+    </ul>
+    >
+</help-screenshot>

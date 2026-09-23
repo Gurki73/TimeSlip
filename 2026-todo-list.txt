@@ -9,27 +9,27 @@ calendar:
 ruleset:
 🔵 3. ☐ check complex rules
 calendar-settings:
-🟣 8. 🚧 (auto remove available days off for employees depending an regular shedule ) 
+🟣 4. 🚧 (auto remove available days off for employees depending an regular shedule ) 
 admin tools:
 admin tools.color:
-🟢11. ☐ custom color picker looses gradient when picking, roles
-🟡12. ☐ center table and picker in form
-🟢13. 🚧 fix the tabulators
-🟡14. ☐ finish layout for calandar color customasation
-🟡15. 🚧 finish the layout for button and background  colors
+🟢5. ☐ custom color picker looses gradient when picking, roles
+🟡6. ☐ center table and picker in form
+🟢7. 🚧 fix the tabulators
+🟡8. ☐ finish layout for calandar color customasation
+🟡9. 🚧 finish the layout for button and background  colors
 admin tools. revive delted employees
-🟡18. ☐ add sample
-🟡19. ☐ removed date picker completely and moved date - picker needs to employeeform , new state phoenix ="🐦‍🔥" needs a warning status in employee form
+🟡10. ☐ add sample
+🟡11. ☐ removed date picker completely and moved date - picker needs to employeeform , new state phoenix ="🐦‍🔥" needs a warning status in employee form
 minx:
-🟡22. 👀 allow state dirty for sample save button(?)
+🟡12. 👀 allow state dirty for sample save button(?)
 -> keep buttons as are but make sure tooltip text are updated
-🟣23. ☐ update version from 1.x.x to 2.0.0 dev to prototype
-🟣24. ☐ publish as prototype on itch.icon
-🟣25. ☐ make basic marketing article for itch.icon
-🟣26. ☐ plan you-tube tutorial
+🟣13. ☐ update version from 1.x.x to 2.0.0 dev to prototype
+🟣14. ☐ publish as prototype on itch.icon
+🟣15. ☐ make basic marketing article for itch.icon
+🟣16. ☐ plan you-tube tutorial
 
 help page:
-🟣27. 🚧 write down the thoughts about  heros journey and save the calculations
-🟡28. 🚧 update Glossary
-🟡29. ☐ build a skeleton for screenshots
-🟡30. 🚧 highlight in nav when hover/click in help
+🟣17. 🚧 write down the thoughts about  heros journey and save the calculations
+🟡18. 🚧 update Glossary
+🟡19. 🚧 build a skeleton for screenshots
+🟡20. 🚧 highlight in nav when hover/click in help
