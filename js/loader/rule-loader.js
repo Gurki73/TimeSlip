@@ -9,6 +9,39 @@ let rules = [];       // evaluated (usable) rules
 let allRules = [];    // raw rule objects loaded
 let rulesMode = null;
 
+const RULE_SETTINGS_FILE = 'rules/rule-settings.json';
+
+const DEFAULT_RULE_SETTINGS = {
+  toleranceLevel: 3, // 0..6
+  shiftLevel: 0,     // 0..3
+  solverLevel: 0     // 0..2
+};
+
+function normalizeRuleSettings(settings = {}) {
+  return {
+    toleranceLevel:
+      Number.isInteger(settings?.toleranceLevel) &&
+        settings.toleranceLevel >= 0 &&
+        settings.toleranceLevel <= 6
+        ? settings.toleranceLevel
+        : DEFAULT_RULE_SETTINGS.toleranceLevel,
+
+    shiftLevel:
+      Number.isInteger(settings?.shiftLevel) &&
+        settings.shiftLevel >= 0 &&
+        settings.shiftLevel <= 3
+        ? settings.shiftLevel
+        : DEFAULT_RULE_SETTINGS.shiftLevel,
+
+    solverLevel:
+      Number.isInteger(settings?.solverLevel) &&
+        settings.solverLevel >= 0 &&
+        settings.solverLevel <= 2
+        ? settings.solverLevel
+        : DEFAULT_RULE_SETTINGS.solverLevel
+  };
+}
+
 export async function loadRuleData(api, attempt = 1) {
   if (!api) {
     console.error('[rule-loader] window.api not available');
@@ -341,14 +374,6 @@ export function getAllRules() {
   return allRules.map(r => ({ ...r }));
 }
 
-const RULE_SETTINGS_FILE = 'rule-settings.json';
-
-const DEFAULT_RULE_SETTINGS = {
-  toleranceLevel: 3, // 0..6
-  shiftLevel: 0,     // 0..3
-  solverLevel: 0     // 0..2
-};
-
 export async function loadRuleSettings(api) {
   if (!api) {
     throw new Error('API reference missing');
@@ -436,6 +461,55 @@ export async function saveRuleSettings(api, settings) {
     );
   } catch (err) {
     console.error('[rule-loader] failed to save rule settings', err);
+    throw err;
+  }
+}
+export async function loadRuleSettings(api) {
+  if (!api) {
+    throw new Error('API reference missing');
+  }
+
+  try {
+    const raw = await api.loadRuleSettings();
+
+    if (!raw) {
+      return { ...DEFAULT_RULE_SETTINGS };
+    }
+
+    const parsed = typeof raw === 'string'
+      ? JSON.parse(raw)
+      : raw;
+
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('Invalid rule settings JSON');
+    }
+
+    return normalizeRuleSettings(parsed);
+  } catch (err) {
+    console.warn(
+      '[rule-loader] failed to load rule settings, using defaults',
+      err
+    );
+
+    return { ...DEFAULT_RULE_SETTINGS };
+  }
+}
+
+export async function saveRuleSettings(api, settings) {
+  if (!api) {
+    throw new Error('API reference missing');
+  }
+
+  const data = normalizeRuleSettings(settings);
+  const content = JSON.stringify(data, null, 2);
+
+  try {
+    return await api.saveRuleSettings(content);
+  } catch (err) {
+    console.error(
+      '[rule-loader] failed to save rule settings',
+      err
+    );
     throw err;
   }
 }
