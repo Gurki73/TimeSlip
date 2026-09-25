@@ -464,6 +464,7 @@ export async function saveRuleSettings(api, settings) {
     throw err;
   }
 }
+/*
 export async function loadRuleSettings(api) {
   if (!api) {
     throw new Error('API reference missing');
@@ -513,3 +514,4 @@ export async function saveRuleSettings(api, settings) {
     throw err;
   }
 }
+  */
