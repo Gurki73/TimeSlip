@@ -187,6 +187,9 @@ async function loadToolPage(htmlFile) {
     if (htmlFile === 'buyMeCoffee.html') {
       initBuyMeCoffee();
     }
+    if (htmlFile === 'rules-settings.html') {
+      initRulesSettings();
+    }
 
   } catch (err) {
     container.innerHTML = `
@@ -1278,3 +1281,103 @@ function getContrastYIQ(hexcolor) {
 }
 
 
+
+/* === SHIFT MODEL SAMPLE ============================================= */
+function initRulesSettings(){
+  const sample=document.getElementById('shift-model-sample');
+  const text=document.getElementById('shift-model-sample-text');
+  const options=[...document.querySelectorAll('input[name="shift-model"]')];
+  if(!sample||!text||!options.length)return;
+
+  // Abstract 24-unit layout model; not real clock times.
+  const shifts={
+    early:{label:'Früh',start:0,end:10,className:'early'},
+    day:{label:'Tag',start:7,end:17,className:'day'},
+    late:{label:'Spät',start:14,end:24,className:'late'}
+  };
+
+  const getShiftLabels=()=>{
+    const cached=window.shiftLabels||window.shiftNames||window.calendarShiftLabels;
+    if(Array.isArray(cached)&&cached.length>=3)
+      return {early:cached[0],day:cached[1],late:cached[2]};
+    return {early:shifts.early.label,day:shifts.day.label,late:shifts.late.label};
+  };
+
+  const allowedPairs={
+    'one-shift':[['early','day'],['day','late']],
+    'early-day':[['day','late']],
+    'day-late':[['early','day']],
+    'three-shifts':[]
+  };
+
+  const descriptions={
+    'one-shift':'<strong>Alle Schichten können sich gegenseitig vertreten.</strong>',
+    'early-day':'<strong>Tag und Spät können sich gegenseitig vertreten.</strong>',
+    'day-late':'<strong>Früh und Tag können sich gegenseitig vertreten.</strong>',
+    'three-shifts':'<strong>Vertretungen bleiben innerhalb derselben Schicht.</strong>'
+  };
+
+  function render(mode){
+    const labels=getShiftLabels();
+    const rows=[
+      {key:'early',shift:shifts.early},
+      {key:'day',shift:shifts.day},
+      {key:'late',shift:shifts.late}
+    ];
+    sample.innerHTML='';
+    rows.forEach(({key,shift},index)=>{
+      const row=document.createElement('div');
+      row.className='shift-model-row';
+      const label=document.createElement('span');
+      label.className='shift-model-label';
+      label.textContent=labels[key];
+      row.appendChild(label);
+
+      const track=document.createElement('div');
+      track.className='shift-model-track';
+      const bar=document.createElement('div');
+      bar.className=`shift-model-bar ${shift.className}`;
+      bar.style.left=`${shift.start/24*100}%`;
+      bar.style.width=`${(shift.end-shift.start)/24*100}%`;
+      track.appendChild(bar);
+      row.appendChild(track);
+      sample.appendChild(row);
+
+      if(index<rows.length-1){
+        const exchangeRow=document.createElement('div');
+        exchangeRow.className='shift-model-exchange-row';
+        exchangeRow.dataset.between=`${key}-${rows[index+1].key}`;
+        sample.appendChild(exchangeRow);
+      }
+    });
+
+    (allowedPairs[mode]||[]).forEach(([a,b])=>{
+      const first=shifts[a],second=shifts[b];
+      const overlapStart=Math.max(first.start,second.start);
+      const overlapEnd=Math.min(first.end,second.end);
+      if(overlapEnd<=overlapStart)return;
+      const exchangeRow=sample.querySelector(`.shift-model-exchange-row[data-between="${a}-${b}"]`);
+      if(!exchangeRow)return;
+
+      const indicator=document.createElement('span');
+      indicator.className='shift-model-exchange';
+      indicator.textContent='↕';
+      indicator.setAttribute('aria-hidden','true');
+
+      // Center arrow at the horizontal midpoint of the overlapping bars.
+      const overlapMidpoint=(overlapStart+overlapEnd)/2;
+      indicator.style.left=`${overlapMidpoint/24*100}%`;
+      indicator.style.top='50%';
+      exchangeRow.appendChild(indicator);
+    });
+
+    text.innerHTML=descriptions[mode]||'';
+  }
+
+  const update=()=>{
+    const selected=options.find(option=>option.checked);
+    render(selected?.value||'three-shifts');
+  };
+  options.forEach(option=>option.addEventListener('change',update));
+  update();
+}
