@@ -1282,102 +1282,208 @@ function getContrastYIQ(hexcolor) {
 
 
 
-/* === SHIFT MODEL SAMPLE ============================================= */
-function initRulesSettings(){
-  const sample=document.getElementById('shift-model-sample');
-  const text=document.getElementById('shift-model-sample-text');
-  const options=[...document.querySelectorAll('input[name="shift-model"]')];
-  if(!sample||!text||!options.length)return;
+/* === SHIFT EXAMPLES =============================================== */
+function initRulesSettings() {
+  const scroller = document.getElementById('shift-examples-scroller');
+  const options = [...document.querySelectorAll('input[name="shift-model"]')];
+  if (!scroller || !options.length) return;
 
-  // Abstract 24-unit layout model; not real clock times.
-  const shifts={
-    early:{label:'Früh',start:0,end:10,className:'early'},
-    day:{label:'Tag',start:7,end:17,className:'day'},
-    late:{label:'Spät',start:14,end:24,className:'late'}
+  /*
+   * The examples are deliberately data-driven.
+   * start/end are abstract 24-unit positions used only for the visual
+   * geometry. The actual clock times are intentionally not displayed.
+   */
+  const shiftExamples = [
+    {
+      id: 'hotel',
+      icon: '🏨',
+      title: 'Hotel',
+      model: 'three-shifts',
+      description: 'Die Rezeption muss rund um die Uhr besetzt sein.',
+      shifts: {
+        early: { start: 0, end: 8 },
+        day: { start: 8, end: 16 },
+        late: { start: 16, end: 24 }
+      }
+    },
+    {
+      id: 'restaurant',
+      icon: '🍽️',
+      title: 'Restaurant',
+      model: 'three-shifts',
+      description: 'Vorbereitung, Service und Abendbetrieb überlappen.',
+      shifts: {
+        early: { start: 9, end: 17 },
+        day: { start: 11, end: 19 },
+        late: { start: 15, end: 23 }
+      }
+    },
+    {
+      id: 'museum',
+      icon: '🏛️',
+      title: 'Museum',
+      model: 'day-late',
+      placeholder: true
+    },
+    {
+      id: 'retail',
+      icon: '🛒',
+      title: 'Einzelhandel',
+      model: 'early-day',
+      placeholder: true
+    },
+    {
+      id: 'office',
+      icon: '🏢',
+      title: 'Büro',
+      model: 'one-shift',
+      placeholder: true
+    },
+    {
+      id: 'foodtruck',
+      icon: '🚚',
+      title: 'Foodtruck',
+      model: 'one-shift',
+      placeholder: true
+    }
+  ];
+
+  const shifts = {
+    early: { label: 'Früh', className: 'early' },
+    day: { label: 'Tag', className: 'day' },
+    late: { label: 'Spät', className: 'late' }
   };
 
-  const getShiftLabels=()=>{
-    const cached=window.shiftLabels||window.shiftNames||window.calendarShiftLabels;
-    if(Array.isArray(cached)&&cached.length>=3)
-      return {early:cached[0],day:cached[1],late:cached[2]};
-    return {early:shifts.early.label,day:shifts.day.label,late:shifts.late.label};
+  const allowedPairs = {
+    'one-shift': [['early', 'day'], ['day', 'late']],
+    'early-day': [['early', 'day']],
+    'day-late': [['day', 'late']],
+    'three-shifts': []
   };
 
-  const allowedPairs={
-    'one-shift':[['early','day'],['day','late']],
-    'early-day':[['day','late']],
-    'day-late':[['early','day']],
-    'three-shifts':[]
+  const getShiftLabels = () => {
+    const cached = window.shiftLabels || window.shiftNames || window.calendarShiftLabels;
+    if (Array.isArray(cached) && cached.length >= 3) {
+      return { early: cached[0], day: cached[1], late: cached[2] };
+    }
+    return {
+      early: shifts.early.label,
+      day: shifts.day.label,
+      late: shifts.late.label
+    };
   };
 
-  const descriptions={
-    'one-shift':'<strong>Alle Schichten können sich gegenseitig vertreten.</strong>',
-    'early-day':'<strong>Tag und Spät können sich gegenseitig vertreten.</strong>',
-    'day-late':'<strong>Früh und Tag können sich gegenseitig vertreten.</strong>',
-    'three-shifts':'<strong>Vertretungen bleiben innerhalb derselben Schicht.</strong>'
-  };
+  function createShiftBar(track, key, geometry, labels) {
+    const shift = document.createElement('div');
+    shift.className = `shift-example-bar ${shifts[key].className}`;
+    shift.style.left = `${geometry.start / 24 * 100}%`;
+    shift.style.width = `${(geometry.end - geometry.start) / 24 * 100}%`;
+    shift.setAttribute('aria-label', labels[key]);
+    track.appendChild(shift);
+  }
 
-  function render(mode){
-    const labels=getShiftLabels();
-    const rows=[
-      {key:'early',shift:shifts.early},
-      {key:'day',shift:shifts.day},
-      {key:'late',shift:shifts.late}
-    ];
-    sample.innerHTML='';
-    rows.forEach(({key,shift},index)=>{
-      const row=document.createElement('div');
-      row.className='shift-model-row';
-      const label=document.createElement('span');
-      label.className='shift-model-label';
-      label.textContent=labels[key];
-      row.appendChild(label);
+  function createExampleCard(example, labels) {
+    const card = document.createElement('article');
+    card.className = 'shift-example-card';
+    card.dataset.exampleId = example.id;
 
-      const track=document.createElement('div');
-      track.className='shift-model-track';
-      const bar=document.createElement('div');
-      bar.className=`shift-model-bar ${shift.className}`;
-      bar.style.left=`${shift.start/24*100}%`;
-      bar.style.width=`${(shift.end-shift.start)/24*100}%`;
-      track.appendChild(bar);
-      row.appendChild(track);
-      sample.appendChild(row);
+    const header = document.createElement('div');
+    header.className = 'shift-example-header';
 
-      if(index<rows.length-1){
-        const exchangeRow=document.createElement('div');
-        exchangeRow.className='shift-model-exchange-row';
-        exchangeRow.dataset.between=`${key}-${rows[index+1].key}`;
-        sample.appendChild(exchangeRow);
+    const title = document.createElement('h3');
+    title.className = 'shift-example-title';
+
+    const icon = document.createElement('span');
+    icon.className = 'shift-example-icon noto';
+    icon.textContent = example.icon;
+    icon.setAttribute('aria-hidden', 'true');
+
+    const titleText = document.createElement('span');
+    titleText.textContent = example.title;
+
+    title.append(icon, titleText);
+    header.appendChild(title);
+    card.appendChild(header);
+
+    if (example.placeholder) {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'shift-example-placeholder';
+      placeholder.textContent = 'Beispiel folgt …';
+      card.appendChild(placeholder);
+      return card;
+    }
+
+    const diagram = document.createElement('div');
+    diagram.className = 'shift-example-diagram';
+    diagram.setAttribute('aria-label', `Schichtbeispiel: ${example.title}`);
+
+    ['early', 'day', 'late'].forEach((key, index) => {
+      const row = document.createElement('div');
+      row.className = 'shift-example-row';
+
+      const label = document.createElement('span');
+      label.className = 'shift-example-label';
+      label.textContent = labels[key];
+
+      const track = document.createElement('div');
+      track.className = 'shift-example-track';
+      createShiftBar(track, key, example.shifts[key], labels);
+
+      row.append(label, track);
+      diagram.appendChild(row);
+
+      if (index < 2) {
+        const exchangeRow = document.createElement('div');
+        exchangeRow.className = 'shift-example-exchange-row';
+
+        const pair = [key, ['day', 'late'][index]];
+        if (allowedPairs[example.model]?.some(([a, b]) => a === pair[0] && b === pair[1])) {
+          const first = example.shifts[pair[0]];
+          const second = example.shifts[pair[1]];
+          const overlapStart = Math.max(first.start, second.start);
+          const overlapEnd = Math.min(first.end, second.end);
+
+          if (overlapEnd > overlapStart) {
+            const indicator = document.createElement('span');
+            indicator.className = 'shift-model-exchange';
+            indicator.textContent = '↕';
+            indicator.setAttribute('aria-hidden', 'true');
+            const overlapMidpoint = (overlapStart + overlapEnd) / 2;
+            indicator.style.left = `${overlapMidpoint / 24 * 100}%`;
+            exchangeRow.appendChild(indicator);
+          }
+        }
+
+        diagram.appendChild(exchangeRow);
       }
     });
 
-    (allowedPairs[mode]||[]).forEach(([a,b])=>{
-      const first=shifts[a],second=shifts[b];
-      const overlapStart=Math.max(first.start,second.start);
-      const overlapEnd=Math.min(first.end,second.end);
-      if(overlapEnd<=overlapStart)return;
-      const exchangeRow=sample.querySelector(`.shift-model-exchange-row[data-between="${a}-${b}"]`);
-      if(!exchangeRow)return;
+    card.appendChild(diagram);
 
-      const indicator=document.createElement('span');
-      indicator.className='shift-model-exchange';
-      indicator.textContent='↕';
-      indicator.setAttribute('aria-hidden','true');
+    const description = document.createElement('p');
+    description.className = 'shift-example-description';
+    description.textContent = example.description;
+    card.appendChild(description);
 
-      // Center arrow at the horizontal midpoint of the overlapping bars.
-      const overlapMidpoint=(overlapStart+overlapEnd)/2;
-      indicator.style.left=`${overlapMidpoint/24*100}%`;
-      indicator.style.top='50%';
-      exchangeRow.appendChild(indicator);
-    });
-
-    text.innerHTML=descriptions[mode]||'';
+    return card;
   }
 
-  const update=()=>{
-    const selected=options.find(option=>option.checked);
-    render(selected?.value||'three-shifts');
+  function render(mode) {
+    const labels = getShiftLabels();
+    scroller.innerHTML = '';
+
+    const examples = shiftExamples.filter(example => example.model === mode);
+
+    examples.forEach(example => {
+      scroller.appendChild(createExampleCard(example, labels));
+    });
+  }
+
+  const update = () => {
+    const selected = options.find(option => option.checked);
+    render(selected?.value || 'three-shifts');
   };
-  options.forEach(option=>option.addEventListener('change',update));
+
+  options.forEach(option => option.addEventListener('change', update));
   update();
 }
