@@ -29,35 +29,29 @@
             </legend>
             <label class="settings-radio-option" for="shift-model-one">
               <input id="shift-model-one" name="shift-model" type="radio" value="one-shift">
-              <span class="settings-radio-label">
-                1 Schicht
-              </span>
+              <span class="settings-radio-label">1 Schicht</span>
             </label>
 
-            <label class="settings-radio-option" for="shift-model-half-day">
-              <input id="shift-model-half-day" name="shift-model" type="radio" value="one-shift-half-day">
-              <span class="settings-radio-label">
-                1 Schicht + Halbtag
-              </span>
+            <label class="settings-radio-option" for="shift-model-early-day">
+              <input id="shift-model-early-day" name="shift-model" type="radio" value="early-day">
+              <span class="settings-radio-label">2 Schichten · Früh + Tag</span>
             </label>
 
-            <label class="settings-radio-option" for="shift-model-three">
-              <input id="shift-model-three" name="shift-model" type="radio" value="three-shifts">
-              <span class="settings-radio-label">
-                3 Schichten
-              </span>
+            <label class="settings-radio-option" for="shift-model-day-late">
+              <input id="shift-model-day-late" name="shift-model" type="radio" value="day-late">
+              <span class="settings-radio-label">2 Schichten · Tag + Spät</span>
             </label>
 
             <label class="settings-radio-option" for="shift-model-three">
               <input id="shift-model-three" name="shift-model" type="radio" value="three-shifts">
-              <span class="settings-radio-label">
-                3 Schichten
-              </span>
+              <span class="settings-radio-label">3 Schichten</span>
             </label>
           </div>
         </div>
         <div class="settings-explanation" id="shift-model-explanation" aria-live="polite">
-          <!-- Filled by JavaScript -->
+          <div class="shift-model-sample" id="shift-model-sample" aria-label="Beispiel für die Schicht- und Vertretungslogik"></div>
+          <p class="shift-model-sample-hint"><span aria-hidden="true">↕</span> = Vertretung zwischen diesen Schichten möglich</p>
+          <div class="shift-model-sample-text" id="shift-model-sample-text"></div>
         </div>
       </div>
 
