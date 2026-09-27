@@ -1,4 +1,4 @@
-import { getCurrentRuleSettings } from '../../../js/loader/rule-loader.js';
+import { getCurrentRuleSettings, getShiftSwapGroups } from '../../../js/loader/rule-loader.js';
 
 /*
 SOLVER DISCLAIMER:
@@ -96,8 +96,8 @@ SolverResult = {
  * - Solver moves hats, not people
  */
 
-export function runSolverPerShift(attendanceByShift, rules) {
-    return {
+export function runSolverPerShift(attendanceByShift, rules, options = {}) {
+    const results = {
         early: runSolver({
             timeframe: 'early',
             attendance: attendanceByShift.early,
@@ -114,6 +114,12 @@ export function runSolverPerShift(attendanceByShift, rules) {
             rules
         })
     };
+    results.shiftSwapPolicy = {
+        groups: options.shiftSwapGroups || getShiftSwapGroups(),
+        status: 'not_applied',
+        reason: 'CROSS_SHIFT_SOLVER_NOT_IMPLEMENTED'
+    };
+    return results;
 }
 
 
@@ -125,9 +131,10 @@ export function runSolver(input) {
     return result;
 }
 
-export function runCrossShiftSolver() {
+export function runCrossShiftSolver(shiftGroups = getShiftSwapGroups()) {
     return {
         status: 'not_implemented',
+        allowedShiftGroups: shiftGroups,
         moves: [],
         warnings: ['Cross-shift role reassignment is not implemented'],
         stopReason: 'cross_shift_not_implemented'

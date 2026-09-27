@@ -20,35 +20,37 @@
 
     <section class="rules-settings-panel rules-settings-panel-shift" id="shift-model-panel"
       aria-labelledby="shift-model-title">
-      <span id="shift-model-title">Arbeitszeit-Block-Modell</span>
+      <span id="shift-model-title">Zeitfenster für Rollenwechsel</span>
       <div class="radio-and-explanation">
         <div class="settings-radio-group" id="shift-model-options">
           <div>
             <legend class="sr-only">
-              Arbeitszeit-Block-Modell auswählen
+              Zeitfenster für Rollenwechsel auswählen
             </legend>
             <label class="settings-radio-option" for="shift-model-one">
               <input id="shift-model-one" name="shift-model" type="radio" value="one-shift">
-              <span class="settings-radio-label">1 Schicht</span>
+              <span class="settings-radio-label">Ein Block · Früh, Tag und Spät gemeinsam</span>
             </label>
 
             <label class="settings-radio-option" for="shift-model-early-day">
               <input id="shift-model-early-day" name="shift-model" type="radio" value="early-day">
-              <span class="settings-radio-label">2 Schichten · Früh + Tag</span>
+              <span class="settings-radio-label">Früh separat · Tag und Spät gemeinsam</span>
             </label>
 
             <label class="settings-radio-option" for="shift-model-day-late">
               <input id="shift-model-day-late" name="shift-model" type="radio" value="day-late">
-              <span class="settings-radio-label">2 Schichten · Tag + Spät</span>
+              <span class="settings-radio-label">Früh und Tag gemeinsam · Spät separat</span>
             </label>
 
             <label class="settings-radio-option" for="shift-model-three">
               <input id="shift-model-three" name="shift-model" type="radio" value="three-shifts">
-              <span class="settings-radio-label">3 Schichten</span>
+              <span class="settings-radio-label">Früh, Tag und Spät separat</span>
             </label>
           </div>
         </div>
         <div class="settings-explanation" id="shift-model-explanation" aria-live="polite">
+          Mitarbeiterschichten und Dienstpläne bleiben unverändert. Die Einstellung beschreibt nur erlaubte Grenzen für
+          Rollenwechsel.
           <div class="shift-examples-scroller" id="shift-examples-scroller"
             aria-label="Beispiele für Arbeitszeit-Block-Modelle"></div>
         </div>

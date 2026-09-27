@@ -14,7 +14,7 @@ import { loadRuleData } from '../../js/loader/rule-loader.js';
 import { updateRuleset } from '../forms/rule-form/translatorMachine.js';
 import { runSolver as runSolver, runSolverPerShift, mergeAttendance, checkRulesForWeek, checkRulesForSpecial, createEmptyAttendance } from '../forms/rule-form/solver.js';
 import { executeRuleset } from '../forms/rule-form/ruleChecker.js';
-import { getCurrentRuleSettings, loadRuleSettings } from '../../js/loader/rule-loader.js';
+import { getCurrentRuleSettings, getShiftSwapGroups, loadRuleSettings } from '../../js/loader/rule-loader.js';
 import { loadCalendarRoleAssignmentPlan, saveCalendarRoleAssignmentPlan } from '../../js/Utils/calendarRoleAssignmentStore.js';
 
 
@@ -1589,7 +1589,7 @@ function mapDailySolverMovesToReassignments(moves, shiftMatchesByType) {
 
 function logSolverIssues(date, scope, result) {
   const results = scope === 'shift'
-    ? Object.entries(result || {})
+    ? Object.entries(result || {}).filter(([key]) => ['early', 'day', 'late'].includes(key))
     : [[scope, result]];
   const issues = results
     .map(([timeframe, solverResult]) => ({
@@ -2101,7 +2101,9 @@ function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts, 
       Object.assign(reassignmentsByShift, restoreRoleAssignments(savedAssignments));
     } else {
       try {
-        solverResult = runSolverPerShift(attendanceInput, solverRules);
+        solverResult = runSolverPerShift(attendanceInput, solverRules, {
+          shiftSwapGroups: getShiftSwapGroups()
+        });
         logSolverIssues(day, 'shift', solverResult);
         reassignmentsByShift.early = mapSolverMovesToReassignments(solverResult?.early?.moves, shiftMatchesByType.early);
         reassignmentsByShift.day = mapSolverMovesToReassignments(solverResult?.day?.moves, shiftMatchesByType.day);

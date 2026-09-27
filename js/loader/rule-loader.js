@@ -24,6 +24,20 @@ export function getCurrentRuleSettings() {
   return { ...(currentRuleSettings || DEFAULT_RULE_SETTINGS) };
 }
 
+export function getShiftSwapGroups(shiftLevel = getCurrentRuleSettings().shiftLevel) {
+  switch (shiftLevel) {
+    case 0:
+      return [['early', 'day', 'late']];
+    case 1:
+      return [['early'], ['day', 'late']];
+    case 2:
+      return [['early', 'day'], ['late']];
+    case 3:
+    default:
+      return [['early'], ['day'], ['late']];
+  }
+}
+
 export function setCurrentRuleSettings(settings) {
   currentRuleSettings = normalizeRuleSettings(settings);
   return getCurrentRuleSettings();
