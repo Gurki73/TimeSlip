@@ -14,6 +14,7 @@ import { loadRuleData } from '../../js/loader/rule-loader.js';
 import { updateRuleset } from '../forms/rule-form/translatorMachine.js';
 import { runSolver as runSolver, runSolverPerShift, mergeAttendance, checkRulesForWeek, checkRulesForSpecial, createEmptyAttendance } from '../forms/rule-form/solver.js';
 import { executeRuleset } from '../forms/rule-form/ruleChecker.js';
+import { loadCalendarRoleAssignmentPlan, saveCalendarRoleAssignmentPlan } from '../../js/Utils/calendarRoleAssignmentStore.js';
 
 
 let currentMonthIndex;
@@ -1038,6 +1039,9 @@ function applyRuleWarnings(ruleStats) {
   };
 
   const buildViolationTooltip = (failure) => {
+    if (failure.type === 'LOGIC_NOT_MET') {
+      return `Regel ${failure.ruleId}: logische Ausnahmebedingung nicht erfüllt`;
+    }
     const typeLabel = failure.type === 'TOO_MANY' ? 'zu viele' : 'zu wenig';
     const roleLabel = getRoleLabel(failure);
     const actual = Number.isFinite(failure.total) ? failure.total : '?';
@@ -1048,7 +1052,9 @@ function applyRuleWarnings(ruleStats) {
   const createViolationIcon = (failure) => {
     const icon = document.createElement('span');
     icon.classList.add('violation-icon');
-    icon.textContent = failure.type === 'TOO_MANY' ? '⚠️' : '🚨';
+    icon.textContent = failure.type === 'LOGIC_NOT_MET'
+      ? '⚠️'
+      : failure.type === 'TOO_MANY' ? '⚠️' : '🚨';
     icon.title = buildViolationTooltip(failure);
     return icon;
   };
@@ -1501,6 +1507,64 @@ function mapSolverMovesToReassignments(moves, matches) {
   return result;
 }
 
+function createRoleAssignmentSignature(scope, attendance, rules, matchesByShift) {
+  const employees = Object.entries(matchesByShift || {})
+    .flatMap(([shift, matches]) => (Array.isArray(matches) ? matches : [])
+      .map(({ employee }) => ({
+        shift,
+        id: String(employee?.id ?? ''),
+        mainRoleIndex: Number(employee?.mainRoleIndex),
+        secondaryRoleIndex: Number(employee?.secondaryRoleIndex),
+        tertiaryRoleIndex: Number(employee?.tertiaryRoleIndex)
+      })))
+    .sort((left, right) => `${left.shift}:${left.id}`.localeCompare(`${right.shift}:${right.id}`));
+
+  const signatureInput = JSON.stringify({
+    scope,
+    dataMode: localStorage.getItem('dataMode') || 'auto',
+    roleIndices: calendarRoles.map((role, index) => Number(role?.colorIndex ?? index)),
+    attendance,
+    rules,
+    employees
+  });
+
+  let hash = 14695981039346656037n;
+  for (let index = 0; index < signatureInput.length; index++) {
+    hash ^= BigInt(signatureInput.charCodeAt(index));
+    hash = BigInt.asUintN(64, hash * 1099511628211n);
+  }
+  return `fnv64-${hash.toString(16)}`;
+}
+
+function serializeRoleAssignments(assignmentsByShift) {
+  return Object.entries(assignmentsByShift || {}).flatMap(([shift, assignments]) =>
+    Object.entries(assignments || {}).map(([employeeId, assignment]) => ({
+      shift,
+      employeeId,
+      fromRoleIndex: assignment.fromRoleIndex,
+      toRoleIndex: assignment.toRoleIndex,
+      badge: assignment.badge || null
+    }))
+  );
+}
+
+function restoreRoleAssignments(assignments) {
+  const restored = { early: {}, day: {}, late: {} };
+  if (!Array.isArray(assignments)) return restored;
+
+  assignments.forEach(assignment => {
+    const { shift, employeeId, fromRoleIndex, toRoleIndex, badge } = assignment || {};
+    if (!restored[shift] || employeeId == null || !Number.isInteger(toRoleIndex) || toRoleIndex < 0) return;
+    restored[shift][String(employeeId)] = {
+      fromRoleIndex,
+      toRoleIndex,
+      badge: typeof badge === 'string' ? badge : null
+    };
+  });
+
+  return restored;
+}
+
 function mapDailySolverMovesToReassignments(moves, shiftMatchesByType) {
   const result = { early: {}, day: {}, late: {} };
   if (!Array.isArray(moves)) return result;
@@ -1573,7 +1637,7 @@ function populateShift(type, shift, day, index, monthRequests, reassignments = n
       'calendar-emoji',
       'small',
       `emp-${employee.id}`,
-      `role-${employee.mainRoleIndex}`
+      `role-${displayRoleIndex}`
     );
     emoji.innerHTML = employee.personalEmoji;
 
@@ -2014,48 +2078,78 @@ function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts, 
   });
 
   let solverResult = null;
+  const reassignmentsByShift = { early: {}, day: {}, late: {} };
   if (solverRules.static.length || solverRules.flexible.length) {
-    try {
-      solverResult = runSolverPerShift({
-        early: shiftAttendanceByType.early || createEmptyAttendance(),
-        day: shiftAttendanceByType.day || createEmptyAttendance(),
-        late: shiftAttendanceByType.late || createEmptyAttendance()
-      }, solverRules);
-      logSolverIssues(day, 'shift', solverResult);
-    } catch (error) {
-      console.warn('Solver failed for day shift:', error);
+    const attendanceInput = {
+      early: shiftAttendanceByType.early || createEmptyAttendance(),
+      day: shiftAttendanceByType.day || createEmptyAttendance(),
+      late: shiftAttendanceByType.late || createEmptyAttendance()
+    };
+    const cacheKey = `${fullDate}:shift`;
+    const signature = createRoleAssignmentSignature(
+      'shift',
+      attendanceInput,
+      solverRules,
+      shiftMatchesByType
+    );
+    const savedAssignments = loadCalendarRoleAssignmentPlan(cacheKey, signature);
+
+    if (savedAssignments) {
+      Object.assign(reassignmentsByShift, restoreRoleAssignments(savedAssignments));
+    } else {
+      try {
+        solverResult = runSolverPerShift(attendanceInput, solverRules);
+        logSolverIssues(day, 'shift', solverResult);
+        reassignmentsByShift.early = mapSolverMovesToReassignments(solverResult?.early?.moves, shiftMatchesByType.early);
+        reassignmentsByShift.day = mapSolverMovesToReassignments(solverResult?.day?.moves, shiftMatchesByType.day);
+        reassignmentsByShift.late = mapSolverMovesToReassignments(solverResult?.late?.moves, shiftMatchesByType.late);
+        saveCalendarRoleAssignmentPlan(cacheKey, signature, serializeRoleAssignments(reassignmentsByShift));
+      } catch (error) {
+        console.warn('Solver failed for day shift:', error);
+      }
     }
   }
 
   let dailySolverResult = null;
+  let dailyReassignmentsByShift = { early: {}, day: {}, late: {} };
   if (dailySolverRules.static.length || dailySolverRules.flexible.length) {
-    try {
-      console.info('[Calendar][Solver] DAILY_SOLVER_REQUESTED', {
-        date: day,
-        weekday: index,
-        staticRules: dailySolverRules.static.length,
-        flexibleRules: dailySolverRules.flexible.length
-      });
-      dailySolverResult = runSolver({
-        timeframe: index,
-        attendance: dailyAttendance,
-        rules: dailySolverRules
-      });
-      logSolverIssues(day, 'daily', dailySolverResult);
-    } catch (error) {
-      console.warn('Daily solver failed for day:', error);
+    const dailyMatchesByShift = shiftMatchesByType;
+    const cacheKey = `${fullDate}:daily`;
+    const signature = createRoleAssignmentSignature(
+      'daily',
+      dailyAttendance,
+      { timeframe: index, rules: dailySolverRules },
+      dailyMatchesByShift
+    );
+    const savedAssignments = loadCalendarRoleAssignmentPlan(cacheKey, signature);
+
+    if (savedAssignments) {
+      dailyReassignmentsByShift = restoreRoleAssignments(savedAssignments);
+    } else {
+      try {
+        console.info('[Calendar][Solver] DAILY_SOLVER_REQUESTED', {
+          date: day,
+          weekday: index,
+          staticRules: dailySolverRules.static.length,
+          flexibleRules: dailySolverRules.flexible.length
+        });
+        dailySolverResult = runSolver({
+          timeframe: index,
+          attendance: dailyAttendance,
+          rules: dailySolverRules
+        });
+        logSolverIssues(day, 'daily', dailySolverResult);
+        dailyReassignmentsByShift = mapDailySolverMovesToReassignments(
+          dailySolverResult?.moves,
+          shiftMatchesByType
+        );
+        saveCalendarRoleAssignmentPlan(cacheKey, signature, serializeRoleAssignments(dailyReassignmentsByShift));
+      } catch (error) {
+        console.warn('Daily solver failed for day:', error);
+      }
     }
   }
 
-  const reassignmentsByShift = {
-    early: mapSolverMovesToReassignments(solverResult?.early?.moves, shiftMatchesByType.early),
-    day: mapSolverMovesToReassignments(solverResult?.day?.moves, shiftMatchesByType.day),
-    late: mapSolverMovesToReassignments(solverResult?.late?.moves, shiftMatchesByType.late)
-  };
-  const dailyReassignmentsByShift = mapDailySolverMovesToReassignments(
-    dailySolverResult?.moves,
-    shiftMatchesByType
-  );
   Object.keys(reassignmentsByShift).forEach(shiftType => {
     Object.assign(reassignmentsByShift[shiftType], dailyReassignmentsByShift[shiftType]);
   });

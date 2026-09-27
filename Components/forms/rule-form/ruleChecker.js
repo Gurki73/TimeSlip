@@ -228,19 +228,36 @@ function evaluateRule(rule, cube) {
     const sub = submissiveCondition
         ? evaluateCondition(submissiveCondition, cube)
         : [];
+    const mainPasses = dom.length === 0;
+    const secondaryPasses = sub.length === 0;
+    const logicalFailure = () => [{
+        type: 'LOGIC_NOT_MET',
+        total: 1,
+        limit: 0,
+        conditionLink
+    }];
 
     switch (conditionLink) {
         case 'SINGLE':
             return dom;
 
         case 'AND':
+        case 'LIMIT_MAX':
+        case 'LIMIT_MIN':
             return [...dom, ...sub];
 
         case 'OR':
-            return dom.length && sub.length ? [...dom, ...sub] : [];
+            return mainPasses || secondaryPasses ? [] : [...dom, ...sub];
 
-        case 'UNLESS':
-            return sub.length === 0 ? dom : [];
+        // E3: the main condition is not met while the secondary condition is met.
+        case 'BUT':
+            if (!mainPasses && secondaryPasses) return [];
+            return mainPasses ? logicalFailure() : sub;
+
+        // E4: the main condition must pass, except when the secondary also passes.
+        case 'EXCEPT':
+            if (mainPasses && !secondaryPasses) return [];
+            return !mainPasses ? dom : logicalFailure();
 
         default:
             return dom;
@@ -721,6 +738,7 @@ export function executeRuleset(
                     type: v.type,
                     total: v.total,
                     limit: v.limit,
+                    conditionLink: v.conditionLink ?? rule.conditionLink,
                     subjectRoles: rule?.dominantCondition?.subjectRoles || []
                 });
             });
@@ -767,6 +785,7 @@ export function executeRuleset(
                     type: v.type,
                     total: v.total,
                     limit: v.limit,
+                    conditionLink: v.conditionLink ?? rule.conditionLink,
                     subjectRoles: rule?.dominantCondition?.subjectRoles || []
                 });
             });
@@ -806,6 +825,7 @@ export function executeRuleset(
                         type: v.type,
                         total: v.total,
                         limit: v.limit,
+                        conditionLink: v.conditionLink ?? rule.conditionLink,
                         subjectRoles: rule?.dominantCondition?.subjectRoles || []
                     });
                 });

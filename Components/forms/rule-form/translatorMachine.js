@@ -156,12 +156,24 @@ function translateToMachine(inputRule, id = 'test') {
             conditionLink = 'OR';
             break;
         case 'E3':
+            _dominant = safeCreateCondition(main);
+            _submissive = safeCreateCondition(secondary);
+            conditionLink = 'BUT';
+            break;
         case 'E4':
+            _dominant = safeCreateCondition(main);
+            _submissive = safeCreateCondition(secondary);
+            conditionLink = 'EXCEPT';
+            break;
         case 'E5':
+            _dominant = safeCreateCondition(main);
+            _submissive = safeCreateCondition(secondary);
+            conditionLink = 'LIMIT_MAX';
+            break;
         case 'E6':
-            _dominant = safeCreateCondition(secondary);
-            _submissive = safeCreateCondition(main);
-            conditionLink = 'UNLESS';
+            _dominant = safeCreateCondition(main);
+            _submissive = safeCreateCondition(secondary);
+            conditionLink = 'LIMIT_MIN';
             break;
         default:
             _dominant = safeCreateCondition(secondary);
