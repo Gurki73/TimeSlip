@@ -5,9 +5,9 @@ Legend:
 
 🚧 1. schicht model vs. 1 schicht + halbtags vs. 3 schicht modell  
 calendar:
-🟢 2. ☐ check if role reasignments are rendered
+🟢 2. 👀 check if role reasignments are rendered
 ruleset:
-🔵 3. ☐ check complex rules
+🔵 3. 👀 check complex rules
 calendar-settings:
 🟣 4. 🚧 (auto remove available days off for employees depending an regular shedule ) 
 admin tools:
@@ -24,7 +24,7 @@ minx:
 🟡12. 👀 allow state dirty for sample save button(?)
 -> keep buttons as are but make sure tooltip text are updated
 🟣13. ☐ update version from 1.x.x to 2.0.0 dev to prototype
-🟣14. ☐ publish as prototype on itch.icon
+🟣14. ✅ publish as prototype on itch.icon
 🟣15. ☐ make basic marketing article for itch.icon
 🟣16. ☐ plan you-tube tutorial
 

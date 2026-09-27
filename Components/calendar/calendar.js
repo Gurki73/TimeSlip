@@ -14,6 +14,7 @@ import { loadRuleData } from '../../js/loader/rule-loader.js';
 import { updateRuleset } from '../forms/rule-form/translatorMachine.js';
 import { runSolver as runSolver, runSolverPerShift, mergeAttendance, checkRulesForWeek, checkRulesForSpecial, createEmptyAttendance } from '../forms/rule-form/solver.js';
 import { executeRuleset } from '../forms/rule-form/ruleChecker.js';
+import { getCurrentRuleSettings, loadRuleSettings } from '../../js/loader/rule-loader.js';
 import { loadCalendarRoleAssignmentPlan, saveCalendarRoleAssignmentPlan } from '../../js/Utils/calendarRoleAssignmentStore.js';
 
 
@@ -77,6 +78,7 @@ async function loadCalendarData(api) {
       loadBridgeDays(api),
       loadPublicHolidaysSimple(api),
       loadRuleData(api),
+      loadRuleSettings(api),
     ]);
 
     calendarRoles = _roles;
@@ -2072,6 +2074,7 @@ function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts, 
 
   const solverRules = buildStaticSolverRules(machineRuleSet);
   const dailySolverRules = buildDailySolverRules(machineRuleSet);
+  const solverEnabled = getCurrentRuleSettings().solverLevel > 0;
   const dailyAttendance = createEmptyAttendance();
   Object.values(shiftAttendanceByType).forEach(attendance => {
     mergeAttendance(dailyAttendance, attendance);
@@ -2079,7 +2082,7 @@ function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts, 
 
   let solverResult = null;
   const reassignmentsByShift = { early: {}, day: {}, late: {} };
-  if (solverRules.static.length || solverRules.flexible.length) {
+  if (solverEnabled && (solverRules.static.length || solverRules.flexible.length)) {
     const attendanceInput = {
       early: shiftAttendanceByType.early || createEmptyAttendance(),
       day: shiftAttendanceByType.day || createEmptyAttendance(),
@@ -2112,7 +2115,7 @@ function createShifts(day, index, monthRequests, shiftStatusForDay, usedShifts, 
 
   let dailySolverResult = null;
   let dailyReassignmentsByShift = { early: {}, day: {}, late: {} };
-  if (dailySolverRules.static.length || dailySolverRules.flexible.length) {
+  if (solverEnabled && (dailySolverRules.static.length || dailySolverRules.flexible.length)) {
     const dailyMatchesByShift = shiftMatchesByType;
     const cacheKey = `${fullDate}:daily`;
     const signature = createRoleAssignmentSignature(

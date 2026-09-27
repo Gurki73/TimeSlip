@@ -1,3 +1,5 @@
+import { getCurrentRuleSettings } from '../../../js/loader/rule-loader.js';
+
 /*
 SOLVER DISCLAIMER:
 
@@ -116,24 +118,48 @@ export function runSolverPerShift(attendanceByShift, rules) {
 
 
 export function runSolver(input) {
-    const {
-        timeframe,
-        attendance,
-        rules,
-        options = {}
-    } = input;
+    const result = solveShift(input);
+    const solverLevel = getCurrentRuleSettings().solverLevel;
+    if (solverLevel >= 2) result.crossShift = runCrossShiftSolver();
+    if (solverLevel >= 3) result.crossDay = runCrossDaySolver();
+    return result;
+}
 
-    return solveShift({
-        timeframe,
-        attendance,
-        rules,
-        options
-    });
+export function runCrossShiftSolver() {
+    return {
+        status: 'not_implemented',
+        moves: [],
+        warnings: ['Cross-shift role reassignment is not implemented'],
+        stopReason: 'cross_shift_not_implemented'
+    };
+}
+
+export function runCrossDaySolver() {
+    return {
+        status: 'not_implemented',
+        moves: [],
+        warnings: ['Cross-day role reassignment is not implemented'],
+        stopReason: 'cross_day_not_implemented'
+    };
 }
 
 function solveShift({ timeframe, attendance, rules, options = {} }) {
-    const maxSteps = options.maxSteps ?? 10;
-    const allowEmergency = options.allowEmergency ?? false;
+    const solverLevel = getCurrentRuleSettings().solverLevel;
+    if (solverLevel === 0) {
+        return {
+            status: 'disabled',
+            demand: { static: [], effective: [] },
+            feasibility: [],
+            roleStatus: [],
+            moves: [],
+            finalAttendance: attendance,
+            warnings: [],
+            stopReason: 'disabled'
+        };
+    }
+
+    const maxSteps = options.maxSteps ?? (solverLevel === 1 ? 2 : 10);
+    const allowEmergency = options.allowEmergency ?? solverLevel >= 2;
     const logPrefix = `[Solver][${timeframe}]`;
     const staticRuleCount = Array.isArray(rules?.static) ? rules.static.length : 0;
     const flexRuleCount = Array.isArray(rules?.flexible) ? rules.flexible.length : 0;
@@ -328,7 +354,7 @@ function solveShift({ timeframe, attendance, rules, options = {} }) {
     //console.info(`${logPrefix} FINAL attendance:`, attendanceClone);
     // console.info(`${logPrefix} MOVES:`, moves);
 
-    return {
+    const result = {
         status: stopReason === 'solved' || moves.length > 0 ? 'ok' : 'unsolved',
         demand: { static: staticDemand, effective: effectiveDemand },
         feasibility,
@@ -338,6 +364,8 @@ function solveShift({ timeframe, attendance, rules, options = {} }) {
         warnings,
         stopReason
     };
+
+    return result;
 }
 
 export function mergeAttendance(summedAttendance, detailedAttendance) {

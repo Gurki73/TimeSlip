@@ -2,7 +2,7 @@
 import { runSolver, runSolverPerShift } from './solver.js';
 import { updateRulesPreview } from './translatorMachine.js';
 import { ensureCalendarReady, computeAttendanceForRange } from '../../calendar/calendar.js';
-import { loadRuleData } from '../../../js/loader/rule-loader.js';
+import { ensureRuleSettingsLoaded, getCurrentRuleSettings, loadRuleData } from '../../../js/loader/rule-loader.js';
 import { loadRoleData } from '../../../js/loader/role-loader.js';
 
 const SHIFTS_PER_DAY = 3;
@@ -357,6 +357,9 @@ export async function runRequestRuleCheck(startDate, endDate, requests, options 
         };
     }
 
+    const settingsApi = (typeof window !== 'undefined' && window.api) ? window.api : null;
+    if (settingsApi) await ensureRuleSettingsLoaded(settingsApi);
+
     let {
         machineRuleset = null,
         uiRules = null,
@@ -678,7 +681,7 @@ export function executeRuleset(
     const skipped = [];
     let solverResult = null;
 
-    if (useSolver) {
+    if (useSolver && getCurrentRuleSettings().solverLevel > 0) {
         try {
             if (context.solverInput) {
                 console.info('[RuleChecker][Solver] Running `runSolver` with explicit solver input.');

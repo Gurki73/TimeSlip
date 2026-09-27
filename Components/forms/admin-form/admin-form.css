@@ -1685,6 +1685,63 @@ input[type="color"] {
     font-variant-numeric: tabular-nums;
 }
 
+#shift-model-panel,
+#rule-engine-panel,
+#solver-panel {
+  max-height: none;
+}
+
+.rules-settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.8rem;
+}
+
+.rules-settings-preview {
+  width: min(34rem, calc(100vw - 2rem));
+  max-height: min(85vh, 40rem);
+  padding: 1.25rem;
+  border: 1px solid var(--border-color, #aaa);
+  border-radius: 0.5rem;
+  color: var(--text-color, #222);
+  background: var(--panel-background, #fff);
+}
+
+.rules-settings-preview::backdrop {
+  background: rgb(0 0 0 / 45%);
+}
+
+.rules-settings-preview form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.rules-settings-preview h3,
+.rules-settings-preview p {
+  margin: 0;
+}
+
+.rules-settings-preview-details {
+  line-height: 1.5;
+}
+
+.rules-settings-preview-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .rules-settings-preview-actions {
+    flex-direction: column-reverse;
+  }
+
+  .rules-settings-preview-actions button {
+    min-height: 2.75rem;
+  }
+}
+
 
 /* =========================================================
    ACCESSIBILITY

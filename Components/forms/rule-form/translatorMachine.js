@@ -1,3 +1,5 @@
+import { getCurrentRuleSettings } from '../../../js/loader/rule-loader.js';
+
 /**
  * COMMIT PATH
  * -----------
@@ -233,6 +235,46 @@ function pickUniverse(timeframeId) {
     }
 }
 
+function getApproximateLimits(target, toleranceLevel) {
+    const roundedTarget = Math.max(0, Math.round(Number(target) || 0));
+    const baseLower = roundedTarget > 0
+        ? Math.max(1, Math.floor(0.9 * roundedTarget))
+        : 0;
+    let lowerLimit = baseLower;
+    let upperLimit = Math.ceil(1.1 * roundedTarget);
+
+    switch (toleranceLevel) {
+        case 0:
+            lowerLimit = Math.max(0, roundedTarget - 1);
+            upperLimit = roundedTarget + 1;
+            break;
+        case 1:
+            break;
+        case 2:
+            upperLimit = Math.ceil(1.2 * roundedTarget);
+            break;
+        case 3:
+            upperLimit = Math.ceil(1.25 * roundedTarget);
+            break;
+        case 4:
+            lowerLimit = Math.max(0, baseLower - 1);
+            upperLimit = Math.ceil(1.35 * roundedTarget);
+            break;
+        case 5:
+            lowerLimit = Math.max(0, baseLower - 2);
+            upperLimit = Math.ceil(1.35 * roundedTarget);
+            break;
+        case 6:
+            lowerLimit = 0;
+            upperLimit = roundedTarget * 2;
+            break;
+        default:
+            break;
+    }
+
+    return { lowerLimit, upperLimit };
+}
+
 
 function createCondition(condition) {
     if (!condition) return createAlwaysTrue(); // fallback
@@ -303,8 +345,10 @@ function createCondition(condition) {
         const amountDetails = safeDetails(condition.amount);
         switch (amountId) {
             case "a1": // approximately
-                lowerLimit = Math.max(1, Math.floor(0.9 * (amountDetails.bottom ?? 0)));
-                upperLimit = Math.ceil(1.1 * (amountDetails.top ?? 0));
+                ({ lowerLimit, upperLimit } = getApproximateLimits(
+                    amountDetails.bottom ?? amountDetails.top ?? 0,
+                    getCurrentRuleSettings().toleranceLevel
+                ));
                 break;
             case "a3": // between
                 lowerLimit = Math.round(amountDetails.bottom ?? 0);

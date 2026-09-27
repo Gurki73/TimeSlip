@@ -17,6 +17,29 @@ const DEFAULT_RULE_SETTINGS = {
   solverLevel: 0     // 0..2
 };
 
+let currentRuleSettings = null;
+let ruleSettingsLoadPromise = null;
+
+export function getCurrentRuleSettings() {
+  return { ...(currentRuleSettings || DEFAULT_RULE_SETTINGS) };
+}
+
+export function setCurrentRuleSettings(settings) {
+  currentRuleSettings = normalizeRuleSettings(settings);
+  return getCurrentRuleSettings();
+}
+
+export function ensureRuleSettingsLoaded(api) {
+  if (currentRuleSettings) return Promise.resolve(getCurrentRuleSettings());
+  if (!ruleSettingsLoadPromise) {
+    ruleSettingsLoadPromise = loadRuleSettings(api).catch(error => {
+      ruleSettingsLoadPromise = null;
+      throw error;
+    });
+  }
+  return ruleSettingsLoadPromise.then(settings => ({ ...settings }));
+}
+
 function normalizeRuleSettings(settings = {}) {
   return {
     toleranceLevel:
@@ -36,7 +59,7 @@ function normalizeRuleSettings(settings = {}) {
     solverLevel:
       Number.isInteger(settings?.solverLevel) &&
         settings.solverLevel >= 0 &&
-        settings.solverLevel <= 2
+        settings.solverLevel <= 3
         ? settings.solverLevel
         : DEFAULT_RULE_SETTINGS.solverLevel
   };
@@ -383,9 +406,7 @@ export async function loadRuleSettings(api) {
     // Rule-engine settings always belong to client data.
     const raw = await api.loadCSV('client', RULE_SETTINGS_FILE);
 
-    if (!raw) {
-      return { ...DEFAULT_RULE_SETTINGS };
-    }
+    if (!raw) return setCurrentRuleSettings(DEFAULT_RULE_SETTINGS);
 
     const parsed = typeof raw === 'string'
       ? JSON.parse(raw)
@@ -395,7 +416,7 @@ export async function loadRuleSettings(api) {
       throw new Error('Invalid rule settings JSON');
     }
 
-    return {
+    return setCurrentRuleSettings({
       toleranceLevel:
         Number.isInteger(parsed.toleranceLevel) &&
           parsed.toleranceLevel >= 0 &&
@@ -413,13 +434,13 @@ export async function loadRuleSettings(api) {
       solverLevel:
         Number.isInteger(parsed.solverLevel) &&
           parsed.solverLevel >= 0 &&
-          parsed.solverLevel <= 2
+          parsed.solverLevel <= 3
           ? parsed.solverLevel
           : DEFAULT_RULE_SETTINGS.solverLevel
-    };
+    });
   } catch (err) {
     console.warn('[rule-loader] failed to load rule settings, using defaults', err);
-    return { ...DEFAULT_RULE_SETTINGS };
+    return setCurrentRuleSettings(DEFAULT_RULE_SETTINGS);
   }
 }
 
@@ -428,7 +449,7 @@ export async function saveRuleSettings(api, settings) {
     throw new Error('API reference missing');
   }
 
-  const data = {
+  const data = normalizeRuleSettings({
     toleranceLevel:
       Number.isInteger(settings?.toleranceLevel) &&
         settings.toleranceLevel >= 0 &&
@@ -446,19 +467,18 @@ export async function saveRuleSettings(api, settings) {
     solverLevel:
       Number.isInteger(settings?.solverLevel) &&
         settings.solverLevel >= 0 &&
-        settings.solverLevel <= 2
+        settings.solverLevel <= 3
         ? settings.solverLevel
         : DEFAULT_RULE_SETTINGS.solverLevel
-  };
+  });
 
   const content = JSON.stringify(data, null, 2);
 
   try {
-    return await api.saveCSV(
-      'rules',
-      RULE_SETTINGS_FILE,
-      content
-    );
+    const savedPath = await api.saveCSV('rules', 'rule-settings.json', content);
+    if (!savedPath) throw new Error('Rule settings were not saved');
+    setCurrentRuleSettings(data);
+    return savedPath;
   } catch (err) {
     console.error('[rule-loader] failed to save rule settings', err);
     throw err;

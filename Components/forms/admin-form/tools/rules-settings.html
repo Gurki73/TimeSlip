@@ -49,10 +49,11 @@
           </div>
         </div>
         <div class="settings-explanation" id="shift-model-explanation" aria-live="polite">
-          <div class="shift-examples-scroller" id="shift-examples-scroller" aria-label="Beispiele für Arbeitszeit-Block-Modelle"></div>
+          <div class="shift-examples-scroller" id="shift-examples-scroller"
+            aria-label="Beispiele für Arbeitszeit-Block-Modelle"></div>
         </div>
       </div>
-
+      <div class="rules-settings-actions" id="shift-model-save"></div>
 
     </section>
 
@@ -114,7 +115,7 @@
 
         </div>
       </div>
-
+      <div class="rules-settings-actions" id="rule-engine-save"></div>
 
     </section>
 
@@ -132,32 +133,53 @@
           </legend>
 
           <label class="settings-radio-option" for="solver-none">
-            <input id="solver-none" name="solver-mode" type="radio" value="none">
+            <input id="solver-none" name="solver-mode" type="radio" value="0">
             <span class="settings-radio-label">
-              No solving
-            </span>i still
+              Keine Solver-Vorschläge
+            </span>
           </label>
 
           <label class="settings-radio-option" for="solver-easy">
-            <input id="solver-easy" name="solver-mode" type="radio" value="easy">
+            <input id="solver-easy" name="solver-mode" type="radio" value="1">
             <span class="settings-radio-label">
-              Easy solve
+              Wenige Versuche innerhalb einer Schicht
             </span>
           </label>
 
           <label class="settings-radio-option" for="solver-hard">
-            <input id="solver-hard" name="solver-mode" type="radio" value="hard">
+            <input id="solver-hard" name="solver-mode" type="radio" value="2">
             <span class="settings-radio-label">
-              Hard solve
+              Mehr Versuche, schichtübergreifend (Platzhalter)
+            </span>
+          </label>
+
+          <label class="settings-radio-option" for="solver-week">
+            <input id="solver-week" name="solver-mode" type="radio" value="3">
+            <span class="settings-radio-label">
+              Tages- und wochenübergreifend (Platzhalter)
             </span>
           </label>
         </div>
 
         <div class="settings-explanation" id="solver-explanation" aria-live="polite">
-          <!-- Filled by JavaScript -->
+          Solver-Vorschläge ändern keine Mitarbeiterschichten. Sie ordnen nur Rollen bzw. Aufgaben-Zeitfenster neu zu.
         </div>
       </div>
+      <div class="rules-settings-actions" id="solver-save"></div>
     </section>
 
   </div>
+
+  <dialog class="rules-settings-preview" id="rules-settings-preview" aria-labelledby="rules-settings-preview-title">
+    <form method="dialog">
+      <h3 id="rules-settings-preview-title">Jahresvorschau der Regeländerungen</h3>
+      <p id="rules-settings-preview-year"></p>
+      <p id="rules-settings-preview-summary" aria-live="polite">Statistik wird berechnet …</p>
+      <div class="rules-settings-preview-details" id="rules-settings-preview-details"></div>
+      <div class="rules-settings-preview-actions">
+        <button type="button" id="rules-settings-reject">Ablehnen</button>
+        <button type="button" id="rules-settings-apply">Anwenden</button>
+      </div>
+    </form>
+  </dialog>
 </div>

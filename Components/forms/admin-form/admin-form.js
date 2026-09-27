@@ -4,6 +4,8 @@ import { createHelpButton } from '../../../js/Utils/helpPageButton.js';
 import { createWindowButtons } from '../../../js/Utils/minMaxFormComponent.js';
 import { loadEmployeeData, storeEmployeeChange } from '../../../js/loader/employee-loader.js';
 import { initRoleColorTab } from './colorTheme.js';
+import { createSaveButton } from '../../../js/Utils/saveButton.js';
+import { getCurrentRuleSettings, loadRuleSettings, saveRuleSettings, setCurrentRuleSettings } from '../../../js/loader/rule-loader.js';
 
 export const adminTools = [
   { id: 'color-customization', name: 'Eigene Farben', icon: 'paint-palette-art-svgrepo-com.svg', enabled: true },
@@ -1282,8 +1284,235 @@ function getContrastYIQ(hexcolor) {
 
 
 
+async function initializeRuleSettingsControls() {
+  const root = document.getElementById('rules-settings');
+  const dialog = document.getElementById('rules-settings-preview');
+  if (!root || !dialog) return;
+
+  const toleranceInput = root.querySelector('#rule-tolerance');
+  const shiftInputs = [...root.querySelectorAll('input[name="shift-model"]')];
+  const solverInputs = [...root.querySelectorAll('input[name="solver-mode"]')];
+  const saveTargets = ['shift-model-save', 'rule-engine-save', 'solver-save'];
+  const buttons = [];
+  let savedSettings;
+  let isSaving = false;
+
+  const writeControls = settings => {
+    if (toleranceInput) toleranceInput.value = String(settings.toleranceLevel);
+    if (shiftInputs[settings.shiftLevel]) shiftInputs[settings.shiftLevel].checked = true;
+    solverInputs.forEach(input => {
+      input.checked = Number(input.value) === settings.solverLevel;
+    });
+    updateToleranceSamples(settings.toleranceLevel);
+  };
+
+  const readControls = () => ({
+    toleranceLevel: Number(toleranceInput?.value ?? 3),
+    shiftLevel: Math.max(0, shiftInputs.findIndex(input => input.checked)),
+    solverLevel: Number(solverInputs.find(input => input.checked)?.value ?? 0)
+  });
+
+  const setAllButtonStates = state => buttons.forEach(button => button.setState(state));
+
+  const buildPreviewStats = async proposedSettings => {
+    const year = new Date().getFullYear();
+    const [rules, calendarModule, checkerModule, translatorModule] = await Promise.all([
+      loadRuleDataForSettings(),
+      import('../../calendar/calendar.js'),
+      import('../rule-form/ruleChecker.js'),
+      import('../rule-form/translatorMachine.js')
+    ]);
+    const attendanceByDate = await calendarModule.computeAttendanceForRange(
+      new Date(year, 0, 1),
+      new Date(year, 11, 31)
+    );
+    const activeRules = rules.filter(rule => !rule?._deleted && !rule?.isAsleep);
+    const originalSettings = getCurrentRuleSettings();
+
+    try {
+      setCurrentRuleSettings(savedSettings);
+      const currentRuleset = translatorModule.updateRulesPreview(activeRules);
+      setCurrentRuleSettings(proposedSettings);
+      const proposedRuleset = translatorModule.updateRulesPreview(activeRules);
+      const roleCount = Array.isArray(Object.values(attendanceByDate)[0])
+        ? Object.values(attendanceByDate)[0].length
+        : 14;
+      const currentStats = checkerModule.executeRuleset({
+        ...currentRuleset,
+        context: { attendanceByDate, roleCount }
+      }, new Date(year, 0, 1), new Date(year, 11, 31), false);
+      const proposedStats = checkerModule.executeRuleset({
+        ...proposedRuleset,
+        context: { attendanceByDate, roleCount }
+      }, new Date(year, 0, 1), new Date(year, 11, 31), false);
+
+      return { year, currentStats, proposedStats };
+    } finally {
+      setCurrentRuleSettings(originalSettings);
+    }
+  };
+
+  const waitForPreviewChoice = () => new Promise(resolve => {
+    let finished = false;
+    const finish = accepted => {
+      if (finished) return;
+      finished = true;
+      if (dialog.open) dialog.close();
+      resolve(accepted);
+    };
+
+    dialog.querySelector('#rules-settings-apply').addEventListener('click', () => finish(true), { once: true });
+    dialog.querySelector('#rules-settings-reject').addEventListener('click', () => finish(false), { once: true });
+    dialog.addEventListener('cancel', event => {
+      event.preventDefault();
+      finish(false);
+    }, { once: true });
+    if (!dialog.open) dialog.showModal();
+  });
+
+  const applySettings = async () => {
+    if (isSaving) return;
+    isSaving = true;
+    const proposedSettings = readControls();
+    const summary = dialog.querySelector('#rules-settings-preview-summary');
+    const yearLabel = dialog.querySelector('#rules-settings-preview-year');
+    const details = dialog.querySelector('#rules-settings-preview-details');
+    const applyButton = dialog.querySelector('#rules-settings-apply');
+    const rejectButton = dialog.querySelector('#rules-settings-reject');
+    yearLabel.textContent = `Zeitraum: 1. Januar bis 31. Dezember ${new Date().getFullYear()}`;
+    summary.textContent = 'Jahresstatistik wird berechnet …';
+    details.textContent = '';
+    applyButton.disabled = true;
+    rejectButton.disabled = true;
+    dialog.showModal();
+    let cancelledWhileLoading = false;
+    const cancelWhileLoading = event => {
+      event.preventDefault();
+      cancelledWhileLoading = true;
+      dialog.close();
+    };
+    dialog.addEventListener('cancel', cancelWhileLoading);
+
+    try {
+      const { year, currentStats, proposedStats } = await buildPreviewStats(proposedSettings);
+      dialog.removeEventListener('cancel', cancelWhileLoading);
+      if (cancelledWhileLoading) {
+        writeControls(savedSettings);
+        setAllButtonStates('clean');
+        return;
+      }
+      const before = currentStats.summary.totalFailures;
+      const after = proposedStats.summary.totalFailures;
+      const delta = after - before;
+      summary.textContent = `Regelverstöße ${year}: ${before} aktuell → ${after} mit Änderungen (${delta > 0 ? '+' : ''}${delta}).`;
+      details.textContent = `Wöchentlich ${currentStats.summary.byScope.weekly || 0} → ${proposedStats.summary.byScope.weekly || 0} · Täglich ${currentStats.summary.byScope.daily || 0} → ${proposedStats.summary.byScope.daily || 0} · Schichten ${currentStats.summary.byScope.shiftly || 0} → ${proposedStats.summary.byScope.shiftly || 0}. Die Statistik nutzt den aktuellen Kalender-Schichtplan; Solver-Zuweisungen werden noch nicht simuliert.`;
+      applyButton.disabled = false;
+      rejectButton.disabled = false;
+
+      const accepted = await waitForPreviewChoice();
+      if (!accepted) {
+        writeControls(savedSettings);
+        setAllButtonStates('clean');
+        return;
+      }
+
+      await saveRuleSettings(adminApi, proposedSettings);
+      savedSettings = { ...proposedSettings };
+      setCurrentRuleSettings(savedSettings);
+      setAllButtonStates('clean');
+      window.api?.send?.('refresh-calendar');
+    } catch (error) {
+      dialog.removeEventListener('cancel', cancelWhileLoading);
+      if (dialog.open) dialog.close();
+      setAllButtonStates('dirty');
+      throw error;
+    } finally {
+      isSaving = false;
+    }
+  };
+
+  try {
+    savedSettings = await loadRuleSettings(adminApi);
+    writeControls(savedSettings);
+  } catch (error) {
+    console.warn('[RuleSettings] Could not load settings:', error);
+    return;
+  }
+
+  saveTargets.forEach(targetId => {
+    const target = root.querySelector(`#${targetId}`);
+    if (!target) return;
+    const saveButton = createSaveButton({ onSave: applySettings });
+    target.appendChild(saveButton.el);
+    buttons.push(saveButton);
+  });
+
+  root.addEventListener('input', event => {
+    if (!event.target.matches('#rule-tolerance, input[name="shift-model"], input[name="solver-mode"]')) return;
+    updateToleranceSamples(Number(toleranceInput?.value ?? 3));
+    setAllButtonStates('dirty');
+  });
+  root.addEventListener('change', event => {
+    if (!event.target.matches('#rule-tolerance, input[name="shift-model"], input[name="solver-mode"]')) return;
+    setAllButtonStates('dirty');
+  });
+}
+
+async function loadRuleDataForSettings() {
+  const { loadRuleData } = await import('../../../js/loader/rule-loader.js');
+  return loadRuleData(adminApi);
+}
+
+function updateToleranceSamples(level) {
+  const sampleIds = [1, 4, 9];
+  sampleIds.forEach(target => {
+    const { lowerLimit, upperLimit } = approximateRangeForSettings(target, level);
+    const min = document.getElementById(`toleranceSampleMin_${sampleIds.indexOf(target) + 1}`);
+    const max = document.getElementById(`toleranceSampleMax_${sampleIds.indexOf(target) + 1}`);
+    if (min) min.textContent = String(lowerLimit);
+    if (max) max.textContent = String(upperLimit);
+  });
+}
+
+function approximateRangeForSettings(target, level) {
+  const baseLower = target > 0 ? Math.max(1, Math.floor(0.9 * target)) : 0;
+  let lowerLimit = baseLower;
+  let upperLimit = Math.ceil(1.1 * target);
+
+  switch (level) {
+    case 0:
+      lowerLimit = Math.max(0, target - 1);
+      upperLimit = target + 1;
+      break;
+    case 2:
+      upperLimit = Math.ceil(1.2 * target);
+      break;
+    case 3:
+      upperLimit = Math.ceil(1.25 * target);
+      break;
+    case 4:
+      lowerLimit = Math.max(0, baseLower - 1);
+      upperLimit = Math.ceil(1.35 * target);
+      break;
+    case 5:
+      lowerLimit = Math.max(0, baseLower - 2);
+      upperLimit = Math.ceil(1.35 * target);
+      break;
+    case 6:
+      lowerLimit = 0;
+      upperLimit = target * 2;
+      break;
+    default:
+      break;
+  }
+  return { lowerLimit, upperLimit };
+}
+
+
 /* === SHIFT EXAMPLES =============================================== */
 function initRulesSettings() {
+  initializeRuleSettingsControls();
+
   const scroller = document.getElementById('shift-examples-scroller');
   const options = [...document.querySelectorAll('input[name="shift-model"]')];
   if (!scroller || !options.length) return;
