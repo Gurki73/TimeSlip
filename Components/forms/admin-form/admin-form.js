@@ -169,6 +169,10 @@ async function loadToolPage(htmlFile) {
   const container = document.getElementById('form-container');
   if (!container) return;
 
+  if (htmlFile !== 'color-customization.html') {
+    window.__timeslipDiscardColorThemeDraft?.();
+  }
+
   try {
     const res = await fetch(`./Components/forms/admin-form/tools/${htmlFile}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(res.status);
