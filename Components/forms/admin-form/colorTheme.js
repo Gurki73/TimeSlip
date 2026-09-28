@@ -487,13 +487,13 @@ function colorToRgb(value) {
         ];
     }
 
-    const rgbMatch = normalized.match(/^rgb\\?a?\\?\\(([^)]+)\\)$/i);
+    const rgbMatch = normalized.match(/^rgba?\\(([^)]+)\\)$/i);
     if (!rgbMatch) {
         return null;
     }
 
     const values = rgbMatch[1]
-        .split(/[,\\s]+/)
+         .split(/[,\\s]+/)
         .slice(0, 3)
         .map(Number);
 
