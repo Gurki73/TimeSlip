@@ -1,3 +1,5 @@
+import { showSuccess, showFailure } from "../../../js/loader/loader.js";
+
 // Components/forms/admin-form/colorTheme.js
 //
 // Custom Theme editor.
@@ -65,6 +67,7 @@ export async function initRoleColorTab(api) {
 
     try {
         const persistedTheme = await loadCustomTheme(api);
+        window.__timeslipPersistedCustomTheme = structuredCloneSafe(persistedTheme);
         draftTheme = buildDraftTheme(persistedTheme);
         bindTabs();
         bindSave(api);
@@ -80,6 +83,7 @@ export async function initCustomThemeUI(theme) {
         return;
     }
 
+    window.__timeslipPersistedCustomTheme = structuredCloneSafe(theme);
     draftTheme = buildDraftTheme(theme);
     initialized = true;
     bindTabs();
@@ -400,11 +404,11 @@ async function saveDraft(api) {
         window.__timeslipPersistedCustomTheme = structuredCloneSafe(draftTheme);
         updateDirtyState();
 
-        if (typeof window.api?.send === 'function') {
-            window.api.send('set-theme', 'custom');
+        if (typeof window.__timeslipApplyCustomTheme === 'function') {
+            window.__timeslipApplyCustomTheme(draftTheme);
         }
 
-        showColorSaveSuccess();
+        showSuccess('✅ Custom-Theme gespeichert');
     } catch (err) {
         console.error('[ColorTheme] Save failed:', err);
         showColorSaveFailure(err);
@@ -412,36 +416,6 @@ async function saveDraft(api) {
         saving = false;
         if (button) button.disabled = false;
     }
-}
-
-function showColorSaveSuccess() {
-    if (typeof window.__timeslipShowSuccess === 'function') {
-        window.__timeslipShowSuccess('✅ Custom-Theme gespeichert');
-        return;
-    }
-
-    showTemporaryColorMessage('success', '✅ Custom-Theme gespeichert');
-}
-
-function showColorSaveFailure(err) {
-    if (typeof window.__timeslipShowFailure === 'function') {
-        window.__timeslipShowFailure('❌ Custom-Theme konnte nicht gespeichert werden');
-    } else {
-        showTemporaryColorMessage('failure', '❌ Custom-Theme konnte nicht gespeichert werden');
-    }
-
-    console.error('[ColorTheme] Technical save error:', err);
-}
-
-function showTemporaryColorMessage(type, message) {
-    const popup = document.createElement('div');
-    popup.className = type === 'success' ? 'request-popup-success noto' : 'request-popup-failure noto';
-    popup.setAttribute('role', 'status');
-    popup.setAttribute('aria-live', 'polite');
-    popup.textContent = message;
-    document.body.appendChild(popup);
-
-    window.setTimeout(() => popup.remove(), type === 'success' ? 2500 : 3000);
 }
 
 function readCssVariable(key) {
