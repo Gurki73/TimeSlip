@@ -89,10 +89,15 @@ export function registerEventHandlers(mainWindow) {
         }
     });
 
-    // Neuer IPC-Handler für Custom-Theme
+    // IPC-Handler für Custom-Theme
     ipcMain.handle('save-custom-theme', async (event, themeData) => {
-        saveCustomTheme(themeData);
-        return { success: true };
+        try {
+            saveCustomTheme(themeData);
+            return true;
+        } catch (err) {
+            console.error('[CustomTheme] Failed to save custom theme:', err);
+            throw err;
+        }
     });
 
     ipcMain.handle('get-custom-theme', async () => {
