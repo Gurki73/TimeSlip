@@ -58,15 +58,23 @@ let teamNames = { blue: 'Team Blau', green: 'Team Grün', red: 'Team Rot', gray:
 let paletteCells = [];
 let initialized = false;
 let saving = false;
+let originalThemeWasCustom = false;
 
 export function discardColorThemeDraft() {
-    if (window.__timeslipPersistedCustomTheme) {
+    if (originalThemeWasCustom && window.__timeslipPersistedCustomTheme) {
         applyThemeVariables(window.__timeslipPersistedCustomTheme);
+    } else if (draftTheme) {
+        for (const section of Object.values(draftTheme)) {
+            for (const key of Object.keys(section)) {
+                document.documentElement.style.removeProperty(`--${key}`);
+            }
+        }
     }
 
     draftTheme = null;
     initialized = false;
     saving = false;
+    originalThemeWasCustom = false;
     window.__timeslipPersistedCustomTheme = null;
 }
 
@@ -81,6 +89,7 @@ export async function initRoleColorTab(api) {
 
     try {
         const persistedTheme = await loadCustomTheme(api);
+        originalThemeWasCustom = document.body.classList.contains('theme-custom');
         draftTheme = buildDraftTheme(persistedTheme);
         window.__timeslipPersistedCustomTheme = structuredCloneSafe(persistedTheme || draftTheme);
         try {
@@ -109,6 +118,7 @@ export async function initCustomThemeUI(theme) {
         return;
     }
 
+    originalThemeWasCustom = document.body.classList.contains('theme-custom');
     draftTheme = buildDraftTheme(theme);
     window.__timeslipPersistedCustomTheme = structuredCloneSafe(theme || draftTheme);
     initialized = true;
