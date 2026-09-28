@@ -202,6 +202,7 @@ function setupFormLoader() {
       await loadFormModules();
     }
 
+    window.__timeslipDiscardColorThemeDraft?.();
     formContainer.innerHTML = htmlContent;
 
     const initializer = formInitializers[formName];
