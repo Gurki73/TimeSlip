@@ -1,3 +1,5 @@
+import { loadTeamnames } from "../../../js/loader/role-loader.js";
+
 // Components/forms/admin-form/colorTheme.js
 //
 // Custom Theme editor.
@@ -52,6 +54,7 @@ let draftTheme = null;
 let activeSection = 'roles';
 let activeTargetIndex = 0;
 let activePalette = 'blue';
+let teamNames = { blue: 'Team Blau', green: 'Team Grün', red: 'Team Rot', gray: 'Team Schwarz' };
 let paletteCells = [];
 let initialized = false;
 let saving = false;
@@ -65,8 +68,20 @@ export async function initRoleColorTab(api) {
 
     try {
         const persistedTheme = await loadCustomTheme(api);
-        window.__timeslipPersistedCustomTheme = structuredCloneSafe(persistedTheme);
         draftTheme = buildDraftTheme(persistedTheme);
+        window.__timeslipPersistedCustomTheme = structuredCloneSafe(persistedTheme || draftTheme);
+        try {
+            const loadedNames = await loadTeamnames(api);
+            if (loadedNames && typeof loadedNames === 'object') {
+                teamNames = {
+                    ...teamNames,
+                    ...loadedNames,
+                    gray: loadedNames.black || loadedNames.gray || teamNames.gray
+                };
+            }
+        } catch (err) {
+            console.warn('[ColorTheme] Could not load team names:', err);
+        }
         bindTabs();
         bindSave(api);
         renderEditor();
@@ -81,8 +96,8 @@ export async function initCustomThemeUI(theme) {
         return;
     }
 
-    window.__timeslipPersistedCustomTheme = structuredCloneSafe(theme);
     draftTheme = buildDraftTheme(theme);
+    window.__timeslipPersistedCustomTheme = structuredCloneSafe(theme || draftTheme);
     initialized = true;
     bindTabs();
     bindSave(window.api);
@@ -224,7 +239,7 @@ function renderPaletteFamilies() {
         button.type = 'button';
         button.className = 'palette-family';
         button.classList.toggle('active', family === activePalette);
-        button.textContent = config.label;
+        button.textContent = activeSection === 'roles' && family !== 'rainbow' ? teamNames[family] : config.label;
         button.setAttribute('aria-pressed', String(family === activePalette));
 
         button.addEventListener('click', () => {
@@ -268,6 +283,9 @@ function renderPalette() {
             button.dataset.row = String(row);
             button.dataset.color = color;
             button.style.backgroundColor = color;
+            if (normalizeCssColor(currentColor) === normalizeCssColor(color)) {
+                button.classList.add('selected');
+            }
             button.setAttribute('role', 'gridcell');
             button.setAttribute('aria-label', `${config.label}, Variante ${column + 1}, Helligkeit ${row + 1}, ${color}`);
             button.tabIndex = -1;
@@ -376,7 +394,8 @@ function updateTargetSummary() {
 
 function updateDirtyState() {
     const indicator = document.getElementById('dirty-indicator');
-    const dirty = JSON.stringify(draftTheme) !== JSON.stringify(buildDraftTheme(window.__timeslipPersistedCustomTheme));
+    const persisted = window.__timeslipPersistedCustomTheme || draftTheme;
+    const dirty = JSON.stringify(draftTheme) !== JSON.stringify(persisted);
 
     if (indicator) {
         indicator.hidden = !dirty;
