@@ -261,3 +261,8 @@ document.addEventListener('colorsSaved', function (e) {
     // Save to your backend or localStorage
     // Your existing save logic here
 });
+
+if (typeof window !== 'undefined') {
+    window.__timeslipShowSuccess = showSuccess;
+    window.__timeslipShowFailure = showFailure;
+}
