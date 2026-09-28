@@ -1,5 +1,3 @@
-import { showSuccess, showFailure } from "../../../js/loader/loader.js";
-
 // Components/forms/admin-form/colorTheme.js
 //
 // Custom Theme editor.
@@ -408,10 +406,16 @@ async function saveDraft(api) {
             window.__timeslipApplyCustomTheme(draftTheme);
         }
 
-        showSuccess('✅ Custom-Theme gespeichert');
+        if (typeof window.__timeslipShowSuccess === 'function') {
+            window.__timeslipShowSuccess('✅ Custom-Theme gespeichert');
+        }
     } catch (err) {
         console.error('[ColorTheme] Save failed:', err);
-        showFailure('❌ Custom-Theme konnte nicht gespeichert werden');
+        if (typeof window.__timeslipShowFailure === 'function') {
+            window.__timeslipShowFailure('❌ Custom-Theme konnte nicht gespeichert werden');
+        } else {
+            showTemporaryColorMessage('failure', '❌ Custom-Theme konnte nicht gespeichert werden');
+        }
     } finally {
         saving = false;
         if (button) button.disabled = false;
@@ -542,4 +546,17 @@ function oklchToHex(L, C, H) {
 
 function structuredCloneSafe(value) {
     return JSON.parse(JSON.stringify(value));
+}
+
+function showTemporaryColorMessage(type, message) {
+    const popup = document.createElement('div');
+    popup.className = type === 'success'
+        ? 'request-popup-success noto'
+        : 'request-popup-failure noto';
+    popup.setAttribute('role', 'status');
+    popup.setAttribute('aria-live', 'polite');
+    popup.textContent = message;
+    document.body.appendChild(popup);
+
+    window.setTimeout(() => popup.remove(), type === 'success' ? 2500 : 3000);
 }
