@@ -356,11 +356,22 @@ function setZoom(factor) {
 
 
 
-function initTheme() {
-  setTheme(localStorage.getItem('colorTheme') || 'default');
-  applyCustomThemeFromStorage();
+async function initTheme() {
+  setupThemeListeners();
+  const savedTheme = localStorage.getItem('colorTheme') || 'default';
+
+  setTheme(savedTheme);
+  await initCustomThemeState();
   setZoom(localStorage.getItem('zoomFactor') || 1.0);
+
+  console.log('[Theme] Initialized with theme:', savedTheme);
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  initTheme().catch(err => {
+    console.error('[Theme] Initialization failed:', err);
+  });
+});
 
 function showFnKeyHintIfLaptop() {
   const hint = document.getElementById('fn-key-hint');
