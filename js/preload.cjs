@@ -8,12 +8,12 @@ const validReceiveChannels = [
   'update-cache', 'open-help', 'checklist-update', 'refresh-calendar',
   'mode-changed', 'set-presence-ui-mode',
   'excel-import-done', 'excel-import-error', 'excel-export-done', 'excel-export-error',
-  'excel-template-done', 'excel-template-error', 'set-shift-symbols', 'set-zodiac-style'
+  'excel-template-done', 'excel-template-error', 'set-shift-symbols', 'set-zodiac-style', 'set-custom-theme'
 ];
 const validInvokeChannels = [
   'load-data', 'save-data', 'check-path', 'save-csv', 'load-csv', 'load-text', 'save-text',
   'get-recovered-path', 'set-cache-value', 'get-cache-value',
-  'health-check', 'get-school-holidays', 'confirm'
+  'health-check', 'get-school-holidays', 'confirm', 'save-custom-theme', 'get-custom-theme'
 ];
 
 const CACHE_WHITELIST = [
