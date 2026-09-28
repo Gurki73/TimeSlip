@@ -321,11 +321,32 @@ function showAcknowledgementsDialog(browserWindow, topic) {
             title: 'Danksagungen / Acknowledgements',
             message: 'KI-Assistenz / AI Assistance',
             detail:
-                '- ChatGPT:\n' +
-                '  Unterstützung bei Architektur, Feature-Design und Konzeption\n' +
-                '  Assistance with architecture, feature design, and conceptual guidance\n\n' +
-                'Vielen Dank für die Hilfe bei der App-Architektur und den Funktionsideen!\n' +
-                'Thank you for the help with app architecture and feature ideas!'
+                '- ChatGPT / GPT-5.6 Luna:\n' +
+                '  Architektur, Feature-Design, UX-Überlegungen, Dokumentation und allgemeine Entwicklungsunterstützung\n' +
+                '  Architecture, feature design, UX thinking, documentation, and general development assistance\n\n' +
+                'Vielen Dank für die Unterstützung bei Architektur, UX und Funktionsideen!\n' +
+                'Thank you for the support with architecture, UX, and feature ideas!'
+        },
+        projectStory: {
+            title: 'Projektgeschichte / Project Story',
+            message: 'Die etwas längere Wahrheit / The slightly longer truth',
+            detail:
+                'Credit is not only about what survived in the final binary. It is also about acknowledging what helped me get there.\n\n' +
+                'Ich entwickle Software seit ungefähr 40 Jahren. Meine persönliche Programmier-Superkraft ist dabei erstaunlich einfach:\n' +
+                '1. Etwas zuweisen.\n2. Eine Bedingung prüfen.\n3. Eine Schleife laufen lassen.\n\n' +
+                'Alles andere sind offenbar immer kompliziertere Varianten dieser drei Dinge.\n\n' +
+                'Ich behaupte nicht, der beste Entwickler zu sein. Ich bin weder UI-Designer, Datenanalyst, Datenbank-Spezialist noch ein Zauberer, der jedes obskure Sprach-Feature seit 1986 auswendig kennt.\n\n' +
+                'Was ich gerne mache: die Dinge verbessern, die in Software gerne vergessen werden. Hilfe soll wirklich helfen. Ein Glossar soll wirklich nützlich sein. Barrierefreiheit soll kein nachträglicher Gedanke sein. Eine Farbanpassung soll nicht aussehen, als hätte jemand sie in einer freien Stunde hineingeschoben. Fehler sollen sichtbar sein. Nutzer sollen verstehen, was die Software gerade macht.\n\n' +
+                'Warum so viele Credits? Weil ich glaube, dass man Credits vergeben sollte, bevor man gesetzlich dazu gezwungen wird. Manche Bibliotheken, Projekte, Artikel, Beispiele, Werkzeuge, Menschen und KI-Systeme, die mir geholfen haben, sind noch Teil der Anwendung. Andere nicht. Manche haben den finalen Code überlebt. Andere wurden ersetzt oder haben mir einfach etwas beigebracht und sind danach verschwunden. Ich bedanke mich trotzdem.\n\n' +
+                'KI-Unterstützung: KI-gestützte Entwicklung wurde in den späteren Phasen dieses Projekts zunehmend wichtig. Während der ungefähr 18 Monate Entwicklung haben sich KI-Modelle stark weiterentwickelt, und mehrere Systeme und Modelle wurden für Architekturgespräche, Feature-Design, Debugging, Code-Generierung, Refactoring, Accessibility, Dokumentation und Problemlösung eingesetzt.\n\n' +
+                'Deshalb wäre es unehrlich zu behaupten, jede Idee oder Implementierung könne sauber einem einzigen KI-System oder Modell zugeordnet werden. Die Grenzen zwischen menschlichem Design, KI-Vorschlägen, generiertem Code, menschlichen Änderungen und späterer KI-gestützter Überarbeitung lassen sich oft nicht objektiv ziehen.\n\n' +
+                'Der menschliche Entwickler verantwortet Produktidee, Entscheidungen, Integration, Tests, Ablehnung schlechter Vorschläge und die endgültige Auswahl dessen, was bleibt. Die KI-Systeme haben geholfen. Manchmal hervorragend. Manchmal spektakulär schlecht. Und gelegentlich erst nachdem man ihnen mehrmals erklären musste, dass die erste Idee furchtbar war. Das ist Zusammenarbeit, keine alleinige Urheberschaft.\n\n' +
+                'Die einzelnen KI-Credits sind daher Anerkennung sinnvoller Unterstützung und kein forensischer Versuch festzustellen, wer welche Zeile zuerst geschrieben hat.\n\n' +
+                'Für zukünftige Archäologen: Wenn du diese Credits liest, weil du das Projekt untersuchst, es forken, übersetzen, daraus lernen oder herausfinden möchtest, warum etwas auf diese Weise implementiert wurde: willkommen.\n\n' +
+                'TimeSlip ist ebenso ein Showcase für Softwareentwicklung, Experimentieren, Architektur und Mensch-KI-Zusammenarbeit wie eine funktionierende Anwendung. MitarbeiterKalender ist die aktuelle deutschsprachige Veröffentlichung des Projekts.\n\n' +
+                'Das Projekt steht unter der MIT-Lizenz und darf daher von anderen genutzt, untersucht, verändert, übersetzt, angepasst und weiterverbreitet werden. Wenn jemand daraus irgendwann eine spanische, französische, dänische oder völlig unerwartete Variante macht, ist das für mich eine wesentlich interessantere Form der Anerkennung als irgendeine Behauptung von kommerziellem Erfolg.\n\n' +
+                'Und ja: Ich weiß, dass fast niemand Credits liest. Wahrscheinlich gehört genau deshalb das Interessante hier hinein.\n\n' +
+                'GPT-5.6 Luna: Dieser Text wurde gemeinsam mit dem menschlichen Entwickler formuliert. Die Wahrheit ist absichtlich zweigeteilt: Der Mensch beansprucht nicht alleinige Urheberschaft für KI-Unterstützung, und die KI beansprucht nicht die Urheberschaft für das Projekt. Der Mensch hat die Richtung vorgegeben. Die KI hat Vorschläge gemacht. Beide lagen gelegentlich falsch. Der Mensch hat entschieden, was tatsächlich in die Anwendung gehört.'
         },
         codex: {
             title: 'Danksagungen / Acknowledgements',
@@ -606,6 +627,12 @@ function buildMenuTemplate() {
                     click: (menuItem, browserWindow) => {
                         showGitHubDialog(browserWindow);
                     },
+                },
+                {
+                    label: 'Projektgeschichte / AI',
+                    click: (menuItem, browserWindow) => {
+                        showAcknowledgementsDialog(browserWindow, 'projectStory');
+                    }
                 },
                 {
                     label: 'Danksagungen',
