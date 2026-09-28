@@ -85,7 +85,7 @@ function getFriendlyName(fileName) {
 }
 
 // --- Popup feedback helpers ---
-function showSuccess(message) {
+export function showSuccess(message) {
     let popup = document.createElement("div");
     popup.className = "request-popup-success noto";
     popup.textContent = message;
@@ -93,7 +93,7 @@ function showSuccess(message) {
     setTimeout(() => popup.remove(), 2500);
 }
 
-function showFailure(message) {
+export function showFailure(message) {
     let popup = document.createElement("div");
     popup.className = "request-popup-failure noto";
     popup.textContent = message;
