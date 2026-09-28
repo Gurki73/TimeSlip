@@ -11,6 +11,77 @@ import { getMainWindow } from './appWindow.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+const CUSTOM_THEME_FILE = 'custom-theme.json';
+const CUSTOM_THEME_SECTIONS = ['roles', 'calendar', 'app'];
+
+function getCustomThemePath() {
+    return path.join(app.getPath('userData'), CUSTOM_THEME_FILE);
+}
+
+function validateCustomTheme(themeData) {
+    if (!themeData || typeof themeData !== 'object' || Array.isArray(themeData)) {
+        throw new TypeError('Custom theme must be an object.');
+    }
+
+    for (const section of CUSTOM_THEME_SECTIONS) {
+        if (!themeData[section] || typeof themeData[section] !== 'object' || Array.isArray(themeData[section])) {
+            throw new TypeError(`Custom theme section is invalid: ${section}`);
+        }
+
+        for (const [key, value] of Object.entries(themeData[section])) {
+            if (!/^#[0-9a-f]{6}$/i.test(value)) {
+                throw new TypeError(`Invalid color value for ${section}.${key}`);
+            }
+        }
+    }
+
+    return true;
+}
+
+function saveCustomTheme(themeData) {
+    validateCustomTheme(themeData);
+
+    const targetPath = getCustomThemePath();
+    const tempPath = `${targetPath}.tmp-${process.pid}`;
+    const content = JSON.stringify(themeData, null, 2);
+
+    try {
+        fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+        fs.writeFileSync(tempPath, content, 'utf8');
+        fs.renameSync(tempPath, targetPath);
+        console.log('[CustomTheme] Saved successfully.');
+    } catch (err) {
+        try {
+            if (fs.existsSync(tempPath)) {
+                fs.unlinkSync(tempPath);
+            }
+        } catch (cleanupErr) {
+            console.error('[CustomTheme] Failed to clean up temporary file:', cleanupErr);
+        }
+
+        throw err;
+    }
+}
+
+function getCustomTheme() {
+    const targetPath = getCustomThemePath();
+
+    try {
+        if (!fs.existsSync(targetPath)) {
+            return null;
+        }
+
+        const raw = fs.readFileSync(targetPath, 'utf8');
+        const theme = JSON.parse(raw);
+        validateCustomTheme(theme);
+        return theme;
+    } catch (err) {
+        console.error('[CustomTheme] Failed to load custom theme:', err);
+        return null;
+    }
+}
+
+
 export function registerEventHandlers(mainWindow) {
     ipcMain.handle('confirm', async (event, payload = {}) => {
         const host = mainWindow || getMainWindow();
