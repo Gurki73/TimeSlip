@@ -499,3 +499,81 @@ Justifies why abstraction exists at all
         <strong>Öffnungszeiten</strong> (Kapitel 3) aufbaut.
     </p>
 </div>
+
+Mitarbeiterdaten – der Mensch hinter dem Plan
+Nicht Personalakte, sondern Planungsmodell
+TimeSlip bildet Mitarbeiter nur soweit ab, wie es für Urlaubsplanung, Vertretung und Warnungen notwendig ist. Gehalt,
+Stundenlohn oder eine vollständige Personalakte gehören bewusst nicht in das Modell.
+Für kleine Betriebe gedacht
+Das Modell richtet sich an Betriebe mit ungefähr 8–30 Mitarbeitern, darunter Vollzeitkräfte, Teilzeitkräfte, Aushilfen
+und Menschen mit sehr individuellen Arbeitsmustern.
+Regelmäßige Arbeitsmuster statt theoretischer Vollzeitwelt
+Fry arbeitet beispielsweise nur Freitag und Samstag. Ein Elternteil arbeitet vielleicht nur vormittags, ein Schüler nur
+nach der Schule. Diese Muster sind Bestandteil der regulären Verfügbarkeit.
+Hauptrolle = Normalbetrieb
+Die Hauptrolle beschreibt, welche Aufgabe der Mitarbeiter normalerweise übernimmt.
+Stellvertreterrolle = sinnvoller Rollenwechsel
+Die Stellvertreterrolle ist nicht einfach „irgendeine zweite Rolle“. Sie beschreibt eine Funktion, in die der
+Mitarbeiter bei Bedarf wechseln kann. Ein Manager braucht deshalb normalerweise nicht zusätzlich „Rezeption“ als
+Stellvertreterrolle – seine Managerrolle deckt die entsprechenden Fähigkeiten bereits ab. Als Stellvertreter wäre
+beispielsweise Tellerwäscher sinnvoll, wenn das im konkreten Betrieb tatsächlich vorgesehen ist.
+Notfallrolle = letzte Reserve
+Die dritte Rolle beschreibt, was im Notfall noch zulässig ist. Dadurch entsteht eine bewusste Hierarchie: Normalbetrieb
+→ Vertretung → Notfall.
+Das Rollen-Nesting entscheidet, was wirklich möglich ist
+Ob ein Rollenwechsel sinnvoll ist, ergibt sich aus dem Rollenmodell. Ein Manager kann Tätigkeiten der Rezeption
+übernehmen, aber ein Rezeptionsmitarbeiter wird dadurch nicht zum Manager. Das Rollen-Nesting aus dem vorherigen Kapitel
+wird hier praktisch genutzt.
+Keine beliebige Rollenteilung innerhalb eines Blocks
+TimeSlip kann nicht darstellen, dass jemand innerhalb desselben Arbeitszeitblocks 50 % Koch und 50 % Kellner ist. Der
+Rollenwechsel findet auf Ebene des Arbeitsblocks statt, nicht als minutengenaue Aufteilung innerhalb desselben Blocks.
+Der Solver darf Über- und Unterbesetzung korrigieren
+Beispiel: Die Regel lautet „Für jeden Koch werden zwei Kellner benötigt.“ Es sind zwei Köche und nur ein Kellner
+vorhanden. Wenn einer der Köche laut Rollenmodell als Kellner eingesetzt werden darf, kann der Solver daraus einen Koch
++ zwei Kellner machen. Die Regel ist damit erfüllt. 😄
+Der Solver ist damit bewusst kein starrer Prüfer
+Er fragt nicht nur „Ist die ursprüngliche Rollenverteilung korrekt?“, sondern kann innerhalb der erlaubten Rollenwechsel
+nach einer sinnvollen Variante suchen. Das reduziert Warnungen, ohne Menschen beliebig umzuwidmen.
+Warnungen sollen etwas bedeuten
+Wenn TimeSlip jeden Tag zehn bis zwölf Warnungen erzeugt, werden sie zum Hintergrundrauschen. Rollenwechsel sind deshalb
+ein Werkzeug, um lösbare Situationen bereits im Modell aufzulösen.
+Berufsschule hat unterschiedliche Formen
+BigBee kann regelmäßig ein oder zwei Tage pro Woche Berufsschule haben, während Bob Blockunterricht hat. Beide Fälle
+müssen als unterschiedliche Verfügbarkeitsmuster abgebildet werden können.
+Urlaubsanspruch ist keine Buchhaltung
+Resturlaub ist eine zusätzliche Information und Entscheidungshilfe – ohne Gewähr und ohne Anspruch auf eine
+rechtsverbindliche Urlaubsabrechnung.
+Die Information kann trotzdem bei Konflikten helfen
+Wenn Ramsay noch einen Urlaubstag und Rémy noch 30 Tage hat, kann diese Information bei einer Entscheidung relevant
+sein. TimeSlip entscheidet aber nicht, wem Urlaub genehmigt werden muss.
+Dasselbe gilt für Überstunden
+Überstunden sind ebenfalls eine Orientierungshilfe und keine echte Arbeitszeit- oder Lohnbuchhaltung.
+Geburtstag ist rein dekorativ
+Das Geburtstagsfeld hat keine Planungslogik. Es dient lediglich als kleine Erinnerung: „Heute hat dieser Mitarbeiter
+Geburtstag – vielleicht gratulieren.“ Das ist bewusst außerhalb des eigentlichen Planungsmodells.
+Start- und Enddatum sind dagegen mechanisch relevant
+Ein Mitarbeiter ist nur innerhalb seines definierten Zeitraums Teil der Planung. Das beeinflusst also tatsächlich, ob er
+bei einer Planung berücksichtigt werden kann.
+Ein gelöschter Mitarbeiter ist nicht zwangsläufig verloren
+Gelöschte Mitarbeiter können über die Admin-Werkzeuge wiederhergestellt werden. Damit ist Löschen nicht automatisch
+gleichbedeutend mit dem unwiederbringlichen Verlust der bisherigen Daten.
+Und dann kommt die eigentliche Ursprungsgeschichte
+TimeSlip entstand nicht aus dem Wunsch, eine hübsche Mitarbeiterdatenbank zu bauen. Das reale Problem war: Der Chef gibt
+die Urlaubsplanung an eine Sekretärin oder einen anderen Mitarbeiter ab und kann sich bei einem Konflikt anschließend
+darauf zurückziehen, dass „die Planung ja von ihr gemacht wurde“.
+Verantwortung darf nicht mit Arbeit verwechselt werden
+Die Person, die Urlaub in den Kalender einträgt, sollte nicht automatisch die Verantwortung für die unternehmerische
+Entscheidung tragen. TimeSlip kann Konflikte sichtbar machen und Informationen liefern – die Entscheidung muss beim
+Verantwortlichen bleiben.
+Deshalb braucht nicht jeder Zugriff auf alles
+Ned bzw. BigBee kann bei der Urlaubsplanung helfen, ohne Zugriff auf vollständige Stammdaten anderer Personen zu
+benötigen. Informationen, die für seine Aufgabe nicht erforderlich sind, gehen ihn schlicht nichts an.
+TimeSlip trennt deshalb Aufgabe und Datenzugriff
+Wer Urlaubsplanung unterstützt, braucht nicht automatisch Gehaltsinformationen, vollständige Stammdaten oder andere
+persönliche Informationen. Das ist nicht nur Datenschutz, sondern auch eine sinnvolle organisatorische Trennung.
+Bernd darf seine Excel-Tabelle behalten
+Seine Excel-Liste kann weiterhin die detaillierten Informationen enthalten, die TimeSlip gar nicht verwalten möchte –
+etwa Überstunden oder Urlaubskonten. TimeSlip muss nicht versuchen, Excel vollständig zu ersetzen.
+Import statt Daten-Neueingabe
+Bernd kann seine vorhandenen Daten über die TimeSlip-Vorlage in das benötigte Format bringen und importieren. Damit kann
+seine Excel-Welt bestehen bleiben, während TimeSlip genau die Daten übernimmt, die es für seine Aufgabe benötigt.

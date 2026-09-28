@@ -332,3 +332,98 @@ So passt sich die Planung an die tatsächlichen Öffnungs- und Schließtage dein
         </div>
     </div>
 </div>
+
+Kapitel: Öffnungszeiten / Arbeitszeitblöcke
+
+1. Ausgangssituation – Bernds Excel und die Öffnungszeiten
+Bernd arbeitet weiterhin mit seiner eigenen Excel-Lösung und hinterfragt die drei in TimeSlip angezeigten Bereiche
+„früh“, „Tag“ und „spät“, weil das Restaurant keinen klassischen Schichtbetrieb hat. Sein Misstrauen gegenüber der App
+liefert den Anlass, zu erklären, was TimeSlip unter Öffnungszeiten, Zeitfenstern und Arbeitszeitblöcken tatsächlich
+versteht.
+
+2. Öffnungszeiten als reguläres Betriebsmodell
+Die Öffnungszeiten beschreiben den regulären, wiederkehrenden Betrieb und gelten grundsätzlich über das ganze Jahr. Sie
+bilden die zeitliche Grundlage für die Urlaubs- und Vertretungsplanung und sind nicht dafür gedacht, jeden einzelnen
+tatsächlichen Betriebstag abzubilden. Ein regulär geschlossener Mittwoch bedeutet beispielsweise, dass mittwochs
+grundsätzlich geschlossen ist.
+
+3. Vorgesehene Ausnahmen vom regulären Modell
+Das reguläre Öffnungsmodell kann durch dafür vorgesehene Ausnahmen ergänzt werden, etwa Betriebsferien, Feiertage oder
+die Entscheidung, an bestimmten Feiertagen zu öffnen oder zu schließen. Auch Brückentage können entsprechend den
+Einstellungen des Betriebs berücksichtigt werden. Diese Ausnahmen verändern das reguläre Grundmodell nicht dauerhaft.
+
+4. Einmalige Sonderöffnungen liegen außerhalb des Modells
+Wenn ein normalerweise geschlossener Mittwoch einmalig wegen eines Events geöffnet wird, wird diese Sonderöffnung in
+TimeSlip nicht als neue Öffnungszeit abgebildet. Ebenso führt eine einmalige Öffnung der Bar an einem normalerweise
+geschlossenen Montag nicht dazu, dass Montag dauerhaft zu einem regulären Öffnungstag wird. Bernds Kritik an solchen
+Fällen ist berechtigt, gleichzeitig macht sie die bewusste Grenze des Modells sichtbar.
+
+5. Brückentage sind vom konkreten Betrieb abhängig
+Ein Brückentag hat nicht für jeden Betrieb dieselbe Bedeutung. TimeSlip betrachtet ihn im Zusammenhang mit dem
+individuellen regulären Öffnungsmodell. Ein Restaurant, das beispielsweise Dienstag und Mittwoch geschlossen und am
+Wochenende geöffnet hat, kann deshalb bei einem Brückentag zu einer anderen Bewertung kommen als ein klassischer
+Montag-bis-Freitag-Betrieb.
+
+6. Arbeitszeitblöcke statt klassischer Schichten
+Die bisher als „Schichten“ bezeichneten Bereiche werden konzeptionell besser als Arbeitszeitblöcke oder Zeitfenster
+verstanden. Im Restaurant können „früh“, „Tag“ und „spät“ unterschiedliche Abschnitte des normalen Betriebs beschreiben,
+etwa Einkauf und Vorbereitung am frühen Teil des Tages, Kochen und Servieren am Tag und den Barbetrieb am späten Teil.
+Sie bedeuten zunächst nicht, dass drei vollständige Schichten mit jeweils eigener Belegschaft existieren.
+
+7. Zeitfenster sind keine festen Uhrzeiten
+Ein Zeitfenster ist eine zeitliche Zuordnung und nicht einfach eine einzelne Uhrzeit oder zwingend ein global
+festgelegter Tagesabschnitt. Zeitfenster können sich überschneiden und müssen nicht dieselbe reale Bedeutung für alle
+Rollen oder Aufgaben haben. Entscheidend ist, welche zeitliche Struktur für die jeweilige Aufgabe oder Rolle benötigt
+wird.
+
+8. Früh und spät können je nach Aufgabe etwas anderes bedeuten
+Der Lieferdienst zeigt, warum „früh“ und „spät“ nicht als universelle Uhrzeiten verstanden werden dürfen. Kicky kann
+beispielsweise montags bis freitags mittags Firmen beliefern, während Fry freitags und samstags abends Privathaushalte
+beliefert. Die zeitlichen Bereiche werden damit aus der jeweiligen betrieblichen Realität heraus verstanden und nicht
+aus einer allgemeinen Definition von „früh“ oder „spät“.
+
+9. Arbeitszeitblöcke sind nicht automatisch vollständige Schichten
+Im normalen Betriebsmodell beschreiben Arbeitszeitblöcke lediglich zeitliche Bereiche. In bestimmten Anwendungsfällen
+kann die Rule Engine jedoch ausdrücklich mit einem Schichtmodell arbeiten. Ein Hotel mit echtem 24/7-Betrieb kann
+beispielsweise Früh-, Tag- und Nachtschichten definieren, die jeweils vollständig besetzt werden müssen. Der Begriff
+Schicht ist damit nicht grundsätzlich falsch, sondern bezeichnet eine speziellere Form der zeitlichen Organisation.
+
+10. Rollenswaps innerhalb eines Schichtmodells
+Im Schichtmodus können Rollen so miteinander verbunden werden, dass eine Rolle unter bestimmten Bedingungen durch eine
+andere ersetzt werden darf. Dadurch kann beispielsweise definiert werden, dass eine bestimmte Funktion in einer Schicht
+durch eine alternative Rolle abgedeckt werden kann. Das ist eine konkrete Regelungsfunktion der Rule Engine und nicht
+die grundlegende Bedeutung eines normalen Zeitfensters.
+
+11. Wiederkehrende Regeln statt einzelner Ereignisse
+Die Rule Engine prüft wiederkehrende betriebliche Bedingungen. Eine Regel wie „Freitagabend werden mindestens drei Köche
+benötigt“ bezieht sich auf die entsprechenden regulären Freitage und nicht automatisch auf einen einzelnen Sondertermin
+wie eine Veranstaltung oder einen bestimmten Freitag, an dem ausnahmsweise eine andere Situation geplant ist. Die Regel
+beschreibt eine wiederkehrende Erwartung an den Betrieb.
+
+12. Warnungen statt automatischer Lösungen
+TimeSlip produziert als Ergebnis der Prüfung Warnungen. Wenn beispielsweise Ramsay und Rémy gleichzeitig Urlaub haben
+und dadurch die erforderliche Zahl an Köchen unterschritten wird, weist die App auf den entstehenden Engpass hin. Sie
+entscheidet jedoch nicht selbst, wie dieser gelöst werden soll.
+
+13. Der Umgang mit einem Engpass bleibt beim Benutzer
+Eine Warnung kann unterschiedliche menschliche Konsequenzen haben: eine Vertretung organisieren, einen anderen
+Mitarbeiter einsetzen, einen Urlaubsantrag ablehnen oder verschieben, den Betrieb für einen Zeitraum schließen oder
+einen Engpass bewusst akzeptieren. TimeSlip stellt die Information bereit, übernimmt aber nicht die organisatorische
+Entscheidung.
+
+14. Auch Überbesetzung kann sichtbar werden
+Das gleiche Prinzip gilt in die andere Richtung. Wenn eine Regel eine maximale oder sinnvolle Besetzung beschreibt und
+zu viele Mitarbeiter beziehungsweise Rollen eingeplant sind, kann TimeSlip ebenfalls eine Warnung erzeugen. Die App
+bewertet damit die Planung anhand definierter Bedingungen, ohne daraus automatisch eine Personalentscheidung abzuleiten.
+
+15. Abgrenzung zur Belegschaftsplanung
+TimeSlip ist keine vollständige Belegschafts- oder Dienstplanungssoftware, die den täglichen Personalbedarf automatisch
+berechnet und anschließend alle Mitarbeiter einteilt. Ihr Schwerpunkt liegt auf Urlaubs- und Vertretungsplanung. Die
+Regel Engine nutzt allerdings Rollen, Zeiträume und wiederkehrende Anforderungen, um sichtbar zu machen, wann eine
+Urlaubs- oder Vertretungssituation zu einem Engpass oder einer Überbesetzung führt.
+
+16. Grundprinzip des Kapitels
+Das Kapitel vermittelt damit mehrere Ebenen, die voneinander getrennt werden müssen: Öffnungszeiten beschreiben den
+regulären Betrieb, Arbeitszeitblöcke und Zeitfenster strukturieren dessen Zeitbereiche, Regeln beschreiben
+wiederkehrende Anforderungen und Warnungen zeigen Abweichungen in der konkreten Urlaubs- und Vertretungssituation.
+TimeSlip erkennt das Problem; der Mensch entscheidet, was daraus folgt.

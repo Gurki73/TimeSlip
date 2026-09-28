@@ -206,240 +206,864 @@ async function loadCustomTheme() {
 
 // In colorTheme.js - Custom-Theme UI
 class SimpleColorPicker {
+    // ============================================================
+    // Team Palette
+    // ============================================================
+    //
+    // Each team has a FIXED color family.
+    // Each family contains:
+    //
+    //     12 hue variants × 8 brightness levels = 96 colors
+    //
+    // Columns:
+    //     hue/family variation
+    //
+    // Rows:
+    //     brightness
+    //     top    = light
+    //     bottom = dark
+    //
+    // The actual colors are generated dynamically in OKLCH.
+    // No 96 individual hex values are stored.
+    //
+
+    const TEAM_PALETTE_CONFIG = {
+        red: {
+            label: 'Rot',
+
+            // Allowed hue bandwidth for red.
+            // The interpolation follows the shortest path around
+            // the hue wheel.
+            hueLeft: 350,
+            hueRight: 20,
+
+            // OKLCH lightness
+            light: 0.86,
+            dark: 0.34,
+
+            // Chroma
+            chroma: 0.17
+        },
+
+        green: {
+            label: 'Grün',
+
+            hueLeft: 105,
+            hueRight: 165,
+
+            light: 0.86,
+            dark: 0.34,
+
+            chroma: 0.16
+        },
+
+        blue: {
+            label: 'Blau',
+
+            hueLeft: 210,
+            hueRight: 260,
+
+            light: 0.86,
+            dark: 0.34,
+
+            chroma: 0.15
+        },
+
+        gray: {
+            label: 'Grau',
+
+            // Gray has almost no chroma.
+            // The hue variation produces warm/cool grays
+            // without leaving the gray family.
+            hueLeft: 220,
+            hueRight: 40,
+
+            light: 0.86,
+            dark: 0.30,
+
+            chroma: 0.015
+        }
+    };
+
+    const TEAM_ROLE_RANGES = {
+        blue: [1, 2, 3],
+        green: [4, 5, 6],
+        red: [7, 8, 9],
+        gray: [10, 11, 12]
+    };
+
+
+// ============================================================
+// Palette generator
+// ============================================================
+
+class TeamPalette {
     constructor(options) {
-        this.element = options.element;
-        this.initialColor = options.initialColor || '#3498db';
-        this.onChange = options.onChange || (() => { });
-        this.hueLimit = options.hueLimit || null;
-        this.colorKey = options.colorKey || '';
-        this.init();
+        this.element =
+            typeof options.element === 'string'
+                ? document.getElementById(options.element)
+                : options.element;
+
+        this.team = options.team;
+        this.config = {
+            ...TEAM_PALETTE_CONFIG[this.team],
+            ...(options.config || {})
+        };
+
+        this.roleIndices =
+            options.roleIndices ||
+            TEAM_ROLE_RANGES[this.team] ||
+            [];
+
+        this.selectedRole = 0;
+
+        this.onChange =
+            options.onChange ||
+            (() => { });
+
+        this.cells = [];
+
+        this.render();
     }
 
-    init() {
-        // Slider-Elemente finden
-        this.hueSlider = this.element.querySelector('.hue-slider');
-        this.saturationSlider = this.element.querySelector('.saturation-slider');
-        this.lightnessSlider = this.element.querySelector('.lightness-slider');
-        this.preview = this.element.querySelector('.color-preview');
-        this.hexInput = this.element.querySelector('.color-hex-input');
-
-        // Initiale Farbe setzen
-        const hsl = this.hexToHsl(this.initialColor);
-        this.hue = hsl.h;
-        this.saturation = hsl.s;
-        this.lightness = hsl.l;
-
-        // Slider-Werte setzen
-        if (this.hueSlider) this.hueSlider.value = this.hue;
-        if (this.saturationSlider) this.saturationSlider.value = this.saturation;
-        if (this.lightnessSlider) this.lightnessSlider.value = this.lightness;
-        if (this.hexInput) this.hexInput.value = this.initialColor;
-
-        // Event-Listener
-        this.hueSlider?.addEventListener('input', () => this.updateColor());
-        this.saturationSlider?.addEventListener('input', () => this.updateColor());
-        this.lightnessSlider?.addEventListener('input', () => this.updateColor());
-        this.hexInput?.addEventListener('change', () => this.updateFromHex());
-
-        // Initial anzeigen
-        this.updatePreview();
-    }
-
-    updateColor() {
-        let hue = parseInt(this.hueSlider?.value || 0);
-
-        // Hue-Limit anwenden
-        if (this.hueLimit) {
-            hue = Math.min(Math.max(hue, this.hueLimit.min), this.hueLimit.max);
-            if (this.hueSlider) this.hueSlider.value = hue;
+    render() {
+        if (!this.element) {
+            console.warn(`TeamPalette: element not found`);
+            return;
         }
 
-        this.hue = hue;
-        this.saturation = parseInt(this.saturationSlider?.value || 50);
-        this.lightness = parseInt(this.lightnessSlider?.value || 50);
+        this.element.innerHTML = '';
 
-        this.updatePreview();
+        const wrapper = document.createElement('div');
+        wrapper.className = 'team-palette';
 
-        const hexColor = this.hslToHex(this.hue, this.saturation, this.lightness);
-        if (this.hexInput) this.hexInput.value = hexColor;
+        // ----------------------------------------------------
+        // Role selector
+        // ----------------------------------------------------
 
-        this.onChange(hexColor);
-    }
+        const roleBar = document.createElement('div');
+        roleBar.className = 'team-palette-role-bar';
 
-    updateFromHex() {
-        const hex = this.hexInput?.value || '#000000';
-        const hsl = this.hexToHsl(hex);
-        this.hue = hsl.h;
-        this.saturation = hsl.s;
-        this.lightness = hsl.l;
+        this.roleButtons = [];
 
-        if (this.hueSlider) this.hueSlider.value = this.hue;
-        if (this.saturationSlider) this.saturationSlider.value = this.saturation;
-        if (this.lightnessSlider) this.lightnessSlider.value = this.lightness;
+        this.roleIndices.forEach((roleIndex, index) => {
+            const button = document.createElement('button');
 
-        this.updatePreview();
-        this.onChange(hex);
-    }
+            button.type = 'button';
+            button.className = 'team-palette-role';
+            button.textContent = `#${roleIndex}`;
 
-    updatePreview() {
-        const color = `hsl(${this.hue}, ${this.saturation}%, ${this.lightness}%)`;
-        if (this.preview) {
-            this.preview.style.background = color;
+            button.setAttribute(
+                'aria-label',
+                `Aufgabe ${roleIndex} auswählen`
+            );
+
+            button.addEventListener('click', () => {
+                this.selectRole(index);
+            });
+
+            this.roleButtons.push(button);
+            roleBar.appendChild(button);
+        });
+
+        wrapper.appendChild(roleBar);
+
+        // ----------------------------------------------------
+        // Palette table
+        // ----------------------------------------------------
+
+        const table = document.createElement('table');
+
+        table.className = 'team-palette-grid';
+
+        table.setAttribute(
+            'aria-label',
+            `${this.config.label} Farbpalette`
+        );
+
+        const tbody = document.createElement('tbody');
+
+        this.cells = [];
+
+        for (let row = 0; row < 8; row++) {
+            const tr = document.createElement('tr');
+
+            const rowCells = [];
+
+            for (let col = 0; col < 12; col++) {
+                const color = this.getColor(col, row);
+
+                const td = document.createElement('td');
+
+                const button = document.createElement('button');
+
+                button.type = 'button';
+
+                button.className = 'team-palette-cell';
+
+                button.style.backgroundColor = color;
+
+                button.dataset.column = col;
+                button.dataset.row = row;
+                button.dataset.color = color;
+
+                button.tabIndex = -1;
+
+                button.setAttribute(
+                    'aria-label',
+                    `${this.config.label}, Variante ${col + 1}, Helligkeit ${row + 1}`
+                );
+
+                button.addEventListener('click', () => {
+                    this.selectColor(col, row);
+                });
+
+                button.addEventListener('keydown', event => {
+                    this.handleKeyboard(event, col, row);
+                });
+
+                td.appendChild(button);
+                tr.appendChild(td);
+
+                rowCells.push(button);
+            }
+
+            tbody.appendChild(tr);
+            this.cells.push(rowCells);
         }
-        // Werte anzeigen
-        const valueDisplay = this.element.querySelector('.color-values');
-        if (valueDisplay) {
-            valueDisplay.textContent = `${this.hue}° ${this.saturation}% ${this.lightness}%`;
+
+        table.appendChild(tbody);
+        wrapper.appendChild(table);
+
+        this.element.appendChild(wrapper);
+
+        this.updateSelection();
+
+        // Make first cell keyboard-focusable.
+        this.cells[0][0].tabIndex = 0;
+    }
+
+
+    // --------------------------------------------------------
+    // Generate one color
+    // --------------------------------------------------------
+
+    getColor(column, row) {
+        const hue = interpolateHue(
+            this.config.hueLeft,
+            this.config.hueRight,
+            column / 11
+        );
+
+        const lightness = interpolate(
+            this.config.light,
+            this.config.dark,
+            row / 7
+        );
+
+        return oklchToHex(
+            lightness,
+            this.config.chroma,
+            hue
+        );
+    }
+
+
+    // --------------------------------------------------------
+    // Role selection
+    // --------------------------------------------------------
+
+    selectRole(index) {
+        if (index < 0 || index >= this.roleIndices.length) {
+            return;
         }
+
+        this.selectedRole = index;
+
+        this.updateSelection();
     }
 
-    getColor() {
-        return this.hslToHex(this.hue, this.saturation, this.lightness);
+
+    // --------------------------------------------------------
+    // Color selection
+    // --------------------------------------------------------
+
+    selectColor(column, row) {
+        const button = this.cells?.[row]?.[column];
+
+        if (!button) {
+            return;
+        }
+
+        const roleIndex = this.roleIndices[this.selectedRole];
+
+        const color = button.dataset.color;
+
+        this.updateSelection(column, row);
+
+        this.onChange({
+            team: this.team,
+            roleIndex,
+            rolePosition: this.selectedRole,
+            column,
+            row,
+            color
+        });
     }
 
-    // Farbkonvertierung
-    hexToHsl(hex) {
-        let r = parseInt(hex.slice(1, 3), 16) / 255;
-        let g = parseInt(hex.slice(3, 5), 16) / 255;
-        let b = parseInt(hex.slice(5, 7), 16) / 255;
 
-        const max = Math.max(r, g, b);
-        const min = Math.min(r, g, b);
-        let h, s, l = (max + min) / 2;
+    // --------------------------------------------------------
+    // Visual selection state
+    // --------------------------------------------------------
 
-        if (max === min) {
-            h = s = 0;
-        } else {
-            const d = max - min;
-            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-            switch (max) {
-                case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-                case g: h = ((b - r) / d + 2) / 6; break;
-                case b: h = ((r - g) / d + 4) / 6; break;
+    updateSelection(column = null, row = null) {
+        this.cells.forEach(rowCells => {
+            rowCells.forEach(cell => {
+                cell.classList.remove('selected');
+                cell.classList.remove('active-role');
+            });
+        });
+
+        // Mark the current role button.
+        this.roleButtons?.forEach((button, index) => {
+            button.classList.toggle(
+                'active',
+                index === this.selectedRole
+            );
+        });
+
+        if (column !== null && row !== null) {
+            const cell = this.cells[row]?.[column];
+
+            if (cell) {
+                cell.classList.add('selected');
+                cell.focus();
             }
         }
-
-        return {
-            h: Math.round(h * 360),
-            s: Math.round(s * 100),
-            l: Math.round(l * 100)
-        };
     }
 
-    hslToHex(h, s, l) {
-        h = h / 360;
-        s = s / 100;
-        l = l / 100;
 
-        let r, g, b;
-        if (s === 0) {
-            r = g = b = l;
-        } else {
-            const hue2rgb = (p, q, t) => {
-                if (t < 0) t += 1;
-                if (t > 1) t -= 1;
-                if (t < 1 / 6) return p + (q - p) * 6 * t;
-                if (t < 1 / 2) return q;
-                if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-                return p;
+    // --------------------------------------------------------
+    // Keyboard navigation
+    // --------------------------------------------------------
+
+    handleKeyboard(event, column, row) {
+        let nextColumn = column;
+        let nextRow = row;
+
+        switch (event.key) {
+            case 'ArrowLeft':
+                nextColumn--;
+                break;
+
+            case 'ArrowRight':
+                nextColumn++;
+                break;
+
+            case 'ArrowUp':
+                nextRow--;
+                break;
+
+            case 'ArrowDown':
+                nextRow++;
+                break;
+
+            case 'Home':
+                nextColumn = 0;
+                break;
+
+            case 'End':
+                nextColumn = 11;
+                break;
+
+            case 'Enter':
+            case ' ':
+                event.preventDefault();
+                this.selectColor(column, row);
+                return;
+
+            default:
+                return;
+        }
+
+        event.preventDefault();
+
+        nextColumn = Math.max(0, Math.min(11, nextColumn));
+        nextRow = Math.max(0, Math.min(7, nextRow));
+
+        const nextCell = this.cells[nextRow]?.[nextColumn];
+
+        if (!nextCell) {
+            return;
+        }
+
+        this.cells.forEach(rowCells => {
+            rowCells.forEach(cell => {
+                cell.tabIndex = -1;
+            });
+        });
+
+        nextCell.tabIndex = 0;
+        nextCell.focus();
+    }
+}
+
+
+// ============================================================
+// Math helpers
+// ============================================================
+
+function interpolate(a, b, t) {
+    return a + (b - a) * t;
+}
+
+
+// Hue interpolation.
+//
+// Handles the circular 360° hue wheel correctly.
+// Example:
+//
+//     350° → 20°
+//
+// becomes:
+//
+//     350 → 355 → 0 → 5 → 10 → 15 → 20
+//
+
+function interpolateHue(a, b, t) {
+    let delta = ((b - a + 540) % 360) - 180;
+
+    let hue = a + delta * t;
+
+    hue %= 360;
+
+    if (hue < 0) {
+        hue += 360;
+    }
+
+    return hue;
+}
+
+
+// ============================================================
+// OKLCH → sRGB → HEX
+// ============================================================
+//
+// No library required.
+//
+// OKLCH gives us a much more useful lightness axis than HSL.
+// The final conversion includes simple gamut handling.
+//
+
+function oklchToHex(L, C, H) {
+    const hRad = H * Math.PI / 180;
+
+    const a = C * Math.cos(hRad);
+    const b = C * Math.sin(hRad);
+
+    // OKLab → XYZ
+    const l = L + 0.3963377774 * a + 0.2158037573 * b;
+    const m = L - 0.1055613458 * a - 0.0638541728 * b;
+    const s = L - 0.0894841775 * a - 1.2914855480 * b;
+
+    const l3 = l * l * l;
+    const m3 = m * m * m;
+    const s3 = s * s * s;
+
+    const X =
+        1.2270138511 * l3 -
+        0.5577999807 * m3 +
+        0.2812561490 * s3;
+
+    const Y =
+        -0.0405801784 * l3 +
+        1.1122568696 * m3 -
+        0.0716766787 * s3;
+
+    const Z =
+        -0.0763812845 * l3 -
+        0.4214819784 * m3 +
+        1.5861632204 * s3;
+
+    // XYZ → linear sRGB
+    let r =
+        3.2409699419 * X -
+        1.5373831776 * Y -
+        0.4986107603 * Z;
+
+    let g =
+        -0.9692436363 * X +
+        1.8759675015 * Y +
+        0.0415550574 * Z;
+
+    let blue =
+        0.0556300797 * X -
+        0.2039769589 * Y +
+        1.0569715142 * Z;
+
+    // --------------------------------------------------------
+    // Simple gamut mapping.
+    //
+    // If a color falls outside sRGB, progressively reduce
+    // chroma until it fits.
+    // --------------------------------------------------------
+
+    if (
+        r < 0 || r > 1 ||
+        g < 0 || g > 1 ||
+        blue < 0 || blue > 1
+    ) {
+        const originalChroma = C;
+
+        for (let factor = 0.98; factor >= 0; factor -= 0.02) {
+            const mapped = oklchToLinearRgb(
+                L,
+                originalChroma * factor,
+                H
+            );
+
+            if (
+                mapped.r >= 0 && mapped.r <= 1 &&
+                mapped.g >= 0 && mapped.g <= 1 &&
+                mapped.b >= 0 && mapped.b <= 1
+            ) {
+                r = mapped.r;
+                g = mapped.g;
+                blue = mapped.b;
+                break;
+            }
+        }
+    }
+
+    return rgbToHex(
+        linearToSrgb(r),
+        linearToSrgb(g),
+        linearToSrgb(blue)
+    );
+}
+
+
+function oklchToLinearRgb(L, C, H) {
+    const hRad = H * Math.PI / 180;
+
+    const a = C * Math.cos(hRad);
+    const b = C * Math.sin(hRad);
+
+    const l = L + 0.3963377774 * a + 0.2158037573 * b;
+    const m = L - 0.1055613458 * a - 0.0638541728 * b;
+    const s = L - 0.0894841775 * a - 1.2914855480 * b;
+
+    const l3 = l * l * l;
+    const m3 = m * m * m;
+    const s3 = s * s * s;
+
+    const X =
+        1.2270138511 * l3 -
+        0.5577999807 * m3 +
+        0.2812561490 * s3;
+
+    const Y =
+        -0.0405801784 * l3 +
+        1.1122568696 * m3 -
+        0.0716766787 * s3;
+
+    const Z =
+        -0.0763812845 * l3 -
+        0.4214819784 * m3 +
+        1.5861632204 * s3;
+
+    return {
+        r:
+            3.2409699419 * X -
+            1.5373831776 * Y -
+            0.4986107603 * Z,
+
+        g:
+            -0.9692436363 * X +
+            1.8759675015 * Y +
+            0.0415550574 * Z,
+
+        b:
+            0.0556300797 * X -
+            0.2039769589 * Y +
+            1.0569715142 * Z
+    };
+}
+
+
+function linearToSrgb(value) {
+    value = Math.max(0, Math.min(1, value));
+
+    if (value <= 0.0031308) {
+        return 12.92 * value;
+    }
+
+    return (
+        1.055 * Math.pow(value, 1 / 2.4) -
+        0.055
+    );
+}
+
+
+function rgbToHex(r, g, b) {
+    const toHex = value =>
+        Math.round(value * 255)
+            .toString(16)
+            .padStart(2, '0');
+
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+// ============================================================
+// Palette color matching
+// ============================================================
+//
+// Finds the closest color in one of the generated 96-color
+// palettes.
+//
+// Accepts:
+//   #rrggbb
+//   #rgb
+//   rgb(...)
+//   rgba(...)
+//   CSS named colors such as "salmon", "cornflowerblue"
+//
+// Matching is done in OKLab, which is much more appropriate
+// for perceptual color distance than RGB distance.
+//
+
+
+// ------------------------------------------------------------
+// Public API
+// ------------------------------------------------------------
+
+export function findBestPaletteMatch(color, team) {
+    const config = TEAM_PALETTE_CONFIG[team];
+
+    if (!config) {
+        throw new Error(`Unknown team palette: ${team}`);
+    }
+
+    const rgb = parseCssColor(color);
+
+    if (!rgb) {
+        throw new Error(`Cannot parse color: ${color}`);
+    }
+
+    const target = rgbToOklab(
+        rgb.r,
+        rgb.g,
+        rgb.b
+    );
+
+    let best = null;
+
+    for (let row = 0; row < 8; row++) {
+        for (let column = 0; column < 12; column++) {
+
+            const paletteColor = oklchToHex(
+                interpolate(
+                    config.light,
+                    config.dark,
+                    row / 7
+                ),
+
+                config.chroma,
+
+                interpolateHue(
+                    config.hueLeft,
+                    config.hueRight,
+                    column / 11
+                )
+            );
+
+            const paletteRgb = parseCssColor(paletteColor);
+
+            const paletteLab = rgbToOklab(
+                paletteRgb.r,
+                paletteRgb.g,
+                paletteRgb.b
+            );
+
+            const distance = colorDistanceOklab(
+                target,
+                paletteLab
+            );
+
+            if (!best || distance < best.distance) {
+                best = {
+                    team,
+                    row,
+                    column,
+                    color: paletteColor,
+                    distance
+                };
+            }
+        }
+    }
+
+    return best;
+}
+
+
+// ------------------------------------------------------------
+// Search all four team palettes
+// ------------------------------------------------------------
+
+export function findBestTeamPaletteMatch(color) {
+    const matches = [];
+
+    for (const team of Object.keys(TEAM_PALETTE_CONFIG)) {
+        const match = findBestPaletteMatch(color, team);
+
+        matches.push(match);
+    }
+
+    matches.sort(
+        (a, b) => a.distance - b.distance
+    );
+
+    return matches[0];
+}
+
+
+// ------------------------------------------------------------
+// CSS color parser
+// ------------------------------------------------------------
+//
+// We deliberately let the browser parse named CSS colors.
+// This means we don't need a giant list of CSS color names.
+//
+// Canvas understands:
+//   salmon
+//   cornflowerblue
+//   rgb(...)
+//   rgba(...)
+//   #...
+//
+
+function parseCssColor(value) {
+    if (!value || typeof value !== 'string') {
+        return null;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+        return null;
+    }
+
+    ctx.clearRect(0, 0, 1, 1);
+
+    ctx.fillStyle = '#000000';
+    ctx.fillStyle = value;
+
+    const normalized = ctx.fillStyle;
+
+    // Browser normally converts named colors and rgb/rgba
+    // into rgb(...).
+    const match = normalized.match(
+        /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/
+    );
+
+    if (!match) {
+        // Handle hexadecimal output from the browser.
+        if (/^#[0-9a-f]{6}$/i.test(normalized)) {
+            return {
+                r: parseInt(normalized.slice(1, 3), 16),
+                g: parseInt(normalized.slice(3, 5), 16),
+                b: parseInt(normalized.slice(5, 7), 16)
             };
-            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-            const p = 2 * l - q;
-            r = hue2rgb(p, q, h + 1 / 3);
-            g = hue2rgb(p, q, h);
-            b = hue2rgb(p, q, h - 1 / 3);
         }
 
-        const toHex = (x) => {
-            const hex = Math.round(x * 255).toString(16);
-            return hex.length === 1 ? '0' + hex : hex;
-        };
-
-        return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+        return null;
     }
-}
 
-// Custom-Theme UI initialisieren
-async function initCustomThemeUI() {
-    // Custom-Theme laden
-    const customTheme = await loadCustomTheme();
-
-    // Picker für Rollen-Farben initialisieren
-    const roleColors = customTheme?.roles || {
-        'team-blue': '#3498db',
-        'team-green': '#2ecc71',
-        // ... weitere Farben
+    return {
+        r: Number(match[1]),
+        g: Number(match[2]),
+        b: Number(match[3])
     };
-
-    // Picker erstellen
-    const pickers = {};
-
-    // Team-Blau (nur Blau-Töne)
-    pickers['team-blue'] = new SimpleColorPicker({
-        element: document.getElementById('team-blue-picker'),
-        initialColor: roleColors['team-blue'] || '#3498db',
-        hueLimit: { min: 180, max: 260 },
-        colorKey: 'team-blue',
-        onChange: (color) => updateThemeColor('team-blue', color)
-    });
-
-    // Team-Grün (nur Grün-Töne)
-    pickers['team-green'] = new SimpleColorPicker({
-        element: document.getElementById('team-green-picker'),
-        initialColor: roleColors['team-green'] || '#2ecc71',
-        hueLimit: { min: 80, max: 160 },
-        colorKey: 'team-green',
-        onChange: (color) => updateThemeColor('team-green', color)
-    });
-
-    // Weitere Picker...
-
-    // Speichern-Button
-    document.getElementById('save-custom-theme')?.addEventListener('click', async () => {
-        const themeData = collectThemeData(pickers);
-        const result = await saveCustomTheme(themeData);
-        if (result.success) {
-            showNotification('Custom-Theme erfolgreich gespeichert!', 'success');
-        } else {
-            showNotification('Fehler beim Speichern: ' + result.error, 'error');
-        }
-    });
-
-    return pickers;
 }
 
-// Theme-Farbe aktualisieren
-function updateThemeColor(key, color) {
-    // Temporär anwenden für Live-Preview
-    document.documentElement.style.setProperty(`--${key}`, color);
-}
 
-// Alle Farben sammeln
-function collectThemeData(pickers) {
-    const theme = {
-        roles: {},
-        calendar: {},
-        app: {}
+// ------------------------------------------------------------
+// RGB → OKLab
+// ------------------------------------------------------------
+
+function rgbToOklab(r, g, b) {
+    r = srgbToLinear(r / 255);
+    g = srgbToLinear(g / 255);
+    b = srgbToLinear(b / 255);
+
+    const l =
+        0.4122214708 * r +
+        0.5363325363 * g +
+        0.0514459929 * b;
+
+    const m =
+        0.2119034982 * r +
+        0.6806995451 * g +
+        0.1073969566 * b;
+
+    const s =
+        0.0883024619 * r +
+        0.2817188376 * g +
+        0.6299787005 * b;
+
+    const lRoot = Math.cbrt(l);
+    const mRoot = Math.cbrt(m);
+    const sRoot = Math.cbrt(s);
+
+    return {
+        L:
+            0.2104542553 * lRoot +
+            0.7936177850 * mRoot -
+            0.0040720468 * sRoot,
+
+        a:
+            1.9779984951 * lRoot -
+            2.4285922050 * mRoot +
+            0.4505937099 * sRoot,
+
+        b:
+            0.0259040371 * lRoot +
+            0.7827717662 * mRoot -
+            0.8086757660 * sRoot
     };
-
-    Object.entries(pickers).forEach(([key, picker]) => {
-        const color = picker.getColor();
-        if (key.startsWith('team-')) {
-            theme.roles[key] = color;
-        } else if (key.startsWith('weekday-') || key.includes('bg')) {
-            theme.calendar[key] = color;
-        } else {
-            theme.app[key] = color;
-        }
-    });
-
-    return theme;
 }
 
-// Hilfsfunktion für Notifications
-function showNotification(message, type = 'info') {
-    // Implementierung abhängig von eurem UI-System
-    console.log(`[${type}] ${message}`);
+
+function srgbToLinear(value) {
+    if (value <= 0.04045) {
+        return value / 12.92;
+    }
+
+    return Math.pow(
+        (value + 0.055) / 1.055,
+        2.4
+    );
+}
+
+
+// ------------------------------------------------------------
+// Perceptual distance
+// ------------------------------------------------------------
+
+function colorDistanceOklab(a, b) {
+    const dL = a.L - b.L;
+    const da = a.a - b.a;
+    const db = a.b - b.b;
+
+    return Math.sqrt(
+        dL * dL +
+        da * da +
+        db * db
+    );
 }
 
 // Export für admin-form.js

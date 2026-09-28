@@ -904,3 +904,221 @@ max = sum(supervisors) * supervisionCapacity
     <li><b>NEEDS</b> verschiebt Minimum</li>
     <li><b>HELPS</b> verschiebt Maximum</li>
 </ul>
+
+Nicht:
+
+„So funktioniert die Rule Engine.“
+
+Sondern:
+
+„Welche Regeln sollte ich überhaupt aufstellen – und warum?“
+
+Die UI ist nur das Werkzeug, mit dem diese Entscheidungen später umgesetzt werden.
+
+Der eigentliche Lerninhalt
+1. Warum gibt es überhaupt Regeln?
+
+Der Betrieb hat viele Dinge, die „normalerweise so sein sollten“. Die meisten davon müssen aber nicht als Regel erfasst
+werden.
+
+Die Rule Engine ist dafür da, betriebliche Grenzen sichtbar zu machen, wenn sie im Plan unterschritten oder
+überschritten werden.
+
+Sie soll nicht den Betrieb vollständig beschreiben und auch nicht jede Entscheidung automatisieren.
+
+2. Weniger Regeln sind meistens besser
+
+Ein gutes Regelwerk ist nicht das mit den meisten Regeln.
+
+Jede zusätzliche Regel macht das erlaubte Planungskorsett enger und kann zusätzliche Warnungen erzeugen. Deshalb sollte
+eine Regel nur aufgenommen werden, wenn ihre Verletzung tatsächlich relevant ist.
+
+Wenn eine Abweichung akzeptabel ist, braucht sie meistens keine Regel.
+
+3. Regeln beschreiben Absichten, nicht die Realität bis ins Detail
+
+Der Nutzer soll nicht versuchen, jede Situation seines Betriebs abzubilden.
+
+Beispiel:
+
+„Normalerweise brauchen wir einen Koch.“
+
+ist eine sinnvolle betriebliche Absicht.
+
+„Montag um 11:15 Uhr muss exakt Hans als Koch eingetragen sein.“
+
+ist eine konkrete Planung und gehört nicht in das allgemeine Regelwerk.
+
+Die Regel beschreibt was gebraucht wird, nicht wer genau an welcher Stelle stehen muss.
+
+4. Gib dem System Luft
+
+Eine Regel darf einen Spielraum enthalten.
+
+Statt:
+
+exakt 1 Koch
+
+kann sinnvoller sein:
+
+mindestens 1 Koch
+oder normalerweise ungefähr 1 Koch
+oder zwischen 1 und 2 Köche
+
+Je nachdem, was tatsächlich wichtig ist.
+
+Der Spielraum ermöglicht TimeSlip, unterschiedliche Mitarbeiter, Verfügbarkeiten und Vertretungen sinnvoll miteinander
+zu kombinieren.
+
+5. „Was passiert, wenn die Regel verletzt wird?“
+
+Das ist wahrscheinlich die wichtigste Frage im ganzen Kapitel.
+
+Vor dem Erstellen einer Regel sollte der Nutzer sich fragen:
+
+„Möchte ich dafür wirklich eine Warnung bekommen?“
+
+Wenn die Antwort nein ist, braucht es wahrscheinlich keine Regel.
+
+Damit verschiebt sich die Perspektive:
+
+Eine Regel existiert nicht, weil etwas wahr ist.
+Eine Regel existiert, weil eine Abweichung davon für mich relevant ist.
+
+6. Warnungen sind das eigentliche Ergebnis
+
+Der Nutzer baut Regeln nicht, um ein schönes Regelwerk zu besitzen.
+
+Er baut sie, um sinnvolle Warnungen zu bekommen.
+
+Zu wenige Regeln → wichtige Probleme bleiben unsichtbar.
+
+Zu viele Regeln → Warning Spam.
+
+Das Ziel liegt dazwischen:
+
+Die Warnungen sollen die Situationen hervorheben, bei denen der Nutzer tatsächlich hinschauen möchte.
+
+7. Deshalb: klein anfangen
+
+Die Empfehlung sollte ausdrücklich sein:
+
+Nicht versuchen, beim ersten Einrichten alle Regeln zu erstellen.
+
+Besser:
+
+Mit wenigen wichtigen Regeln starten.
+Den Betrieb mit TimeSlip planen.
+Warnungen beobachten.
+Prüfen, welche Warnungen wirklich relevant sind.
+Regeln lockern, zusammenfassen oder entfernen.
+Erst dann neue Regeln ergänzen.
+
+Das Regelwerk darf mit dem Betrieb lernen.
+
+8. Die Simulation hilft beim Lernen
+
+Die Simulation und Heatmap passen perfekt in dieses Konzept, ohne dass man erklären muss, wie Solver oder Rule Engine
+intern funktionieren.
+
+Der Nutzer kann eine Regel verändern und sehen:
+
+Was würde sich dadurch an meinen Warnungen ändern?
+
+Damit kann er ausprobieren:
+
+Wird eine wichtige Warnung beseitigt?
+Erzeuge ich plötzlich sehr viele neue Warnungen?
+Ist die Regel vielleicht zu eng?
+Ist sie überhaupt notwendig?
+
+Das macht Regelpflege nachvollziehbar, ohne dem Nutzer die Maschine erklären zu müssen.
+
+9. Manche Dinge brauchen bewusst keine Regel
+
+Das ist wichtig, weil Nutzer sonst glauben:
+
+„Wenn TimeSlip das wissen kann, muss ich es konfigurieren.“
+
+Nein.
+
+Wenn im Notfall jeder die Spülmaschine bedienen kann, muss daraus keine komplizierte Vertretungsregel entstehen.
+
+Vielleicht ist:
+
+„Normalerweise ein Tellerwäscher“
+
+sinnvoll.
+
+Vielleicht ist sogar gar keine Regel besser.
+
+Der Nutzer entscheidet, ob eine Abweichung eine Warnung wert ist.
+
+10. Vorgeschlagene Regeln sind etwas anderes
+
+Bei bestimmten betrieblichen oder sicherheitsrelevanten Abhängigkeiten sollte TimeSlip den Nutzer nicht mit der Frage
+allein lassen, ob er überhaupt eine Regel braucht.
+
+Beispiele:
+
+Azubi braucht geeignete Aufsicht.
+Azubi nicht in bestimmten unzulässigen Situationen.
+Maschinenbetrieb benötigt notwendige Qualifikation bzw. Sicherheitsbesetzung.
+Bestimmte Tätigkeiten benötigen zeitgleich bestimmte andere Rollen.
+
+Hier kann TimeSlip vorgefertigte Regeln empfehlen oder bereitstellen.
+
+Das ist nicht dasselbe wie den Nutzer mit 50 frei konfigurierbaren Regeln zu erschlagen.
+
+11. Zeitgleich ist wichtiger als „irgendwann an diesem Tag“
+
+Viele Regeln existieren wegen gleichzeitiger Zusammenarbeit.
+
+Nicht:
+
+„Es gibt heute einen Koch und einen Kellner.“
+
+sondern:
+
+„Wenn diese Arbeit gleichzeitig stattfindet, müssen die dafür notwendigen Fähigkeiten gleichzeitig vorhanden sein.“
+
+Darum sind Beispiele wie
+
+Koch ↔ Kellner
+Arzt ↔ TMA
+Maschinenführer ↔ Ersthelfer
+Azubi ↔ Ausbilder
+
+so wertvoll.
+
+Sie erklären den Sinn des Regelwerks besser als jede UI-Erklärung.
+
+12. Anwesenheit ist nicht gleich Einsatzort
+
+Auch hier sollte die Hilfe das mentale Modell vermitteln, statt technische Begriffe zu erklären.
+
+Urlaub und Krankheit sind nicht die einzigen Gründe, warum jemand für eine bestimmte Regel nicht verfügbar ist.
+
+Auch:
+
+Berufsschule
+Homeoffice
+Dienstreise
+
+können die Verfügbarkeit verändern.
+
+Und umgekehrt ist ein Mitarbeiter nicht automatisch „unverfügbar“, nur weil er einen Teil seiner Arbeit außerhalb des
+Restaurants verbringt.
+
+Der Lieferfahrer kann weiterhin im Dienst sein, obwohl er 75 % seiner Zeit unterwegs ist.
+
+Das sind genau die Fälle, bei denen ein zu einfaches Regelverständnis zu falschen Regeln führt.
+
+Damit wäre die Leitidee des gesamten Kapitels eigentlich:
+
+Die Rule Engine ist kein Werkzeug, um deinen Betrieb möglichst genau zu beschreiben.
+Sie ist ein Werkzeug, um wichtige Abweichungen von deinem gewünschten Normalbetrieb sichtbar zu machen.
+
+Und der zweite Satz:
+
+Je weniger und besser gewählte Regeln du brauchst, desto nützlicher werden deine Warnungen.

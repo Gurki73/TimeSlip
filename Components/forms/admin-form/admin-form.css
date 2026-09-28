@@ -2238,6 +2238,8 @@ cursor: not-allowed;
   background: var(--calendar-shift-late-bg);
 }
 
+
+
 .shift-example-exchange-row {
   position: relative;
   height: .2rem;
@@ -2299,4 +2301,63 @@ cursor: not-allowed;
     opacity: 1;
     transform: translate(-50%, -50%) scale(1.15);
   }
+}
+
+
+.team-palette-grid {
+    border-collapse: separate;
+    border-spacing: 2px;
+}
+
+.team-palette-grid td {
+    padding: 0;
+    border: 0;
+}
+
+.team-palette-cell {
+    display: block;
+
+    width: 34px;
+    height: 28px;
+
+    padding: 0;
+    margin: 0;
+
+    border: 0;
+    border-radius: 3px;
+
+    cursor: pointer;
+
+    box-sizing: border-box;
+}
+
+.team-palette-cell:hover {
+    transform: scale(1.08);
+    z-index: 2;
+    position: relative;
+}
+
+.team-palette-cell:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+.team-palette-cell.selected {
+    outline: 3px solid currentColor;
+    outline-offset: 2px;
+}
+
+.team-palette-role-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.team-palette-role {
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+.team-palette-role.active {
+    font-weight: 700;
 }
