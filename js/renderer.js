@@ -346,7 +346,16 @@ async function initCustomThemeState() {
   }
 }
 
-window.__timeslipApplyCustomTheme = applyCustomTheme;
+window.__timeslipApplyCustomTheme = themeData => {
+  document.body.classList.add('theme-custom');
+  localStorage.setItem('colorTheme', 'custom');
+
+  if (window.cacheAPI) {
+    window.cacheAPI.setCacheValue('colorTheme', 'custom');
+  }
+
+  applyCustomTheme(themeData);
+};
 
 function setZoom(factor) {
   document.body.style.fontSize = `${factor}rem`;
