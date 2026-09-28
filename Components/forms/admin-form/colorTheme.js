@@ -59,6 +59,19 @@ let paletteCells = [];
 let initialized = false;
 let saving = false;
 
+export function discardColorThemeDraft() {
+    if (window.__timeslipPersistedCustomTheme) {
+        applyThemeVariables(window.__timeslipPersistedCustomTheme);
+    }
+
+    draftTheme = null;
+    initialized = false;
+    saving = false;
+    window.__timeslipPersistedCustomTheme = null;
+}
+
+window.__timeslipDiscardColorThemeDraft = discardColorThemeDraft;
+
 export async function initRoleColorTab(api) {
     if (initialized) {
         return;
