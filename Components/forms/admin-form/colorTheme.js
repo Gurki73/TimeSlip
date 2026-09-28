@@ -411,7 +411,7 @@ async function saveDraft(api) {
         showSuccess('✅ Custom-Theme gespeichert');
     } catch (err) {
         console.error('[ColorTheme] Save failed:', err);
-        showColorSaveFailure(err);
+        showFailure('❌ Custom-Theme konnte nicht gespeichert werden');
     } finally {
         saving = false;
         if (button) button.disabled = false;
