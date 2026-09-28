@@ -2361,3 +2361,229 @@ cursor: not-allowed;
 .team-palette-role.active {
     font-weight: 700;
 }
+
+/* ============================================================
+   Custom color editor
+   ============================================================ */
+
+.color-customizer-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.color-customizer-v2 .color-header {
+  margin-bottom: 0;
+}
+
+.color-customizer-v2 .color-tabs {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border-color, #ccc);
+  padding-bottom: .5rem;
+}
+
+.color-customizer-v2 .color-tab {
+  border: 1px solid var(--border-color, #ccc);
+  background: var(--bg-inactive, #f4f4f4);
+  color: var(--text-color, #222);
+  border-radius: .5rem;
+  padding: .6rem .8rem;
+  cursor: pointer;
+}
+
+.color-customizer-v2 .color-tab.active {
+  background: var(--button-active-color, #3498db);
+  color: #fff;
+}
+
+.color-customizer-v2 .color-editor-layout {
+  display: grid;
+  grid-template-columns: minmax(420px, 1.45fr) minmax(300px, .8fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.color-customizer-v2 .universal-picker-panel,
+.color-customizer-v2 .color-target-panel {
+  border: 1px solid var(--border-color, #ccc);
+  border-radius: .75rem;
+  background: var(--bg-white, #fff);
+  padding: 1rem;
+}
+
+.color-customizer-v2 .palette-toolbar,
+.color-customizer-v2 .palette-target-summary,
+.color-customizer-v2 .target-panel-header {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+
+.color-customizer-v2 .palette-toolbar {
+  justify-content: space-between;
+  margin-bottom: .8rem;
+}
+
+.color-customizer-v2 #palette-hint {
+  font-size: .8rem;
+  opacity: .7;
+  margin-left: .35rem;
+}
+
+.color-customizer-v2 .palette-family-buttons {
+  display: flex;
+  gap: .3rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.color-customizer-v2 .palette-family {
+  border: 1px solid var(--border-color, #ccc);
+  background: transparent;
+  color: var(--text-color, #222);
+  border-radius: .35rem;
+  padding: .35rem .55rem;
+  cursor: pointer;
+}
+
+.color-customizer-v2 .palette-family.active {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+}
+
+.color-customizer-v2 .palette-target-summary {
+  min-height: 2rem;
+  margin-bottom: .8rem;
+  flex-wrap: wrap;
+}
+
+.color-customizer-v2 .current-color-chip,
+.color-customizer-v2 .color-target-chip {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: .25rem;
+  border: 1px solid rgba(0, 0, 0, .25);
+  flex: 0 0 auto;
+}
+
+.color-customizer-v2 .universal-palette {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(26px, 1fr));
+  gap: 3px;
+  padding: .4rem;
+  border-radius: .5rem;
+  background: var(--bg-inactive, #f2f2f2);
+}
+
+.color-customizer-v2 .universal-palette-cell {
+  width: 100%;
+  aspect-ratio: 1;
+  min-width: 0;
+  border: 2px solid transparent;
+  border-radius: .2rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.color-customizer-v2 .universal-palette-cell:hover {
+  transform: scale(1.08);
+  z-index: 1;
+}
+
+.color-customizer-v2 .universal-palette-cell:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 2px;
+}
+
+.color-customizer-v2 .palette-help,
+.color-customizer-v2 .color-save-hint {
+  font-size: .8rem;
+  opacity: .75;
+  margin: .75rem 0 0;
+}
+
+.color-customizer-v2 .color-target-panel {
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.color-customizer-v2 .target-panel-header {
+  justify-content: space-between;
+  margin-bottom: .75rem;
+  flex-wrap: wrap;
+}
+
+.color-customizer-v2 .color-dirty-indicator {
+  font-size: .78rem;
+  font-weight: 600;
+}
+
+.color-customizer-v2 .color-target-list {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+}
+
+.color-customizer-v2 .color-target {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: .55rem;
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: .45rem;
+  background: transparent;
+  color: var(--text-color, #222);
+  padding: .5rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.color-customizer-v2 .color-target:hover {
+  background: var(--bg-inactive, #f4f4f4);
+}
+
+.color-customizer-v2 .color-target[aria-selected="true"] {
+  border-color: var(--button-active-color, #3498db);
+  background: var(--bg-inactive, #f4f4f4);
+}
+
+.color-customizer-v2 .color-target:focus-visible,
+.color-customizer-v2 .palette-family:focus-visible,
+.color-customizer-v2 .color-tab:focus-visible,
+.color-customizer-v2 #save-custom-theme:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 2px;
+}
+
+.color-customizer-v2 .color-target-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.color-customizer-v2 .color-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+@media (max-width: 900px) {
+  .color-customizer-v2 .color-editor-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .color-customizer-v2 .universal-palette {
+    grid-template-columns: repeat(12, minmax(22px, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .color-customizer-v2 .universal-palette {
+    grid-template-columns: repeat(6, minmax(28px, 1fr));
+  }
+}
